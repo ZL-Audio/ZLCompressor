@@ -1,4 +1,4 @@
 [submodule "JUCE"]
 	path = JUCE
 	url = https://github.com/juce-framework/JUCE/
-	branch = juce8
+	branch = master
