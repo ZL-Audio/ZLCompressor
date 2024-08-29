@@ -60,9 +60,9 @@ namespace zlCompressor {
         paras[0] = FloatType(1) / currentRatio - FloatType(1);
         paras[1] = -lowThres;
         paras[2] = FloatType(1) / (kneeW_ * FloatType(4));
-        paras[3] = 1 / std::min(currentThreshold + kneeW_, FloatType(0.0001)) / currentRatio;
+        paras[3] = FloatType(0.5) / std::min(currentThreshold + kneeW_, FloatType(-0.0001)) / currentRatio;
         paras[4] = currentThreshold + (kneeW_ - currentThreshold) / FloatType(2) / currentRatio;
-        paras[5] = currentThreshold * (1 - currentSlope);
+        paras[5] = currentThreshold * (FloatType(1) - currentSlope);
     }
 
     template
