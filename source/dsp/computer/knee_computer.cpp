@@ -30,14 +30,12 @@ namespace zlCompressor {
         if (x <= lowThres) {
             return x;
         } else if (x >= highThres) {
-            const auto linearV = paras[5] + x * currentSlope;
-            const auto quadV = paras[3] * x * x + paras[4];
             return juce::jlimit(x - currentBound, x + currentBound,
-                                currentOppositeCurve * linearV + currentCurve * quadV);
+                paras[2] + paras[3] * x + paras[4] * x * x);
         } else {
             const auto xx = x + paras[1];
             return juce::jlimit(x - currentBound, x + currentBound,
-                                x + paras[0] * xx * xx * paras[2]);
+                                x + paras[0] * xx * xx);
         }
     }
 
@@ -48,21 +46,31 @@ namespace zlCompressor {
 
     template<typename FloatType>
     void KneeComputer<FloatType>::interpolate() {
-        currentThreshold = threshold.load();
-        const auto kneeW_ = kneeW.load();
-        currentRatio = ratio.load();
-        currentSlope = FloatType(1) / currentRatio;
+        const auto currentThreshold = threshold.load();
+        const auto currentKneeW = kneeW.load();
+        const auto currentRatio = ratio.load();
         currentBound = bound.load();
-        currentCurve = curve.load();
-        currentOppositeCurve = FloatType(1) - currentCurve;
-        lowThres = currentThreshold - kneeW_;
-        highThres = currentThreshold + kneeW_;
+        const auto currentCurve = curve.load();
+        lowThres = currentThreshold - currentKneeW;
+        highThres = currentThreshold + currentKneeW;
         paras[0] = FloatType(1) / currentRatio - FloatType(1);
         paras[1] = -lowThres;
-        paras[2] = FloatType(1) / (kneeW_ * FloatType(4));
-        paras[3] = FloatType(0.5) / std::min(currentThreshold + kneeW_, FloatType(-0.0001)) / currentRatio;
-        paras[4] = currentThreshold + (kneeW_ - currentThreshold) / FloatType(2) / currentRatio;
-        paras[5] = currentThreshold * (FloatType(1) - currentSlope);
+        paras[0] *= FloatType(1) / (currentKneeW * FloatType(4));
+        if (currentCurve >= FloatType(0)) {
+            const auto alpha = FloatType(1) - currentCurve, beta = currentCurve;
+            linearCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+            downCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+            paras[2] = alpha * linearCurve.c + beta * downCurve.c;
+            paras[3] = alpha * linearCurve.b + beta * downCurve.b;
+            paras[4] = alpha * linearCurve.a + beta * downCurve.a;
+        } else {
+            const auto alpha = FloatType(1) + currentCurve, beta = -currentCurve;
+            linearCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+            upCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+            paras[2] = alpha * linearCurve.c + beta * upCurve.c;
+            paras[3] = alpha * linearCurve.b + beta * upCurve.b;
+            paras[4] = alpha * linearCurve.a + beta * upCurve.a;
+        }
     }
 
     template

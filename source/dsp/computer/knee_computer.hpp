@@ -13,6 +13,40 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace zlCompressor {
+    template<typename FloatType>
+    struct LinearCurve {
+        static constexpr FloatType a{FloatType(0)};
+        FloatType b, c;
+
+        void setPara(FloatType t, FloatType r, FloatType w) {
+            juce::ignoreUnused(w);
+            b = FloatType(1) / r;
+            c = t * (FloatType(1) - FloatType(1) / r);
+        }
+    };
+
+    template<typename FloatType>
+    struct DownCurve {
+        FloatType a, c;
+        static constexpr FloatType b{FloatType(0)};
+
+        void setPara(FloatType t, FloatType r, FloatType w) {
+            a = FloatType(0.5) / (r * std::min(t + w, FloatType(-0.0001)));
+            c = FloatType(0.5) * (w - t) / r;
+        }
+    };
+
+    template<typename FloatType>
+    struct UpCurve {
+        FloatType a, c;
+        static constexpr FloatType b{FloatType(1)};
+
+        void setPara(FloatType t, FloatType r, FloatType w) {
+            a = FloatType(0.5) * (FloatType(1) - r) / (r * std::min(t + w, FloatType(-0.0001)));
+            c = FloatType(0.5) * (FloatType(1) - r) * (w - t) / r;
+        }
+    };
+
     /**
      * a computer that computes the current compression
      * @tparam FloatType
@@ -43,7 +77,7 @@ namespace zlCompressor {
         inline FloatType getThreshold() const { return threshold.load(); }
 
         inline void setRatio(FloatType v) {
-            ratio.store(v);
+            ratio.store(std::max(FloatType(1), v));
             toInterpolate.store(true);
         }
 
@@ -57,7 +91,7 @@ namespace zlCompressor {
         inline FloatType getKneeW() const { return kneeW.load(); }
 
         inline void setCurve(FloatType v) {
-            curve.store(v);
+            curve.store(juce::jlimit(FloatType(-1), FloatType(1), v));
             toInterpolate.store(true);
         }
 
@@ -70,18 +104,20 @@ namespace zlCompressor {
         inline FloatType getBound() const { return bound.load(); }
 
     private:
+        LinearCurve<FloatType> linearCurve;
+        DownCurve<FloatType> downCurve;
+        UpCurve<FloatType> upCurve;
         std::atomic<FloatType> threshold{0}, ratio{1};
-        FloatType currentThreshold{0}, currentRatio{1}, currentSlope{1};
+        // FloatType currentThreshold{0}, currentRatio{1}, currentSlope{1};
         std::atomic<FloatType> kneeW{FloatType(0.01)}, curve{0};
-        FloatType lowThres{0}, highThres{0}, currentCurve{0}, currentOppositeCurve{1};
+        FloatType lowThres{0}, highThres{0};
         std::atomic<FloatType> bound{60};
         FloatType currentBound{60};
-        std::array<FloatType, 6> paras;
+        std::array<FloatType, 5> paras;
         std::atomic<bool> toInterpolate{true};
 
         void interpolate();
     };
-
 } // KneeComputer
 
 #endif //COMPRESSOR_COMPUTER_H
