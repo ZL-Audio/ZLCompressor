@@ -107,7 +107,7 @@ jobs:
           submodules: true
 
       - name: Install boost
-        uses: MarkusJx/install-boost@v2.4.5
+        uses: MarkusJx/install-boost@v2.5.0
         id: install-boost
         with:
           boost_version: 1.80.0
