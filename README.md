@@ -36,4 +36,4 @@ See the releases for the latest version.
  -->
 ## License
 
-ZLCompressor is licensed under GPLv3, as found in the [LICENSE.md](LICENSE.md) file.
+ZLCompressor is licensed under AGPLv3, as found in the [LICENSE.md](LICENSE.md) file.

@@ -7,6 +7,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-includes")
 include(GitVersion)
 include(PamplejuceVersion)
 
+# Configures universal binaries and decides which version of macOS to support
+include(PamplejuceMacOS)
+
 # Change me!
 # This is the internal name of the project and the name of JUCE's shared code "target"
 # Note: This cannot have spaces (it may be 2023, but you can't have it all!)
@@ -14,7 +17,6 @@ include(PamplejuceVersion)
 set(PROJECT_NAME "ZLCompressor")
 set(PLUGIN_CODE "Comp")
 
-# Change me!
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs will display)
 # You can also just have it be the same thing as PROJECT_NAME
 # You may want to append the major version on the end of this (and PROJECT_NAME) ala:
@@ -63,11 +65,8 @@ else ()
     endif ()
 endif ()
 
-# include boost for this project
-# find_package(Boost 1.80.0 REQUIRED)
-
-# Configures universal binaries in CI
-include(PamplejuceMacOS)
+# Sanitizer support, comment out to disable
+include(Sanitizer)
 
 # Couple tweaks that IMO should be JUCE defaults
 include(JUCEDefaults)
@@ -79,12 +78,14 @@ include(JUCEDefaults)
 add_subdirectory(JUCE)
 
 # Add any other modules you want modules here, before the juce_add_plugin call
+juce_add_module("${CMAKE_CURRENT_LIST_DIR}/modules/friz/Source/friz")
 
 # See `docs/CMake API.md` in the JUCE repo for all config options
 juce_add_plugin("${PROJECT_NAME}"
         # Icons for the standalone app
-        ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/packaging/icon.png"
+        # ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/packaging/icon.png"
 
+        # Change me!
         COMPANY_NAME "${COMPANY_NAME}"
         BUNDLE_ID "${BUNDLE_ID}"
 
@@ -92,10 +93,12 @@ juce_add_plugin("${PROJECT_NAME}"
         COPY_PLUGIN_AFTER_BUILD TRUE
         AAX_COPY_DIR "${JUCE_AAX_COPY_DIR}"
 
+        # Change me!
         # A four-character plugin id
         # First character MUST be uppercase for AU formats
         PLUGIN_MANUFACTURER_CODE "${PLUGIN_MANUFACTURER_CODE}"
 
+        # Change me!
         # A unique four-character plugin id
         # Note: this must have at least one upper-case character
         PLUGIN_CODE "${PLUGIN_CODE}"
@@ -103,8 +106,8 @@ juce_add_plugin("${PROJECT_NAME}"
         LV2URI "${LV2URI}"
 
         AU_MAIN_TYPE kAudioUnitType_Effect
-        VST3_CATEGORIES Dynamics
-        AAX_CATEGORY AAX_ePlugInCategory_Dynamics
+        VST3_CATEGORIES Fx
+        AAX_CATEGORY AAX_EPlugInCategory_Effect
 
         # The name of your final executable
         # This is how it's listed in the DAW
@@ -125,7 +128,7 @@ include(SharedCodeDefaults)
 # Just ensure you employ CONFIGURE_DEPENDS so the build system picks up changes
 # If you want to appease the CMake gods and avoid globs, manually add files like so:
 # set(SourceFiles Source/PluginEditor.h Source/PluginProcessor.h Source/PluginEditor.cpp Source/PluginProcessor.cpp)
-file(GLOB_RECURSE SourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/source/*.hpp")
+file(GLOB_RECURSE SourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/source/*.h")
 target_sources(SharedCode INTERFACE ${SourceFiles})
 
 # Adds a BinaryData target for embedding assets into the binary
@@ -147,12 +150,11 @@ target_compile_definitions(SharedCode
         CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
         VERSION="${CURRENT_VERSION}"
 
-        #        JUCE_DISPLAY_SPLASH_SCREEN=0
-
         # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
         PRODUCT_NAME_WITHOUT_VERSION="${PRODUCT_NAME}"
         #        JUCE_COREGRAPHICS_RENDER_WITH_MULTIPLE_PAINT_CALLS=1
         JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
+        USE_JUCE7_INSTEAD_OF_LATEST=${USE_JUCE7_INSTEAD_OF_LATEST}
 )
 
 # Link to any other modules you added (with juce_add_module) here!
@@ -170,8 +172,8 @@ target_link_libraries(SharedCode
         juce_gui_extra
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
-#        Boost::boost)
+        juce::juce_recommended_warning_flags
+        friz)
 
 # Link the JUCE plugin targets our SharedCode target
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
