@@ -118,6 +118,7 @@ namespace zlMagAnalyzer {
             timeLength.store(x);
             maxPos.store(static_cast<int>(
                 sampleRate.load() * static_cast<double>(x) / static_cast<double>(PointNum - 1)));
+            currentPos = 0;
         }
 
         void setToReset() { toReset.store(true); }
