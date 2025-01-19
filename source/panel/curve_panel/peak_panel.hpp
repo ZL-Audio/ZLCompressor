@@ -27,16 +27,18 @@ namespace zlPanel {
         void resized() override;
 
         void setTimeLength(const float x) {
-            peakAnalyzer.setTimeLength(x);
+            magAnalyzer.setTimeLength(x);
             numPerMilliSecond.store(
                 static_cast<double>(zlDSP::Controller::analyzerPointNum - 1) / static_cast<double>(x) / 1000.0);
         }
 
     private:
-        zlMagAnalyzer::MultiplePeakAnalyzer<double, 1, zlDSP::Controller::analyzerPointNum> &peakAnalyzer;
+        zlMagAnalyzer::MagReductionAnalyzer<double, zlDSP::Controller::analyzerPointNum> &magAnalyzer;
         AtomicBound atomicBound;
 
         juce::Path inPath, recentInPath;
+        juce::Path outPath, recentOutPath;
+        juce::Path reductionPath, recentReductionPath;
         juce::SpinLock lock;
 
         juce::Time startTime{0};

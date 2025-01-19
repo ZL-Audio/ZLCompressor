@@ -23,10 +23,12 @@ namespace zlDSP {
 
         void process(juce::AudioBuffer<double> &buffer);
 
-        zlMagAnalyzer::MultiplePeakAnalyzer<double, 1, analyzerPointNum> &getPeakAnalyzer() { return peakAnalyzer; }
+        zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> &getMagAnalyzer() { return magAnalyzer; }
 
     private:
-        zlMagAnalyzer::MultiplePeakAnalyzer<double, 1, analyzerPointNum> peakAnalyzer;
+        zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> magAnalyzer;
+
+        juce::dsp::Compressor<double> compressor;
     };
 } // zlDSP
 

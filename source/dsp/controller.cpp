@@ -11,10 +11,21 @@
 
 namespace zlDSP {
     void Controller::prepare(const juce::dsp::ProcessSpec &spec) {
-        peakAnalyzer.prepare(spec);
+        magAnalyzer.prepare(spec);
+        compressor.prepare(spec);
+        compressor.setThreshold(-20.0);
+        compressor.setRatio(2.0);
+        compressor.setAttack(50.0);
+        compressor.setRelease(100.0);
     }
 
     void Controller::process(juce::AudioBuffer<double> &buffer) {
-        peakAnalyzer.process({buffer});
+        juce::AudioBuffer<double> mainBuffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
+        juce::AudioBuffer<double> sideBuffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
+        juce::ignoreUnused(sideBuffer);
+        magAnalyzer.pushInBuffer(mainBuffer);
+        juce::dsp::AudioBlock<double> block(mainBuffer);
+        compressor.process(juce::dsp::ProcessContextReplacing<double>(block));
+        magAnalyzer.pushOutBuffer(mainBuffer);
     }
 } // zlDSP

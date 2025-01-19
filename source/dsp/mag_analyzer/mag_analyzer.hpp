@@ -10,6 +10,7 @@
 #ifndef ZL_MAG_ANALYZER_HPP
 #define ZL_MAG_ANALYZER_HPP
 
-#include "multiple_peak_analyzer.hpp"
+#include "multiple_mag_analyzer.hpp"
+#include "mag_reduction_analyzer.hpp"
 
 #endif //ZL_MAG_ANALYZER_HPP

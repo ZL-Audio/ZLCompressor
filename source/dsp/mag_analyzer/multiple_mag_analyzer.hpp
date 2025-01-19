@@ -14,36 +14,41 @@
 #include <juce_dsp/juce_dsp.h>
 
 namespace zlMagAnalyzer {
-    template<typename FloatType, size_t PeakNum, size_t PointNum>
-    class MultiplePeakAnalyzer {
+    template<typename FloatType, size_t MagNum, size_t PointNum>
+    class MultipleMagAnalyzer {
     public:
-        explicit MultiplePeakAnalyzer() = default;
+        enum MagType {
+            peak, rms
+        };
+
+        explicit MultipleMagAnalyzer() = default;
 
         void prepare(const juce::dsp::ProcessSpec &spec) {
             sampleRate.store(spec.sampleRate);
             setTimeLength(timeLength.load());
         }
 
-        void process(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, PeakNum> buffers) {
+        void process(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers) {
             int startIdx{0}, endIdx{0};
             int numSamples = buffers[0].get().getNumSamples();
+            const auto currentMagType = magType.load();
             while (true) {
                 if (const auto remainNum = maxPos.load() - currentPos; numSamples >= remainNum) {
                     startIdx = endIdx;
                     endIdx = endIdx + remainNum;
                     numSamples -= remainNum;
                     currentPos = 0;
-                    updatePeaks(buffers, startIdx, remainNum);
+                    updateMags(buffers, startIdx, remainNum, currentMagType);
                     if (abstractFIFO.getFreeSpace() == 0) return;
                     const auto scope = abstractFIFO.write(1);
                     const auto writeIdx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
-                    for (size_t i = 0; i < PeakNum; ++i) {
-                        peakFIFOs[i][static_cast<size_t>(writeIdx)] = static_cast<float>(currentPeaks[i]);
+                    for (size_t i = 0; i < MagNum; ++i) {
+                        magFIFOs[i][static_cast<size_t>(writeIdx)] = static_cast<float>(currentMags[i]);
                     }
                 } else {
                     currentPos += numSamples;
                     startIdx = endIdx;
-                    updatePeaks(buffers, startIdx, numSamples);
+                    updateMags(buffers, startIdx, numSamples, currentMagType);
                     break;
                 }
             }
@@ -54,8 +59,8 @@ namespace zlMagAnalyzer {
             // calculate number of points put into circular buffers
             const int fifoNumReady = abstractFIFO.getNumReady();
             if (toReset.exchange(false)) {
-                for (size_t i = 0; i < PeakNum; ++i) {
-                    std::fill(circularPeaks[i].begin(), circularPeaks[i].end(), 0.f);
+                for (size_t i = 0; i < MagNum; ++i) {
+                    std::fill(circularMags[i].begin(), circularMags[i].end(), 0.f);
                 }
                 const auto scope = abstractFIFO.read(fifoNumReady);
                 return 0;
@@ -66,17 +71,17 @@ namespace zlMagAnalyzer {
             if (numReady == 0) return 0;
             const auto numReadyShift = static_cast<typename std::array<float, PointNum>::difference_type>(numReady);
             // shift circular buffers
-            for (size_t i = 0; i < PeakNum; ++i) {
-                auto &circularPeak{circularPeaks[i]};
+            for (size_t i = 0; i < MagNum; ++i) {
+                auto &circularPeak{circularMags[i]};
                 std::rotate(circularPeak.begin(),
                             circularPeak.begin() + numReadyShift,
                             circularPeak.end());
             }
             // read from FIFOs
             const auto scope = abstractFIFO.read(numReady);
-            for (size_t i = 0; i < PeakNum; ++i) {
-                auto &circularPeak{circularPeaks[i]};
-                auto &peakFIFO{peakFIFOs[i]};
+            for (size_t i = 0; i < MagNum; ++i) {
+                auto &circularPeak{circularMags[i]};
+                auto &peakFIFO{magFIFOs[i]};
                 size_t j = circularPeak.size() - static_cast<size_t>(numReady);
                 if (scope.blockSize1 > 0) {
                     std::copy(&peakFIFO[static_cast<size_t>(scope.startIndex1)],
@@ -93,21 +98,21 @@ namespace zlMagAnalyzer {
             return numReady;
         }
 
-        void createPath(std::array<std::reference_wrapper<juce::Path>, PeakNum> paths,
+        void createPath(std::array<std::reference_wrapper<juce::Path>, MagNum> paths,
                         const juce::Rectangle<float> bound,
                         const float shift = 0.f,
                         const float minDB = -72.f, const float maxDB = 0.f) {
             const auto deltaX = bound.getWidth() / static_cast<float>(PointNum - 1);
             const auto x0 = bound.getX(), y0 = bound.getY(), height = bound.getHeight();
             float x = x0 - shift * deltaX;
-            for (size_t i = 0; i < PeakNum; ++i) {
+            for (size_t i = 0; i < MagNum; ++i) {
                 paths[i].get().clear();
-                paths[i].get().startNewSubPath(x0, peakToY(circularPeaks[i][0], y0, height, minDB, maxDB));
+                paths[i].get().startNewSubPath(x, magToY(circularMags[i][0], y0, height, minDB, maxDB));
                 x += deltaX;
             }
             for (size_t idx = 1; idx < PointNum; ++idx) {
-                for (size_t i = 0; i < PeakNum; ++i) {
-                    const auto y = peakToY(circularPeaks[i][idx], y0, height, minDB, maxDB);
+                for (size_t i = 0; i < MagNum; ++i) {
+                    const auto y = magToY(circularMags[i][idx], y0, height, minDB, maxDB);
                     paths[i].get().lineTo(x, y);
                 }
                 x += deltaX;
@@ -123,30 +128,46 @@ namespace zlMagAnalyzer {
 
         void setToReset() { toReset.store(true); }
 
-    private:
+        void setMagType(const MagType x) { magType.store(x); }
+
+    protected:
         std::atomic<double> sampleRate{48000.0};
-        std::array<std::array<float, PointNum>, PeakNum> peakFIFOs{};
+        std::array<std::array<float, PointNum>, MagNum> magFIFOs{};
         juce::AbstractFifo abstractFIFO{PointNum};
-        std::array<std::array<float, PointNum>, PeakNum> circularPeaks{};
+        std::array<std::array<float, PointNum>, MagNum> circularMags{};
         size_t circularIdx{0};
 
         std::atomic<float> timeLength{7.f};
         int currentPos{0};
         std::atomic<int> maxPos{1};
-        std::array<FloatType, PeakNum> currentPeaks{};
+        std::array<FloatType, MagNum> currentMags{};
 
         std::atomic<bool> toReset{false};
+        std::atomic<MagType> magType{MagType::peak};
 
-        void updatePeaks(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, PeakNum> buffers,
-                         const int startIdx, const int numSamples) {
-            for (size_t i = 0; i < PeakNum; ++i) {
+        void updateMags(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers,
+                        const int startIdx, const int numSamples, const MagType currentMagType) {
+            for (size_t i = 0; i < MagNum; ++i) {
                 auto &buffer = buffers[i];
-                currentPeaks[i] = buffer.get().getMagnitude(startIdx, numSamples);
+                switch (currentMagType) {
+                    case MagType::peak: {
+                        currentMags[i] = buffer.get().getMagnitude(startIdx, numSamples);
+                    }
+                    case MagType::rms: {
+                        FloatType currentRMS{FloatType(0)};
+                        for (int j = 0; j < buffer.get().getNumChannels(); ++j) {
+                            const auto channelRMS = buffer.get().getRMSLevel(j, startIdx, numSamples);
+                            currentRMS += channelRMS * channelRMS;
+                        }
+                        currentRMS = std::sqrt(currentRMS / static_cast<FloatType>(buffer.get().getNumChannels()));
+                        currentMags[i] = currentRMS;
+                    }
+                }
             }
         }
 
-        static float peakToY(const float peak, const float y0, const float height,
-                             const float minDB, const float maxDB) {
+        static float magToY(const float peak, const float y0, const float height,
+                            const float minDB, const float maxDB) {
             const auto dB = juce::Decibels::gainToDecibels(peak, minDB * 2.f);
             return y0 + height * (maxDB - dB) / (maxDB - minDB);
         }
