@@ -64,10 +64,13 @@ namespace zlMagAnalyzer {
                                      ? fifoNumReady
                                      : std::min(fifoNumReady, numToRead);
             if (numReady == 0) return 0;
+            const auto numReadyShift = static_cast<typename std::array<float, PointNum>::difference_type>(numReady);
             // shift circular buffers
             for (size_t i = 0; i < PeakNum; ++i) {
                 auto &circularPeak{circularPeaks[i]};
-                std::rotate(circularPeak.begin(), &circularPeak[static_cast<size_t>(numReady)], circularPeak.end());
+                std::rotate(circularPeak.begin(),
+                            circularPeak.begin() + numReadyShift,
+                            circularPeak.end());
             }
             // read from FIFOs
             const auto scope = abstractFIFO.read(numReady);
