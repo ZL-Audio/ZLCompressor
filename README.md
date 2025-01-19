@@ -3,12 +3,12 @@
   <img src="docs/logo.svg" width="7.5%" />
 </p>
 
-# ZLCompressor
+# ZL Compressor
 ![pluginval](<https://github.com/ZL-Audio/ZLCompressor/actions/workflows/cmake_full_test.yml/badge.svg?branch=main>)
-[![License](https://img.shields.io/badge/License-GPL3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+[![License](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://opensource.org/license/agpl-v3)
 [![Downloads](https://img.shields.io/github/downloads/ZL-Audio/ZLCompressor/total)](https://somsubhra.github.io/github-release-stats/?username=ZL-Audio&repository=ZLCompressor&page=1&per_page=30)
 
-ZLCompressor is a compressor plugin.
+ZL Compressor is a compressor plugin.
 
 <!-- <img src="Docs/screenshot.png" width=94%> -->
  
@@ -36,4 +36,4 @@ See the releases for the latest version.
  -->
 ## License
 
-ZLCompressor is licensed under AGPLv3, as found in the [LICENSE.md](LICENSE.md) file.
+ZL Compressor is licensed under AGPLv3, as found in the [LICENSE.md](LICENSE.md) file.
