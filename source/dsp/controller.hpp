@@ -7,12 +7,27 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef DSP_HPP
-#define DSP_HPP
+#ifndef CONTROLLER_HPP
+#define CONTROLLER_HPP
 
-#include "dsp_definitions.hpp"
-#include "controller.hpp"
-#include "computer/computer.hpp"
 #include "mag_analyzer/mag_analyzer.hpp"
 
-#endif //DSP_HPP
+namespace zlDSP {
+    class Controller {
+    public:
+        static constexpr size_t analyzerPointNum = 351;
+
+        explicit Controller() = default;
+
+        void prepare(const juce::dsp::ProcessSpec &spec);
+
+        void process(juce::AudioBuffer<double> &buffer);
+
+        zlMagAnalyzer::MultiplePeakAnalyzer<double, 1, analyzerPointNum> &getPeakAnalyzer() { return peakAnalyzer; }
+
+    private:
+        zlMagAnalyzer::MultiplePeakAnalyzer<double, 1, analyzerPointNum> peakAnalyzer;
+    };
+} // zlDSP
+
+#endif //CONTROLLER_HPP

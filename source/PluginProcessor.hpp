@@ -17,9 +17,10 @@
 #include "ipps.h"
 #endif
 
-class PluginProcessor final : public juce::AudioProcessor {
+class PluginProcessor : public juce::AudioProcessor {
 public:
-    juce::AudioProcessorValueTreeState parameters;
+    // zlState::DummyProcessor dummyProcessor;
+    juce::AudioProcessorValueTreeState parameters;//, state;
 
     PluginProcessor();
 
@@ -32,6 +33,8 @@ public:
     bool isBusesLayoutSupported(const BusesLayout &layouts) const override;
 
     void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
+
+    void processBlock(juce::AudioBuffer<double> &, juce::MidiBuffer &) override;
 
     juce::AudioProcessorEditor *createEditor() override;
 
@@ -61,6 +64,13 @@ public:
 
     void setStateInformation(const void *data, int sizeInBytes) override;
 
+    bool supportsDoublePrecisionProcessing() const override { return true; }
+
+    zlDSP::Controller &getController() { return controller; }
+
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
+    zlDSP::Controller controller;
+
+    juce::AudioBuffer<double> doubleBuffer;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

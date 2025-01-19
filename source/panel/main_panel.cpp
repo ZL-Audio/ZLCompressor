@@ -7,12 +7,15 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef DSP_HPP
-#define DSP_HPP
+#include "main_panel.hpp"
 
-#include "dsp_definitions.hpp"
-#include "controller.hpp"
-#include "computer/computer.hpp"
-#include "mag_analyzer/mag_analyzer.hpp"
+namespace zlPanel {
+    MainPanel::MainPanel(PluginProcessor &processor)
+        : curvePanel(processor) {
+        addAndMakeVisible(curvePanel);
+    }
 
-#endif //DSP_HPP
+    void MainPanel::resized() {
+        curvePanel.setBounds(getLocalBounds());
+    }
+} // zlPanel
