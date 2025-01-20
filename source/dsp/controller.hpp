@@ -10,6 +10,7 @@
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 
+#include "splitter/splitter.hpp"
 #include "mag_analyzer/mag_analyzer.hpp"
 
 namespace zlDSP {
@@ -27,7 +28,8 @@ namespace zlDSP {
 
     private:
         zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> magAnalyzer;
-
+        zlSplitter::LRSplitter<double> mainLRSplitter, sideLRSplitter;
+        zlSplitter::MSSplitter<double> mainMSSplitter, sideMSSplitter;
         juce::dsp::Compressor<double> compressor;
     };
 } // zlDSP
