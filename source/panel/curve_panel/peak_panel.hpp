@@ -22,29 +22,27 @@ namespace zlPanel {
 
         void paint(juce::Graphics &g) override;
 
-        void run();
+        void run(double nextTimeStamp);
 
         void resized() override;
 
         void setTimeLength(const float x) {
             magAnalyzer.setTimeLength(x);
-            numPerMilliSecond.store(
-                static_cast<double>(zlDSP::Controller::analyzerPointNum - 1) / static_cast<double>(x) / 1000.0);
+            numPerSecond.store(
+                static_cast<double>(zlDSP::Controller::analyzerPointNum - 1) / static_cast<double>(x));
         }
 
     private:
         zlMagAnalyzer::MagReductionAnalyzer<double, zlDSP::Controller::analyzerPointNum> &magAnalyzer;
         AtomicBound atomicBound;
 
-        juce::Path inPath, recentInPath;
-        juce::Path outPath, recentOutPath;
-        juce::Path reductionPath, recentReductionPath;
+        juce::Path inPath, outPath, reductionPath;
         juce::SpinLock lock;
 
-        juce::Time startTime{0};
+        double startTime{0.0};
         double currentCount{0.0};
 
-        std::atomic<double> numPerMilliSecond{50.0 / 1000.0};
+        std::atomic<double> numPerSecond{50.0};
     };
 } // zlPanel
 

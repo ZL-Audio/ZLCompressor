@@ -60,7 +60,7 @@ namespace zlMagAnalyzer {
             const int fifoNumReady = abstractFIFO.getNumReady();
             if (toReset.exchange(false)) {
                 for (size_t i = 0; i < MagNum; ++i) {
-                    std::fill(circularMags[i].begin(), circularMags[i].end(), 0.f);
+                    std::fill(circularMags[i].begin(), circularMags[i].end(), -240.f);
                 }
                 const auto scope = abstractFIFO.read(fifoNumReady);
                 return 0;
@@ -151,7 +151,8 @@ namespace zlMagAnalyzer {
                 auto &buffer = buffers[i];
                 switch (currentMagType) {
                     case MagType::peak: {
-                        currentMags[i] = buffer.get().getMagnitude(startIdx, numSamples);
+                        const auto currentMagnitude = buffer.get().getMagnitude(startIdx, numSamples);
+                        currentMags[i] = juce::Decibels::gainToDecibels(currentMagnitude, FloatType(-240));
                     }
                     case MagType::rms: {
                         FloatType currentRMS{FloatType(0)};
@@ -160,16 +161,15 @@ namespace zlMagAnalyzer {
                             currentRMS += channelRMS * channelRMS;
                         }
                         currentRMS = std::sqrt(currentRMS / static_cast<FloatType>(buffer.get().getNumChannels()));
-                        currentMags[i] = currentRMS;
+                        currentMags[i] = juce::Decibels::gainToDecibels(currentRMS, FloatType(-240));
                     }
                 }
             }
         }
 
-        static float magToY(const float peak, const float y0, const float height,
+        static float magToY(const float mag, const float y0, const float height,
                             const float minDB, const float maxDB) {
-            const auto dB = juce::Decibels::gainToDecibels(peak, minDB * 2.f);
-            return y0 + height * (maxDB - dB) / (maxDB - minDB);
+            return y0 + height * (maxDB - mag) / (maxDB - minDB);
         }
     };
 }

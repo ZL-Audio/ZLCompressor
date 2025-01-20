@@ -13,9 +13,9 @@ namespace zlPanel {
     CurvePanel::CurvePanel(PluginProcessor &processor)
         : Thread("curve_panel"),
           peakPanel(processor),
-          vblank(this, [this]() { repaintCallBack(); }) {
+          vblank(this, [this](const double timeStamp) { repaintCallBack(timeStamp); }) {
         addAndMakeVisible(peakPanel);
-        startThread(juce::Thread::Priority::low);
+        // startThread(juce::Thread::Priority::low);
     }
 
     CurvePanel::~CurvePanel() {
@@ -30,7 +30,7 @@ namespace zlPanel {
 
     void CurvePanel::paintOverChildren(juce::Graphics &g) {
         juce::ignoreUnused(g);
-        notify();
+        // notify();
     }
 
     void CurvePanel::resized() {
@@ -42,11 +42,12 @@ namespace zlPanel {
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
-            peakPanel.run();
+            break;
         }
     }
 
-    void CurvePanel::repaintCallBack() {
+    void CurvePanel::repaintCallBack(const double timeStamp) {
+        peakPanel.run(timeStamp);
         repaint();
     }
 } // zlPanel

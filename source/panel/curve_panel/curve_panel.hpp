@@ -35,7 +35,7 @@ namespace zlPanel {
 
         void run() override;
 
-        void repaintCallBack();
+        void repaintCallBack(double timeStamp);
     };
 } // zlPanel
 
