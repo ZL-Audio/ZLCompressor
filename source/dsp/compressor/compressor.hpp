@@ -7,12 +7,10 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef DSP_HPP
-#define DSP_HPP
+#ifndef ZL_COMPRESSOR_HPP
+#define ZL_COMPRESSOR_HPP
 
-#include "dsp_definitions.hpp"
-#include "controller.hpp"
-#include "compressor/compressor.hpp"
-#include "mag_analyzer/mag_analyzer.hpp"
+#include "computer/computer.hpp"
+#include "tracker/tracker.hpp"
 
-#endif //DSP_HPP
+#endif //ZL_COMPRESSOR_HPP

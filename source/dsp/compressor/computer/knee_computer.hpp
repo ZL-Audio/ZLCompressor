@@ -7,8 +7,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef COMPRESSOR_COMPUTER_H
-#define COMPRESSOR_COMPUTER_H
+#ifndef ZL_COMPRESSOR_KNEE_COMPUTER_HPP
+#define ZL_COMPRESSOR_KNEE_COMPUTER_HPP
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -120,4 +120,4 @@ namespace zlCompressor {
     };
 } // KneeComputer
 
-#endif //COMPRESSOR_COMPUTER_H
+#endif //ZL_COMPRESSOR_KNEE_COMPUTER_HPP

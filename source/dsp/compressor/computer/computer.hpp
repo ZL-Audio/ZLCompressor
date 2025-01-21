@@ -7,9 +7,9 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef COMPRESSOR_COMPUTER_HPP
-#define COMPRESSOR_COMPUTER_HPP
+#ifndef ZL_COMPRESSOR_COMPUTER_HPP
+#define ZL_COMPRESSOR_COMPUTER_HPP
 
 #include "knee_computer.hpp"
 
-#endif //COMPRESSOR_COMPUTER_HPP
+#endif //ZL_COMPRESSOR_COMPUTER_HPP

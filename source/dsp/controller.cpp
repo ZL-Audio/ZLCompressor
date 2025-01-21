@@ -12,6 +12,10 @@
 namespace zlDSP {
     void Controller::prepare(const juce::dsp::ProcessSpec &spec) {
         magAnalyzer.prepare(spec);
+        mainLRSplitter.prepare(spec);
+        mainMSSplitter.prepare(spec);
+        sideLRSplitter.prepare(spec);
+        sideMSSplitter.prepare(spec);
         compressor.prepare(spec);
         compressor.setThreshold(-20.0);
         compressor.setRatio(2.0);
