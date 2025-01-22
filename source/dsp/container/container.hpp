@@ -12,5 +12,6 @@
 
 #include "array.hpp"
 #include "circular_buffer.hpp"
+#include "circular_minmax_buffer.hpp"
 
 #endif //ZL_CONTAINER_HPP

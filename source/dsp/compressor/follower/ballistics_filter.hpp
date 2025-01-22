@@ -14,7 +14,7 @@
 #include <numbers>
 
 namespace zl::Compressor {
-    template<typename FloatType, bool isHold = false>
+    template<typename FloatType>
     class BallisticsFilter {
     public:
         enum Style {
@@ -34,6 +34,9 @@ namespace zl::Compressor {
             state = FloatType(0);
             y = FloatType(0);
             toUpdate.store(true);
+            toUpdateAR.store(true);
+            toUpdateStyle.store(true);
+            toUpdateHold.store(true);
         }
 
         /**
@@ -42,11 +45,6 @@ namespace zl::Compressor {
         void prepareBuffer() {
             if (toUpdate.exchange(false)) {
                 update();
-            }
-            if (currentStyle != style.load()) {
-                currentStyle = style.load();
-                state = FloatType(0);
-                y = FloatType(0);
             }
         }
 
@@ -65,30 +63,51 @@ namespace zl::Compressor {
             return y;
         }
 
+        void setAttach(const FloatType millisecond) {
+            attackTime.store(std::max(FloatType(0), millisecond));
+            toUpdateAR.store(true);
+            toUpdate.store(true);
+        }
+
+        void setRelease(const FloatType millisecond) {
+            releaseTime.store(std::max(FloatType(0), millisecond));
+            toUpdateAR.store(true);
+            toUpdate.store(true);
+        }
+
+        void setSmooth(const FloatType smooth) {
+            smooth.store(std::clamp(smooth, FloatType(0), FloatType(1)));
+            toUpdateAR.store(true);
+            toUpdate.store(true);
+        }
+
     private:
-        std::atomic<bool> toUpdate{true};
+        std::atomic<bool> toUpdate{true}, toUpdateAR{true}, toUpdateStyle{true}, toUpdateHold{true};
         double sampleRate{44100.0}, expFactor{-0.142};
-        std::atomic<FloatType> attackTime{1}, releaseTime{1}, holdTime{1}, smooth{0};
+        std::atomic<FloatType> attackTime{1}, releaseTime{1}, smooth{0};
         FloatType attack{0}, attackC{1}, release{0}, releaseC{0};
         FloatType state{0}, y{0};
-        int holdSize{0}, holdPos{0};
         std::atomic<Style> style{branching};
         Style currentStyle{branching};
 
         void update() {
-            const auto currentSmooth = smooth.load();
-            const auto currentAttackTime = attackTime.load();
-            attack = currentAttackTime < FloatType(1e-3)
-                         ? FloatType(0)
-                         : static_cast<FloatType>(std::exp(static_cast<double>(currentAttackTime) * expFactor));
-            attackC = (FloatType(1) - attack) * currentSmooth;
-            const auto currentReleaseTime = releaseTime.load();
-            release = currentReleaseTime < FloatType(1e-3)
-                          ? FloatType(0)
-                          : static_cast<FloatType>(std::exp(static_cast<double>(currentReleaseTime) * expFactor));
-            releaseC = (FloatType(1) - release) * currentSmooth;
-            if (isHold) {
-                holdSize = static_cast<int>(std::round(holdTime.load() * sampleRate));
+            if (toUpdateAR.exchange(false)) {
+                const auto currentSmooth = smooth.load();
+                const auto currentAttackTime = attackTime.load();
+                attack = currentAttackTime < FloatType(1e-3)
+                             ? FloatType(0)
+                             : static_cast<FloatType>(std::exp(static_cast<double>(currentAttackTime) * expFactor));
+                attackC = (FloatType(1) - attack) * currentSmooth;
+                const auto currentReleaseTime = releaseTime.load();
+                release = currentReleaseTime < FloatType(1e-3)
+                              ? FloatType(0)
+                              : static_cast<FloatType>(std::exp(static_cast<double>(currentReleaseTime) * expFactor));
+                releaseC = (FloatType(1) - release) * currentSmooth;
+            }
+            if (toUpdateStyle.exchange(false)) {
+                currentStyle = style.load();
+                state = FloatType(0);
+                y = FloatType(0);
             }
         }
     };
