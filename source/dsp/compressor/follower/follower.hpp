@@ -7,10 +7,9 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_SPLITTER_HPP
-#define ZL_SPLITTER_HPP
+#ifndef ZL_COMPRESSOR_FOLLOWER_HPP
+#define ZL_COMPRESSOR_FOLLOWER_HPP
 
-#include "lright/lr_splitter.hpp"
-#include "mside/ms_splitter.hpp"
+#include "ballistics_filter.hpp"
 
-#endif //ZL_SPLITTER_HPP
+#endif //ZL_COMPRESSOR_FOLLOWER_HPP

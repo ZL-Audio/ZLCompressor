@@ -12,5 +12,6 @@
 
 #include "computer/computer.hpp"
 #include "tracker/tracker.hpp"
+#include "follower/follower.hpp"
 
 #endif //ZL_COMPRESSOR_HPP

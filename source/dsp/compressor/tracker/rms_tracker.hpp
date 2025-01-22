@@ -1,11 +1,11 @@
-// Copyright (C) 2024 - zsliu98
-// This file is part of ZLEqualizer
+// Copyright (C) 2025 - zsliu98
+// This file is part of ZLCompressor
 //
-// ZLEqualizer is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
+// ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
 //
-// ZLEqualizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+// ZLCompressor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Affero General Public License along with ZLEqualizer. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef ZL_COMPRESSOR_RMS_TRACKER_HPP
 #define ZL_COMPRESSOR_RMS_TRACKER_HPP
@@ -29,10 +29,10 @@ namespace zlCompressor {
         /**
          * call before prepare to play
          * set the maximum time length of the tracker
-         * @param x the maximum time length of the tracker
+         * @param millisecond the maximum time length of the tracker
          */
-        void setMaximumMomentarySeconds(FloatType x) {
-            maximumTimeLength = x;
+        void setMaximumMomentarySeconds(const FloatType millisecond) {
+            maximumTimeLength = millisecond;
         }
 
         /**
@@ -41,13 +41,14 @@ namespace zlCompressor {
          */
         void prepare(const juce::dsp::ProcessSpec &spec) {
             sampleRate.store(spec.sampleRate);
-            setMaximumMomentarySize(static_cast<size_t>(static_cast<double>(maximumTimeLength) * spec.sampleRate));
+            setMaximumMomentarySize(
+                static_cast<size_t>(static_cast<double>(maximumTimeLength) * 1000.0 * spec.sampleRate));
             reset();
             setMomentarySeconds(timeLength.load());
         }
 
         /**
-         * cache values before processing a buffer
+         * update values before processing a buffer
          */
         void prepareBuffer() {
             if (toUpdate.exchange(false)) {
@@ -62,10 +63,10 @@ namespace zlCompressor {
             }
         }
 
-        void process(FloatType peak) {
+        void processSample(const FloatType x) {
             const FloatType square = isPeakMix
-                                         ? std::abs(peak) * (currentPeakMix + std::abs(peak) * currentPeakMixC)
-                                         : peak * peak;
+                                         ? std::abs(x) * (currentPeakMix + std::abs(x) * currentPeakMixC)
+                                         : x * x;
             if (loudnessBuffer.size() == currentBufferSize) {
                 mLoudness -= loudnessBuffer.pop_front();
             }
@@ -76,11 +77,11 @@ namespace zlCompressor {
         /**
          * thread-safe, lock-free
          * set the time length of the tracker
-         * @param x the time length of the tracker
+         * @param millisecond the time length of the tracker
          */
-        void setMomentarySeconds(FloatType x) {
-            timeLength.store(x);
-            setMomentarySize(static_cast<size_t>(x * static_cast<FloatType>(sampleRate.load())));
+        void setMomentarySeconds(const FloatType millisecond) {
+            timeLength.store(millisecond);
+            setMomentarySize(static_cast<size_t>(static_cast<double>(millisecond) * 1000.0 * sampleRate.load()));
             toUpdate.store(true);
         }
 
@@ -135,6 +136,6 @@ namespace zlCompressor {
             loudnessBuffer.set_capacity(mSize);
         }
     };
-} // zldetector
+}
 
 #endif //ZL_COMPRESSOR_RMS_TRACKER_HPP
