@@ -20,8 +20,6 @@ namespace zl::Compressor {
         enum Style {
             decoupled,
             branching,
-            decoupledSmooth,
-            branchingSmooth
         };
 
         BallisticsFilter() = default;
@@ -55,18 +53,13 @@ namespace zl::Compressor {
         FloatType processSample(const FloatType x) {
             switch (currentStyle) {
                 case decoupled: {
-                    state = std::max(x, state * release);
-                    y = attack * y + attackC * state;
-                }
-                case branching: {
-                    y = x >= y ? attack * y + attackC * x : release * y;
-                }
-                case decoupledSmooth: {
                     state = std::max(x, release * state + releaseC * x);
                     y = attack * y + attackC * state;
+                    break;
                 }
-                case branchingSmooth: {
+                case branching: {
                     y = x >= y ? attack * y + attackC * x : release * y + releaseC * x;
+                    break;
                 }
             }
             return y;
@@ -75,24 +68,25 @@ namespace zl::Compressor {
     private:
         std::atomic<bool> toUpdate{true};
         double sampleRate{44100.0}, expFactor{-0.142};
-        std::atomic<FloatType> attackTime{1}, releaseTime{1}, holdTime{1};
+        std::atomic<FloatType> attackTime{1}, releaseTime{1}, holdTime{1}, smooth{0};
         FloatType attack{0}, attackC{1}, release{0}, releaseC{0};
         FloatType state{0}, y{0};
         int holdSize{0}, holdPos{0};
-        std::atomic<Style> style{branchingSmooth};
-        Style currentStyle{branchingSmooth};
+        std::atomic<Style> style{branching};
+        Style currentStyle{branching};
 
         void update() {
+            const auto currentSmooth = smooth.load();
             const auto currentAttackTime = attackTime.load();
             attack = currentAttackTime < FloatType(1e-3)
                          ? FloatType(0)
                          : static_cast<FloatType>(std::exp(static_cast<double>(currentAttackTime) * expFactor));
-            attackC = FloatType(1) - attack;
+            attackC = (FloatType(1) - attack) * currentSmooth;
             const auto currentReleaseTime = releaseTime.load();
             release = currentReleaseTime < FloatType(1e-3)
                           ? FloatType(0)
                           : static_cast<FloatType>(std::exp(static_cast<double>(currentReleaseTime) * expFactor));
-            releaseC = FloatType(1) - release;
+            releaseC = (FloatType(1) - release) * currentSmooth;
             if (isHold) {
                 holdSize = static_cast<int>(std::round(holdTime.load() * sampleRate));
             }
