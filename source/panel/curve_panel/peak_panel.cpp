@@ -17,29 +17,28 @@ namespace zlPanel {
             path->preallocateSpace(preallocateSpace);
         }
         magAnalyzer.setToReset();
-        setTimeLength(7.f);
+        setTimeLength(12.f);
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
-        g.setColour(juce::Colours::darkgrey);
-        g.strokePath(inPath,
-                     juce::PathStrokeType(1.0f,
-                                          juce::PathStrokeType::curved,
-                                          juce::PathStrokeType::rounded));
-        g.setColour(juce::Colours::black);
+        g.setColour(juce::Colours::black.withAlpha(.25f));
+        g.fillPath(inPath);
+        g.setColour(juce::Colours::black.withAlpha(.9f));
         g.strokePath(outPath,
-                     juce::PathStrokeType(1.0f,
+                     juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
         g.setColour(juce::Colours::darkred);
         g.strokePath(reductionPath,
-                     juce::PathStrokeType(1.0f,
+                     juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }
 
     void PeakPanel::resized() {
-        atomicBound.store(getLocalBounds().toFloat());
+        auto bound = getLocalBounds().toFloat();
+        bound = bound.withWidth(bound.getWidth() * 1.01f);
+        atomicBound.store(bound);
     }
 
     void PeakPanel::run(const double nextTimeStamp) {
@@ -57,7 +56,7 @@ namespace zlPanel {
                 currentCount = std::floor(targetCount);
             }
             const auto shift = targetCount - currentCount;
-            magAnalyzer.createPath(inPath, outPath, reductionPath, atomicBound.load(), static_cast<float>(shift));
+            magAnalyzer.template createPath<true, false>(inPath, outPath, reductionPath, atomicBound.load(), static_cast<float>(shift));
         }
     }
 } // zlPanel

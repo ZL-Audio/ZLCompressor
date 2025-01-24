@@ -75,8 +75,8 @@ namespace zl::Compressor {
             toUpdate.store(true);
         }
 
-        void setSmooth(const FloatType smooth) {
-            smooth.store(std::clamp(smooth, FloatType(0), FloatType(1)));
+        void setSmooth(const FloatType x) {
+            smooth.store(std::clamp(x, FloatType(0), FloatType(1)));
             toUpdateAR.store(true);
             toUpdate.store(true);
         }

@@ -25,7 +25,7 @@ namespace zlPanel {
     }
 
     void CurvePanel::paint(juce::Graphics &g) {
-        g.fillAll(juce::Colours::grey);
+        g.fillAll(juce::Colours::lightgrey);
     }
 
     void CurvePanel::paintOverChildren(juce::Graphics &g) {
