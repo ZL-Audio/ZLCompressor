@@ -53,7 +53,12 @@ namespace zlMagAnalyzer {
                 } else {
                     inPath.startNewSubPath(x, inY);
                 }
-                outPath.startNewSubPath(x, outY);
+                if (closeOutPath) {
+                    outPath.startNewSubPath(x, bound.getBottom());
+                    outPath.lineTo(x, outY);
+                } else {
+                    outPath.startNewSubPath(x, outY);
+                }
                 reductionPath.startNewSubPath(x, outY - inY);
                 x += deltaX;
             }
@@ -68,6 +73,10 @@ namespace zlMagAnalyzer {
             if (closeInPath) {
                 inPath.lineTo(x - deltaX, bound.getBottom());
                 inPath.closeSubPath();
+            }
+            if (closeOutPath) {
+                outPath.lineTo(x - deltaX, bound.getBottom());
+                outPath.closeSubPath();
             }
         }
 
