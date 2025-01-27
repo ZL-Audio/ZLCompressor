@@ -17,7 +17,7 @@ namespace zlPanel {
             path->preallocateSpace(preallocateSpace);
         }
         magAnalyzer.setToReset();
-        setTimeLength(12.f);
+        setTimeLength(6.f);
     }
 
     void PeakPanel::paint(juce::Graphics &g) {

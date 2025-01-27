@@ -29,28 +29,16 @@ namespace zlMagAnalyzer {
         }
 
         void process(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers) {
-            int startIdx{0}, endIdx{0};
-            int numSamples = buffers[0].get().getNumSamples();
-            const auto currentMagType = magType.load();
-            while (true) {
-                if (const auto remainNum = maxPos.load() - currentPos; numSamples >= remainNum) {
-                    startIdx = endIdx;
-                    endIdx = endIdx + remainNum;
-                    numSamples -= remainNum;
-                    currentPos = 0;
-                    updateMags(buffers, startIdx, remainNum, currentMagType);
-                    if (abstractFIFO.getFreeSpace() == 0) return;
-                    const auto scope = abstractFIFO.write(1);
-                    const auto writeIdx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
-                    for (size_t i = 0; i < MagNum; ++i) {
-                        magFIFOs[i][static_cast<size_t>(writeIdx)] = static_cast<float>(currentMags[i]);
-                    }
-                } else {
-                    currentPos += numSamples;
-                    startIdx = endIdx;
-                    updateMags(buffers, startIdx, numSamples, currentMagType);
+            switch (magType.load()) {
+                case MagType::peak: {
+                    processBuffer<MagType::peak>(buffers);
                     break;
                 }
+                case MagType::rms: {
+                    processBuffer<MagType::rms>(buffers);
+                    break;
+                }
+                default: {}
             }
         }
 
@@ -145,8 +133,35 @@ namespace zlMagAnalyzer {
         std::atomic<bool> toReset{false};
         std::atomic<MagType> magType{MagType::peak};
 
+        template<MagType currentMagType>
+        void processBuffer(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> &buffers) {
+            int startIdx{0}, endIdx{0};
+            int numSamples = buffers[0].get().getNumSamples();
+            while (true) {
+                if (const auto remainNum = maxPos.load() - currentPos; numSamples >= remainNum) {
+                    startIdx = endIdx;
+                    endIdx = endIdx + remainNum;
+                    numSamples -= remainNum;
+                    currentPos = 0;
+                    updateMags<currentMagType>(buffers, startIdx, remainNum);
+                    if (abstractFIFO.getFreeSpace() == 0) return;
+                    const auto scope = abstractFIFO.write(1);
+                    const auto writeIdx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
+                    for (size_t i = 0; i < MagNum; ++i) {
+                        magFIFOs[i][static_cast<size_t>(writeIdx)] = static_cast<float>(currentMags[i]);
+                    }
+                } else {
+                    currentPos += numSamples;
+                    startIdx = endIdx;
+                    updateMags<currentMagType>(buffers, startIdx, numSamples);
+                    break;
+                }
+            }
+        }
+
+        template<MagType currentMagType>
         void updateMags(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers,
-                        const int startIdx, const int numSamples, const MagType currentMagType) {
+                        const int startIdx, const int numSamples) {
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &buffer = buffers[i];
                 switch (currentMagType) {

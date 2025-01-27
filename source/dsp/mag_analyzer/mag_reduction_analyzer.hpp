@@ -17,6 +17,7 @@ namespace zlMagAnalyzer {
     class MagReductionAnalyzer : public MultipleMagAnalyzer<FloatType, 2, PointNum> {
     public:
         explicit MagReductionAnalyzer() : MultipleMagAnalyzer<FloatType, 2, PointNum>() {
+            this->magType.store(this->MagType::rms);
         }
 
         void prepare(const juce::dsp::ProcessSpec &spec) {
