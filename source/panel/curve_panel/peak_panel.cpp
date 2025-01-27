@@ -17,7 +17,7 @@ namespace zlPanel {
             path->preallocateSpace(preallocateSpace);
         }
         magAnalyzer.setToReset();
-        setTimeLength(6.f);
+        setTimeLength(8.f);
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
@@ -37,26 +37,44 @@ namespace zlPanel {
 
     void PeakPanel::resized() {
         auto bound = getLocalBounds().toFloat();
-        bound = bound.withWidth(bound.getWidth() * 1.01f);
+        constexpr auto padP = 1.f / static_cast<float>(zlDSP::Controller::analyzerPointNum - 1);
+        const auto pad = std::max(bound.getWidth() * padP, 1.f);
+        bound = bound.withWidth(bound.getWidth() + pad);
         atomicBound.store(bound);
     }
 
     void PeakPanel::run(const double nextTimeStamp) {
-        if (startTime <= 1e-6) {
-            startTime = nextTimeStamp;
-            magAnalyzer.run(static_cast<int>(zlDSP::Controller::analyzerPointNum));
-            magAnalyzer.createPath(inPath, outPath, reductionPath, atomicBound.load(), 0.f);
+        if (isFirstPoint) {
+            if (magAnalyzer.run(1) > 0) {
+                isFirstPoint = false;
+                currentCount = 0.;
+                startTime = nextTimeStamp;
+                magAnalyzer.createPath(inPath, outPath, reductionPath, atomicBound.load(), 0.f);
+            }
         } else {
             const auto targetCount = (nextTimeStamp - startTime) * numPerSecond.load();
             const auto targetDelta = targetCount - currentCount;
             const auto actualDelta = static_cast<double>(magAnalyzer.run(static_cast<int>(std::floor(targetDelta))));
-            if (std::abs(targetDelta - actualDelta) < 2.9) {
-                currentCount += static_cast<double>(actualDelta);
+            currentCount += static_cast<double>(actualDelta);
+            const auto currentError = std::abs(targetDelta - actualDelta);
+            if (currentError < smoothError) {
+                smoothError = currentError;
             } else {
-                currentCount = std::floor(targetCount);
+                smoothError = smoothError * 0.95 + currentError * 0.05;
             }
-            const auto shift = targetCount - currentCount;
-            magAnalyzer.template createPath<true, false>(inPath, outPath, reductionPath, atomicBound.load(), static_cast<float>(shift));
+            if (smoothError > 1.0) {
+                currentCount += std::floor(smoothError);
+                if (consErrorCount < 5) {
+                    consErrorCount += 1;
+                }
+            }
+            if (actualDelta > 0) {
+                consErrorCount = 0;
+            }
+            if (consErrorCount < 5) {
+                const auto shift = targetCount - currentCount;
+                magAnalyzer.template createPath<true, false>(inPath, outPath, reductionPath, atomicBound.load(), static_cast<float>(shift));
+            }
         }
     }
 } // zlPanel

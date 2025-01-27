@@ -38,7 +38,8 @@ namespace zlMagAnalyzer {
                     processBuffer<MagType::rms>(buffers);
                     break;
                 }
-                default: {}
+                default: {
+                }
             }
         }
 
@@ -56,11 +57,14 @@ namespace zlMagAnalyzer {
             const int numReady = fifoNumReady >= static_cast<int>(PointNum / 2)
                                      ? fifoNumReady
                                      : std::min(fifoNumReady, numToRead);
-            if (numReady == 0) return 0;
-            const auto numReadyShift = static_cast<typename std::array<float, PointNum>::difference_type>(numReady);
+            if (numReady <= 0) return 0;
+            const auto numReadyShift = static_cast<size_t>(numReady);
             // shift circular buffers
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &circularPeak{circularMags[i]};
+                // for (size_t j = 0; j < circularPeak.size() - numReadyShift; ++j) {
+                //     circularPeak[j] = circularPeak[j + numReadyShift];
+                // }
                 std::rotate(circularPeak.begin(),
                             circularPeak.begin() + numReadyShift,
                             circularPeak.end());
@@ -109,9 +113,7 @@ namespace zlMagAnalyzer {
 
         void setTimeLength(const float x) {
             timeLength.store(x);
-            maxPos.store(static_cast<int>(
-                sampleRate.load() * static_cast<double>(x) / static_cast<double>(PointNum - 1)));
-            currentPos = 0;
+            toUpdateTimeLength.store(true);
         }
 
         void setToReset() { toReset.store(true); }
@@ -126,8 +128,8 @@ namespace zlMagAnalyzer {
         size_t circularIdx{0};
 
         std::atomic<float> timeLength{7.f};
-        int currentPos{0};
-        std::atomic<int> maxPos{1};
+        double currentPos{0.}, maxPos{1.};
+        std::atomic<bool> toUpdateTimeLength{true};
         std::array<FloatType, MagNum> currentMags{};
 
         std::atomic<bool> toReset{false};
@@ -137,12 +139,18 @@ namespace zlMagAnalyzer {
         void processBuffer(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> &buffers) {
             int startIdx{0}, endIdx{0};
             int numSamples = buffers[0].get().getNumSamples();
+            if (numSamples == 0) { return; }
+            if (toUpdateTimeLength.exchange(false)) {
+                maxPos = sampleRate.load() * static_cast<double>(timeLength.load()) / static_cast<double>(PointNum - 1);
+                currentPos = 0;
+            }
             while (true) {
-                if (const auto remainNum = maxPos.load() - currentPos; numSamples >= remainNum) {
+                const auto remainNum = static_cast<int>(std::round(maxPos - currentPos));
+                if (numSamples >= remainNum) {
                     startIdx = endIdx;
                     endIdx = endIdx + remainNum;
                     numSamples -= remainNum;
-                    currentPos = 0;
+                    currentPos = currentPos + static_cast<double>(remainNum) - maxPos;
                     updateMags<currentMagType>(buffers, startIdx, remainNum);
                     if (abstractFIFO.getFreeSpace() == 0) return;
                     const auto scope = abstractFIFO.write(1);
@@ -151,7 +159,7 @@ namespace zlMagAnalyzer {
                         magFIFOs[i][static_cast<size_t>(writeIdx)] = static_cast<float>(currentMags[i]);
                     }
                 } else {
-                    currentPos += numSamples;
+                    currentPos += static_cast<double>(numSamples);
                     startIdx = endIdx;
                     updateMags<currentMagType>(buffers, startIdx, numSamples);
                     break;

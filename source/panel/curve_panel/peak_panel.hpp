@@ -28,8 +28,7 @@ namespace zlPanel {
 
         void setTimeLength(const float x) {
             magAnalyzer.setTimeLength(x);
-            numPerSecond.store(
-                static_cast<double>(zlDSP::Controller::analyzerPointNum - 1) / static_cast<double>(x));
+            numPerSecond.store(static_cast<double>(zlDSP::Controller::analyzerPointNum - 1) / static_cast<double>(x));
         }
 
     private:
@@ -43,6 +42,10 @@ namespace zlPanel {
         double currentCount{0.0};
 
         std::atomic<double> numPerSecond{50.0};
+
+        bool isFirstPoint{true};
+        double smoothError{0.f};
+        int consErrorCount{0};
     };
 } // zlPanel
 
