@@ -26,6 +26,7 @@ namespace zlMagAnalyzer {
         void prepare(const juce::dsp::ProcessSpec &spec) {
             sampleRate.store(spec.sampleRate);
             setTimeLength(timeLength.load());
+            std::fill(currentMags.begin(), currentMags.end(), FloatType(-999));
         }
 
         void process(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers) {
@@ -62,9 +63,6 @@ namespace zlMagAnalyzer {
             // shift circular buffers
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &circularPeak{circularMags[i]};
-                // for (size_t j = 0; j < circularPeak.size() - numReadyShift; ++j) {
-                //     circularPeak[j] = circularPeak[j + numReadyShift];
-                // }
                 std::rotate(circularPeak.begin(),
                             circularPeak.begin() + numReadyShift,
                             circularPeak.end());
@@ -150,15 +148,17 @@ namespace zlMagAnalyzer {
                     startIdx = endIdx;
                     endIdx = endIdx + remainNum;
                     numSamples -= remainNum;
+                    updateMags<currentMagType, false>(buffers, startIdx, remainNum);
                     currentPos = currentPos + static_cast<double>(remainNum) - maxPos;
-                    updateMags<currentMagType>(buffers, startIdx, remainNum);
                     if (abstractFIFO.getFreeSpace() == 0) return;
                     const auto scope = abstractFIFO.write(1);
                     const auto writeIdx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
                     for (size_t i = 0; i < MagNum; ++i) {
                         magFIFOs[i][static_cast<size_t>(writeIdx)] = static_cast<float>(currentMags[i]);
                     }
+                    std::fill(currentMags.begin(), currentMags.end(), FloatType(-999));
                 } else {
+                    updateMags<currentMagType, false>(buffers, startIdx, numSamples);
                     currentPos += static_cast<double>(numSamples);
                     startIdx = endIdx;
                     updateMags<currentMagType>(buffers, startIdx, numSamples);
@@ -167,7 +167,7 @@ namespace zlMagAnalyzer {
             }
         }
 
-        template<MagType currentMagType>
+        template<MagType currentMagType, bool replaceMag=true>
         void updateMags(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers,
                         const int startIdx, const int numSamples) {
             for (size_t i = 0; i < MagNum; ++i) {
@@ -175,7 +175,8 @@ namespace zlMagAnalyzer {
                 switch (currentMagType) {
                     case MagType::peak: {
                         const auto currentMagnitude = buffer.get().getMagnitude(startIdx, numSamples);
-                        currentMags[i] = juce::Decibels::gainToDecibels(currentMagnitude, FloatType(-240));
+                        const auto currentDB = juce::Decibels::gainToDecibels(currentMagnitude, FloatType(-240));
+                        currentMags[i] = replaceMag ? currentDB : std::max(currentMags[i], currentDB);
                     }
                     case MagType::rms: {
                         FloatType currentRMS{FloatType(0)};
@@ -184,7 +185,8 @@ namespace zlMagAnalyzer {
                             currentRMS += channelRMS * channelRMS;
                         }
                         currentRMS = std::sqrt(currentRMS / static_cast<FloatType>(buffer.get().getNumChannels()));
-                        currentMags[i] = juce::Decibels::gainToDecibels(currentRMS, FloatType(-240));
+                        const auto currentDB = juce::Decibels::gainToDecibels(currentRMS, FloatType(-240));
+                        currentMags[i] = replaceMag ? currentDB : std::max(currentMags[i], currentDB);
                     }
                 }
             }
