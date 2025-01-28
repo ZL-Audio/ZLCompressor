@@ -36,4 +36,14 @@ See the releases for the latest version.
  -->
 ## License
 
-ZL Compressor is licensed under AGPLv3, as found in the [LICENSE.md](LICENSE.md) file.
+ZL Compressor is licensed under AGPLv3, as found in the [LICENSE.md](LICENSE.md) file. However, the [logo of ZL Audio](assets/zlaudio.svg) and the [logo of ZL Compressor](assets/logo.svg) are not covered by this license.
+
+Copyright (c) 2023 - [zsliu98](https://github.com/zsliu98)
+
+JUCE framework from [JUCE](https://github.com/juce-framework/JUCE)
+
+JUCE template from [pamplejuce](https://github.com/sudara/pamplejuce)
+
+## Reference
+
+Giannoulis, Dimitrios, Michael Massberg, and Joshua D. Reiss. *Digital dynamic range compressor design—A tutorial and analysis*. Journal of the Audio Engineering Society. (2012).
