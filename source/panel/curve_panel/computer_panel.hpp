@@ -7,39 +7,36 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef CURVE_PANEL_HPP
-#define CURVE_PANEL_HPP
-
-#include <juce_gui_basics/juce_gui_basics.h>
+#ifndef COMPUTER_PANEL_HPP
+#define COMPUTER_PANEL_HPP
 
 #include "../../PluginProcessor.hpp"
-#include "peak_panel.hpp"
-#include "computer_panel.hpp"
+#include "helpers.hpp"
 
 namespace zlPanel {
-    class CurvePanel final : public juce::Component,
-                             private juce::Thread {
+    class ComputerPanel final : public juce::Component {
     public:
-        explicit CurvePanel(PluginProcessor &processor);
+        static constexpr size_t numPoint = 100;
 
-        ~CurvePanel() override;
+        explicit ComputerPanel();
 
         void paint(juce::Graphics &g) override;
 
-        void paintOverChildren(juce::Graphics &g) override;
+        void run();
 
         void resized() override;
 
     private:
-        PeakPanel peakPanel;
-        ComputerPanel computerPanel;
-        juce::VBlankAttachment vblank;
-        std::atomic<double> nextStamp{0.};
+        zlCompressor::KneeComputer<float> computer{};
+        AtomicBound atomicBound;
 
-        void run() override;
+        std::atomic<bool> toUpdate{true};
+        juce::Path compPath, nextCompPath;
+        juce::SpinLock lock;
 
-        void repaintCallBack(double timeStamp);
+        std::atomic<float> minDB{-72.f};
+        std::array<float, numPoint> pathY{};
     };
 } // zlPanel
 
-#endif //CURVE_PANEL_HPP
+#endif //COMPUTER_PANEL_HPP

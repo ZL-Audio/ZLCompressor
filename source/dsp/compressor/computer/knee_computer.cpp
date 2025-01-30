@@ -23,10 +23,14 @@ namespace zlCompressor {
     KneeComputer<FloatType>::~KneeComputer() = default;
 
     template<typename FloatType>
-    FloatType KneeComputer<FloatType>::eval(FloatType x) {
+    void KneeComputer<FloatType>::prepareBuffer() {
         if (toInterpolate.exchange(false)) {
             interpolate();
         }
+    }
+
+    template<typename FloatType>
+    FloatType KneeComputer<FloatType>::eval(FloatType x) {
         if (x <= lowThres) {
             return x;
         } else if (x >= highThres) {

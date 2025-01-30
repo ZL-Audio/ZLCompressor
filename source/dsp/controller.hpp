@@ -10,6 +10,7 @@
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 
+#include "compressor/compressor.hpp"
 #include "splitter/splitter.hpp"
 #include "mag_analyzer/mag_analyzer.hpp"
 

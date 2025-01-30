@@ -60,6 +60,8 @@ namespace zlCompressor {
 
         ~KneeComputer();
 
+        void prepareBuffer();
+
         FloatType eval(FloatType x);
 
         /**
@@ -107,9 +109,8 @@ namespace zlCompressor {
         LinearCurve<FloatType> linearCurve;
         DownCurve<FloatType> downCurve;
         UpCurve<FloatType> upCurve;
-        std::atomic<FloatType> threshold{0}, ratio{1};
-        // FloatType currentThreshold{0}, currentRatio{1}, currentSlope{1};
-        std::atomic<FloatType> kneeW{FloatType(0.01)}, curve{0};
+        std::atomic<FloatType> threshold{-18}, ratio{2};
+        std::atomic<FloatType> kneeW{FloatType(0.25)}, curve{0};
         FloatType lowThres{0}, highThres{0};
         std::atomic<FloatType> bound{60};
         FloatType currentBound{60};

@@ -53,8 +53,8 @@ namespace zlPanel {
                 isFirstPoint = false;
                 currentCount = 0.;
                 startTime = nextTimeStamp;
-                // const juce::GenericScopedLock guard{lock};
-                magAnalyzer.createPath(nextInPath, nextOutPath, nextReductionPath, atomicBound.load(), 0.f);
+                magAnalyzer.createPath(nextInPath, nextOutPath, nextReductionPath,
+                                       atomicBound.load(), 0.f, .75f);
             }
         } else {
             const auto targetCount = (nextTimeStamp - startTime) * numPerSecond.load();
@@ -78,11 +78,10 @@ namespace zlPanel {
             }
             if (consErrorCount < 5) {
                 const auto shift = targetCount - currentCount;
-                // const juce::GenericScopedLock guard{lock};
-                magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath, atomicBound.load(), static_cast<float>(shift));
+                magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath,
+                                                             atomicBound.load(), static_cast<float>(shift), .75f);
             }
-        }
-        {
+        } {
             const juce::GenericScopedLock guard{lock};
             inPath = nextInPath;
             outPath = nextOutPath;

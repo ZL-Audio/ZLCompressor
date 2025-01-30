@@ -12,7 +12,5 @@
 
 #include "dsp_definitions.hpp"
 #include "controller.hpp"
-#include "compressor/compressor.hpp"
-#include "mag_analyzer/mag_analyzer.hpp"
 
 #endif //DSP_HPP

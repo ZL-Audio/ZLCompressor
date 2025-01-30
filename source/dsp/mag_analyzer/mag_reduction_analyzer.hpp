@@ -37,7 +37,7 @@ namespace zlMagAnalyzer {
         template<bool closeInPath = false, bool closeOutPath = false>
         void createPath(juce::Path &inPath, juce::Path &outPath, juce::Path &reductionPath,
                        const juce::Rectangle<float> bound,
-                       const float shift = 0.f,
+                       const float shift = 0.f, const float reductionBias = 0.f,
                        const float minDB = -72.f, const float maxDB = 0.f) {
             const auto deltaX = bound.getWidth() / static_cast<float>(PointNum - 1);
             const auto x0 = bound.getX(), y0 = bound.getY(), height = bound.getHeight();
@@ -60,7 +60,7 @@ namespace zlMagAnalyzer {
                 } else {
                     outPath.startNewSubPath(x, outY);
                 }
-                reductionPath.startNewSubPath(x, outY - inY);
+                reductionPath.startNewSubPath(x, outY - inY - reductionBias);
                 x += deltaX;
             }
             for (size_t idx = 1; idx < PointNum; ++idx) {
@@ -68,7 +68,7 @@ namespace zlMagAnalyzer {
                 const auto outY = this->magToY(this->circularMags[1][idx], y0, height, minDB, maxDB);
                 inPath.lineTo(x, inY);
                 outPath.lineTo(x, outY);
-                reductionPath.lineTo(x, outY - inY);
+                reductionPath.lineTo(x, outY - inY - reductionBias);
                 x += deltaX;
             }
             if (closeInPath) {
