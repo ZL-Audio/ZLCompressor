@@ -32,7 +32,7 @@ namespace zlCompressor {
 
         void setPara(FloatType t, FloatType r, FloatType w) {
             a = FloatType(0.5) / (r * std::min(t + w, FloatType(-0.0001)));
-            c = FloatType(0.5) * (w - t) / r;
+            c = FloatType(0.5) * (w - t) / r + t;
         }
     };
 
