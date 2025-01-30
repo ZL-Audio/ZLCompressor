@@ -36,6 +36,7 @@ namespace zlPanel {
         AtomicBound atomicBound;
 
         juce::Path inPath, outPath, reductionPath;
+        juce::Path nextInPath, nextOutPath, nextReductionPath;
         juce::SpinLock lock;
 
         double startTime{0.0};

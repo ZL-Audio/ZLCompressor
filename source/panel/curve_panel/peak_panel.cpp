@@ -21,6 +21,10 @@ namespace zlPanel {
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
+        const juce::GenericScopedTryLock guard{lock};
+        if (!guard.isLocked()) {
+            return;
+        }
         g.setColour(juce::Colours::black.withAlpha(.25f));
         g.fillPath(inPath);
         g.setColour(juce::Colours::black.withAlpha(.9f));
@@ -49,7 +53,8 @@ namespace zlPanel {
                 isFirstPoint = false;
                 currentCount = 0.;
                 startTime = nextTimeStamp;
-                magAnalyzer.createPath(inPath, outPath, reductionPath, atomicBound.load(), 0.f);
+                // const juce::GenericScopedLock guard{lock};
+                magAnalyzer.createPath(nextInPath, nextOutPath, nextReductionPath, atomicBound.load(), 0.f);
             }
         } else {
             const auto targetCount = (nextTimeStamp - startTime) * numPerSecond.load();
@@ -73,8 +78,15 @@ namespace zlPanel {
             }
             if (consErrorCount < 5) {
                 const auto shift = targetCount - currentCount;
-                magAnalyzer.template createPath<true, false>(inPath, outPath, reductionPath, atomicBound.load(), static_cast<float>(shift));
+                // const juce::GenericScopedLock guard{lock};
+                magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath, atomicBound.load(), static_cast<float>(shift));
             }
+        }
+        {
+            const juce::GenericScopedLock guard{lock};
+            inPath = nextInPath;
+            outPath = nextOutPath;
+            reductionPath = nextReductionPath;
         }
     }
 } // zlPanel

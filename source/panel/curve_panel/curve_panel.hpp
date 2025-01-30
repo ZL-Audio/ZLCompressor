@@ -32,6 +32,7 @@ namespace zlPanel {
     private:
         PeakPanel peakPanel;
         juce::VBlankAttachment vblank;
+        std::atomic<double> nextStamp{0.};
 
         void run() override;
 
