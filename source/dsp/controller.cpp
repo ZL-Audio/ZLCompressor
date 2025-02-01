@@ -17,7 +17,7 @@ namespace zlDSP {
         sideLRSplitter.prepare(spec);
         sideMSSplitter.prepare(spec);
         compressor.prepare(spec);
-        compressor.setThreshold(-18.0);
+        compressor.setThreshold(-21.0);
         compressor.setRatio(2.0);
         compressor.setAttack(50.0);
         compressor.setRelease(100.0);

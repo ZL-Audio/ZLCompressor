@@ -32,7 +32,7 @@ namespace zlPanel {
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
-        g.setColour(juce::Colours::orange);
+        g.setColour(juce::Colours::orangered);
         g.strokePath(reductionPath,
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,

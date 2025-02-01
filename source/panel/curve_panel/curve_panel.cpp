@@ -15,6 +15,7 @@ namespace zlPanel {
           peakPanel(processor), rmsPanel(processor),
           vblank(this, [this](const double timeStamp) { repaintCallBack(timeStamp); }) {
         addAndMakeVisible(peakPanel);
+        addAndMakeVisible(separatePanel);
         addAndMakeVisible(rmsPanel);
         addAndMakeVisible(computerPanel);
         startThread(juce::Thread::Priority::low);
@@ -36,10 +37,11 @@ namespace zlPanel {
     }
 
     void CurvePanel::resized() {
-        auto bound = getLocalBounds();
-        rmsPanel.setBounds(bound.removeFromLeft(50));
+        const auto bound = getLocalBounds();
+        rmsPanel.setBounds(bound.withWidth(75));
         peakPanel.setBounds(bound);
         const auto r = std::min(bound.getWidth(), bound.getHeight());
+        separatePanel.setBounds(bound.withSize(r, r));
         computerPanel.setBounds(bound.withSize(r, r));
     }
 

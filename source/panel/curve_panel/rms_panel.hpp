@@ -35,6 +35,8 @@ namespace zlPanel {
         juce::Path inPath, outPath;
         juce::Path nextInPath, nextOutPath;
         juce::SpinLock lock;
+
+        juce::ColourGradient gradient;
     };
 } // zlPanel
 

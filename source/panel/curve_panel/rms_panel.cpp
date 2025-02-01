@@ -20,6 +20,8 @@ namespace zlPanel {
         if (!guard.isLocked()) {
             return;
         }
+        // g.setGradientFill(gradient);
+        // g.fillRect(getLocalBounds());
         g.setColour(juce::Colours::white.withAlpha(.25f));
         g.fillPath(inPath);
         g.setColour(juce::Colours::white.withAlpha(.9f));
@@ -44,9 +46,18 @@ namespace zlPanel {
     }
 
     void RMSPanel::resized() {
-        auto bound = getLocalBounds();
-        bound.removeFromRight(1);
-        atomicBound.store(bound.toFloat());
+        auto bound = getLocalBounds().toFloat();
+        atomicBound.store(bound.withWidth(bound.getWidth() - 20.f));
+
+        gradient.point1 = juce::Point<float>(bound.getX(), 0.f);
+        gradient.point2 = juce::Point<float>(bound.getRight(), 0.f);
+        gradient.isRadial = false;
+        gradient.clearColours();
+
+        gradient.addColour(0.0,
+                           juce::Colours::black.withAlpha(1.f));
+        gradient.addColour(1.0,
+                           juce::Colours::black.withAlpha(0.f));
     }
 
     void RMSPanel::mouseDoubleClick(const juce::MouseEvent &event) {

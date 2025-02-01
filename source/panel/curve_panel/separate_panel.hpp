@@ -7,44 +7,23 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef CURVE_PANEL_HPP
-#define CURVE_PANEL_HPP
+#ifndef SEPARATE_PANEL_HPP
+#define SEPARATE_PANEL_HPP
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "../../PluginProcessor.hpp"
-#include "rms_panel.hpp"
-#include "peak_panel.hpp"
-#include "computer_panel.hpp"
-#include "separate_panel.hpp"
-
 namespace zlPanel {
-    class CurvePanel final : public juce::Component,
-                             private juce::Thread {
+    class SeparatePanel : public juce::Component {
     public:
-        explicit CurvePanel(PluginProcessor &processor);
-
-        ~CurvePanel() override;
+        explicit SeparatePanel();
 
         void paint(juce::Graphics &g) override;
-
-        void paintOverChildren(juce::Graphics &g) override;
 
         void resized() override;
 
     private:
-        PeakPanel peakPanel;
-        RMSPanel rmsPanel;
-        ComputerPanel computerPanel;
-        SeparatePanel separatePanel;
-        juce::VBlankAttachment vblank;
-        std::atomic<double> nextStamp{0.};
-        double rmsPreviousStamp1{0.}, rmsPreviousStamp2{0.};
-
-        void run() override;
-
-        void repaintCallBack(double timeStamp);
+        juce::ColourGradient gradient;
     };
 } // zlPanel
 
-#endif //CURVE_PANEL_HPP
+#endif //SEPARATE_PANEL_HPP

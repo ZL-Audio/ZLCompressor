@@ -191,6 +191,7 @@ namespace zlMagAnalyzer {
         static inline void updateHist(std::array<double, BinNum> &hist, const double x) {
             const auto idx = static_cast<size_t>(std::max(0., std::round(-x)));
             if (idx < BinNum) {
+                juce::FloatVectorOperations::multiply(&hist[0], 0.99999, hist.size());
                 hist[idx] += 1.;
             }
         }

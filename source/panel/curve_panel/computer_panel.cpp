@@ -18,17 +18,13 @@ namespace zlPanel {
     }
 
     void ComputerPanel::paint(juce::Graphics &g) {
-        g.setColour(juce::Colours::white.withAlpha(.25f));
-        g.fillAll();
-        g.setColour(juce::Colours::black.withAlpha(.5f));
-        g.fillAll();
         const juce::GenericScopedTryLock guard{lock};
         if (!guard.isLocked()) {
             return;
         }
-        g.setColour(juce::Colours::white);
+        g.setColour(juce::Colours::orange);
         g.strokePath(compPath,
-                     juce::PathStrokeType(1.5f,
+                     juce::PathStrokeType(2.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }
