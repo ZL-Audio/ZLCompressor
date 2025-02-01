@@ -21,15 +21,18 @@ namespace zlDSP {
         compressor.setRatio(2.0);
         compressor.setAttack(50.0);
         compressor.setRelease(100.0);
+
+        preBuffer.setSize(2, static_cast<int>(spec.maximumBlockSize));
     }
 
     void Controller::process(juce::AudioBuffer<double> &buffer) {
         juce::AudioBuffer<double> mainBuffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
         juce::AudioBuffer<double> sideBuffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
         juce::ignoreUnused(sideBuffer);
-        magAnalyzer.pushInBuffer(mainBuffer);
+        preBuffer.makeCopyOf(mainBuffer, true);
         juce::dsp::AudioBlock<double> block(mainBuffer);
         compressor.process(juce::dsp::ProcessContextReplacing<double>(block));
-        magAnalyzer.pushOutBuffer(mainBuffer);
+        magAnalyzer.process({preBuffer, mainBuffer});
+        magAvgAnalyzer.process({preBuffer, mainBuffer});
     }
 } // zlDSP

@@ -17,21 +17,11 @@ namespace zlMagAnalyzer {
     class MagReductionAnalyzer : public MultipleMagAnalyzer<FloatType, 2, PointNum> {
     public:
         explicit MagReductionAnalyzer() : MultipleMagAnalyzer<FloatType, 2, PointNum>() {
-            this->magType.store(this->MagType::rms);
         }
 
         void prepare(const juce::dsp::ProcessSpec &spec) {
             this->sampleRate.store(spec.sampleRate);
             this->setTimeLength(this->timeLength.load());
-            inBuffer.setSize(static_cast<int>(spec.numChannels), static_cast<int>(spec.maximumBlockSize));
-        }
-
-        void pushInBuffer(juce::AudioBuffer<FloatType> &buffer) {
-            inBuffer.makeCopyOf(buffer, true);
-        }
-
-        void pushOutBuffer(juce::AudioBuffer<FloatType> &buffer) {
-            this->process({inBuffer, buffer});
         }
 
         template<bool closeInPath = false, bool closeOutPath = false>
@@ -43,9 +33,6 @@ namespace zlMagAnalyzer {
             const auto x0 = bound.getX(), y0 = bound.getY(), height = bound.getHeight();
             float x = x0 - shift * deltaX;
             {
-                inPath.clear();
-                outPath.clear();
-                reductionPath.clear();
                 const auto inY = this->magToY(this->circularMags[0][0], y0, height, minDB, maxDB);
                 const auto outY = this->magToY(this->circularMags[1][0], y0, height, minDB, maxDB);
                 if (closeInPath) {
@@ -80,9 +67,6 @@ namespace zlMagAnalyzer {
                 outPath.closeSubPath();
             }
         }
-
-    protected:
-        juce::AudioBuffer<FloatType> inBuffer;
     };
 }
 

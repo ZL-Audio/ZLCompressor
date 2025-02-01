@@ -25,14 +25,14 @@ namespace zlPanel {
         if (!guard.isLocked()) {
             return;
         }
-        g.setColour(juce::Colours::black.withAlpha(.25f));
+        g.setColour(juce::Colours::white.withAlpha(.25f));
         g.fillPath(inPath);
-        g.setColour(juce::Colours::black.withAlpha(.9f));
+        g.setColour(juce::Colours::white.withAlpha(.9f));
         g.strokePath(outPath,
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
-        g.setColour(juce::Colours::darkred);
+        g.setColour(juce::Colours::orange);
         g.strokePath(reductionPath,
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
@@ -52,9 +52,13 @@ namespace zlPanel {
             if (magAnalyzer.run(1) > 0) {
                 isFirstPoint = false;
                 currentCount = 0.;
-                startTime = nextTimeStamp;
-                magAnalyzer.createPath(nextInPath, nextOutPath, nextReductionPath,
-                                       atomicBound.load(), 0.f, .75f);
+                startTime = nextTimeStamp; {
+                    nextInPath.clear();
+                    nextOutPath.clear();
+                    nextReductionPath.clear();
+                }
+                magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath,
+                                       atomicBound.load(), 0.f, 0.f);
             }
         } else {
             const auto targetCount = (nextTimeStamp - startTime) * numPerSecond.load();
@@ -77,9 +81,13 @@ namespace zlPanel {
                 consErrorCount = 0;
             }
             if (consErrorCount < 5) {
-                const auto shift = targetCount - currentCount;
+                const auto shift = targetCount - currentCount; {
+                    nextInPath.clear();
+                    nextOutPath.clear();
+                    nextReductionPath.clear();
+                }
                 magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath,
-                                                             atomicBound.load(), static_cast<float>(shift), .75f);
+                                                             atomicBound.load(), static_cast<float>(shift), 0.f);
             }
         } {
             const juce::GenericScopedLock guard{lock};

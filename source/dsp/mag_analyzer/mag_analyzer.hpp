@@ -12,5 +12,6 @@
 
 #include "multiple_mag_analyzer.hpp"
 #include "mag_reduction_analyzer.hpp"
+#include "multiple_mag_avg_analyzer.hpp"
 
 #endif //ZL_MAG_ANALYZER_HPP

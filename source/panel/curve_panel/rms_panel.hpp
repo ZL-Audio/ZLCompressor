@@ -7,42 +7,35 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef CURVE_PANEL_HPP
-#define CURVE_PANEL_HPP
+#ifndef RMS_PANEL_HPP
+#define RMS_PANEL_HPP
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../PluginProcessor.hpp"
-#include "rms_panel.hpp"
-#include "peak_panel.hpp"
-#include "computer_panel.hpp"
+#include "helpers.hpp"
 
 namespace zlPanel {
-    class CurvePanel final : public juce::Component,
-                             private juce::Thread {
+    class RMSPanel final : public juce::Component {
     public:
-        explicit CurvePanel(PluginProcessor &processor);
-
-        ~CurvePanel() override;
+        explicit RMSPanel(PluginProcessor &processor);
 
         void paint(juce::Graphics &g) override;
 
-        void paintOverChildren(juce::Graphics &g) override;
+        void run(double nextTimeStamp);
 
         void resized() override;
 
+        void mouseDoubleClick(const juce::MouseEvent &event) override;
+
     private:
-        PeakPanel peakPanel;
-        RMSPanel rmsPanel;
-        ComputerPanel computerPanel;
-        juce::VBlankAttachment vblank;
-        std::atomic<double> nextStamp{0.};
-        double rmsPreviousStamp1{0.}, rmsPreviousStamp2{0.};
+        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, zlDSP::Controller::avgAnalyzerPointNum> &avgAnalyzer;
+        AtomicBound atomicBound;
 
-        void run() override;
-
-        void repaintCallBack(double timeStamp);
+        juce::Path inPath, outPath;
+        juce::Path nextInPath, nextOutPath;
+        juce::SpinLock lock;
     };
 } // zlPanel
 
-#endif //CURVE_PANEL_HPP
+#endif //RMS_PANEL_HPP

@@ -18,6 +18,7 @@ namespace zlDSP {
     class Controller {
     public:
         static constexpr size_t analyzerPointNum = 351;
+        static constexpr size_t avgAnalyzerPointNum = 120;
 
         explicit Controller() = default;
 
@@ -27,11 +28,16 @@ namespace zlDSP {
 
         zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> &getMagAnalyzer() { return magAnalyzer; }
 
+        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, 120> &getMagAvgAnalyzer() { return magAvgAnalyzer; }
+
     private:
         zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> magAnalyzer;
+        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, avgAnalyzerPointNum> magAvgAnalyzer;
         zlSplitter::LRSplitter<double> mainLRSplitter, sideLRSplitter;
         zlSplitter::MSSplitter<double> mainMSSplitter, sideMSSplitter;
         juce::dsp::Compressor<double> compressor;
+
+        juce::AudioBuffer<double> preBuffer;
     };
 } // zlDSP
 

@@ -13,20 +13,20 @@ namespace zlPanel {
     ComputerPanel::ComputerPanel() {
         compPath.preallocateSpace(static_cast<int>(numPoint) * 3);
         nextCompPath.preallocateSpace(static_cast<int>(numPoint) * 3);
-        computer.setKneeW(.1f);
-        computer.setCurve(.5f);
+        computer.setKneeW(1.f);
+        computer.setCurve(0.f);
     }
 
     void ComputerPanel::paint(juce::Graphics &g) {
-        g.setColour(juce::Colours::black.withAlpha(.25f));
+        g.setColour(juce::Colours::white.withAlpha(.25f));
         g.fillAll();
-        g.setColour(juce::Colours::lightgrey.withAlpha(.5f));
+        g.setColour(juce::Colours::black.withAlpha(.5f));
         g.fillAll();
         const juce::GenericScopedTryLock guard{lock};
         if (!guard.isLocked()) {
             return;
         }
-        g.setColour(juce::Colours::black);
+        g.setColour(juce::Colours::white);
         g.strokePath(compPath,
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,

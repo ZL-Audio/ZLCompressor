@@ -63,7 +63,7 @@ namespace zl::Compressor {
             return y;
         }
 
-        void setAttach(const FloatType millisecond) {
+        void setAttack(const FloatType millisecond) {
             attackTime.store(std::max(FloatType(0), millisecond));
             toUpdateAR.store(true);
             toUpdate.store(true);
@@ -96,12 +96,12 @@ namespace zl::Compressor {
                 const auto currentAttackTime = attackTime.load();
                 attack = currentAttackTime < FloatType(1e-3)
                              ? FloatType(0)
-                             : static_cast<FloatType>(std::exp(static_cast<double>(currentAttackTime) * expFactor));
+                             : static_cast<FloatType>(std::exp(expFactor / static_cast<double>(currentAttackTime)));
                 attackC = (FloatType(1) - attack) * currentSmooth;
                 const auto currentReleaseTime = releaseTime.load();
                 release = currentReleaseTime < FloatType(1e-3)
                               ? FloatType(0)
-                              : static_cast<FloatType>(std::exp(static_cast<double>(currentReleaseTime) * expFactor));
+                              : static_cast<FloatType>(std::exp(expFactor / static_cast<double>(currentReleaseTime)));
                 releaseC = (FloatType(1) - release) * currentSmooth;
             }
             if (toUpdateStyle.exchange(false)) {

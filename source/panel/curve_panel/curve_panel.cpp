@@ -12,9 +12,10 @@
 namespace zlPanel {
     CurvePanel::CurvePanel(PluginProcessor &processor)
         : Thread("curve_panel"),
-          peakPanel(processor),
+          peakPanel(processor), rmsPanel(processor),
           vblank(this, [this](const double timeStamp) { repaintCallBack(timeStamp); }) {
         addAndMakeVisible(peakPanel);
+        addAndMakeVisible(rmsPanel);
         addAndMakeVisible(computerPanel);
         startThread(juce::Thread::Priority::low);
     }
@@ -26,7 +27,7 @@ namespace zlPanel {
     }
 
     void CurvePanel::paint(juce::Graphics &g) {
-        g.fillAll(juce::Colours::lightgrey);
+        g.fillAll(juce::Colours::black);
     }
 
     void CurvePanel::paintOverChildren(juce::Graphics &g) {
@@ -35,7 +36,8 @@ namespace zlPanel {
     }
 
     void CurvePanel::resized() {
-        const auto bound = getLocalBounds();
+        auto bound = getLocalBounds();
+        rmsPanel.setBounds(bound.removeFromLeft(50));
         peakPanel.setBounds(bound);
         const auto r = std::min(bound.getWidth(), bound.getHeight());
         computerPanel.setBounds(bound.withSize(r, r));
@@ -46,13 +48,22 @@ namespace zlPanel {
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
-            peakPanel.run(nextStamp.load());
+            const auto timeStamp = nextStamp.load();
+            peakPanel.run(timeStamp);
             computerPanel.run();
+            if (timeStamp - rmsPreviousStamp2 > 0.1) {
+                rmsPanel.run(timeStamp);
+                rmsPreviousStamp2 = timeStamp;
+            }
         }
     }
 
-    void CurvePanel::repaintCallBack(const double timeStamp) {\
+    void CurvePanel::repaintCallBack(const double timeStamp) {
         nextStamp.store(timeStamp);
-        repaint();
+        peakPanel.repaint();
+        if (timeStamp - rmsPreviousStamp1 > 0.1) {
+            rmsPanel.repaint();
+            rmsPreviousStamp1 = timeStamp;
+        }
     }
 } // zlPanel
