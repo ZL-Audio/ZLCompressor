@@ -18,6 +18,7 @@ namespace zlPanel {
         addAndMakeVisible(separatePanel);
         addAndMakeVisible(rmsPanel);
         addAndMakeVisible(computerPanel);
+        computerPanel.setInterceptsMouseClicks(false, false);
         startThread(juce::Thread::Priority::low);
     }
 

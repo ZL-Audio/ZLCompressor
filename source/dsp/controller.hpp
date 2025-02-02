@@ -28,7 +28,7 @@ namespace zlDSP {
 
         zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> &getMagAnalyzer() { return magAnalyzer; }
 
-        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, 120> &getMagAvgAnalyzer() { return magAvgAnalyzer; }
+        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, avgAnalyzerPointNum> &getMagAvgAnalyzer() { return magAvgAnalyzer; }
 
     private:
         zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> magAnalyzer;

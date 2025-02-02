@@ -20,8 +20,6 @@ namespace zlPanel {
         if (!guard.isLocked()) {
             return;
         }
-        // g.setGradientFill(gradient);
-        // g.fillRect(getLocalBounds());
         g.setColour(juce::Colours::white.withAlpha(.25f));
         g.fillPath(inPath);
         g.setColour(juce::Colours::white.withAlpha(.9f));

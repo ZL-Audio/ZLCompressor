@@ -13,6 +13,7 @@ namespace zlPanel {
     ComputerPanel::ComputerPanel() {
         compPath.preallocateSpace(static_cast<int>(numPoint) * 3);
         nextCompPath.preallocateSpace(static_cast<int>(numPoint) * 3);
+        computer.setThreshold(-18.f);
         computer.setKneeW(1.f);
         computer.setCurve(0.f);
     }
