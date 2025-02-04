@@ -13,6 +13,7 @@ namespace zlPanel {
     RMSPanel::RMSPanel(PluginProcessor &processor)
         : avgAnalyzer(processor.getController().getMagAvgAnalyzer()) {
         avgAnalyzer.setToReset();
+        setBufferedToImage(true);
     }
 
     void RMSPanel::paint(juce::Graphics &g) {

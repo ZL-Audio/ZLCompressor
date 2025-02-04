@@ -38,12 +38,12 @@ namespace zlPanel {
     }
 
     void CurvePanel::resized() {
-        const auto bound = getLocalBounds();
-        rmsPanel.setBounds(bound.withWidth(75));
-        peakPanel.setBounds(bound);
+        const auto bound = getLocalBounds().toFloat();
+        rmsPanel.setBounds(bound.withWidth(75.f).toNearestInt());
+        peakPanel.setBounds(bound.toNearestInt());
         const auto r = std::min(bound.getWidth(), bound.getHeight());
-        separatePanel.setBounds(bound.withSize(r, r));
-        computerPanel.setBounds(bound.withSize(r, r));
+        separatePanel.setBounds(bound.withSize(r, r).toNearestInt());
+        computerPanel.setBounds(bound.withSize(r * 1.5f, r).toNearestInt());
     }
 
     void CurvePanel::run() {
@@ -54,9 +54,8 @@ namespace zlPanel {
             const auto timeStamp = nextStamp.load();
             peakPanel.run(timeStamp);
             computerPanel.run();
-            if (timeStamp - rmsPreviousStamp2 > 0.1) {
+            if (toRunRMS.exchange(false)) {
                 rmsPanel.run(timeStamp);
-                rmsPreviousStamp2 = timeStamp;
             }
         }
     }
@@ -64,9 +63,10 @@ namespace zlPanel {
     void CurvePanel::repaintCallBack(const double timeStamp) {
         nextStamp.store(timeStamp);
         peakPanel.repaint();
-        if (timeStamp - rmsPreviousStamp1 > 0.1) {
+        if (timeStamp - rmsPreviousStamp > .1) {
             rmsPanel.repaint();
-            rmsPreviousStamp1 = timeStamp;
+            rmsPreviousStamp = timeStamp;
+            toRunRMS.store(true);
         }
     }
 } // zlPanel

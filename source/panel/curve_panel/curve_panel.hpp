@@ -39,7 +39,8 @@ namespace zlPanel {
         SeparatePanel separatePanel;
         juce::VBlankAttachment vblank;
         std::atomic<double> nextStamp{0.};
-        double rmsPreviousStamp1{0.}, rmsPreviousStamp2{0.};
+        double rmsPreviousStamp{0.};
+        std::atomic<bool> toRunRMS{false};
 
         void run() override;
 

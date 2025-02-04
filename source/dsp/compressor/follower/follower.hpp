@@ -11,5 +11,6 @@
 #define ZL_COMPRESSOR_FOLLOWER_HPP
 
 #include "ballistics_filter.hpp"
+#include "ps_follower.hpp"
 
 #endif //ZL_COMPRESSOR_FOLLOWER_HPP

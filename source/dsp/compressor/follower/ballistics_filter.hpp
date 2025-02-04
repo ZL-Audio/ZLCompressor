@@ -13,7 +13,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <numbers>
 
-namespace zl::Compressor {
+namespace zlCompressor {
     template<typename FloatType>
     class BallisticsFilter {
     public:

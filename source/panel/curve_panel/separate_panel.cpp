@@ -17,13 +17,12 @@ namespace zlPanel {
     void SeparatePanel::paint(juce::Graphics &g) {
         g.setGradientFill(gradient);
         g.fillRect(getLocalBounds());
-        g.fillAll(juce::Colours::black.withAlpha(.25f));
     }
 
     void SeparatePanel::resized() {
         auto bound = getLocalBounds().toFloat();
-        gradient.point1 = juce::Point<float>(bound.getX(), 0.f);
-        gradient.point2 = juce::Point<float>(bound.getRight(), 0.f);
+        gradient.point1 = juce::Point<float>(bound.getX(), bound.getY());
+        gradient.point2 = juce::Point<float>(bound.getRight(), bound.getY());
         gradient.isRadial = false;
         gradient.clearColours();
 
