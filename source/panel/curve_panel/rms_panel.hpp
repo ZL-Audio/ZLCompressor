@@ -13,7 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../PluginProcessor.hpp"
-#include "helpers.hpp"
+#include "../helper/helper.hpp"
 
 namespace zlPanel {
     class RMSPanel final : public juce::Component {

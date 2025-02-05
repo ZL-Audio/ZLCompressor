@@ -7,8 +7,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZLPANEL_HELPERS_HPP
-#define ZLPANEL_HELPERS_HPP
+#ifndef ZLPANEL_ATOMIC_BOUND_HPP
+#define ZLPANEL_ATOMIC_BOUND_HPP
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -41,4 +41,4 @@ namespace zlPanel {
     };
 }
 
-#endif //ZLPANEL_HELPERS_HPP
+#endif //ZLPANEL_ATOMIC_BOUND_HPP

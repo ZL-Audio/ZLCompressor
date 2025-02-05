@@ -14,8 +14,8 @@ namespace zlPanel {
         compPath.preallocateSpace(static_cast<int>(numPoint) * 3);
         nextCompPath.preallocateSpace(static_cast<int>(numPoint) * 3);
         computer.setThreshold(-18.f);
-        computer.setKneeW(1.f);
-        computer.setCurve(0.f);
+        computer.setKneeW(5.f);
+        computer.setCurve(1.f);
     }
 
     void ComputerPanel::paint(juce::Graphics &g) {
@@ -38,27 +38,22 @@ namespace zlPanel {
         auto dBIn = currentMinDB;
         const auto deltaDBIn = -currentMinDB / static_cast<float>(numPoint - 1);
         const auto deltaY = bound.getHeight() / static_cast<float>(numPoint - 1);
-        for (size_t i = 0; i < numPoint; ++i) {
-            const auto dBOut = computer.eval(dBIn);
-            pathY[i] = dBOut / currentMinDB * bound.getHeight() + bound.getY();
-            dBIn += deltaDBIn;
-        }
         auto x = bound.getX();
         const auto deltaX = deltaY;
         nextCompPath.clear();
-        nextCompPath.startNewSubPath(x, pathY[0]);
-        size_t previousYIdx = 0;
-        for (size_t i = 1; i < numPoint - 1; ++i) {
-            x += deltaX;
-            const auto w = 1.f / static_cast<float>(i + 1 - previousYIdx);
-            const auto linPred = w * pathY[previousYIdx] + (1.f - w) * pathY[i + 1];
-            if (std::abs(linPred - pathY[i]) > 0.001f) {
-                nextCompPath.lineTo(x, pathY[i]);
-                previousYIdx = i;
+        PathMinimizer minimizer{nextCompPath};
+        for (size_t i = 0; i < numPoint; ++i) {
+            const auto dBOut = computer.eval(dBIn);
+            const auto y = dBOut / currentMinDB * bound.getHeight() + bound.getY();
+            if (i == 0) {
+                minimizer.startNewSubPath(x, y);
+            } else {
+                minimizer.lineTo(x, y);
             }
+            x += deltaX;
+            dBIn += deltaDBIn;
         }
-        x += deltaX;
-        nextCompPath.lineTo(x, pathY[numPoint - 1]);
+        minimizer.finish();
         const juce::GenericScopedLock guard{lock};
         compPath = nextCompPath;
     }

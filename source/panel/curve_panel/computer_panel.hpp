@@ -11,7 +11,7 @@
 #define COMPUTER_PANEL_HPP
 
 #include "../../PluginProcessor.hpp"
-#include "helpers.hpp"
+#include "../helper/helper.hpp"
 
 namespace zlPanel {
     class ComputerPanel final : public juce::Component {
@@ -35,7 +35,6 @@ namespace zlPanel {
         juce::SpinLock lock;
 
         std::atomic<float> minDB{-72.f};
-        std::array<float, numPoint> pathY{};
     };
 } // zlPanel
 
