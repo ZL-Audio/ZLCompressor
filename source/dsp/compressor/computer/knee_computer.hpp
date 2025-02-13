@@ -50,26 +50,41 @@ namespace zlCompressor {
     /**
      * a computer that computes the current compression
      * @tparam FloatType
+     * @tparam useCurve whether to use curve
+     * @tparam useBound whether to use bound
      */
-    template<typename FloatType>
+    template<typename FloatType, bool useCurve = false, bool useBound = false>
     class KneeComputer final {
     public:
         KneeComputer() = default;
 
-        KneeComputer(const KneeComputer<FloatType> &c);
+        void prepareBuffer() {
+            if (toInterpolate.exchange(false)) {
+                interpolate();
+            }
+        }
 
-        ~KneeComputer();
-
-        void prepareBuffer();
-
-        FloatType eval(FloatType x);
+        FloatType eval(FloatType x)  {
+            if (x <= lowThres) {
+                return x;
+            } else if (x >= highThres) {
+                const auto y = useCurve ? paras[2] + paras[3] * x + paras[4] * x * x : paras[2] + paras[3] * x;
+                return useBound ? std::max(x - currentBound, y) : y;
+            } else {
+                const auto xx = x + paras[1];
+                const auto y = x + paras[0] * xx * xx;
+                return useBound ? std::max(x - currentBound, y) : y;
+            }
+        }
 
         /**
          * computes the current compression
          * @param x input level (in dB)
          * @return current compression (in dB)
          */
-        FloatType process(FloatType x);
+        FloatType process(FloatType x)  {
+            return eval(x) - x;
+        }
 
         inline void setThreshold(FloatType v) {
             threshold.store(v);
@@ -117,7 +132,41 @@ namespace zlCompressor {
         std::array<FloatType, 5> paras;
         std::atomic<bool> toInterpolate{true};
 
-        void interpolate();
+        void interpolate() {
+            const auto currentThreshold = threshold.load();
+            const auto currentKneeW = kneeW.load();
+            const auto currentRatio = ratio.load();
+            if (useBound) {
+                currentBound = bound.load();
+            }
+            const auto currentCurve = curve.load();
+            lowThres = currentThreshold - currentKneeW;
+            highThres = currentThreshold + currentKneeW;
+            paras[0] = FloatType(1) / currentRatio - FloatType(1);
+            paras[1] = -lowThres;
+            paras[0] *= FloatType(1) / (currentKneeW * FloatType(4));
+            if (useCurve) {
+                if (currentCurve >= FloatType(0)) {
+                    const auto alpha = FloatType(1) - currentCurve, beta = currentCurve;
+                    linearCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+                    downCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+                    paras[2] = alpha * linearCurve.c + beta * downCurve.c;
+                    paras[3] = alpha * linearCurve.b + beta * downCurve.b;
+                    paras[4] = alpha * linearCurve.a + beta * downCurve.a;
+                } else {
+                    const auto alpha = FloatType(1) + currentCurve, beta = -currentCurve;
+                    linearCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+                    upCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+                    paras[2] = alpha * linearCurve.c + beta * upCurve.c;
+                    paras[3] = alpha * linearCurve.b + beta * upCurve.b;
+                    paras[4] = alpha * linearCurve.a + beta * upCurve.a;
+                }
+            } else {
+                linearCurve.setPara(currentThreshold, currentRatio, currentKneeW);
+                paras[2] = linearCurve.c;
+                paras[3] = linearCurve.b;
+            }
+        }
     };
 } // KneeComputer
 

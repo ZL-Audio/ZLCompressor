@@ -37,12 +37,12 @@ namespace zlCompressor {
 
         /**
          * call before processing starts
-         * @param spec
+         * @param sr sampleRate
          */
-        void prepare(const juce::dsp::ProcessSpec &spec) {
-            sampleRate.store(spec.sampleRate);
+        void prepare(const double sr) {
+            sampleRate.store(sr);
             setMaximumMomentarySize(
-                static_cast<size_t>(static_cast<double>(maximumTimeLength) * 1000.0 * spec.sampleRate));
+                static_cast<size_t>(static_cast<double>(maximumTimeLength) * 1000.0 * sr));
             reset();
             setMomentarySeconds(timeLength.load());
         }
@@ -112,7 +112,7 @@ namespace zlCompressor {
         FloatType mLoudness{0};
         zlContainer::CircularBuffer<FloatType> loudnessBuffer{1};
 
-        std::atomic<double> sampleRate{44100.0};
+        std::atomic<double> sampleRate{48000.0};
         std::atomic<FloatType> timeLength{0};
         FloatType maximumTimeLength{0};
         size_t currentBufferSize{1};
