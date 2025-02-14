@@ -7,8 +7,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_COMPRESSOR_FORWARD_OPERATOR_HPP
-#define ZL_COMPRESSOR_FORWARD_OPERATOR_HPP
+#ifndef ZL_COMPRESSOR_FORWARD_PRE_OPERATOR_HPP
+#define ZL_COMPRESSOR_FORWARD_PRE_OPERATOR_HPP
 
 #include "../computer/computer.hpp"
 #include "../tracker/tracker.hpp"
@@ -19,9 +19,9 @@ namespace zlCompressor {
         bool useCurve, bool useBound,
         bool isPeakMix,
         bool useSmooth, bool usePunch>
-    class ForwardPostOperator {
+    class ForwardPreOperator {
     public:
-        ForwardPostOperator(KneeComputer<FloatType, useCurve, useBound> &computer,
+        ForwardPreOperator(KneeComputer<FloatType, useCurve, useBound> &computer,
                             RMSTracker<FloatType, isPeakMix> &tracker,
                             PSFollower<FloatType, useSmooth, usePunch> &follower)
             : m_computer(computer), m_tracker(tracker), m_follower(follower) {
@@ -30,23 +30,18 @@ namespace zlCompressor {
         template<bool returnDB = false>
         FloatType processSample(FloatType x) {
             m_tracker.processSample(x);
-            const auto inputDB = m_tracker.getMomentaryDB();
-            const auto reductionDB = inputDB - m_computer.processSample(inputDB);
+            FloatType smoothInputDB;
             if (isLogDomain) {
-                const auto smoothReductionDB = m_follower.processSample(reductionDB);
-                if (returnDB) {
-                    return -smoothReductionDB;
-                } else {
-                    return juce::Decibels::decibelsToGain(-smoothReductionDB, FloatType(-240));
-                }
+                const auto smoothInputGain = m_follower.processSample(m_tracker.getMomentaryGain());
+                smoothInputDB = juce::Decibels::gainToDecibels(smoothInputGain, FloatType(-240));
             } else {
-                const auto reductionGain = juce::Decibels::decibelsToGain(-reductionDB, FloatType(-240));
-                const auto smoothReductionGain = m_follower.processSample(reductionGain);
-                if (returnDB) {
-                    return juce::Decibels::gainToDecibels(smoothReductionGain, FloatType(-240));
-                } else {
-                    return smoothReductionGain;
-                }
+                smoothInputDB = m_follower.processSample(m_tracker.getMomentaryDB());
+            }
+            const auto reductionDB = smoothInputDB - m_computer.processSample(smoothInputDB);
+            if (returnDB) {
+                return -reductionDB;
+            } else {
+                return juce::Decibels::decibelsToGain(-reductionDB, FloatType(-240));
             }
         }
 
@@ -57,4 +52,4 @@ namespace zlCompressor {
     };
 }
 
-#endif //ZL_COMPRESSOR_FORWARD_OPERATOR_HPP
+#endif //ZL_COMPRESSOR_FORWARD_PRE_OPERATOR_HPP

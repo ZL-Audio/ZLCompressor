@@ -11,5 +11,6 @@
 #define ZL_COMPRESSOR_OPERATOR_HPP
 
 #include "forward_post_operator.hpp"
+#include "forward_pre_operator.hpp"
 
 #endif //ZL_COMPRESSOR_OPERATOR_HPP

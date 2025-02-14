@@ -103,9 +103,14 @@ namespace zlCompressor {
             toUpdate.store(true);
         }
 
-        FloatType getMomentaryLoudness() {
+        FloatType getMomentaryDB() {
             FloatType meanSquare = mLoudness / static_cast<FloatType>(currentBufferSize);
             return juce::Decibels::gainToDecibels(meanSquare, minusInfinityDB) * FloatType(0.5);
+        }
+
+        FloatType getMomentaryGain() {
+            FloatType meanSquare = mLoudness / static_cast<FloatType>(currentBufferSize);
+            return std::sqrt(meanSquare);
         }
 
     private:
