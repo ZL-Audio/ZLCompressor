@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef SEPARATE_PANEL_HPP
-#define SEPARATE_PANEL_HPP
+#pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -25,5 +24,3 @@ namespace zlPanel {
         juce::ColourGradient gradient;
     };
 } // zlPanel
-
-#endif //SEPARATE_PANEL_HPP

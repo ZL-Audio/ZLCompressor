@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_COMPRESSOR_RMS_TRACKER_HPP
-#define ZL_COMPRESSOR_RMS_TRACKER_HPP
+#pragma once
 
 #include <juce_dsp/juce_dsp.h>
 
@@ -29,10 +28,10 @@ namespace zlCompressor {
         /**
          * call before prepare to play
          * set the maximum time length of the tracker
-         * @param millisecond the maximum time length of the tracker
+         * @param second the maximum time length of the tracker
          */
-        void setMaximumMomentarySeconds(const FloatType millisecond) {
-            maximumTimeLength = millisecond;
+        void setMaximumMomentarySeconds(const FloatType second) {
+            maximumTimeLength = second;
         }
 
         /**
@@ -42,7 +41,7 @@ namespace zlCompressor {
         void prepare(const double sr) {
             sampleRate.store(sr);
             setMaximumMomentarySize(
-                static_cast<size_t>(static_cast<double>(maximumTimeLength) * 1000.0 * sr));
+                static_cast<size_t>(static_cast<double>(maximumTimeLength) * sr));
             reset();
             setMomentarySeconds(timeLength.load());
         }
@@ -74,14 +73,31 @@ namespace zlCompressor {
             mLoudness += square;
         }
 
+        void processBufferRMS(juce::AudioBuffer<FloatType> &buffer) {
+            FloatType _ms = 0;
+            for (auto channel = 0; channel < buffer.getNumChannels(); channel++) {
+                auto data = buffer.getReadPointer(channel);
+                for (auto i = 0; i < buffer.getNumSamples(); i++) {
+                    _ms += data[i] * data[i];
+                }
+            }
+            _ms = _ms / static_cast<FloatType>(buffer.getNumSamples());
+
+            if (loudnessBuffer.size() == currentBufferSize) {
+                mLoudness -= loudnessBuffer.pop_front();
+            }
+            loudnessBuffer.push_back(_ms);
+            mLoudness += _ms;
+        }
+
         /**
          * thread-safe, lock-free
          * set the time length of the tracker
-         * @param millisecond the time length of the tracker
+         * @param second the time length of the tracker
          */
-        void setMomentarySeconds(const FloatType millisecond) {
-            timeLength.store(millisecond);
-            setMomentarySize(static_cast<size_t>(static_cast<double>(millisecond) * 1000.0 * sampleRate.load()));
+        void setMomentarySeconds(const FloatType second) {
+            timeLength.store(second);
+            setMomentarySize(static_cast<size_t>(static_cast<double>(second) * sampleRate.load()));
             toUpdate.store(true);
         }
 
@@ -103,14 +119,9 @@ namespace zlCompressor {
             toUpdate.store(true);
         }
 
-        FloatType getMomentaryDB() {
+        FloatType getMomentaryLoudness() {
             FloatType meanSquare = mLoudness / static_cast<FloatType>(currentBufferSize);
             return juce::Decibels::gainToDecibels(meanSquare, minusInfinityDB) * FloatType(0.5);
-        }
-
-        FloatType getMomentaryGain() {
-            FloatType meanSquare = mLoudness / static_cast<FloatType>(currentBufferSize);
-            return std::sqrt(meanSquare);
         }
 
     private:
@@ -142,5 +153,3 @@ namespace zlCompressor {
         }
     };
 }
-
-#endif //ZL_COMPRESSOR_RMS_TRACKER_HPP

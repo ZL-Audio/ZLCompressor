@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_MULTIPLE_MAG_ANALYZER_HPP
-#define ZL_MULTIPLE_MAG_ANALYZER_HPP
+#pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -208,5 +207,3 @@ namespace zlMagAnalyzer {
         }
     };
 }
-
-#endif //ZL_MULTIPLE_MAG_ANALYZER_HPP

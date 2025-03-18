@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef COMPUTER_PANEL_HPP
-#define COMPUTER_PANEL_HPP
+#pragma once
 
 #include "../../PluginProcessor.hpp"
 #include "../helper/helper.hpp"
@@ -37,5 +36,3 @@ namespace zlPanel {
         std::atomic<float> minDB{-72.f};
     };
 } // zlPanel
-
-#endif //COMPUTER_PANEL_HPP

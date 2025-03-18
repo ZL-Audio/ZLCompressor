@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_COMPRESSOR_PS_FOLLOWER_HPP
-#define ZL_COMPRESSOR_PS_FOLLOWER_HPP
+#pragma once
 
 #include <atomic>
 #include <numbers>
@@ -27,17 +26,20 @@ namespace zlCompressor {
 
         /**
          * call before processing starts
-         * @tparam toReset whether to reset the internal state
          * @param sr sampleRate
          */
-        template <bool toReset=true>
         void prepare(const double sr) {
             expFactor = -2.0 * std::numbers::pi * 1000.0 / sr;
-            if (toReset) {
-                state = FloatType(0);
-                y = FloatType(0);
-            }
             toUpdate.store(true);
+        }
+
+        /**
+         * reset the follower
+         */
+        void reset(const FloatType x) {
+            y = x;
+            state = x;
+            slope = FloatType(0);
         }
 
         /**
@@ -156,5 +158,3 @@ namespace zlCompressor {
         }
     };
 }
-
-#endif //ZL_COMPRESSOR_PS_FOLLOWER_HPP

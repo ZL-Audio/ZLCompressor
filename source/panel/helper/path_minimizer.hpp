@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZLPANEL_PATH_MINIMIZER_HPP
-#define ZLPANEL_PATH_MINIMIZER_HPP
+#pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -48,4 +47,3 @@ namespace zlPanel {
         float currentX{0.}, currentY{0.};
     };
 }
-#endif //ZLPANEL_PATH_MINIMIZER_HPP

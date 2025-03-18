@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef MAIN_PANEL_HPP
-#define MAIN_PANEL_HPP
+#pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -26,5 +25,3 @@ namespace zlPanel {
         CurvePanel curvePanel;
     };
 } // zlPanel
-
-#endif //MAIN_PANEL_HPP

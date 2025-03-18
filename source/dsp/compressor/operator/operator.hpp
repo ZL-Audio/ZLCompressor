@@ -7,10 +7,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_COMPRESSOR_OPERATOR_HPP
-#define ZL_COMPRESSOR_OPERATOR_HPP
+#pragma once
 
 #include "forward_post_operator.hpp"
 #include "forward_pre_operator.hpp"
-
-#endif //ZL_COMPRESSOR_OPERATOR_HPP
+#include "feedback_post_operator.hpp"

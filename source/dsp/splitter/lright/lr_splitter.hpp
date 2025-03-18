@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_LR_SPLITER_HPP
-#define ZL_LR_SPLITER_HPP
+#pragma once
 
 #include <juce_dsp/juce_dsp.h>
 
@@ -58,5 +57,3 @@ namespace zlSplitter {
         juce::AudioBuffer<FloatType> lBuffer, rBuffer;
     };
 }
-
-#endif //ZL_LR_SPLITER_HPP

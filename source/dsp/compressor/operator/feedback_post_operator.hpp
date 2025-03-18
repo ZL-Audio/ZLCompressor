@@ -9,6 +9,18 @@
 
 #pragma once
 
-#include "multiple_mag_analyzer.hpp"
-#include "mag_reduction_analyzer.hpp"
-#include "multiple_mag_avg_analyzer.hpp"
+#include "../computer/computer.hpp"
+#include "../tracker/tracker.hpp"
+#include "../follower/follower.hpp"
+
+namespace zlCompressor {
+    template<typename FloatType, bool isLogDomain,
+        bool useCurve, bool useBound,
+        bool isPeakMix,
+        bool useSmooth, bool usePunch>
+    class FeedbackPostOperator {
+    public:
+    private:
+
+    };
+}

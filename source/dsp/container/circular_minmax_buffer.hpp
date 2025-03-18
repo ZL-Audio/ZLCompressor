@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_CONTAINER_CIRCULAR_MINMAX_BUFFER_HPP
-#define ZL_CONTAINER_CIRCULAR_MINMAX_BUFFER_HPP
+#pragma once
 
 #include <vector>
 
@@ -95,5 +94,3 @@ namespace zlContainer {
         }
     };
 }
-
-#endif //ZL_CONTAINER_CIRCULAR_MINMAX_BUFFER_HPP

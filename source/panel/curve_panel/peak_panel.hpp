@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef PEAK_PANEL_HPP
-#define PEAK_PANEL_HPP
+#pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -49,5 +48,3 @@ namespace zlPanel {
         int consErrorCount{0};
     };
 } // zlPanel
-
-#endif //PEAK_PANEL_HPP

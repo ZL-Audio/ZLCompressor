@@ -7,12 +7,9 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_COMPRESSOR_HPP
-#define ZL_COMPRESSOR_HPP
+#pragma once
 
 #include "computer/computer.hpp"
 #include "tracker/tracker.hpp"
 #include "follower/follower.hpp"
 #include "operator/operator.hpp"
-
-#endif //ZL_COMPRESSOR_HPP

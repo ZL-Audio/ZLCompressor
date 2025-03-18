@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZLPANEL_ATOMIC_BOUND_HPP
-#define ZLPANEL_ATOMIC_BOUND_HPP
+#pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -40,5 +39,3 @@ namespace zlPanel {
         std::atomic<float> x{0.f}, y{0.f}, width{0.f}, height{0.f};
     };
 }
-
-#endif //ZLPANEL_ATOMIC_BOUND_HPP

@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_MAG_REDUCTION_ANALYZER_HPP
-#define ZL_MAG_REDUCTION_ANALYZER_HPP
+#pragma once
 
 #include "multiple_mag_analyzer.hpp"
 
@@ -69,5 +68,3 @@ namespace zlMagAnalyzer {
         }
     };
 }
-
-#endif //ZL_MAG_REDUCTION_ANALYZER_HPP

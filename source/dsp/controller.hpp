@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef CONTROLLER_HPP
-#define CONTROLLER_HPP
+#pragma once
 
 #include "compressor/compressor.hpp"
 #include "splitter/splitter.hpp"
@@ -36,9 +35,9 @@ namespace zlDSP {
         zlSplitter::LRSplitter<double> mainLRSplitter, sideLRSplitter;
         zlSplitter::MSSplitter<double> mainMSSplitter, sideMSSplitter;
         juce::dsp::Compressor<double> compressor;
+        zlCompressor::RMSTracker<double, true> rmsTracker;
+
 
         juce::AudioBuffer<double> preBuffer;
     };
 } // zlDSP
-
-#endif //CONTROLLER_HPP

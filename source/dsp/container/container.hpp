@@ -7,11 +7,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_CONTAINER_HPP
-#define ZL_CONTAINER_HPP
+#pragma once
 
 #include "array.hpp"
 #include "circular_buffer.hpp"
 #include "circular_minmax_buffer.hpp"
-
-#endif //ZL_CONTAINER_HPP

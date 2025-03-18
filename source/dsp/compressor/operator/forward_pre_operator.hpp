@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZL_COMPRESSOR_FORWARD_PRE_OPERATOR_HPP
-#define ZL_COMPRESSOR_FORWARD_PRE_OPERATOR_HPP
+#pragma once
 
 #include "../computer/computer.hpp"
 #include "../tracker/tracker.hpp"
@@ -51,5 +50,3 @@ namespace zlCompressor {
         PSFollower<FloatType, useSmooth, usePunch> &m_follower;
     };
 }
-
-#endif //ZL_COMPRESSOR_FORWARD_PRE_OPERATOR_HPP

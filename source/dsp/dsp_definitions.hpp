@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZLCOMPRESSOR_DSP_DEFINITIONS_HPP
-#define ZLCOMPRESSOR_DSP_DEFINITIONS_HPP
+#pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -229,5 +228,3 @@ namespace zlDSP {
         para->endChangeGesture();
     }
 }
-
-#endif //ZLCOMPRESSOR_DSP_DEFINITIONS_HPP

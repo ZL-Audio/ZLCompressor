@@ -7,8 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef CURVE_PANEL_HPP
-#define CURVE_PANEL_HPP
+#pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -47,5 +46,3 @@ namespace zlPanel {
         void repaintCallBack(double timeStamp);
     };
 } // zlPanel
-
-#endif //CURVE_PANEL_HPP
