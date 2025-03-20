@@ -16,7 +16,7 @@
 namespace zlDSP {
     class Controller {
     public:
-        static constexpr size_t analyzerPointNum = 351;
+        static constexpr size_t analyzerPointNum = 251;
         static constexpr size_t avgAnalyzerPointNum = 120;
 
         explicit Controller() = default;

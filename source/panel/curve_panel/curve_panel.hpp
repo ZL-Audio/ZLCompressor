@@ -40,6 +40,7 @@ namespace zlPanel {
         std::atomic<double> nextStamp{0.};
         double rmsPreviousStamp{0.};
         std::atomic<bool> toRunRMS{false};
+        int repaintCount{3};
 
         void run() override;
 

@@ -13,6 +13,8 @@
 #include "../tracker/tracker.hpp"
 #include "../follower/follower.hpp"
 
+#include "forward_post_operator.hpp"
+
 namespace zlCompressor {
     template<typename FloatType, bool isLogDomain,
         bool useCurve, bool useBound,
@@ -20,7 +22,25 @@ namespace zlCompressor {
         bool useSmooth, bool usePunch>
     class FeedbackPostOperator {
     public:
-    private:
+        FeedbackPostOperator(KneeComputer<FloatType, useCurve, useBound> &computer,
+                             RMSTracker<FloatType, isPeakMix> &tracker,
+                             PSFollower<FloatType, useSmooth, usePunch> &follower)
+            : forwardOp(computer, tracker, follower) {
+        }
 
+        template<bool returnDB = false>
+        FloatType processSample(FloatType x) {
+            const auto reduction = forwardOp.processSample(x0);
+            x0 = x * reduction;
+            if (returnDB) {
+                return juce::Decibels::gainToDecibels(reduction, FloatType(-240));
+            } else {
+                return reduction;
+            }
+        }
+
+    private:
+        ForwardPostOperator<FloatType, isLogDomain, useCurve, useBound, isPeakMix, useSmooth, usePunch> forwardOp;
+        FloatType x0{FloatType(0)};
     };
 }

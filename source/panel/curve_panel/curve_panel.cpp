@@ -61,12 +61,17 @@ namespace zlPanel {
     }
 
     void CurvePanel::repaintCallBack(const double timeStamp) {
-        nextStamp.store(timeStamp);
-        peakPanel.repaint();
-        if (timeStamp - rmsPreviousStamp > .1) {
-            rmsPanel.repaint();
-            rmsPreviousStamp = timeStamp;
-            toRunRMS.store(true);
+        if (repaintCount >= 0) {
+            repaintCount = 0;
+            nextStamp.store(timeStamp);
+            peakPanel.repaint();
+            if (timeStamp - rmsPreviousStamp > .1) {
+                rmsPanel.repaint();
+                rmsPreviousStamp = timeStamp;
+                toRunRMS.store(true);
+            }
+        } else {
+            repaintCount += 1;
         }
     }
 } // zlPanel

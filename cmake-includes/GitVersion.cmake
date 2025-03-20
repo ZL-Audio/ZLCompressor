@@ -26,11 +26,11 @@ endif ()
 
 if (NOT DEFINED FOOBAR_VERSION)
     set(FOOBAR_VERSION 0.0.0)
-    message(WARNING "Failed to determine VERSION from Git tags. Using default version \"${FOOBAR_VERSION}\".")
+    message("Failed to determine VERSION from Git tags. Using default version \"${FOOBAR_VERSION}\".")
 endif ()
 if (NOT DEFINED FOOBAR_HASH)
   set(FOOBAR_HASH "0000000")
-  message(WARNING "Failed to determine HASH from Git logs. Using default hash \"${FOOBAR_HASH}\".")
+  message("Failed to determine HASH from Git logs. Using default hash \"${FOOBAR_HASH}\".")
 endif ()
 
 string(REPLACE "v" "" FOOBAR_VERSION_WITHOUT_V "${FOOBAR_VERSION}")
