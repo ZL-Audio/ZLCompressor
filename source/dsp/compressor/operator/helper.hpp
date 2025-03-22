@@ -9,7 +9,17 @@
 
 #pragma once
 
-#include "forward_post_operator.hpp"
-#include "forward_pre_operator.hpp"
-#include "feedback_post_operator.hpp"
-#include "bus_post_operator.hpp"
+#include <algorithm>
+#include <cmath>
+
+namespace zlCompressor {
+    template<typename Type>
+    static Type decibelsToGain(const Type decibels) {
+        return std::pow(static_cast<Type>(10.0), decibels * static_cast<Type>(0.05));
+    }
+
+    template <typename Type>
+    static Type gainToDecibels (const Type gain) {
+        return std::log10(std::max(gain, static_cast<Type>(1e-10)))  * static_cast<Type>(20.0);
+    }
+}

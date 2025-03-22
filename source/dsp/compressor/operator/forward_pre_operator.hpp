@@ -13,6 +13,8 @@
 #include "../tracker/tracker.hpp"
 #include "../follower/follower.hpp"
 
+#include "helper.hpp"
+
 namespace zlCompressor {
     template<typename FloatType, bool isLogDomain,
         bool useCurve, bool useBound,
@@ -26,22 +28,16 @@ namespace zlCompressor {
             : m_computer(computer), m_tracker(tracker), m_follower(follower) {
         }
 
-        template<bool returnDB = false>
         FloatType processSample(FloatType x) {
             m_tracker.processSample(x);
             FloatType smoothInputDB;
             if (isLogDomain) {
                 const auto smoothInputGain = m_follower.processSample(m_tracker.getMomentaryGain());
-                smoothInputDB = juce::Decibels::gainToDecibels(smoothInputGain, FloatType(-240));
+                smoothInputDB = gainToDecibels(smoothInputGain);
             } else {
                 smoothInputDB = m_follower.processSample(m_tracker.getMomentaryDB());
             }
-            const auto reductionDB = smoothInputDB - m_computer.processSample(smoothInputDB);
-            if (returnDB) {
-                return -reductionDB;
-            } else {
-                return juce::Decibels::decibelsToGain(-reductionDB, FloatType(-240));
-            }
+            return m_computer.processSample(smoothInputDB) - smoothInputDB;
         }
 
     private:

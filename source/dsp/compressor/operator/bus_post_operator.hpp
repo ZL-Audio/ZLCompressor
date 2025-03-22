@@ -20,25 +20,25 @@ namespace zlCompressor {
         bool useCurve, bool useBound,
         bool isPeakMix,
         bool useSmooth, bool usePunch>
-    class FeedbackPostOperator {
+    class BusPostOperator {
     public:
-        FeedbackPostOperator(KneeComputer<FloatType, useCurve, useBound> &computer,
-                             RMSTracker<FloatType, isPeakMix> &tracker,
-                             PSFollower<FloatType, useSmooth, usePunch> &follower)
-            : m_computer(computer), m_tracker(tracker), m_follower(follower)  {
+        BusPostOperator(KneeComputer<FloatType, useCurve, useBound> &computer,
+                        RMSTracker<FloatType, isPeakMix> &tracker,
+                        PSFollower<FloatType, useSmooth, usePunch> &follower)
+            : m_computer(computer), m_tracker(tracker), m_follower(follower) {
         }
 
         FloatType processSample(FloatType x) {
-            m_tracker.processSample(x0);
+            m_tracker.processSample(x * g0);
             const auto inputDB = m_tracker.getMomentaryDB();
             if (isLogDomain) {
                 const auto smoothReductionDB = m_follower.processSample(inputDB - m_computer.processSample(inputDB));
-                x0 = x * decibelsToGain(smoothReductionDB);
+                g0 = decibelsToGain(smoothReductionDB);
                 return -smoothReductionDB;
             } else {
                 const auto reductionGain = decibelsToGain(m_computer.processSample(inputDB) - inputDB);
                 const auto smoothReductionGain = m_follower.processSample(reductionGain);
-                x0 = x * smoothReductionGain;
+                g0 = smoothReductionGain;
                 return gainToDecibels(smoothReductionGain);
             }
         }
@@ -47,6 +47,6 @@ namespace zlCompressor {
         KneeComputer<FloatType, useCurve, useBound> &m_computer;
         RMSTracker<FloatType, isPeakMix> &m_tracker;
         PSFollower<FloatType, useSmooth, usePunch> &m_follower;
-        FloatType x0{FloatType(0)};
+        FloatType g0{FloatType(1)};
     };
 }
