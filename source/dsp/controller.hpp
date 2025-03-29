@@ -35,7 +35,6 @@ namespace zlDSP {
         zlSplitter::LRSplitter<double> mainLRSplitter, sideLRSplitter;
         zlSplitter::MSSplitter<double> mainMSSplitter, sideMSSplitter;
         juce::dsp::Compressor<double> compressor;
-        zlCompressor::RMSTracker<double, true> rmsTracker;
 
 
         juce::AudioBuffer<double> preBuffer;
