@@ -52,7 +52,6 @@ namespace zlDSP {
     }
 
     void Controller::process(juce::AudioBuffer<double> &buffer) {
-        return;
         prepareBuffer();
         juce::AudioBuffer<double> mainBuffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
         juce::AudioBuffer<double> sideBuffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
@@ -67,6 +66,8 @@ namespace zlDSP {
         // up-sample side-buffer
         if (currentOversampleIdx == 0) {
             processSideBuffer(sideBuffer);
+        } else {
+            // over-sample the side-buffer
         }
 
         preBuffer.makeCopyOf(mainBuffer, true);
