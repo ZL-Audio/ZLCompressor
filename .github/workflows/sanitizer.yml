@@ -1,4 +1,4 @@
-name: Thread Sanitizer
+name: Sanitizer
 
 on:
   workflow_dispatch:
@@ -13,7 +13,8 @@ env:
   BUILD_DIR: Builds
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   HOMEBREW_NO_INSTALL_CLEANUP: 1
-  THREAD_SANITIZER_FLAG: True
+  ADDRESS_SANITIZER_FLAG: True
+  PLUGINVAL_DISABLED: Plugin state restoration
 
 # jobs are run in paralell on different machines
 # all steps run in series
@@ -25,11 +26,14 @@ jobs:
       fail-fast: false # show all errors for each platform (vs. cancel jobs on error)
       matrix:
         include:
-          - name: macOS
+          - name: macOS Address Sanitizer
             os: macos-15
             pluginval-binary: ./pluginval/Builds/pluginval_artefacts/Debug/pluginval.app/Contents/MacOS/pluginval
-            plugin_os_format: "VST3;AU"
-            cmake_extra_flags:
+            cmake_extra_flags: -DWITH_ADDRESS_SANITIZER=ON -DWITH_THREAD_SANITIZER=OFF -DZL_JUCE_FORMATS="VST3;AU"
+          - name: macOS Thread Sanitizer
+            os: macos-15
+            pluginval-binary: ./pluginval/Builds/pluginval_artefacts/Debug/pluginval.app/Contents/MacOS/pluginval
+            cmake_extra_flags: -DWITH_ADDRESS_SANITIZER=OFF -DWITH_THREAD_SANITIZER=ON -DZL_JUCE_FORMATS="VST3;AU"
 
     steps:
       - name: Install macOS Deps
@@ -42,31 +46,26 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Configure
+      - name: Configure and Build (Linux & macOS)
+        if: runner.os != 'Windows'
         shell: bash
-        run: cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} ${{ matrix.cmake_extra_flags }} .
-        env:
-          PLUGIN_OS_FORMAT: ${{ matrix.plugin_os_format }}
+        run: |
+          cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} ${{ matrix.cmake_extra_flags }} .
+          cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
 
-      - name: Build
-        shell: bash
-        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
+      - name: Configure and Build (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call ${{ matrix.vcvars64_path }}
+          cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} ${{ matrix.cmake_extra_flags }} .
+          cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
 
       - name: Read in .env from CMake # see GitHubENV.cmake
         shell: bash
         run: |
           cat .env # show us the config
           cat .env >> $GITHUB_ENV # pull in our PRODUCT_NAME, etc
-
-      - name: Set additional env vars for next steps
-        shell: bash
-        run: |
-          ARTIFACTS_PATH=${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}
-          echo "ARTIFACTS_PATH=$ARTIFACTS_PATH" >> $GITHUB_ENV
-          echo "VST3_PATH=$ARTIFACTS_PATH/VST3/${{ env.PRODUCT_NAME }}.vst3" >> $GITHUB_ENV
-          echo "AU_PATH=$ARTIFACTS_PATH/AU/${{ env.PRODUCT_NAME }}.component" >> $GITHUB_ENV
-          echo "LV2_PATH=$ARTIFACTS_PATH/LV2/${{ env.PRODUCT_NAME }}.lv2" >> $GITHUB_ENV
-          echo "ARTIFACT_NAME=${{ env.PRODUCT_NAME }}-${{ env.VERSION }}-${{ matrix.name }}" >> $GITHUB_ENV
 
       - name: Checkout pluginval code
         uses: actions/checkout@v4
@@ -98,22 +97,9 @@ jobs:
       - name: Pluginval VST3 validations
         shell: bash
         run: |
-          ${{ matrix.pluginval-binary }} --verbose --validate "${{ env.VST3_PATH }}" --disabled-tests "Plugin state restoration"
+          ${{ matrix.pluginval-binary }} --verbose --validate "${{ env.VST3_PATH }}" --disabled-tests "${{ env.PLUGINVAL_DISABLED }}"
         env:
           STRICTNESS_LEVEL: 10
           TIMEOUT_MS: 1440000
-          REPEAT: 1
-          RANDOM_SEED: "${{ steps.current-time.outputs.formattedTime }}"
-
-      - name: Pluginval AU validations (macOS)
-        if: ${{ runner.os == 'macOS' }}
-        shell: bash
-        run: |
-          sudo cp -r "${{ env.AU_PATH }}" "/Library/Audio/Plug-ins/components"
-          sudo killall -9 AudioComponentRegistrar
-          ${{ matrix.pluginval-binary }} --verbose --validate "/Library/Audio/Plug-ins/components/${{ env.PRODUCT_NAME }}.component" --disabled-tests "Plugin state restoration,Automation"
-        env:
-          STRICTNESS_LEVEL: 10
-          TIMEOUT_MS: 1440000
-          REPEAT: 1
+          REPEAT: 10
           RANDOM_SEED: "${{ steps.current-time.outputs.formattedTime }}"

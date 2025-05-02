@@ -5,8 +5,8 @@ if (MSVC)
 else ()
     # See the implications here:
     # https://stackoverflow.com/q/45685487
-    target_compile_options(SharedCode INTERFACE $<$<CONFIG:RELEASE>:-O3 -fno-signed-zeros -freciprocal-math -ffp-contract=fast>)
-    target_compile_options(SharedCode INTERFACE $<$<CONFIG:RelWithDebInfo>:-O3 -fno-signed-zeros -freciprocal-math -ffp-contract=fast>)
+    target_compile_options(SharedCode INTERFACE $<$<CONFIG:RELEASE>:-O3 -ffp-contract=fast -fno-signed-zeros -freciprocal-math>)
+    target_compile_options(SharedCode INTERFACE $<$<CONFIG:RelWithDebInfo>:-O3 -ffp-contract=fast -fno-signed-zeros -freciprocal-math>)
 endif ()
 
 # Tell MSVC to properly report what c++ version is being used

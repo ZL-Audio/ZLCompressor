@@ -10,16 +10,17 @@
 #pragma once
 
 #include "compressor/compressor.hpp"
+#include "gain/gain.hpp"
 #include "splitter/splitter.hpp"
 #include "mag_analyzer/mag_analyzer.hpp"
 
 namespace zlDSP {
-    class Controller {
+    class Controller : private juce::AsyncUpdater {
     public:
         static constexpr size_t analyzerPointNum = 251;
         static constexpr size_t avgAnalyzerPointNum = 120;
 
-        explicit Controller() = default;
+        explicit Controller(juce::AudioProcessor &processor);
 
         void prepare(const juce::dsp::ProcessSpec &spec);
 
@@ -30,13 +31,36 @@ namespace zlDSP {
         zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, avgAnalyzerPointNum> &getMagAvgAnalyzer() { return magAvgAnalyzer; }
 
     private:
+        juce::AudioProcessor &processorRef;
+        juce::dsp::ProcessSpec mainSpec;
+        juce::AudioBuffer<double> preBuffer;
+
         zlMagAnalyzer::MagReductionAnalyzer<double, analyzerPointNum> magAnalyzer;
         zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, avgAnalyzerPointNum> magAvgAnalyzer;
+
+        std::atomic<int> stereoMode{0};
+        int currentStereoMode{0};
         zlSplitter::LRSplitter<double> mainLRSplitter, sideLRSplitter;
         zlSplitter::MSSplitter<double> mainMSSplitter, sideMSSplitter;
+
+        std::atomic<int> oversampleIdx{0};
+        int currentOversampleIdx{0};
+        std::atomic<int> oversampleLatency{0};
+        std::array<juce::dsp::Oversampling<double>, 3> oversampleStages{
+            juce::dsp::Oversampling<double>(2, 1,
+                juce::dsp::Oversampling<double>::filterHalfBandFIREquiripple, true, true),
+            juce::dsp::Oversampling<double>(2, 2,
+                juce::dsp::Oversampling<double>::filterHalfBandFIREquiripple, true, true),
+            juce::dsp::Oversampling<double>(2, 3,
+                juce::dsp::Oversampling<double>::filterHalfBandFIREquiripple, true, true),
+        };
+
         juce::dsp::Compressor<double> compressor;
 
+        void prepareBuffer();
 
-        juce::AudioBuffer<double> preBuffer;
+        void processSideBuffer(juce::AudioBuffer<double> &buffer);
+
+        void handleAsyncUpdate() override;
     };
 } // zlDSP
