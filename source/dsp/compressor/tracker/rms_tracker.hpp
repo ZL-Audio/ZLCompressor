@@ -12,8 +12,9 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "../../container/container.hpp"
+#include "../../vector/vector.hpp"
 
-namespace zlCompressor {
+namespace zldsp::compressor {
     /**
      * a tracker that tracks the momentary RMS loudness of the audio signal
      * @tparam FloatType
@@ -32,6 +33,11 @@ namespace zlCompressor {
          */
         void setMaximumMomentarySeconds(const FloatType second) {
             maximumTimeLength = second;
+        }
+
+        void reset() {
+            mLoudness = FloatType(0);
+            loudnessBuffer.clear();
         }
 
         /**
@@ -77,9 +83,8 @@ namespace zlCompressor {
             FloatType _ms = 0;
             for (auto channel = 0; channel < buffer.getNumChannels(); channel++) {
                 auto data = buffer.getReadPointer(channel);
-                for (auto i = 0; i < buffer.getNumSamples(); i++) {
-                    _ms += data[i] * data[i];
-                }
+                _ms += zlVector::sumsqr(buffer.getReadPointer(channel),
+                                        static_cast<size_t>(buffer.getNumSamples()));
             }
             _ms = _ms / static_cast<FloatType>(buffer.getNumSamples());
 
@@ -119,6 +124,12 @@ namespace zlCompressor {
             toUpdate.store(true);
         }
 
+        size_t getCurrentBufferSize() const { return currentBufferSize; }
+
+        FloatType getMomentarySquare() {
+            return mLoudness;
+        }
+
         FloatType getMomentaryLoudness() {
             FloatType meanSquare = mLoudness / static_cast<FloatType>(currentBufferSize);
             return juce::Decibels::gainToDecibels(meanSquare, minusInfinityDB) * FloatType(0.5);
@@ -136,11 +147,6 @@ namespace zlCompressor {
         FloatType currentPeakMix{0}, currentPeakMixC{1};
         std::atomic<FloatType> peakMix{0};
         std::atomic<bool> toUpdate{true};
-
-        void reset() {
-            mLoudness = FloatType(0);
-            loudnessBuffer.clear();
-        }
 
         void setMomentarySize(size_t mSize) {
             mSize = std::max(static_cast<size_t>(1), mSize);

@@ -13,3 +13,4 @@
 #include "tracker/tracker.hpp"
 #include "follower/follower.hpp"
 #include "operator/operator.hpp"
+#include "styles/styles.hpp"

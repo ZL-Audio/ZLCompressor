@@ -15,14 +15,14 @@
 
 #include "helper.hpp"
 
-namespace zlCompressor {
+namespace zldsp::compressor {
     template<typename FloatType, bool isLogDomain,
         bool useCurve, bool useBound,
         bool isPeakMix,
         bool useSmooth, bool usePunch>
     class FeedbackPostOperator {
     public:
-        FeedbackPostOperator(KneeComputer<FloatType, useCurve, useBound> &computer,
+        FeedbackPostOperator(KneeComputer<FloatType, useCurve> &computer,
                              RMSTracker<FloatType, isPeakMix> &tracker,
                              PSFollower<FloatType, useSmooth, usePunch> &follower)
             : m_computer(computer), m_tracker(tracker), m_follower(follower)  {
@@ -44,7 +44,7 @@ namespace zlCompressor {
         }
 
     private:
-        KneeComputer<FloatType, useCurve, useBound> &m_computer;
+        KneeComputer<FloatType, useCurve> &m_computer;
         RMSTracker<FloatType, isPeakMix> &m_tracker;
         PSFollower<FloatType, useSmooth, usePunch> &m_follower;
         FloatType x0{FloatType(0)};

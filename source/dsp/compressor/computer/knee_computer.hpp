@@ -11,7 +11,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace zlCompressor {
+namespace zldsp::compressor {
     template<typename FloatType>
     struct LinearCurve {
         static constexpr FloatType a{FloatType(0)};
@@ -52,7 +52,7 @@ namespace zlCompressor {
      * @tparam useCurve whether to use curve
      * @tparam useBound whether to use bound
      */
-    template<typename FloatType, bool useCurve = false, bool useBound = false>
+    template<typename FloatType, bool useCurve = false>
     class KneeComputer final {
     public:
         KneeComputer() = default;
@@ -68,11 +68,11 @@ namespace zlCompressor {
                 return x;
             } else if (x >= highThres) {
                 const auto y = useCurve ? paras[2] + paras[3] * x + paras[4] * x * x : paras[2] + paras[3] * x;
-                return useBound ? std::max(x - currentBound, y) : y;
+                return y;
             } else {
                 const auto xx = x + paras[1];
                 const auto y = x + paras[0] * xx * xx;
-                return useBound ? std::max(x - currentBound, y) : y;
+                return y;
             }
         }
 
@@ -113,12 +113,6 @@ namespace zlCompressor {
 
         inline FloatType getCurve() const { return curve.load(); }
 
-        inline void setBound(FloatType v) {
-            bound.store(v);
-        }
-
-        inline FloatType getBound() const { return bound.load(); }
-
     private:
         LinearCurve<FloatType> linearCurve;
         DownCurve<FloatType> downCurve;
@@ -126,8 +120,6 @@ namespace zlCompressor {
         std::atomic<FloatType> threshold{-18}, ratio{2};
         std::atomic<FloatType> kneeW{FloatType(0.25)}, curve{0};
         FloatType lowThres{0}, highThres{0};
-        std::atomic<FloatType> bound{60};
-        FloatType currentBound{60};
         std::array<FloatType, 5> paras;
         std::atomic<bool> toInterpolate{true};
 
@@ -135,9 +127,6 @@ namespace zlCompressor {
             const auto currentThreshold = threshold.load();
             const auto currentKneeW = kneeW.load();
             const auto currentRatio = ratio.load();
-            if (useBound) {
-                currentBound = bound.load();
-            }
             const auto currentCurve = curve.load();
             lowThres = currentThreshold - currentKneeW;
             highThres = currentThreshold + currentKneeW;

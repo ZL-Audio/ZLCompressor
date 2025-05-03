@@ -12,7 +12,7 @@
 #include <atomic>
 #include <numbers>
 
-namespace zlCompressor {
+namespace zldsp::compressor {
     /**
      * a punch-smooth follower
      * @tparam FloatType

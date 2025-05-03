@@ -9,17 +9,7 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cmath>
-
-namespace zldsp::compressor {
-    template<typename Type>
-    static Type decibelsToGain(const Type decibels) {
-        return std::pow(static_cast<Type>(10.0), decibels * static_cast<Type>(0.05));
-    }
-
-    template <typename Type>
-    static Type gainToDecibels (const Type gain) {
-        return std::log10(std::max(gain, static_cast<Type>(1e-10)))  * static_cast<Type>(20.0);
-    }
-}
+#include "digital.hpp"
+#include "classic.hpp"
+#include "optical.hpp"
+#include "bus.hpp"

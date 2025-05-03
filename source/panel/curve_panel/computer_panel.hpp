@@ -26,7 +26,7 @@ namespace zlPanel {
         void resized() override;
 
     private:
-        zlCompressor::KneeComputer<float> computer{};
+        zldsp::compressor::KneeComputer<float> computer{};
         AtomicBound atomicBound;
 
         std::atomic<bool> toUpdate{true};
