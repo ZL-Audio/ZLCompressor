@@ -2,9 +2,6 @@
 	path = JUCE
 	url = https://github.com/juce-framework/JUCE/
 	branch = master
-[submodule "modules/friz"]
-	path = modules/friz
-	url = https://github.com/ZL-Audio/animator
 [submodule "kfr"]
 	path = kfr
 	url = https://github.com/ZL-Audio/kfr
