@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "digital.hpp"
+#include "clean.hpp"
 #include "classic.hpp"
 #include "optical.hpp"
 #include "bus.hpp"

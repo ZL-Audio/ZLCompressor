@@ -16,21 +16,23 @@
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType>
-    class DigitalCompressor {
+    template<typename FloatType,
+        bool UseCurve,
+        bool IsPeakMix,
+        bool UseSmooth, bool UsePunch>
+    class CleanCompressor {
     public:
-        DigitalCompressor(KneeComputer<FloatType, true> &computer_,
-                          RMSTracker<FloatType, true> &tracker_,
-                          PSFollower<FloatType, true, true> &follower_)
+        CleanCompressor(KneeComputer<FloatType, UseCurve> &computer_,
+                        RMSTracker<FloatType, IsPeakMix> &tracker_,
+                        PSFollower<FloatType, UseSmooth, UsePunch> &follower_)
             : computer(computer_), tracker(tracker_), follower(follower_) {
         }
 
         void reset() {
-            tracker.reset();
-            follower.reset();
+            follower.reset(FloatType(0));
         }
 
-        void process(FloatType *buffer, size_t num_samples) {
+        void process(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
             for (size_t i = 0; i < num_samples; ++i) {
@@ -47,8 +49,8 @@ namespace zldsp::compressor {
         }
 
     private:
-        KneeComputer<FloatType, true> &computer;
-        RMSTracker<FloatType, true> &tracker;
-        PSFollower<FloatType, true, true> &follower;
+        KneeComputer<FloatType, UseCurve> &computer;
+        RMSTracker<FloatType, IsPeakMix> &tracker;
+        PSFollower<FloatType, UseSmooth, UsePunch> &follower;
     };
 }
