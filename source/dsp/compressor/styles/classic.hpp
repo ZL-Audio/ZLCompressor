@@ -16,10 +16,7 @@
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType,
-        bool UseCurve,
-        bool IsPeakMix,
-        bool UseSmooth, bool UsePunch>
+    template<typename FloatType, bool UseCurve, bool IsPeakMix, bool UseSmooth, bool UsePunch>
     class ClassicCompressor {
     public:
         ClassicCompressor(KneeComputer<FloatType, UseCurve> &computer_,
