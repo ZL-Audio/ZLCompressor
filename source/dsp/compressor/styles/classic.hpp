@@ -13,8 +13,6 @@
 #include "../tracker/tracker.hpp"
 #include "../follower/follower.hpp"
 
-#include "../../vector/vector.hpp"
-
 namespace zldsp::compressor {
     template<typename FloatType, bool UseCurve, bool IsPeakMix, bool UseSmooth, bool UsePunch>
     class ClassicCompressor {
