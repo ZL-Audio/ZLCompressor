@@ -26,11 +26,11 @@ namespace zlContainer {
 
         [[nodiscard]] size_t capacity() const { return data.size(); }
 
-        void set_capacity(const size_t capacity) {
+        void setCapacity(const size_t capacity) {
             data.resize(capacity);
         }
 
-        void set_size(const int x) {
+        void setSize(const int x) {
             if (x < size) {
                 const auto shift = static_cast<size_t>(size - x);
                 for (size_t i = 0; i < static_cast<size_t>(x); ++i) {

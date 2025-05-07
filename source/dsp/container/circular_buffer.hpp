@@ -27,7 +27,7 @@ namespace zlContainer {
 
         [[nodiscard]] size_t size() const { return static_cast<size_t>(currentNum); }
 
-        void set_capacity(const size_t capacity) {
+        void setCapacity(const size_t capacity) {
             data.resize(capacity);
         }
 
@@ -37,13 +37,13 @@ namespace zlContainer {
             currentNum = 0;
         }
 
-        void push_back(T x) {
+        void pushBack(T x) {
             data[static_cast<size_t>(pos)] = x;
             pos = (pos + 1) % static_cast<int>(data.size());
             currentNum = std::min(currentNum + 1, static_cast<int>(data.size()));
         }
 
-        T pop_front() {
+        T popFront() {
             const auto frontPos = (pos - currentNum + static_cast<int>(data.size())) % static_cast<int>(data.size());
             currentNum -= 1;
             return data[static_cast<size_t>(frontPos)];

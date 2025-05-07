@@ -60,7 +60,7 @@ namespace zldsp::compressor {
             if (to_update.exchange(false)) {
                 currentBuffer_size = buffer_size.load();
                 while (square_buffer.size() > currentBuffer_size) {
-                    square_sum -= square_buffer.pop_front();
+                    square_sum -= square_buffer.popFront();
                 }
                 if (IsPeakMix) {
                     current_peak_mix = peak_mix.load();
@@ -74,9 +74,9 @@ namespace zldsp::compressor {
                                          ? std::abs(x) * (current_peak_mix + std::abs(x) * current_peak_mix_c)
                                          : x * x;
             if (square_buffer.size() == currentBuffer_size) {
-                square_sum -= square_buffer.pop_front();
+                square_sum -= square_buffer.popFront();
             }
-            square_buffer.push_back(square);
+            square_buffer.pushBack(square);
             square_sum += square;
         }
 
@@ -90,9 +90,9 @@ namespace zldsp::compressor {
             _ms = _ms / static_cast<FloatType>(buffer.getNumSamples());
 
             if (square_buffer.size() == currentBuffer_size) {
-                square_sum -= square_buffer.pop_front();
+                square_sum -= square_buffer.popFront();
             }
-            square_buffer.push_back(_ms);
+            square_buffer.pushBack(_ms);
             square_sum += _ms;
         }
 
@@ -156,7 +156,7 @@ namespace zldsp::compressor {
 
         void setMaximumMomentarySize(size_t mSize) {
             mSize = std::max(static_cast<size_t>(1), mSize);
-            square_buffer.set_capacity(mSize);
+            square_buffer.setCapacity(mSize);
         }
     };
 }
