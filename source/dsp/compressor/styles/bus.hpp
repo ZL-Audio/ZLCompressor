@@ -46,9 +46,13 @@ namespace zldsp::compressor {
         }
 
         FloatType processSample(FloatType x) {
+            // pass the feedback gain * current sample through the tracker
             tracker.processSample(x * g0);
+            // get the db from the tracker
             const auto inputDB = tracker.getMomentaryDB();
+            // pass through the computer and the follower
             const auto smoothReductionDB = follower.processSample(inputDB - computer.processSample(inputDB));
+            // calculate current gain and save it as the feedback gain for the next
             g0 = decibelsToGain(smoothReductionDB);
             return -smoothReductionDB;
         }
