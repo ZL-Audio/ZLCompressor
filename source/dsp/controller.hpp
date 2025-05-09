@@ -41,6 +41,7 @@ namespace zldsp {
         zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, kAvgAnalyzerPointNum> mag_avg_analyzer;
 
         std::atomic<bool> ext_side_chain{false};
+        bool c_ext_side_chain{false};
 
         std::atomic<int> stereo_mode{0};
         int c_stereo_mode{0};
@@ -53,6 +54,7 @@ namespace zldsp {
 
         std::atomic<compressor::style> style{compressor::style::clean};
 
+        std::atomic<bool> to_update_wet{true};
         std::atomic<double> wet{1.0}, wet1{1.0}, wet2{1.0};
         double c_wet1{1.0}, c_wet2{1.0};
 
@@ -60,6 +62,7 @@ namespace zldsp {
         int c_oversample_idx{-1};
         size_t c_oversample_stage_idx{0};
         std::atomic<int> oversample_latency{0};
+        juce::AudioBuffer<double> oversampled_side_buffer{};
         std::array<juce::dsp::Oversampling<double>, 3> oversample_stages_main{
             juce::dsp::Oversampling<double>(2, 1,
                                             juce::dsp::Oversampling<double>::filterHalfBandFIREquiripple, true, true),

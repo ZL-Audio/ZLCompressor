@@ -153,7 +153,8 @@ namespace zldsp::compressor {
                 if (currentAttackTime < 0.001 || std::abs(currentPunchPortion) < 0.001) {
                     punch = FloatType(0);
                 } else {
-                    punch = static_cast<FloatType>(std::exp(exp_factor / currentAttackTime / std::abs(currentPunchPortion)));
+                    punch = static_cast<FloatType>(std::exp(
+                        exp_factor / currentAttackTime / std::abs(currentPunchPortion)));
                 }
                 punch_c = FloatType(1) - punch;
             }

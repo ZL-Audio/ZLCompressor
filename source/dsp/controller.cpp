@@ -25,6 +25,7 @@ namespace zldsp {
             t->prepare(spec.sampleRate);
             t->setMaximumMomentarySeconds(0.04);
         }
+        oversampled_side_buffer.setSize(2, static_cast<int>(spec.maximumBlockSize) * 8);
         // init oversamplers
         for (auto &os: oversample_stages_main) {
             os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
@@ -36,14 +37,18 @@ namespace zldsp {
 
 
     void Controller::prepareBuffer() {
+        // load external side-chain
+        c_ext_side_chain = ext_side_chain.load();
         // load stereo mode
         c_stereo_mode = stereo_mode.load();
         // load stereo link
         c_link = 1.0 - std::clamp(link.load(), 0.0, 0.5);
         // load wet values
-        const auto c_wet = wet.load();
-        c_wet1 = wet1.load() * c_wet * 0.05; // 0.05 accounts for the db to gain transformation
-        c_wet2 = wet2.load() * c_wet * 0.05;
+        if (to_update_wet.exchange(false)) {
+            const auto c_wet = wet.load();
+            c_wet1 = wet1.load() * c_wet * 0.05; // 0.05 accounts for the db to gain transformation
+            c_wet2 = wet2.load() * c_wet * 0.05;
+        }
         // load oversampling idx, set up trackers/followers and update latency
         if (oversample_idx.load() != c_oversample_idx) {
             c_oversample_idx = oversample_idx.load();
@@ -54,14 +59,17 @@ namespace zldsp {
             } else {
                 oversample_latency.store(0);
             }
+            const auto oversample_mul = 1 << c_oversample_idx;
             // prepare tracker and followers with the multiplied samplerate
-            const auto oversample_sr = main_spec.sampleRate * static_cast<double>(int(1) << c_oversample_idx);
+            const auto oversample_sr = main_spec.sampleRate * static_cast<double>(oversample_mul);
             for (auto &t: {&tracker1, &tracker2}) {
                 t->prepare(oversample_sr);
             }
             for (auto &f: {&follower1, &follower2}) {
                 f->prepare(oversample_sr);
             }
+            // prepare oversampled side-buffer
+            oversampled_side_buffer.setSize(2, static_cast<int>(main_spec.maximumBlockSize) * oversample_mul);
             triggerAsyncUpdate();
         }
     }
@@ -79,25 +87,39 @@ namespace zldsp {
         // stereo split the main/side buffer
         if (c_stereo_mode == 1) {
             ms_splitter.split(main_buffer);
-            ms_splitter.split(side_buffer);
+            if (c_ext_side_chain) ms_splitter.split(side_buffer);
         }
-        // up-sample side-buffer
+        // up-sample side buffer
         if (c_oversample_idx == 0) {
+            if (!c_ext_side_chain) side_buffer.makeCopyOf(main_buffer, true);
             processBuffer(buffer.getWritePointer(0), buffer.getWritePointer(1),
                           buffer.getWritePointer(2), buffer.getWritePointer(3),
                           static_cast<size_t>(buffer.getNumSamples()));
         } else {
             juce::dsp::AudioBlock<double> main_block(main_buffer);
-            juce::dsp::AudioBlock<double> side_block(side_buffer);
+            // upsample the main buffer
             auto &main_oversampler = oversample_stages_main[c_oversample_stage_idx];
-            auto &side_oversampler = oversample_stages_side[c_oversample_stage_idx];
-            // upsample the main buffer and side buffer
             auto os_main_block = main_oversampler.processSamplesUp(main_block);
-            auto os_side_block = side_oversampler.processSamplesUp(side_block);
-            // process the oversampled buffers
-            processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
-                          os_side_block.getChannelPointer(0), os_side_block.getChannelPointer(1),
-                          os_main_block.getNumSamples());
+            if (c_ext_side_chain) {
+                // upsample the side buffer
+                juce::dsp::AudioBlock<double> side_block(side_buffer);
+                auto &side_oversampler = oversample_stages_side[c_oversample_stage_idx];
+                auto os_side_block = side_oversampler.processSamplesUp(side_block);
+                // process the oversampled buffers
+                processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
+                              os_side_block.getChannelPointer(0), os_side_block.getChannelPointer(1),
+                              os_main_block.getNumSamples());
+            } else {
+                // copy the oversampled main buffer to the oversampled side buffer
+                oversampled_side_buffer.copyFrom(0, 0, os_main_block.getChannelPointer(0),
+                                                 static_cast<int>(os_main_block.getNumSamples()));
+                oversampled_side_buffer.copyFrom(1, 0, os_main_block.getChannelPointer(1),
+                                                 static_cast<int>(os_main_block.getNumSamples()));
+                // process the oversampled buffers
+                processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
+                              oversampled_side_buffer.getWritePointer(0), oversampled_side_buffer.getWritePointer(1),
+                              static_cast<size_t>(os_main_block.getNumSamples()));
+            }
             // downsample the main buffer
             main_oversampler.processSamplesDown(main_block);
         }
