@@ -38,7 +38,7 @@ namespace zldsp::compressor {
             }
             // transfer square sum to db
             const auto meanScale = FloatType(1) / static_cast<FloatType>(tracker.getCurrentBufferSize());
-            vector = FloatType(10) * kfr::log10(vector);
+            vector = FloatType(10) * kfr::log10(vector * meanScale);
             // pass through the computer and the follower
             for (size_t i = 0; i < num_samples; ++i) {
                 vector[i] = -follower.processSample(vector[i] - computer.eval(vector[i]));

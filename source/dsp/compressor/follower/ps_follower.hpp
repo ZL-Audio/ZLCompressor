@@ -11,6 +11,8 @@
 
 #include <atomic>
 #include <numbers>
+#include <cmath>
+#include <algorithm>
 
 namespace zldsp::compressor {
     /**
@@ -113,7 +115,7 @@ namespace zldsp::compressor {
         FloatType attack{}, attack_c{}, release{}, release_c{};
         FloatType punch{}, punch_c{}, smooth{}, smooth_c{};
         double exp_factor{-0.1308996938995747};
-        std::atomic<FloatType> attack_time{1}, release_time{1}, smooth_portion{0}, punch_portion{0};
+        std::atomic<FloatType> attack_time{50}, release_time{100}, smooth_portion{0}, punch_portion{0};
         std::atomic<bool> to_update{true};
 
         void update() {

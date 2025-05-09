@@ -28,7 +28,7 @@ namespace zlPanel {
         void mouseDoubleClick(const juce::MouseEvent &event) override;
 
     private:
-        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, zlDSP::Controller::avgAnalyzerPointNum> &avgAnalyzer;
+        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, zldsp::Controller::kAvgAnalyzerPointNum> &avgAnalyzer;
         AtomicBound atomicBound;
 
         juce::Path inPath, outPath;

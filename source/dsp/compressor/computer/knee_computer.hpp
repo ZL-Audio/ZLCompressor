@@ -9,7 +9,10 @@
 
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
+#include <atomic>
+#include <vector>
+#include <array>
+#include <algorithm>
 
 namespace zldsp::compressor {
     template<typename FloatType>
@@ -17,8 +20,7 @@ namespace zldsp::compressor {
         static constexpr FloatType a{FloatType(0)};
         FloatType b, c;
 
-        void setPara(FloatType t, FloatType r, FloatType w) {
-            juce::ignoreUnused(w);
+        void setPara(FloatType t, FloatType r, FloatType) {
             b = FloatType(1) / r;
             c = t * (FloatType(1) - FloatType(1) / r);
         }
@@ -106,7 +108,7 @@ namespace zldsp::compressor {
         inline FloatType getKneeW() const { return knee_w.load(); }
 
         inline void setCurve(FloatType v) {
-            curve.store(juce::jlimit(FloatType(-1), FloatType(1), v));
+            curve.store(std::clamp(v, FloatType(-1), FloatType(1)));
             to_interpolate.store(true);
         }
 

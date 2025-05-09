@@ -9,79 +9,177 @@
 
 #include "controller.hpp"
 
-namespace zlDSP {
+namespace zldsp {
     Controller::Controller(juce::AudioProcessor &processor)
-        : processorRef(processor) {
-
+        : processor_ref(processor) {
     }
 
     void Controller::prepare(const juce::dsp::ProcessSpec &spec) {
-        mainSpec = spec;
-        magAnalyzer.prepare(spec);
-        mainLRSplitter.prepare(spec);
-        mainMSSplitter.prepare(spec);
-        sideLRSplitter.prepare(spec);
-        sideMSSplitter.prepare(spec);
-        compressor.prepare(spec);
-        compressor.setThreshold(-18.0);
-        compressor.setRatio(2.0);
-        compressor.setAttack(50.0);
-        compressor.setRelease(100.0);
+        main_spec = spec;
+        mag_analyzer.prepare(spec);
 
-        preBuffer.setSize(2, static_cast<int>(spec.maximumBlockSize));
+        pre_buffer.setSize(2, static_cast<int>(spec.maximumBlockSize));
+        // allocate memories for up to 8x oversampling
+        for (auto &t: {&tracker1, &tracker2}) {
+            t->setMaximumMomentarySeconds(0.04 * 8.01);
+            t->prepare(spec.sampleRate);
+            t->setMaximumMomentarySeconds(0.04);
+        }
+        // init oversamplers
+        for (auto &os: oversample_stages_main) {
+            os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
+        }
+        for (auto &os: oversample_stages_side) {
+            os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
+        }
     }
 
-    void Controller::prepareBuffer() {
-        {
-            currentStereoMode = stereoMode.load();
-        }
-        {
-            if (oversampleIdx.load() != currentOversampleIdx) {
-                currentOversampleIdx = oversampleIdx.load();
-                if (currentOversampleIdx > 0) {
-                    oversampleLatency.store(
-                        static_cast<int>(
-                            oversampleStages[static_cast<size_t>(currentOversampleIdx - 1)].getLatencyInSamples()));
-                } else {
-                    oversampleLatency.store(0);
-                }
-                // TODO: prepare updated new sample-rates
-            }
-        }
 
+    void Controller::prepareBuffer() {
+        // load stereo mode
+        c_stereo_mode = stereo_mode.load();
+        // load stereo link
+        c_link = 1.0 - std::clamp(link.load(), 0.0, 0.5);
+        // load wet values
+        const auto c_wet = wet.load();
+        c_wet1 = wet1.load() * c_wet * 0.05; // 0.05 accounts for the db to gain transformation
+        c_wet2 = wet2.load() * c_wet * 0.05;
+        // load oversampling idx, set up trackers/followers and update latency
+        if (oversample_idx.load() != c_oversample_idx) {
+            c_oversample_idx = oversample_idx.load();
+            if (c_oversample_idx > 0) {
+                c_oversample_stage_idx = static_cast<size_t>(c_oversample_idx - 1);
+                oversample_latency.store(
+                    static_cast<int>(oversample_stages_main[c_oversample_stage_idx].getLatencyInSamples()));
+            } else {
+                oversample_latency.store(0);
+            }
+            // prepare tracker and followers with the multiplied samplerate
+            const auto oversample_sr = main_spec.sampleRate * static_cast<double>(int(1) << c_oversample_idx);
+            for (auto &t: {&tracker1, &tracker2}) {
+                t->prepare(oversample_sr);
+            }
+            for (auto &f: {&follower1, &follower2}) {
+                f->prepare(oversample_sr);
+            }
+            triggerAsyncUpdate();
+        }
     }
 
     void Controller::process(juce::AudioBuffer<double> &buffer) {
         prepareBuffer();
-        juce::AudioBuffer<double> mainBuffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
-        juce::AudioBuffer<double> sideBuffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
+        juce::AudioBuffer<double> main_buffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
+        juce::AudioBuffer<double> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
+        pre_buffer.makeCopyOf(main_buffer, true);
+
+        if (!ext_side_chain.load()) {
+            side_buffer.makeCopyOf(main_buffer, true);
+        }
+
         // stereo split the main/side buffer
-        if (currentStereoMode == 0) {
-            mainLRSplitter.split(mainBuffer);
-            sideLRSplitter.split(sideBuffer);
-        } else {
-            mainMSSplitter.split(mainBuffer);
-            sideMSSplitter.split(sideBuffer);
+        if (c_stereo_mode == 1) {
+            ms_splitter.split(main_buffer);
+            ms_splitter.split(side_buffer);
         }
         // up-sample side-buffer
-        if (currentOversampleIdx == 0) {
-            processSideBuffer(sideBuffer);
+        if (c_oversample_idx == 0) {
+            processBuffer(buffer.getWritePointer(0), buffer.getWritePointer(1),
+                          buffer.getWritePointer(2), buffer.getWritePointer(3),
+                          static_cast<size_t>(buffer.getNumSamples()));
         } else {
-            // over-sample the side-buffer
+            juce::dsp::AudioBlock<double> main_block(main_buffer);
+            juce::dsp::AudioBlock<double> side_block(side_buffer);
+            auto &main_oversampler = oversample_stages_main[c_oversample_stage_idx];
+            auto &side_oversampler = oversample_stages_side[c_oversample_stage_idx];
+            // upsample the main buffer and side buffer
+            auto os_main_block = main_oversampler.processSamplesUp(main_block);
+            auto os_side_block = side_oversampler.processSamplesUp(side_block);
+            // process the oversampled buffers
+            processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
+                          os_side_block.getChannelPointer(0), os_side_block.getChannelPointer(1),
+                          os_main_block.getNumSamples());
+            // downsample the main buffer
+            main_oversampler.processSamplesDown(main_block);
         }
 
-        preBuffer.makeCopyOf(mainBuffer, true);
-        juce::dsp::AudioBlock<double> block(mainBuffer);
-        compressor.process(juce::dsp::ProcessContextReplacing<double>(block));
-        magAnalyzer.process({preBuffer, mainBuffer});
-        magAvgAnalyzer.process({preBuffer, mainBuffer});
+        juce::dsp::AudioBlock<double> block(main_buffer);
+        mag_analyzer.process({pre_buffer, main_buffer});
+        mag_avg_analyzer.process({pre_buffer, main_buffer});
     }
 
-    void Controller::processSideBuffer(juce::AudioBuffer<double> &buffer) {
-        // TODO: process (over-sampled) side buffer here
+    void Controller::processBuffer(double *main_buffer1, double *main_buffer2,
+                                   double *side_buffer1, double *side_buffer2,
+                                   const size_t num_samples) {
+        // prepare computer, trackers and followers
+        computer.prepareBuffer();
+        tracker1.prepareBuffer();
+        tracker2.prepareBuffer();
+        follower1.prepareBuffer();
+        follower2.prepareBuffer();
+        // process compress style
+        const auto c_style = style.load();
+        switch (c_style) {
+            case compressor::style::clean: {
+                processSideBufferClean(side_buffer1, side_buffer2, num_samples);
+                break;
+            }
+            case compressor::style::classic: {
+                processSideBufferClassic(side_buffer1, side_buffer2, num_samples);
+                break;
+            }
+            case compressor::style::optical: {
+                processSideBufferOptical(side_buffer1, side_buffer2, num_samples);
+                break;
+            }
+            case compressor::style::bus: {
+                processSideBufferBus(side_buffer1, side_buffer2, num_samples);
+                break;
+            }
+        }
+        // apply the stereo link
+        for (size_t i = 0; i < num_samples; ++i) {
+            const auto x = side_buffer1[i];
+            const auto y = side_buffer2[i];
+            const auto xy = c_link * (x - y);
+            side_buffer1[i] = y + xy;
+            side_buffer2[i] = x - xy;
+        }
+        // process wet values and convert decibel to gain
+        auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
+        auto side_v2 = kfr::make_univector(side_buffer2, num_samples);
+        side_v1 = kfr::exp10(side_v1 * c_wet1);
+        side_v2 = kfr::exp10(side_v2 * c_wet2);
+        // apply gain on the main buffer
+        auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
+        auto main_v2 = kfr::make_univector(main_buffer2, num_samples);
+        if (side_swap.load()) {
+            main_v1 = main_v1 * side_v2;
+            main_v2 = main_v2 * side_v1;
+        } else {
+            main_v1 = main_v1 * side_v1;
+            main_v2 = main_v2 * side_v2;
+        }
+    }
+
+
+    void Controller::processSideBufferClean(double *buffer1, double *buffer2, const size_t num_samples) {
+        cleans[0].process(buffer1, num_samples);
+        cleans[1].process(buffer2, num_samples);
+    }
+
+    void Controller::processSideBufferClassic(double *buffer1, double *buffer2, const size_t num_samples) {
+        juce::ignoreUnused(buffer1, buffer2, num_samples);
+    }
+
+    void Controller::processSideBufferOptical(double *buffer1, double *buffer2, const size_t num_samples) {
+        juce::ignoreUnused(buffer1, buffer2, num_samples);
+    }
+
+    void Controller::processSideBufferBus(double *buffer1, double *buffer2, const size_t num_samples) {
+        juce::ignoreUnused(buffer1, buffer2, num_samples);
     }
 
     void Controller::handleAsyncUpdate() {
-        processorRef.setLatencySamples(oversampleLatency.load());
+        processor_ref.setLatencySamples(oversample_latency.load());
     }
 } // zlDSP

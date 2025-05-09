@@ -18,7 +18,7 @@ PluginProcessor::PluginProcessor()
           .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr,
                  juce::Identifier("ZLCompressorParameters"),
-                 zlDSP::getParameterLayout()),
+                 zldsp::getParameterLayout()),
       controller(*this) {
 }
 

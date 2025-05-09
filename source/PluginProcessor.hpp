@@ -66,10 +66,10 @@ public:
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    zlDSP::Controller &getController() { return controller; }
+    zldsp::Controller &getController() { return controller; }
 
 private:
-    zlDSP::Controller controller;
+    zldsp::Controller controller;
 
     juce::AudioBuffer<double> doubleBuffer;
 

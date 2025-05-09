@@ -12,7 +12,7 @@
 namespace zlPanel {
     PeakPanel::PeakPanel(PluginProcessor &processor)
         : magAnalyzer(processor.getController().getMagAnalyzer()) {
-        constexpr auto preallocateSpace = static_cast<int>(zlDSP::Controller::analyzerPointNum) * 3 + 1;
+        constexpr auto preallocateSpace = static_cast<int>(zldsp::Controller::kAnalyzerPointNum) * 3 + 1;
         for (auto &path: {&inPath, &outPath, &reductionPath}) {
             path->preallocateSpace(preallocateSpace);
         }
@@ -41,7 +41,7 @@ namespace zlPanel {
 
     void PeakPanel::resized() {
         auto bound = getLocalBounds().toFloat();
-        constexpr auto padP = 1.f / static_cast<float>(zlDSP::Controller::analyzerPointNum - 1);
+        constexpr auto padP = 1.f / static_cast<float>(zldsp::Controller::kAnalyzerPointNum - 1);
         const auto pad = std::max(bound.getWidth() * padP, 1.f);
         bound = bound.withWidth(bound.getWidth() + pad);
         atomicBound.store(bound);

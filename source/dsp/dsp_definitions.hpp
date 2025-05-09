@@ -11,7 +11,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace zlDSP {
+namespace zldsp {
     inline auto static constexpr versionHint = 1;
 
     // float

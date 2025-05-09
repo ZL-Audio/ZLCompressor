@@ -15,11 +15,6 @@ namespace zlSplitter {
     }
 
     template<typename FloatType>
-    void MSSplitter<FloatType>::prepare(const juce::dsp::ProcessSpec &spec) {
-        juce::ignoreUnused(spec);
-    }
-
-    template<typename FloatType>
     void MSSplitter<FloatType>::split(juce::AudioBuffer<FloatType> &buffer) {
         auto l_buffer = buffer.getWritePointer(0);
         auto r_buffer = buffer.getWritePointer(1);

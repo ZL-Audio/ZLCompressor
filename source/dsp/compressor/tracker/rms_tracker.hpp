@@ -9,10 +9,11 @@
 
 #pragma once
 
-#include <juce_dsp/juce_dsp.h>
+#include <atomic>
+#include <cmath>
+#include <algorithm>
 
 #include "../../container/container.hpp"
-#include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
     /**
@@ -58,8 +59,9 @@ namespace zldsp::compressor {
          */
         void prepareBuffer() {
             if (to_update.exchange(false)) {
-                currentBuffer_size = buffer_size.load();
-                while (square_buffer.size() > currentBuffer_size) {
+                current_buffer_size = buffer_size.load();
+                current_buffer_size_r = FloatType(1) / static_cast<FloatType>(current_buffer_size);
+                while (square_buffer.size() > current_buffer_size) {
                     square_sum -= square_buffer.popFront();
                 }
                 if (IsPeakMix) {
@@ -73,27 +75,11 @@ namespace zldsp::compressor {
             const FloatType square = IsPeakMix
                                          ? std::abs(x) * (current_peak_mix + std::abs(x) * current_peak_mix_c)
                                          : x * x;
-            if (square_buffer.size() == currentBuffer_size) {
+            if (square_buffer.size() == current_buffer_size) {
                 square_sum -= square_buffer.popFront();
             }
             square_buffer.pushBack(square);
             square_sum += square;
-        }
-
-        void processBufferRMS(juce::AudioBuffer<FloatType> &buffer) {
-            FloatType _ms = 0;
-            for (auto channel = 0; channel < buffer.getNumChannels(); channel++) {
-                auto data = buffer.getReadPointer(channel);
-                _ms += zlVector::sumsqr(buffer.getReadPointer(channel),
-                                        static_cast<size_t>(buffer.getNumSamples()));
-            }
-            _ms = _ms / static_cast<FloatType>(buffer.getNumSamples());
-
-            if (square_buffer.size() == currentBuffer_size) {
-                square_sum -= square_buffer.popFront();
-            }
-            square_buffer.pushBack(_ms);
-            square_sum += _ms;
         }
 
         /**
@@ -125,15 +111,15 @@ namespace zldsp::compressor {
             to_update.store(true);
         }
 
-        size_t getCurrentBuffer_size() const { return currentBuffer_size; }
+        size_t getCurrentBufferSize() const { return current_buffer_size; }
 
         FloatType getMomentarySquare() {
             return square_sum;
         }
 
-        FloatType getMomentaryLoudness() {
-            FloatType meanSquare = square_sum / static_cast<FloatType>(currentBuffer_size);
-            return juce::Decibels::gainToDecibels(meanSquare, kMinusInfinityDB) * FloatType(0.5);
+        FloatType getMomentaryDB() {
+            FloatType meanSquare = square_sum * current_buffer_size_r;
+            return std::log10(std::max(FloatType(1e-10), meanSquare)) * FloatType(10);
         }
 
     private:
@@ -143,7 +129,8 @@ namespace zldsp::compressor {
         std::atomic<double> sample_rate{48000.0};
         std::atomic<FloatType> time_length{0};
         FloatType maximum_time_length{0};
-        size_t currentBuffer_size{1};
+        size_t current_buffer_size{1};
+        FloatType current_buffer_size_r{FloatType(1)};
         std::atomic<size_t> buffer_size{1};
         FloatType current_peak_mix{0}, current_peak_mix_c{1};
         std::atomic<FloatType> peak_mix{0};

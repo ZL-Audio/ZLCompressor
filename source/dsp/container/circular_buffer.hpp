@@ -21,36 +21,38 @@ namespace zlContainer {
     public:
         explicit CircularBuffer(const size_t capacity = 1) {
             data.resize(capacity);
+            cap = static_cast<int>(capacity);
         }
 
         [[nodiscard]] size_t capacity() const { return data.size(); }
 
-        [[nodiscard]] size_t size() const { return static_cast<size_t>(currentNum); }
+        [[nodiscard]] size_t size() const { return static_cast<size_t>(current_num); }
 
         void setCapacity(const size_t capacity) {
             data.resize(capacity);
+            cap = static_cast<int>(capacity);
         }
 
         void clear() {
             std::fill(data.begin(), data.end(), T());
             pos = 0;
-            currentNum = 0;
+            current_num = 0;
         }
 
         void pushBack(T x) {
             data[static_cast<size_t>(pos)] = x;
-            pos = (pos + 1) % static_cast<int>(data.size());
-            currentNum = std::min(currentNum + 1, static_cast<int>(data.size()));
+            pos = (pos + 1) % cap;
+            current_num = std::min(current_num + 1, cap);
         }
 
         T popFront() {
-            const auto frontPos = (pos - currentNum + static_cast<int>(data.size())) % static_cast<int>(data.size());
-            currentNum -= 1;
+            const auto frontPos = (pos - current_num + cap) % cap;
+            current_num -= 1;
             return data[static_cast<size_t>(frontPos)];
         }
 
     private:
         std::vector<T> data;
-        int pos = 0, currentNum = 0;
+        int pos = 0, current_num = 0, cap = 0;
     };
 }

@@ -15,11 +15,6 @@ namespace zlSplitter {
     }
 
     template<typename FloatType>
-    void LRSplitter<FloatType>::prepare(const juce::dsp::ProcessSpec &spec) {
-        juce::ignoreUnused(spec);
-    }
-
-    template<typename FloatType>
     void LRSplitter<FloatType>::split(juce::AudioBuffer<FloatType> &buffer) {
         lBuffer.setDataToReferTo(buffer.getArrayOfWritePointers(), 1, 0, buffer.getNumSamples());
         rBuffer.setDataToReferTo(buffer.getArrayOfWritePointers() + 1, 1, 0, buffer.getNumSamples());

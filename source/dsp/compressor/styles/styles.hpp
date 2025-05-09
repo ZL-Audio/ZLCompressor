@@ -13,3 +13,12 @@
 #include "classic.hpp"
 #include "optical.hpp"
 #include "bus.hpp"
+
+namespace zldsp::compressor {
+    enum style {
+        clean,
+        classic,
+        optical,
+        bus
+    };
+}
