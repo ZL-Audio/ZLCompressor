@@ -12,85 +12,87 @@
 #include <vector>
 #include <algorithm>
 
-namespace zlContainer {
+namespace zldsp::container {
     /**
-     * a circular buffer
+     * a circular buffer that can track the min/max value
      * @tparam T the type of elements
+     * @tparam FindMin
+     * @tparam FindMax
      */
-    template<typename T, bool findMin, bool findMax>
+    template<typename T, bool FindMin, bool FindMax>
     class CircularMinMaxBuffer {
     public:
         explicit CircularMinMaxBuffer(const size_t capacity = 1) {
-            static_assert(findMin != findMax);
-            data.resize(capacity);
+            static_assert(FindMin != FindMax);
+            data_.resize_(capacity);
         }
 
-        [[nodiscard]] size_t capacity() const { return data.size(); }
+        [[nodiscard]] size_t capacity() const { return data_.size_(); }
 
         void setCapacity(const size_t capacity) {
-            data.resize(capacity);
+            data_.resize_(capacity);
         }
 
         void setSize(const int x) {
-            if (x < size) {
-                const auto shift = static_cast<size_t>(size - x);
+            if (x < size_) {
+                const auto shift = static_cast<size_t>(size_ - x);
                 for (size_t i = 0; i < static_cast<size_t>(x); ++i) {
-                    data[i] = data[i + shift];
+                    data_[i] = data_[i + shift];
                 }
             }
-            size = x;
-            if (findMin) {
-                std::fill(data.begin() + size, data.end(), static_cast<T>(1e6));
+            size_ = x;
+            if (FindMin) {
+                std::fill(data_.begin() + size_, data_.end(), static_cast<T>(1e6));
             }
-            if (findMax) {
-                std::fill(data.begin() + size, data.end(), static_cast<T>(-1e6));
+            if (FindMax) {
+                std::fill(data_.begin() + size_, data_.end(), static_cast<T>(-1e6));
             }
             updateMinMaxPos();
         }
 
         void clear() {
-            std::fill(data.begin(), data.end(), T());
-            pos = 0;
-            minmaxPos = 0;
+            std::fill(data_.begin(), data_.end(), T());
+            pos_ = 0;
+            minmax_pos_ = 0;
         }
 
         T push(T x) {
-            data[static_cast<size_t>(pos)] = x;
-            if (findMin) {
-                if (x < minmaxValue) {
-                    minmaxValue = x;
-                    minmaxPos = pos;
-                } else if (pos == minmaxPos) {
+            data_[static_cast<size_t>(pos_)] = x;
+            if (FindMin) {
+                if (x < minmax_value_) {
+                    minmax_value_ = x;
+                    minmax_pos_ = pos_;
+                } else if (pos_ == minmax_pos_) {
                     updateMinMaxPos();
                 }
             }
-            if (findMax) {
-                if (x > minmaxValue) {
-                    minmaxValue = x;
-                    minmaxPos = pos;
-                } else if (pos == minmaxPos) {
+            if (FindMax) {
+                if (x > minmax_value_) {
+                    minmax_value_ = x;
+                    minmax_pos_ = pos_;
+                } else if (pos_ == minmax_pos_) {
                     updateMinMaxPos();
                 }
             }
-            pos = (pos + 1) % size;
-            return minmaxValue;
+            pos_ = (pos_ + 1) % size_;
+            return minmax_value_;
         }
 
     private:
-        std::vector<T> data;
-        int pos = 0, minmaxPos = 0, size = 0;
-        T minmaxValue;
+        std::vector<T> data_;
+        int pos_ = 0, minmax_pos_ = 0, size_ = 0;
+        T minmax_value_;
 
         void updateMinMaxPos() {
-            if (findMin) {
-                const auto *minElement = std::min_element(data.begin(), data.begin() + size);
-                minmaxValue = *minElement;
-                minmaxPos = static_cast<int>(std::distance(data.begin(), minElement));
+            if (FindMin) {
+                const auto *min_element = std::min_element(data_.begin(), data_.begin() + size_);
+                minmax_value_ = *min_element;
+                minmax_pos_ = static_cast<int>(std::distance(data_.begin(), min_element));
             }
-            if (findMax) {
-                const auto *maxElement = std::max_element(data.begin(), data.begin() + size);
-                minmaxValue = *maxElement;
-                minmaxPos = static_cast<int>(std::distance(data.begin(), maxElement));
+            if (FindMax) {
+                const auto *max_element = std::max_element(data_.begin(), data_.begin() + size_);
+                minmax_value_ = *max_element;
+                minmax_pos_ = static_cast<int>(std::distance(data_.begin(), max_element));
             }
         }
     };

@@ -9,22 +9,22 @@
 
 #include "rms_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     RMSPanel::RMSPanel(PluginProcessor &processor)
-        : avgAnalyzer(processor.getController().getMagAvgAnalyzer()) {
-        avgAnalyzer.setToReset();
+        : avg_analyzer_ref_(processor.getController().getMagAvgAnalyzer()) {
+        avg_analyzer_ref_.setToReset();
         setBufferedToImage(true);
     }
 
     void RMSPanel::paint(juce::Graphics &g) {
-        const juce::GenericScopedTryLock guard{lock};
+        const juce::GenericScopedTryLock guard{path_lock_};
         if (!guard.isLocked()) {
             return;
         }
         g.setColour(juce::Colours::white.withAlpha(.25f));
-        g.fillPath(inPath);
+        g.fillPath(in_path_);
         g.setColour(juce::Colours::white.withAlpha(.9f));
-        g.strokePath(outPath,
+        g.strokePath(out_path_,
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
@@ -32,35 +32,25 @@ namespace zlPanel {
 
     void RMSPanel::run(double nextTimeStamp) {
         juce::ignoreUnused(nextTimeStamp);
-        const auto currentBound = atomicBound.load();
-        avgAnalyzer.run();
-        nextInPath.clear();
-        nextOutPath.clear();
-        avgAnalyzer.createPath({nextInPath, nextOutPath}, {true, false},
+        const auto currentBound = atomic_bound_.load();
+        avg_analyzer_ref_.run();
+        next_in_path_.clear();
+        next_out_path_.clear();
+        avg_analyzer_ref_.createPath({next_in_path_, next_out_path_}, {true, false},
                                currentBound, 72); {
-            const juce::GenericScopedLock guard{lock};
-            inPath = nextInPath;
-            outPath = nextOutPath;
+            const juce::GenericScopedLock guard{path_lock_};
+            in_path_ = next_in_path_;
+            out_path_ = next_out_path_;
         }
     }
 
     void RMSPanel::resized() {
-        auto bound = getLocalBounds().toFloat();
-        atomicBound.store(bound.withWidth(bound.getWidth() - 20.f));
-
-        gradient.point1 = juce::Point<float>(bound.getX(), 0.f);
-        gradient.point2 = juce::Point<float>(bound.getRight(), 0.f);
-        gradient.isRadial = false;
-        gradient.clearColours();
-
-        gradient.addColour(0.0,
-                           juce::Colours::black.withAlpha(1.f));
-        gradient.addColour(1.0,
-                           juce::Colours::black.withAlpha(0.f));
+        const auto bound = getLocalBounds().toFloat();
+        atomic_bound_.store(bound.withWidth(bound.getWidth() - 20.f));
     }
 
     void RMSPanel::mouseDoubleClick(const juce::MouseEvent &event) {
         juce::ignoreUnused(event);
-        avgAnalyzer.setToReset();
+        avg_analyzer_ref_.setToReset();
     }
-} // zlPanel
+} // zlpanel

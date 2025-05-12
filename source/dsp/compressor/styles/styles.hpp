@@ -15,10 +15,10 @@
 #include "bus.hpp"
 
 namespace zldsp::compressor {
-    enum style {
-        clean,
-        classic,
-        optical,
-        bus
+    enum Style {
+        kClean,
+        kClassic,
+        kOptical,
+        kBus
     };
 }

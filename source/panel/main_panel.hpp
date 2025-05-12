@@ -14,7 +14,7 @@
 #include "../PluginProcessor.hpp"
 #include "curve_panel/curve_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     class MainPanel final : public juce::Component {
     public:
         explicit MainPanel(PluginProcessor &processor);
@@ -22,6 +22,6 @@ namespace zlPanel {
         void resized() override;
 
     private:
-        CurvePanel curvePanel;
+        CurvePanel curve_panel_;
     };
-} // zlPanel
+} // zlpanel

@@ -9,13 +9,13 @@
 
 #include "main_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     MainPanel::MainPanel(PluginProcessor &processor)
-        : curvePanel(processor) {
-        addAndMakeVisible(curvePanel);
+        : curve_panel_(processor) {
+        addAndMakeVisible(curve_panel_);
     }
 
     void MainPanel::resized() {
-        curvePanel.setBounds(getLocalBounds());
+        curve_panel_.setBounds(getLocalBounds());
     }
-} // zlPanel
+} // zlpanel

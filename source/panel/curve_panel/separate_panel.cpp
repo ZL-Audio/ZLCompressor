@@ -9,26 +9,26 @@
 
 #include "separate_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     SeparatePanel::SeparatePanel() {
         setBufferedToImage(true);
     }
 
     void SeparatePanel::paint(juce::Graphics &g) {
-        g.setGradientFill(gradient);
+        g.setGradientFill(gradient_);
         g.fillRect(getLocalBounds());
     }
 
     void SeparatePanel::resized() {
-        auto bound = getLocalBounds().toFloat();
-        gradient.point1 = juce::Point<float>(bound.getX(), bound.getY());
-        gradient.point2 = juce::Point<float>(bound.getRight(), bound.getY());
-        gradient.isRadial = false;
-        gradient.clearColours();
+        const auto bound = getLocalBounds().toFloat();
+        gradient_.point1 = juce::Point<float>(bound.getX(), bound.getY());
+        gradient_.point2 = juce::Point<float>(bound.getRight(), bound.getY());
+        gradient_.isRadial = false;
+        gradient_.clearColours();
 
-        gradient.addColour(0.0,
+        gradient_.addColour(0.0,
                            juce::Colours::black.withAlpha(1.f));
-        gradient.addColour(1.0,
+        gradient_.addColour(1.0,
                            juce::Colours::black.withAlpha(0.f));
     }
-} // zlPanel
+} // zlpanel

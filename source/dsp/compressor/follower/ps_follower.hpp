@@ -31,24 +31,24 @@ namespace zldsp::compressor {
          * @param sr sampleRate
          */
         void prepare(const double sr) {
-            exp_factor = -2.0 * std::numbers::pi * 1000.0 / sr;
-            to_update.store(true);
+            exp_factor_ = -2.0 * std::numbers::pi * 1000.0 / sr;
+            to_update_.store(true);
         }
 
         /**
          * reset the follower
          */
         void reset(const FloatType x) {
-            y = x;
-            state = x;
-            slope = FloatType(0);
+            y_ = x;
+            state_ = x;
+            slope_ = FloatType(0);
         }
 
         /**
          * update values before processing a buffer
          */
         void prepareBuffer() {
-            if (to_update.exchange(false)) {
+            if (to_update_.exchange(false)) {
                 update();
             }
         }
@@ -61,102 +61,102 @@ namespace zldsp::compressor {
         FloatType processSample(const FloatType x) {
             FloatType y0;
             if (UseSmooth) {
-                state = std::max(x, release * state + release_c * x);
-                const auto y1 = attack * y + attack_c * state;
-                const auto y2 = x >= y ? attack * y + attack_c * x : release * y + release_c * x;
-                y0 = smooth * y1 + smooth_c * y2;
+                state_ = std::max(x, release_ * state_ + release_c_ * x);
+                const auto y1 = attack_ * y_ + attack_c_ * state_;
+                const auto y2 = x >= y_ ? attack_ * y_ + attack_c_ * x : release_ * y_ + release_c_ * x;
+                y0 = smooth_ * y1 + smooth_c_ * y2;
             } else {
-                y0 = x >= y ? attack * y + attack_c * x : release * y + release_c * x;
+                y0 = x >= y_ ? attack_ * y_ + attack_c_ * x : release_ * y_ + release_c_ * x;
             }
             if (UsePunch) {
-                const auto slope0 = y0 - y;
-                if (punch >= FloatType(0)) {
-                    if (slope0 < slope) {
-                        slope = punch * slope + punch_c * slope0;
+                const auto slope0 = y0 - y_;
+                if (punch_ >= FloatType(0)) {
+                    if (slope0 < slope_) {
+                        slope_ = punch_ * slope_ + punch_c_ * slope0;
                     } else {
-                        slope = slope0;
+                        slope_ = slope0;
                     }
                 } else {
-                    if (slope0 > slope && slope >= FloatType(0)) {
-                        slope = punch * slope + punch_c * slope0;
+                    if (slope0 > slope_ && slope_ >= FloatType(0)) {
+                        slope_ = punch_ * slope_ + punch_c_ * slope0;
                     } else {
-                        slope = slope0;
+                        slope_ = slope0;
                     }
                 }
-                y += slope;
+                y_ += slope_;
             } else {
-                y = y0;
+                y_ = y0;
             }
-            return y;
+            return y_;
         }
 
         void setAttack(const FloatType millisecond) {
-            attack_time.store(std::max(FloatType(0), millisecond));
-            to_update.store(true);
+            attack_time_.store(std::max(FloatType(0), millisecond));
+            to_update_.store(true);
         }
 
         void setRelease(const FloatType millisecond) {
-            release_time.store(std::max(FloatType(0), millisecond));
-            to_update.store(true);
+            release_time_.store(std::max(FloatType(0), millisecond));
+            to_update_.store(true);
         }
 
         void setPunch(const FloatType x) {
-            punch_portion.store(std::clamp(x, FloatType(-1), FloatType(1)));
-            to_update.store(true);
+            punch_portion_.store(std::clamp(x, FloatType(-1), FloatType(1)));
+            to_update_.store(true);
         }
 
         void setSmooth(const FloatType x) {
-            smooth_portion.store(std::clamp(x, FloatType(0), FloatType(1)));
-            to_update.store(true);
+            smooth_portion_.store(std::clamp(x, FloatType(0), FloatType(1)));
+            to_update_.store(true);
         }
 
     private:
-        FloatType y{}, state{}, slope{};
-        FloatType attack{}, attack_c{}, release{}, release_c{};
-        FloatType punch{}, punch_c{}, smooth{}, smooth_c{};
-        double exp_factor{-0.1308996938995747};
-        std::atomic<FloatType> attack_time{50}, release_time{100}, smooth_portion{0}, punch_portion{0};
-        std::atomic<bool> to_update{true};
+        FloatType y_{}, state_{}, slope_{};
+        FloatType attack_{}, attack_c_{}, release_{}, release_c_{};
+        FloatType punch_{}, punch_c_{}, smooth_{}, smooth_c_{};
+        double exp_factor_{-0.1308996938995747};
+        std::atomic<FloatType> attack_time_{1}, release_time_{1}, smooth_portion_{0}, punch_portion_{0};
+        std::atomic<bool> to_update_{true};
 
         void update() {
             // cache atomic values
-            const auto currentAttackTime = static_cast<double>(attack_time.load());
-            const auto currentReleaseTime = static_cast<double>(release_time.load());
-            const auto currentSmoothPortion = static_cast<double>(smooth_portion.load());
-            const auto currentPunchPortion = static_cast<double>(punch_portion.load());
+            const auto current_attack_time = static_cast<double>(attack_time_.load());
+            const auto current_release_time = static_cast<double>(release_time_.load());
+            const auto current_smooth_portion = static_cast<double>(smooth_portion_.load());
+            const auto current_punch_portion = static_cast<double>(punch_portion_.load());
             // update attack
-            if (currentAttackTime < 0.001) {
-                attack = FloatType(0);
+            if (current_attack_time < 0.001) {
+                attack_ = FloatType(0);
             } else {
                 if (UsePunch) {
-                    attack = static_cast<FloatType>(std::exp(
-                        exp_factor / currentAttackTime / (1. - std::pow(std::abs(currentPunchPortion), 2.) * 0.125)));
+                    attack_ = static_cast<FloatType>(std::exp(
+                        exp_factor_ / current_attack_time / (1. - std::pow(std::abs(current_punch_portion), 2.) * 0.125)));
                 } else {
-                    attack = static_cast<FloatType>(std::exp(exp_factor / currentAttackTime));
+                    attack_ = static_cast<FloatType>(std::exp(exp_factor_ / current_attack_time));
                 }
             }
-            attack_c = FloatType(1) - attack;
+            attack_c_ = FloatType(1) - attack_;
             // update release
-            if (currentReleaseTime < 0.001) {
-                release = FloatType(0);
+            if (current_release_time < 0.001) {
+                release_ = FloatType(0);
             } else {
-                release = static_cast<FloatType>(std::exp(exp_factor / currentReleaseTime));
+                release_ = static_cast<FloatType>(std::exp(exp_factor_ / current_release_time));
             }
-            release_c = FloatType(1) - release;
+            release_c_ = FloatType(1) - release_;
             if (UseSmooth) {
                 // update smooth
-                smooth = static_cast<FloatType>(currentSmoothPortion);
-                smooth_c = FloatType(1) - smooth;
+                smooth_ = static_cast<FloatType>(current_smooth_portion);
+                smooth_c_ = FloatType(1) - smooth_;
             }
             if (UsePunch) {
                 // update punch
-                if (currentAttackTime < 0.001 || std::abs(currentPunchPortion) < 0.001) {
-                    punch = FloatType(0);
+                if (current_attack_time < 0.001 || std::abs(current_punch_portion) < 0.001) {
+                    punch_ = FloatType(0);
                 } else {
-                    punch = static_cast<FloatType>(std::exp(
-                        exp_factor / currentAttackTime / std::abs(currentPunchPortion)));
+                    punch_ = static_cast<FloatType>(std::exp(
+                        exp_factor_ / current_attack_time / std::abs(current_punch_portion)));
                 }
-                punch_c = FloatType(1) - punch;
+                punch_c_ = FloatType(1) - punch_;
             }
         }
     };

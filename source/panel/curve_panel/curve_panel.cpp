@@ -9,16 +9,16 @@
 
 #include "curve_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &processor)
         : Thread("curve_panel"),
-          peakPanel(processor), rmsPanel(processor),
-          vblank(this, [this](const double timeStamp) { repaintCallBack(timeStamp); }) {
-        addAndMakeVisible(peakPanel);
-        addAndMakeVisible(separatePanel);
-        addAndMakeVisible(rmsPanel);
-        addAndMakeVisible(computerPanel);
-        computerPanel.setInterceptsMouseClicks(false, false);
+          peak_panel_(processor), rms_panel_(processor),
+          vblank_(this, [this](const double time_stamp) { repaintCallBack(time_stamp); }) {
+        addAndMakeVisible(peak_panel_);
+        addAndMakeVisible(separate_panel_);
+        addAndMakeVisible(rms_panel_);
+        addAndMakeVisible(computer_panel_);
+        computer_panel_.setInterceptsMouseClicks(false, false);
         startThread(juce::Thread::Priority::low);
     }
 
@@ -39,39 +39,39 @@ namespace zlPanel {
 
     void CurvePanel::resized() {
         const auto bound = getLocalBounds().toFloat();
-        rmsPanel.setBounds(bound.withWidth(75.f).toNearestInt());
-        peakPanel.setBounds(bound.toNearestInt());
+        rms_panel_.setBounds(bound.withWidth(75.f).toNearestInt());
+        peak_panel_.setBounds(bound.toNearestInt());
         const auto r = std::min(bound.getWidth(), bound.getHeight());
-        separatePanel.setBounds(bound.withSize(r, r).toNearestInt());
-        computerPanel.setBounds(bound.withSize(r * 1.5f, r).toNearestInt());
+        separate_panel_.setBounds(bound.withSize(r, r).toNearestInt());
+        computer_panel_.setBounds(bound.withSize(r * 1.5f, r).toNearestInt());
     }
 
     void CurvePanel::run() {
-        juce::ScopedNoDenormals noDenormals;
+        juce::ScopedNoDenormals no_denormals;
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
-            const auto timeStamp = nextStamp.load();
-            peakPanel.run(timeStamp);
-            computerPanel.run();
-            if (toRunRMS.exchange(false)) {
-                rmsPanel.run(timeStamp);
+            const auto time_stamp = next_stamp_.load();
+            peak_panel_.run(time_stamp);
+            computer_panel_.run();
+            if (to_run_rms_.exchange(false)) {
+                rms_panel_.run(time_stamp);
             }
         }
     }
 
-    void CurvePanel::repaintCallBack(const double timeStamp) {
-        if (repaintCount >= 0) {
-            repaintCount = 0;
-            nextStamp.store(timeStamp);
-            peakPanel.repaint();
-            if (timeStamp - rmsPreviousStamp > .1) {
-                rmsPanel.repaint();
-                rmsPreviousStamp = timeStamp;
-                toRunRMS.store(true);
+    void CurvePanel::repaintCallBack(const double time_stamp) {
+        if (repaint_count_ >= 0) {
+            repaint_count_ = 0;
+            next_stamp_.store(time_stamp);
+            peak_panel_.repaint();
+            if (time_stamp - rms_previous_stamp_ > .1) {
+                rms_panel_.repaint();
+                rms_previous_stamp_ = time_stamp;
+                to_run_rms_.store(true);
             }
         } else {
-            repaintCount += 1;
+            repaint_count_ += 1;
         }
     }
-} // zlPanel
+} // zlpanel

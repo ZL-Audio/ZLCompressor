@@ -14,7 +14,7 @@
 #include "../../PluginProcessor.hpp"
 #include "../helper/helper.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     class RMSPanel final : public juce::Component {
     public:
         explicit RMSPanel(PluginProcessor &processor);
@@ -28,13 +28,11 @@ namespace zlPanel {
         void mouseDoubleClick(const juce::MouseEvent &event) override;
 
     private:
-        zlMagAnalyzer::MultipleMagAvgAnalyzer<double, 2, zldsp::Controller::kAvgAnalyzerPointNum> &avgAnalyzer;
-        AtomicBound atomicBound;
+        zldsp::analyzer::MultipleMagAvgAnalyzer<double, 2, zlp::Controller::kAvgAnalyzerPointNum> &avg_analyzer_ref_;
+        AtomicBound<float> atomic_bound_;
 
-        juce::Path inPath, outPath;
-        juce::Path nextInPath, nextOutPath;
-        juce::SpinLock lock;
-
-        juce::ColourGradient gradient;
+        juce::Path in_path_, out_path_;
+        juce::Path next_in_path_, next_out_path_;
+        juce::SpinLock path_lock_;
     };
-} // zlPanel
+} // zlpanel

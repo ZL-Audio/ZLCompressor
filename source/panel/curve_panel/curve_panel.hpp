@@ -17,7 +17,7 @@
 #include "computer_panel.hpp"
 #include "separate_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     class CurvePanel final : public juce::Component,
                              private juce::Thread {
     public:
@@ -32,18 +32,18 @@ namespace zlPanel {
         void resized() override;
 
     private:
-        PeakPanel peakPanel;
-        RMSPanel rmsPanel;
-        ComputerPanel computerPanel;
-        SeparatePanel separatePanel;
-        juce::VBlankAttachment vblank;
-        std::atomic<double> nextStamp{0.};
-        double rmsPreviousStamp{0.};
-        std::atomic<bool> toRunRMS{false};
-        int repaintCount{3};
+        PeakPanel peak_panel_;
+        RMSPanel rms_panel_;
+        ComputerPanel computer_panel_;
+        SeparatePanel separate_panel_;
+        juce::VBlankAttachment vblank_;
+        std::atomic<double> next_stamp_{0.};
+        double rms_previous_stamp_{0.};
+        std::atomic<bool> to_run_rms_{false};
+        int repaint_count_{3};
 
         void run() override;
 
-        void repaintCallBack(double timeStamp);
+        void repaintCallBack(double time_stamp);
     };
-} // zlPanel
+} // zlpanel

@@ -9,10 +9,7 @@
 
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_dsp/juce_dsp.h>
-
-namespace zlSplitter {
+namespace zldsp::splitter {
     /**
      * a splitter that splits the stereo audio signal input mid signal and side signal
      * @tparam FloatType
@@ -22,27 +19,28 @@ namespace zlSplitter {
     public:
         MSSplitter() = default;
 
-        void reset();
-
-        void prepare(const juce::dsp::ProcessSpec &spec);
+        /**
+         * switch left/right buffer to mid/side buffer
+         */
+        static constexpr void split(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
+            for (size_t i = 0; i < num_samples; ++i) {
+                const auto l = l_buffer[i];
+                const auto r = r_buffer[i];
+                l_buffer[i] = (l + r) * FloatType(0.5);
+                r_buffer[i] = l_buffer[i] - r_buffer[i];
+            }
+        }
 
         /**
-         * split the audio buffer into internal mid buffer and side buffer
-         * @param buffer
+         * switch mis/side buffer to left/right buffer
          */
-        void split(juce::AudioBuffer<FloatType> &buffer);
-
-        /**
-         * combine the internal mid buffer and side buffer into the audio buffer
-         * @param buffer
-         */
-        void combine(juce::AudioBuffer<FloatType> &buffer);
-
-        inline juce::AudioBuffer<FloatType> &getMBuffer() { return mBuffer; }
-
-        inline juce::AudioBuffer<FloatType> &getSBuffer() { return sBuffer; }
-
-    private:
-        juce::AudioBuffer<FloatType> mBuffer, sBuffer;
+        static constexpr void combine(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
+            for (size_t i = 0; i < num_samples; ++i) {
+                const auto l = l_buffer[i];
+                const auto r = r_buffer[i];
+                l_buffer[i] = l + r;
+                r_buffer[i] = l - r;
+            }
+        }
     };
 }

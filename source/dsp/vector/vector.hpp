@@ -16,7 +16,7 @@
 #include <kfr/dsp.hpp>
 #pragma clang diagnostic pop
 
-namespace zlVector {
+namespace zldsp::vector {
     template<typename FloatType>
     inline void copy(FloatType *out, const FloatType* in, const size_t size) {
         auto v1 = kfr::make_univector(out, size);
@@ -50,10 +50,25 @@ namespace zlVector {
     }
 
     template<typename FloatType>
+    inline void multiply(FloatType *out, FloatType *in, const FloatType m, const size_t size) {
+        auto out_v = kfr::make_univector(out, size);
+        auto in_v = kfr::make_univector(in, size);
+        out_v = in_v * m;
+    }
+
+    template<typename FloatType>
     inline void multiply(FloatType *in, FloatType *mul, const size_t size) {
         auto v1 = kfr::make_univector(in, size);
         auto v2 = kfr::make_univector(mul, size);
         v1 = v1 * v2;
+    }
+
+    template<typename FloatType>
+    inline void multiply(FloatType *out, FloatType *in, FloatType *mul, const size_t size) {
+        auto out_v = kfr::make_univector(out, size);
+        auto v1 = kfr::make_univector(in, size);
+        auto v2 = kfr::make_univector(mul, size);
+        out_v = v1 * v2;
     }
 
     template<typename FloatType>

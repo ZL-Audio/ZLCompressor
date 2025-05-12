@@ -12,33 +12,36 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 
-namespace zlMagAnalyzer {
+#include "../chore/decibels.hpp"
+#include "../vector/vector.hpp"
+
+namespace zldsp::analyzer {
     template<typename FloatType, size_t MagNum, size_t BinNum>
     class MultipleMagAvgAnalyzer {
     public:
-        static constexpr double rmsLength = 0.01;
+        static constexpr double kRmsLength = 0.01;
 
         enum MagType {
-            peak, rms
+            kPeak, kRMS
         };
 
         explicit MultipleMagAvgAnalyzer() = default;
 
         void prepare(const juce::dsp::ProcessSpec &spec) {
-            sampleRate.store(spec.sampleRate);
-            maxPos = sampleRate.load() * rmsLength;
-            currentPos = 0.;
-            currentNumSamples = 0;
+            sample_rate_.store(spec.sampleRate);
+            max_pos_ = sample_rate_.load() * kRmsLength;
+            current_pos_ = 0.;
+            current_num_samples_ = 0;
         }
 
         void process(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers) {
-            switch (magType.load()) {
-                case MagType::peak: {
-                    processBuffer<MagType::peak>(buffers);
+            switch (mag_type_.load()) {
+                case MagType::kPeak: {
+                    processBuffer<MagType::kPeak>(buffers);
                     break;
                 }
-                case MagType::rms: {
-                    processBuffer<MagType::rms>(buffers);
+                case MagType::kRMS: {
+                    processBuffer<MagType::kRMS>(buffers);
                     break;
                 }
                 default: {
@@ -46,55 +49,55 @@ namespace zlMagAnalyzer {
             }
         }
 
-        void setToReset() { toReset.store(true); }
+        void setToReset() { to_reset_.store(true); }
 
-        void setMagType(const MagType x) { magType.store(x); }
+        void setMagType(const MagType x) { mag_type_.store(x); }
 
         void run() {
-            juce::ScopedNoDenormals noDenormals;
-            if (toReset.exchange(false)) {
+            juce::ScopedNoDenormals no_denormals;
+            if (to_reset_.exchange(false)) {
                 for (size_t i = 0; i < MagNum; ++i) {
-                    auto &cumulativeCount{cumulativeCounts[i]};
-                    std::fill(cumulativeCount.begin(), cumulativeCount.end(), 0.);
+                    auto &cumulative_count{cumulative_counts_[i]};
+                    std::fill(cumulative_count.begin(), cumulative_count.end(), 0.);
                 }
             }
-            const int numReady = abstractFIFO.getNumReady();
-            const auto scope = abstractFIFO.read(numReady);
+            const int num_ready = abstract_fifo_.getNumReady();
+            const auto scope = abstract_fifo_.read(num_ready);
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &magFIFO{magFIFOs[i]};
-                auto &cumulativeCount{cumulativeCounts[i]};
+                auto &mag_fifo{mag_fifos_[i]};
+                auto &cumulative_count{cumulative_counts_[i]};
                 for (auto idx = scope.startIndex1; idx < scope.startIndex1 + scope.blockSize1; ++idx) {
-                    updateHist(cumulativeCount, magFIFO[static_cast<size_t>(idx)]);
+                    updateHist(cumulative_count, mag_fifo[static_cast<size_t>(idx)]);
                 }
                 for (auto idx = scope.startIndex2; idx < scope.startIndex2 + scope.blockSize2; ++idx) {
-                    updateHist(cumulativeCount, magFIFO[static_cast<size_t>(idx)]);
+                    updateHist(cumulative_count, mag_fifo[static_cast<size_t>(idx)]);
                 }
             }
-            std::array<double, MagNum> maximumCounts{};
+            std::array<double, MagNum> maximum_counts{};
             for (size_t i = 0; i < MagNum; ++i) {
-                maximumCounts[i] = *std::max_element(cumulativeCounts[i].begin(), cumulativeCounts[i].end());
+                maximum_counts[i] = *std::max_element(cumulative_counts_[i].begin(), cumulative_counts_[i].end());
             }
-            const auto maximumCount = std::max(10. / rmsLength,
-                                               *std::max_element(maximumCounts.begin(), maximumCounts.end()));
+            const auto maximum_count = std::max(10. / kRmsLength,
+                                                *std::max_element(maximum_counts.begin(), maximum_counts.end()));
+            const auto maximum_count_r = 1.0 / maximum_count;
             for (size_t i = 0; i < MagNum; ++i) {
-                const auto &cumulativeCount{cumulativeCounts[i]};
-                auto &avgCount{avgCounts[i]};
-                juce::FloatVectorOperations::multiply(&avgCount[0], &cumulativeCount[0],
-                                                      1. / maximumCount, avgCount.size());
+                auto &cumulative_count{cumulative_counts_[i]};
+                auto &avg_count{avg_counts_[i]};
+                zldsp::vector::multiply(avg_count.data(), cumulative_count.data(), maximum_count_r, avg_count.size());
             }
         }
 
         void createPath(std::array<std::reference_wrapper<juce::Path>, MagNum> paths,
-                        const std::array<bool, MagNum> isClosePath,
-                        const juce::Rectangle<float> bound, size_t endIdx) {
-            endIdx = std::min(endIdx, BinNum);
-            const auto deltaY = bound.getHeight() / static_cast<float>(endIdx - 1);
+                        const std::array<bool, MagNum> is_close_path,
+                        const juce::Rectangle<float> bound, size_t end_idx) {
+            end_idx = std::min(end_idx, BinNum);
+            const auto delta_y = bound.getHeight() / static_cast<float>(end_idx - 1);
             for (size_t i = 0; i < MagNum; ++i) {
                 const auto y = bound.getY();
-                const auto &avgCount{avgCounts[i]};
+                const auto &avg_count{avg_counts_[i]};
                 constexpr size_t idx = 0;
-                const auto x = bound.getX() + static_cast<float>(avgCount[idx]) * bound.getWidth();
-                if (isClosePath[i]) {
+                const auto x = bound.getX() + static_cast<float>(avg_count[idx]) * bound.getWidth();
+                if (is_close_path[i]) {
                     paths[i].get().startNewSubPath(bound.getTopLeft());
                     paths[i].get().lineTo(x, y);
                 } else {
@@ -103,16 +106,16 @@ namespace zlMagAnalyzer {
             }
 
             for (size_t i = 0; i < MagNum; ++i) {
-                auto y = deltaY;
-                const auto &avgCount{avgCounts[i]};
-                for (size_t idx = 1; idx < endIdx; ++idx) {
-                    const auto x = bound.getX() + static_cast<float>(avgCount[idx]) * bound.getWidth();
+                auto y = delta_y;
+                const auto &avg_count{avg_counts_[i]};
+                for (size_t idx = 1; idx < end_idx; ++idx) {
+                    const auto x = bound.getX() + static_cast<float>(avg_count[idx]) * bound.getWidth();
                     paths[i].get().lineTo(x, y);
-                    y += deltaY;
+                    y += delta_y;
                 }
             }
             for (size_t i = 0; i < MagNum; ++i) {
-                if (isClosePath[i]) {
+                if (is_close_path[i]) {
                     paths[i].get().lineTo(bound.getBottomLeft());
                     paths[i].get().closeSubPath();
                 }
@@ -120,83 +123,85 @@ namespace zlMagAnalyzer {
         }
 
     protected:
-        std::atomic<double> sampleRate{48000.0};
-        std::array<std::array<float, 1000>, MagNum> magFIFOs{};
-        juce::AbstractFifo abstractFIFO{1000};
+        std::atomic<double> sample_rate_{48000.0};
+        std::array<std::array<float, 1000>, MagNum> mag_fifos_{};
+        juce::AbstractFifo abstract_fifo_{1000};
 
-        std::atomic<bool> toReset{false};
-        std::atomic<MagType> magType{MagType::rms};
+        std::atomic<bool> to_reset_{false};
+        std::atomic<MagType> mag_type_{MagType::kRMS};
 
-        double currentPos{0.}, maxPos{1.};
-        int currentNumSamples{0};
-        std::array<FloatType, MagNum> currentMags{};
+        double current_pos_{0.}, max_pos_{1.};
+        int current_num_samples_{0};
+        std::array<FloatType, MagNum> current_mags_{};
 
-        std::array<std::array<double, BinNum>, MagNum> cumulativeCounts{};
-        std::array<std::array<double, BinNum>, MagNum> avgCounts{};
+        std::array<std::array<double, BinNum>, MagNum> cumulative_counts_{};
+        std::array<std::array<double, BinNum>, MagNum> avg_counts_{};
 
-        template<MagType currentMagType>
+        template<MagType CurrentMagType>
         void processBuffer(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> &buffers) {
-            int startIdx{0}, endIdx{0};
-            int numSamples = buffers[0].get().getNumSamples();
-            if (numSamples == 0) { return; }
+            int start_idx{0}, end_idx{0};
+            int num_samples = buffers[0].get().getNumSamples();
+            if (num_samples == 0) { return; }
             while (true) {
-                const auto remainNum = static_cast<int>(std::round(maxPos - currentPos));
-                if (numSamples >= remainNum) {
-                    startIdx = endIdx;
-                    endIdx = endIdx + remainNum;
-                    numSamples -= remainNum;
-                    updateMags<currentMagType>(buffers, startIdx, remainNum);
-                    currentPos = currentPos + static_cast<double>(remainNum) - maxPos;
-                    if (abstractFIFO.getFreeSpace() > 0) {
-                        const auto scope = abstractFIFO.write(1);
-                        const auto writeIdx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
-                        switch (currentMagType) {
-                            case MagType::peak: {
+                const auto remain_num = static_cast<int>(std::round(max_pos_ - current_pos_));
+                if (num_samples >= remain_num) {
+                    start_idx = end_idx;
+                    end_idx = end_idx + remain_num;
+                    num_samples -= remain_num;
+                    updateMags<CurrentMagType>(buffers, start_idx, remain_num);
+                    current_pos_ = current_pos_ + static_cast<double>(remain_num) - max_pos_;
+                    if (abstract_fifo_.getFreeSpace() > 0) {
+                        const auto scope = abstract_fifo_.write(1);
+                        const auto write_idx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
+                        switch (CurrentMagType) {
+                            case MagType::kPeak: {
                                 for (size_t i = 0; i < MagNum; ++i) {
-                                    magFIFOs[i][static_cast<size_t>(writeIdx)] = juce::Decibels::gainToDecibels(
-                                        static_cast<float>(currentMags[i]), -240.f);
+                                    mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::gainToDecibels(
+                                        static_cast<float>(current_mags_[i]));
                                 }
                                 break;
                             }
-                            case MagType::rms: {
+                            case MagType::kRMS: {
                                 for (size_t i = 0; i < MagNum; ++i) {
-                                    magFIFOs[i][static_cast<size_t>(writeIdx)] = 0.5f * juce::Decibels::gainToDecibels(
-                                        static_cast<float>(currentMags[i] / static_cast<FloatType>(currentNumSamples)), -240.f);
+                                    mag_fifos_[i][static_cast<size_t>(write_idx)] =
+                                            0.5f * zldsp::chore::gainToDecibels(
+                                                static_cast<float>(
+                                                    current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
                                 }
-                                currentNumSamples = 0;
+                                current_num_samples_ = 0;
                                 break;
                             }
                         }
-                        std::fill(currentMags.begin(), currentMags.end(), FloatType(0));
+                        std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
                     }
                 } else {
-                    updateMags<currentMagType>(buffers, startIdx, numSamples);
-                    currentPos += static_cast<double>(numSamples);
+                    updateMags<CurrentMagType>(buffers, start_idx, num_samples);
+                    current_pos_ += static_cast<double>(num_samples);
                     break;
                 }
             }
         }
 
-        template<MagType currentMagType>
+        template<MagType CurrentMagType>
         void updateMags(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers,
-                        const int startIdx, const int numSamples) {
+                        const int start_idx, const int num_samples) {
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &buffer = buffers[i];
-                switch (currentMagType) {
-                    case MagType::peak: {
-                        const auto currentMagnitude = buffer.get().getMagnitude(startIdx, numSamples);
-                        currentMags[i] = std::max(currentMags[i], currentMagnitude);
+                switch (CurrentMagType) {
+                    case MagType::kPeak: {
+                        const auto current_magnitude = buffer.get().getMagnitude(start_idx, num_samples);
+                        current_mags_[i] = std::max(current_mags_[i], current_magnitude);
                     }
-                    case MagType::rms: {
-                        FloatType currentS{FloatType(0)};
+                    case MagType::kRMS: {
+                        FloatType current_s{FloatType(0)};
                         for (int j = 0; j < buffer.get().getNumChannels(); ++j) {
-                            auto* data = buffer.get().getReadPointer(j, startIdx);
-                            for (auto idx = 0; idx < numSamples; ++idx) {
-                                currentS += data[static_cast<size_t>(idx)] * data[static_cast<size_t>(idx)];
+                            auto *data = buffer.get().getReadPointer(j, start_idx);
+                            for (auto idx = 0; idx < num_samples; ++idx) {
+                                current_s += data[static_cast<size_t>(idx)] * data[static_cast<size_t>(idx)];
                             }
                         }
-                        currentMags[i] += currentS;
-                        currentNumSamples += numSamples;
+                        current_mags_[i] += current_s;
+                        current_num_samples_ += num_samples;
                     }
                 }
             }
@@ -205,7 +210,7 @@ namespace zlMagAnalyzer {
         static inline void updateHist(std::array<double, BinNum> &hist, const double x) {
             const auto idx = static_cast<size_t>(std::max(0., std::round(-x)));
             if (idx < BinNum) {
-                juce::FloatVectorOperations::multiply(&hist[0], 0.99999, hist.size());
+                zldsp::vector::multiply(hist.data(),0.99999, hist.size());
                 hist[idx] += 1.;
             }
         }

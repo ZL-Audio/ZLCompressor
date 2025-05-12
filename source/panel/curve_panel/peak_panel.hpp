@@ -14,37 +14,37 @@
 #include "../../PluginProcessor.hpp"
 #include "../helper/helper.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     class PeakPanel final : public juce::Component {
     public:
         explicit PeakPanel(PluginProcessor &processor);
 
         void paint(juce::Graphics &g) override;
 
-        void run(double nextTimeStamp);
+        void run(double next_time_stamp);
 
         void resized() override;
 
         void setTimeLength(const float x) {
-            magAnalyzer.setTimeLength(x);
-            numPerSecond.store(static_cast<double>(zldsp::Controller::kAnalyzerPointNum - 1) / static_cast<double>(x));
+            mag_analyzer_ref_.setTimeLength(x);
+            num_per_second_.store(static_cast<double>(zlp::Controller::kAnalyzerPointNum - 1) / static_cast<double>(x));
         }
 
     private:
-        zlMagAnalyzer::MagReductionAnalyzer<double, zldsp::Controller::kAnalyzerPointNum> &magAnalyzer;
-        AtomicBound atomicBound;
+        zldsp::analyzer::MagReductionAnalyzer<double, zlp::Controller::kAnalyzerPointNum> &mag_analyzer_ref_;
+        AtomicBound<float> atomic_bound_;
 
-        juce::Path inPath, outPath, reductionPath;
-        juce::Path nextInPath, nextOutPath, nextReductionPath;
-        juce::SpinLock lock;
+        juce::Path in_path_, out_path_, reduction_path_;
+        juce::Path next_in_path_, next_out_path_, next_reduction_path_;
+        juce::SpinLock path_lock_;
 
-        double startTime{0.0};
-        double currentCount{0.0};
+        double start_time_{0.0};
+        double current_count_{0.0};
 
-        std::atomic<double> numPerSecond{50.0};
+        std::atomic<double> num_per_second_{50.0};
 
-        bool isFirstPoint{true};
-        double smoothError{0.f};
-        int consErrorCount{0};
+        bool is_first_point_{true};
+        double smooth_error_{0.f};
+        int cons_error_count_{0};
     };
-} // zlPanel
+} // zlpanel

@@ -34,12 +34,12 @@ namespace zldsp::compressor {
          * @param second the maximum time length of the tracker
          */
         void setMaximumMomentarySeconds(const FloatType second) {
-            maximum_time_length = second;
+            maximum_time_length_ = second;
         }
 
         void reset() {
-            square_sum = FloatType(0);
-            square_buffer.clear();
+            square_sum_ = FloatType(0);
+            square_buffer_.clear();
         }
 
         /**
@@ -47,39 +47,39 @@ namespace zldsp::compressor {
          * @param sr sample_rate
          */
         void prepare(const double sr) {
-            sample_rate.store(sr);
+            sample_rate_.store(sr);
             setMaximumMomentarySize(
-                static_cast<size_t>(static_cast<double>(maximum_time_length) * sr));
+                static_cast<size_t>(static_cast<double>(maximum_time_length_) * sr));
             reset();
-            setMomentarySeconds(time_length.load());
+            setMomentarySeconds(time_length_.load());
         }
 
         /**
          * update values before processing a buffer
          */
         void prepareBuffer() {
-            if (to_update.exchange(false)) {
-                current_buffer_size = buffer_size.load();
-                current_buffer_size_r = FloatType(1) / static_cast<FloatType>(current_buffer_size);
-                while (square_buffer.size() > current_buffer_size) {
-                    square_sum -= square_buffer.popFront();
+            if (to_update_.exchange(false)) {
+                c_buffer_size_ = buffer_size_.load();
+                c_buffer_size_r = FloatType(1) / static_cast<FloatType>(c_buffer_size_);
+                while (square_buffer_.size() > c_buffer_size_) {
+                    square_sum_ -= square_buffer_.popFront();
                 }
                 if (IsPeakMix) {
-                    current_peak_mix = peak_mix.load();
-                    current_peak_mix_c = FloatType(1) - current_peak_mix;
+                    c_peak_mix_ = peak_mix_.load();
+                    c_peak_mix_c_ = FloatType(1) - c_peak_mix_;
                 }
             }
         }
 
         void processSample(const FloatType x) {
             const FloatType square = IsPeakMix
-                                         ? std::abs(x) * (current_peak_mix + std::abs(x) * current_peak_mix_c)
+                                         ? std::abs(x) * (c_peak_mix_ + std::abs(x) * c_peak_mix_c_)
                                          : x * x;
-            if (square_buffer.size() == current_buffer_size) {
-                square_sum -= square_buffer.popFront();
+            if (square_buffer_.size() == c_buffer_size_) {
+                square_sum_ -= square_buffer_.popFront();
             }
-            square_buffer.pushBack(square);
-            square_sum += square;
+            square_buffer_.pushBack(square);
+            square_sum_ += square;
         }
 
         /**
@@ -88,9 +88,9 @@ namespace zldsp::compressor {
          * @param second the time length of the tracker
          */
         void setMomentarySeconds(const FloatType second) {
-            time_length.store(second);
-            setMomentarySize(static_cast<size_t>(static_cast<double>(second) * sample_rate.load()));
-            to_update.store(true);
+            time_length_.store(second);
+            setMomentarySize(static_cast<size_t>(static_cast<double>(second) * sample_rate_.load()));
+            to_update_.store(true);
         }
 
         /**
@@ -98,7 +98,7 @@ namespace zldsp::compressor {
          * get the time length of the tracker
          */
         inline size_t getMomentarySize() const {
-            return buffer_size.load();
+            return buffer_size_.load();
         }
 
         /**
@@ -107,43 +107,43 @@ namespace zldsp::compressor {
          * @param x the peak-mix portion
          */
         void setPeakMix(const FloatType x) {
-            peak_mix.store(x);
-            to_update.store(true);
+            peak_mix_.store(x);
+            to_update_.store(true);
         }
 
-        size_t getCurrentBufferSize() const { return current_buffer_size; }
+        size_t getCurrentBufferSize() const { return c_buffer_size_; }
 
         FloatType getMomentarySquare() {
-            return square_sum;
+            return square_sum_;
         }
 
         FloatType getMomentaryDB() {
-            FloatType meanSquare = square_sum * current_buffer_size_r;
-            return std::log10(std::max(FloatType(1e-10), meanSquare)) * FloatType(10);
+            FloatType mean_square = square_sum_ * c_buffer_size_r;
+            return std::log10(std::max(FloatType(1e-10), mean_square)) * FloatType(10);
         }
 
     private:
-        FloatType square_sum{0};
-        zlContainer::CircularBuffer<FloatType> square_buffer{1};
+        FloatType square_sum_{0};
+        container::CircularBuffer<FloatType> square_buffer_{1};
 
-        std::atomic<double> sample_rate{48000.0};
-        std::atomic<FloatType> time_length{0};
-        FloatType maximum_time_length{0};
-        size_t current_buffer_size{1};
-        FloatType current_buffer_size_r{FloatType(1)};
-        std::atomic<size_t> buffer_size{1};
-        FloatType current_peak_mix{0}, current_peak_mix_c{1};
-        std::atomic<FloatType> peak_mix{0};
-        std::atomic<bool> to_update{true};
+        std::atomic<double> sample_rate_{48000.0};
+        std::atomic<FloatType> time_length_{0};
+        FloatType maximum_time_length_{0};
+        size_t c_buffer_size_{1};
+        FloatType c_buffer_size_r{FloatType(1)};
+        std::atomic<size_t> buffer_size_{1};
+        FloatType c_peak_mix_{0}, c_peak_mix_c_{1};
+        std::atomic<FloatType> peak_mix_{0};
+        std::atomic<bool> to_update_{true};
 
-        void setMomentarySize(size_t mSize) {
-            mSize = std::max(static_cast<size_t>(1), mSize);
-            buffer_size.store(mSize);
+        void setMomentarySize(size_t size) {
+            size = std::max(static_cast<size_t>(1), size);
+            buffer_size_.store(size);
         }
 
-        void setMaximumMomentarySize(size_t mSize) {
-            mSize = std::max(static_cast<size_t>(1), mSize);
-            square_buffer.setCapacity(mSize);
+        void setMaximumMomentarySize(size_t size) {
+            size = std::max(static_cast<size_t>(1), size);
+            square_buffer_.setCapacity(size);
         }
     };
 }

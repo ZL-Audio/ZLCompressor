@@ -12,7 +12,7 @@
 #include "../../PluginProcessor.hpp"
 #include "../helper/helper.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     class ComputerPanel final : public juce::Component {
     public:
         static constexpr size_t numPoint = 100;
@@ -26,13 +26,13 @@ namespace zlPanel {
         void resized() override;
 
     private:
-        zldsp::compressor::KneeComputer<float> computer{};
-        AtomicBound atomicBound;
+        zldsp::compressor::KneeComputer<float> computer_{};
+        AtomicBound<float> atomic_bound_;
 
-        std::atomic<bool> toUpdate{true};
-        juce::Path compPath, nextCompPath;
-        juce::SpinLock lock;
+        std::atomic<bool> to_update_{true};
+        juce::Path comp_path_, next_comp_path_;
+        juce::SpinLock path_lock_;
 
-        std::atomic<float> minDB{-72.f};
+        std::atomic<float> min_db_{-72.f};
     };
-} // zlPanel
+} // zlpanel

@@ -11,7 +11,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace zlPanel {
+namespace zlpanel {
     class SeparatePanel : public juce::Component {
     public:
         explicit SeparatePanel();
@@ -21,6 +21,6 @@ namespace zlPanel {
         void resized() override;
 
     private:
-        juce::ColourGradient gradient;
+        juce::ColourGradient gradient_;
     };
-} // zlPanel
+} // zlpanel

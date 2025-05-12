@@ -9,31 +9,31 @@
 
 #include "peak_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor &processor)
-        : magAnalyzer(processor.getController().getMagAnalyzer()) {
-        constexpr auto preallocateSpace = static_cast<int>(zldsp::Controller::kAnalyzerPointNum) * 3 + 1;
-        for (auto &path: {&inPath, &outPath, &reductionPath}) {
+        : mag_analyzer_ref_(processor.getController().getMagAnalyzer()) {
+        constexpr auto preallocateSpace = static_cast<int>(zlp::Controller::kAnalyzerPointNum) * 3 + 1;
+        for (auto &path: {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
-        magAnalyzer.setToReset();
+        mag_analyzer_ref_.setToReset();
         setTimeLength(6.f);
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
-        const juce::GenericScopedTryLock guard{lock};
+        const juce::GenericScopedTryLock guard{path_lock_};
         if (!guard.isLocked()) {
             return;
         }
         g.setColour(juce::Colours::white.withAlpha(.25f));
-        g.fillPath(inPath);
+        g.fillPath(in_path_);
         g.setColour(juce::Colours::white.withAlpha(.9f));
-        g.strokePath(outPath,
+        g.strokePath(out_path_,
                      juce::PathStrokeType(1.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
         g.setColour(juce::Colours::mediumvioletred);
-        g.strokePath(reductionPath,
+        g.strokePath(reduction_path_,
                      juce::PathStrokeType(2.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
@@ -41,59 +41,59 @@ namespace zlPanel {
 
     void PeakPanel::resized() {
         auto bound = getLocalBounds().toFloat();
-        constexpr auto padP = 1.f / static_cast<float>(zldsp::Controller::kAnalyzerPointNum - 1);
-        const auto pad = std::max(bound.getWidth() * padP, 1.f);
+        constexpr auto pad_p = 1.f / static_cast<float>(zlp::Controller::kAnalyzerPointNum - 1);
+        const auto pad = std::max(bound.getWidth() * pad_p, 1.f);
         bound = bound.withWidth(bound.getWidth() + pad);
-        atomicBound.store(bound);
+        atomic_bound_.store(bound);
     }
 
-    void PeakPanel::run(const double nextTimeStamp) {
-        if (isFirstPoint) {
-            if (magAnalyzer.run(1) > 0) {
-                isFirstPoint = false;
-                currentCount = 0.;
-                startTime = nextTimeStamp; {
-                    nextInPath.clear();
-                    nextOutPath.clear();
-                    nextReductionPath.clear();
+    void PeakPanel::run(const double next_time_stamp) {
+        if (is_first_point_) {
+            if (mag_analyzer_ref_.run(1) > 0) {
+                is_first_point_ = false;
+                current_count_ = 0.;
+                start_time_ = next_time_stamp; {
+                    next_in_path_.clear();
+                    next_out_path_.clear();
+                    next_reduction_path_.clear();
                 }
-                magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath,
-                                       atomicBound.load(), 0.f, 0.f);
+                mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
+                                       atomic_bound_.load(), 0.f, 0.f);
             }
         } else {
-            const auto targetCount = (nextTimeStamp - startTime) * numPerSecond.load();
-            const auto targetDelta = targetCount - currentCount;
-            const auto actualDelta = static_cast<double>(magAnalyzer.run(static_cast<int>(std::floor(targetDelta))));
-            currentCount += static_cast<double>(actualDelta);
-            const auto currentError = std::abs(targetDelta - actualDelta);
-            if (currentError < smoothError) {
-                smoothError = currentError;
+            const auto target_count = (next_time_stamp - start_time_) * num_per_second_.load();
+            const auto target_delta = target_count - current_count_;
+            const auto actual_delta = static_cast<double>(mag_analyzer_ref_.run(static_cast<int>(std::floor(target_delta))));
+            current_count_ += static_cast<double>(actual_delta);
+            const auto current_error = std::abs(target_delta - actual_delta);
+            if (current_error < smooth_error_) {
+                smooth_error_ = current_error;
             } else {
-                smoothError = smoothError * 0.95 + currentError * 0.05;
+                smooth_error_ = smooth_error_ * 0.95 + current_error * 0.05;
             }
-            if (smoothError > 1.0) {
-                currentCount += std::floor(smoothError);
-                if (consErrorCount < 5) {
-                    consErrorCount += 1;
+            if (smooth_error_ > 1.0) {
+                current_count_ += std::floor(smooth_error_);
+                if (cons_error_count_ < 5) {
+                    cons_error_count_ += 1;
                 }
             }
-            if (actualDelta > 0) {
-                consErrorCount = 0;
+            if (actual_delta > 0) {
+                cons_error_count_ = 0;
             }
-            if (consErrorCount < 5) {
-                const auto shift = targetCount - currentCount; {
-                    nextInPath.clear();
-                    nextOutPath.clear();
-                    nextReductionPath.clear();
+            if (cons_error_count_ < 5) {
+                const auto shift = target_count - current_count_; {
+                    next_in_path_.clear();
+                    next_out_path_.clear();
+                    next_reduction_path_.clear();
                 }
-                magAnalyzer.template createPath<true, false>(nextInPath, nextOutPath, nextReductionPath,
-                                                             atomicBound.load(), static_cast<float>(shift), 0.f);
+                mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
+                                                             atomic_bound_.load(), static_cast<float>(shift), 0.f);
             }
         } {
-            const juce::GenericScopedLock guard{lock};
-            inPath = nextInPath;
-            outPath = nextOutPath;
-            reductionPath = nextReductionPath;
+            const juce::GenericScopedLock guard{path_lock_};
+            in_path_ = next_in_path_;
+            out_path_ = next_out_path_;
+            reduction_path_ = next_reduction_path_;
         }
     }
-} // zlPanel
+} // zlpanel

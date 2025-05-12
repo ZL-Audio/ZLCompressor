@@ -19,14 +19,13 @@
 
 class PluginProcessor : public juce::AudioProcessor {
 public:
-    // zlState::DummyProcessor dummyProcessor;
-    juce::AudioProcessorValueTreeState parameters;//, state;
+    juce::AudioProcessorValueTreeState parameters_;
 
     PluginProcessor();
 
     ~PluginProcessor() override;
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
+    void prepareToPlay(double sample_rate, int samples_per_block) override;
 
     void releaseResources() override;
 
@@ -58,35 +57,34 @@ public:
 
     const juce::String getProgramName(int index) override;
 
-    void changeProgramName(int index, const juce::String &newName) override;
+    void changeProgramName(int, const juce::String &) override;
 
-    void getStateInformation(juce::MemoryBlock &destData) override;
+    void getStateInformation(juce::MemoryBlock &dest_data) override;
 
-    void setStateInformation(const void *data, int sizeInBytes) override;
+    void setStateInformation(const void *data, int size_in_bytes) override;
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    zldsp::Controller &getController() { return controller; }
+    inline zlp::Controller &getController() { return controller_; }
 
 private:
-    zldsp::Controller controller;
-
-    juce::AudioBuffer<double> doubleBuffer;
+    zlp::Controller controller_;
+    juce::AudioBuffer<double> double_buffer_;
 
     enum ChannelLayout {
-        main1aux0, main1aux1, main1aux2,
-        main2aux0, main2aux1, main2aux2,
-        invalid
+        kMain1Aux0, kMain1Aux1, kMain1Aux2,
+        kMain2Aux0, kMain2Aux1, kMain2Aux2,
+        kInvalid
     };
-    ChannelLayout channelLayout{invalid};
+    ChannelLayout channel_layout_{kInvalid};
 
-    void doubleBufferCopyFrom(int destChan, const juce::AudioBuffer<float> &buffer, int srcChan);
+    void doubleBufferCopyFrom(int dest_chan, const juce::AudioBuffer<float> &buffer, int src_chan);
 
-    void doubleBufferCopyTo(int srcChan, juce::AudioBuffer<float> &buffer, int destChan) const;
+    void doubleBufferCopyTo(int src_chan, juce::AudioBuffer<float> &buffer, int dest_chan) const;
 
-    void doubleBufferCopyFrom(int destChan, const juce::AudioBuffer<double> &buffer, int srcChan);
+    void doubleBufferCopyFrom(int dest_chan, const juce::AudioBuffer<double> &buffer, int src_chan);
 
-    void doubleBufferCopyTo(int srcChan, juce::AudioBuffer<double> &buffer, int destChan) const;
+    void doubleBufferCopyTo(int src_chan, juce::AudioBuffer<double> &buffer, int dest_chan) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

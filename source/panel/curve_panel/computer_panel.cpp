@@ -9,57 +9,57 @@
 
 #include "computer_panel.hpp"
 
-namespace zlPanel {
+namespace zlpanel {
     ComputerPanel::ComputerPanel() {
-        compPath.preallocateSpace(static_cast<int>(numPoint) * 3);
-        nextCompPath.preallocateSpace(static_cast<int>(numPoint) * 3);
-        computer.setThreshold(-18.f);
-        computer.setKneeW(5.f);
-        computer.setCurve(1.f);
+        comp_path_.preallocateSpace(static_cast<int>(numPoint) * 3);
+        next_comp_path_.preallocateSpace(static_cast<int>(numPoint) * 3);
+        computer_.setThreshold(-18.f);
+        computer_.setKneeW(5.f);
+        computer_.setCurve(1.f);
     }
 
     void ComputerPanel::paint(juce::Graphics &g) {
-        const juce::GenericScopedTryLock guard{lock};
+        const juce::GenericScopedTryLock guard{path_lock_};
         if (!guard.isLocked()) {
             return;
         }
         g.setColour(juce::Colours::orange);
-        g.strokePath(compPath,
+        g.strokePath(comp_path_,
                      juce::PathStrokeType(2.5f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }
 
     void ComputerPanel::run() {
-        if (!toUpdate.exchange(false)) { return; }
-        const auto currentMinDB = minDB.load();
-        computer.prepareBuffer();
-        const auto bound = atomicBound.load();
-        auto dBIn = currentMinDB;
-        const auto deltaDBIn = -currentMinDB / static_cast<float>(numPoint - 1);
-        const auto deltaY = bound.getHeight() / static_cast<float>(numPoint - 1);
+        if (!to_update_.exchange(false)) { return; }
+        const auto current_min_db = min_db_.load();
+        computer_.prepareBuffer();
+        const auto bound = atomic_bound_.load();
+        auto db_in = current_min_db;
+        const auto delta_db_in = -current_min_db / static_cast<float>(numPoint - 1);
+        const auto delta_y = bound.getHeight() / static_cast<float>(numPoint - 1);
         auto x = bound.getX();
-        const auto deltaX = deltaY;
-        nextCompPath.clear();
-        PathMinimizer minimizer{nextCompPath};
+        const auto delta_x = delta_y;
+        next_comp_path_.clear();
+        PathMinimizer minimizer{next_comp_path_};
         for (size_t i = 0; i < numPoint; ++i) {
-            const auto dBOut = computer.eval(dBIn);
-            const auto y = dBOut / currentMinDB * bound.getHeight() + bound.getY();
+            const auto db_out = computer_.eval(db_in);
+            const auto y = db_out / current_min_db * bound.getHeight() + bound.getY();
             if (i == 0) {
                 minimizer.startNewSubPath(x, y);
             } else {
                 minimizer.lineTo(x, y);
             }
-            x += deltaX;
-            dBIn += deltaDBIn;
+            x += delta_x;
+            db_in += delta_db_in;
         }
         minimizer.finish();
-        const juce::GenericScopedLock guard{lock};
-        compPath = nextCompPath;
+        const juce::GenericScopedLock guard{path_lock_};
+        comp_path_ = next_comp_path_;
     }
 
     void ComputerPanel::resized() {
-        atomicBound.store(getLocalBounds().toFloat());
-        toUpdate.store(true);
+        atomic_bound_.store(getLocalBounds().toFloat());
+        to_update_.store(true);
     }
-} // zlPanel
+} // zlpanel

@@ -10,11 +10,11 @@
 #include "PluginEditor.hpp"
 
 PluginEditor::PluginEditor(PluginProcessor &p)
-    : AudioProcessorEditor(&p), processorRef(p),
-      mainPanel(p) {
-    juce::ignoreUnused(processorRef);
+    : AudioProcessorEditor(&p), processor_ref_(p),
+      main_panel_(p) {
+    juce::ignoreUnused(processor_ref_);
 
-    addAndMakeVisible(mainPanel);
+    addAndMakeVisible(main_panel_);
 
     setSize(600, 300);
 }
@@ -28,5 +28,5 @@ void PluginEditor::paint(juce::Graphics &g) {
 }
 
 void PluginEditor::resized() {
-    mainPanel.setBounds(getLocalBounds());
+    main_panel_.setBounds(getLocalBounds());
 }
