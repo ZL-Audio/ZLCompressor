@@ -13,6 +13,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "../chore/decibels.hpp"
+#include "../container/abstract_fifo.hpp"
 
 namespace zldsp::analyzer {
     template<typename FloatType, size_t MagNum, size_t PointNum>
@@ -53,7 +54,10 @@ namespace zldsp::analyzer {
                 for (size_t i = 0; i < MagNum; ++i) {
                     std::fill(circular_mags_[i].begin(), circular_mags_[i].end(), -240.f);
                 }
-                const auto scope = abstract_fifo_.read(fifo_num_ready);
+                // clear FIFOs
+                zldsp::container::AbstractFIFO::Range range;
+                abstract_fifo_.prepareToRead(fifo_num_ready, range);
+                abstract_fifo_.finishedRead(fifo_num_ready);
                 return 0;
             }
             const int num_ready = fifo_num_ready >= static_cast<int>(PointNum / 2)
@@ -69,23 +73,26 @@ namespace zldsp::analyzer {
                             circular_peak.end());
             }
             // read from FIFOs
-            const auto scope = abstract_fifo_.read(num_ready);
+            zldsp::container::AbstractFIFO::Range range;
+            abstract_fifo_.prepareToRead(num_ready, range);
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &circular_peak{circular_mags_[i]};
                 auto &peak_fifo{mag_fifos_[i]};
                 size_t j = circular_peak.size() - static_cast<size_t>(num_ready);
-                if (scope.blockSize1 > 0) {
-                    std::copy(&peak_fifo[static_cast<size_t>(scope.startIndex1)],
-                              &peak_fifo[static_cast<size_t>(scope.startIndex1 + scope.blockSize1)],
+                if (range.block_size1 > 0) {
+                    std::copy(&peak_fifo[static_cast<size_t>(range.start_index1)],
+                              &peak_fifo[static_cast<size_t>(range.start_index1 + range.block_size1)],
                               &circular_peak[j]);
-                    j += static_cast<size_t>(scope.blockSize1);
+                    j += static_cast<size_t>(range.block_size1);
                 }
-                if (scope.blockSize2 > 0) {
-                    std::copy(&peak_fifo[static_cast<size_t>(scope.startIndex2)],
-                              &peak_fifo[static_cast<size_t>(scope.startIndex2 + scope.blockSize2)],
+                if (range.block_size2 > 0) {
+                    std::copy(&peak_fifo[static_cast<size_t>(range.start_index2)],
+                              &peak_fifo[static_cast<size_t>(range.start_index2 + range.block_size2)],
                               &circular_peak[j]);
                 }
             }
+            abstract_fifo_.finishedRead(num_ready);
+
             return num_ready;
         }
 
@@ -117,7 +124,7 @@ namespace zldsp::analyzer {
     protected:
         std::atomic<double> sample_rate_{48000.0};
         std::array<std::array<float, PointNum>, MagNum> mag_fifos_{};
-        juce::AbstractFifo abstract_fifo_{PointNum};
+        zldsp::container::AbstractFIFO abstract_fifo_{PointNum};
         std::array<std::array<float, PointNum>, MagNum> circular_mags_{};
         size_t circular_idx_{0};
 
@@ -149,9 +156,11 @@ namespace zldsp::analyzer {
                     num_samples -= remain_num;
                     updateMags<CurrentMagType>(buffers, start_idx, remain_num);
                     current_pos_ = current_pos_ + static_cast<double>(remain_num) - max_pos_;
-                    if (abstract_fifo_.getFreeSpace() > 0) {
-                        const auto scope = abstract_fifo_.write(1);
-                        const auto write_idx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
+                    if (abstract_fifo_.getNumFree() > 0) {
+
+                        zldsp::container::AbstractFIFO::Range range;
+                        abstract_fifo_.prepareToWrite(1, range);
+                        const auto write_idx = range.block_size1 > 0 ? range.start_index1 : range.start_index2;
                         switch (CurrentMagType) {
                             case MagType::kPeak: {
                                 for (size_t i = 0; i < MagNum; ++i) {
@@ -170,6 +179,8 @@ namespace zldsp::analyzer {
                                 break;
                             }
                         }
+                        abstract_fifo_.finishedWrite(1);
+
                         std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
                     }
                 } else {

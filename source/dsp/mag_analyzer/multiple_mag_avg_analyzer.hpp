@@ -14,6 +14,7 @@
 
 #include "../chore/decibels.hpp"
 #include "../vector/vector.hpp"
+#include "../container/abstract_fifo.hpp"
 
 namespace zldsp::analyzer {
     template<typename FloatType, size_t MagNum, size_t BinNum>
@@ -61,18 +62,22 @@ namespace zldsp::analyzer {
                     std::fill(cumulative_count.begin(), cumulative_count.end(), 0.);
                 }
             }
+
             const int num_ready = abstract_fifo_.getNumReady();
-            const auto scope = abstract_fifo_.read(num_ready);
+            zldsp::container::AbstractFIFO::Range range;
+            abstract_fifo_.prepareToRead(num_ready, range);
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &mag_fifo{mag_fifos_[i]};
                 auto &cumulative_count{cumulative_counts_[i]};
-                for (auto idx = scope.startIndex1; idx < scope.startIndex1 + scope.blockSize1; ++idx) {
+                for (auto idx = range.start_index1; idx < range.start_index1 + range.block_size1; ++idx) {
                     updateHist(cumulative_count, mag_fifo[static_cast<size_t>(idx)]);
                 }
-                for (auto idx = scope.startIndex2; idx < scope.startIndex2 + scope.blockSize2; ++idx) {
+                for (auto idx = range.start_index2; idx < range.start_index2 + range.block_size2; ++idx) {
                     updateHist(cumulative_count, mag_fifo[static_cast<size_t>(idx)]);
                 }
             }
+            abstract_fifo_.finishedRead(num_ready);
+
             std::array<double, MagNum> maximum_counts{};
             for (size_t i = 0; i < MagNum; ++i) {
                 maximum_counts[i] = *std::max_element(cumulative_counts_[i].begin(), cumulative_counts_[i].end());
@@ -125,7 +130,7 @@ namespace zldsp::analyzer {
     protected:
         std::atomic<double> sample_rate_{48000.0};
         std::array<std::array<float, 1000>, MagNum> mag_fifos_{};
-        juce::AbstractFifo abstract_fifo_{1000};
+        zldsp::container::AbstractFIFO abstract_fifo_{1000};
 
         std::atomic<bool> to_reset_{false};
         std::atomic<MagType> mag_type_{MagType::kRMS};
@@ -150,9 +155,11 @@ namespace zldsp::analyzer {
                     num_samples -= remain_num;
                     updateMags<CurrentMagType>(buffers, start_idx, remain_num);
                     current_pos_ = current_pos_ + static_cast<double>(remain_num) - max_pos_;
-                    if (abstract_fifo_.getFreeSpace() > 0) {
-                        const auto scope = abstract_fifo_.write(1);
-                        const auto write_idx = scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2;
+                    if (abstract_fifo_.getNumFree() > 0) {
+
+                        zldsp::container::AbstractFIFO::Range range;
+                        abstract_fifo_.prepareToWrite(1, range);
+                        const auto write_idx = range.block_size1 > 0 ? range.start_index1 : range.start_index2;
                         switch (CurrentMagType) {
                             case MagType::kPeak: {
                                 for (size_t i = 0; i < MagNum; ++i) {
@@ -172,6 +179,8 @@ namespace zldsp::analyzer {
                                 break;
                             }
                         }
+                        abstract_fifo_.finishedWrite(1);
+
                         std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
                     }
                 } else {

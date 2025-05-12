@@ -15,7 +15,7 @@
 #include "mag_analyzer/mag_analyzer.hpp"
 
 namespace zlp {
-    class Controller : private juce::AsyncUpdater {
+    class Controller final : private juce::AsyncUpdater {
     public:
         static constexpr size_t kAnalyzerPointNum = 251;
         static constexpr size_t kAvgAnalyzerPointNum = 120;
@@ -26,17 +26,15 @@ namespace zlp {
 
         void process(juce::AudioBuffer<double> &buffer);
 
-        zldsp::analyzer::MagReductionAnalyzer<double, kAnalyzerPointNum> &getMagAnalyzer() { return mag_analyzer_; }
+        auto &getMagAnalyzer() { return mag_analyzer_; }
 
-        zldsp::analyzer::MultipleMagAvgAnalyzer<double, 2, kAvgAnalyzerPointNum> &getMagAvgAnalyzer() {
-            return mag_avg_analyzer_;
-        }
+        auto &getMagAvgAnalyzer() { return mag_avg_analyzer_; }
 
     private:
         juce::AudioProcessor &processor_ref_;
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
         juce::AudioBuffer<double> pre_buffer_;
-        std::array<double*, 2> write_pointers_{};
+        std::array<double *, 2> write_pointers_{};
 
         zldsp::analyzer::MagReductionAnalyzer<double, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<double, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
@@ -88,19 +86,23 @@ namespace zlp {
         // clean compressors
         std::array<zldsp::compressor::CleanCompressor<double, true, true, true, true>, 2> clean_comps_ = {
             zldsp::compressor::CleanCompressor{computer_, tracker_[0], follower_[0]},
-            zldsp::compressor::CleanCompressor{computer_, tracker_[1], follower_[1]}};
+            zldsp::compressor::CleanCompressor{computer_, tracker_[1], follower_[1]}
+        };
         // classic compressors
         std::array<zldsp::compressor::ClassicCompressor<double, true, true, true, true>, 2> classic_comps_ = {
             zldsp::compressor::ClassicCompressor{computer_, tracker_[0], follower_[0]},
-            zldsp::compressor::ClassicCompressor{computer_, tracker_[1], follower_[1]}};
+            zldsp::compressor::ClassicCompressor{computer_, tracker_[1], follower_[1]}
+        };
         // optical compressors
         std::array<zldsp::compressor::OpticalCompressor<double, true, true, true, true>, 2> optical_comps_ = {
             zldsp::compressor::OpticalCompressor{computer_, tracker_[0], follower_[0]},
-            zldsp::compressor::OpticalCompressor{computer_, tracker_[1], follower_[1]}};
+            zldsp::compressor::OpticalCompressor{computer_, tracker_[1], follower_[1]}
+        };
         // bus compressors
         std::array<zldsp::compressor::BusCompressor<double, true, true, true, true>, 2> bus_comps_ = {
             zldsp::compressor::BusCompressor{computer_, tracker_[0], follower_[0]},
-            zldsp::compressor::BusCompressor{computer_, tracker_[1], follower_[1]}};
+            zldsp::compressor::BusCompressor{computer_, tracker_[1], follower_[1]}
+        };
 
         zldsp::gain::Gain<double> output_gain_{};
 
