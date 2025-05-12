@@ -21,10 +21,10 @@ namespace zlp {
 
         pre_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
         // allocate memories for up to 8x oversampling
-        for (auto &t: {&tracker1_, &tracker2_}) {
-            t->setMaximumMomentarySeconds(0.04 * 8.01);
-            t->prepare(spec.sampleRate);
-            t->setMaximumMomentarySeconds(0.04);
+        for (auto &t: tracker_) {
+            t.setMaximumMomentarySeconds(0.04 * 8.01);
+            t.prepare(spec.sampleRate);
+            t.setMaximumMomentarySeconds(0.04);
         }
         oversampled_side_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize) * 8);
         // init oversamplers
@@ -42,6 +42,30 @@ namespace zlp {
         c_ext_side_chain_ = ext_side_chain_.load();
         // load stereo mode
         c_stereo_mode_ = stereo_mode_.load();
+        // load compressor style
+        if (c_comp_style_ != comp_style_.load()) {
+            c_comp_style_ = comp_style_.load();
+            switch (c_comp_style_) {
+                case zldsp::compressor::Style::kClean: {
+                    clean_comps_[0].reset();
+                    clean_comps_[1].reset();
+                    break;
+                }
+                case zldsp::compressor::Style::kClassic: {
+                    classic_comps_[0].reset();
+                    classic_comps_[1].reset();
+                }
+                case zldsp::compressor::Style::kOptical: {
+                    optical_comps_[0].reset();
+                    optical_comps_[1].reset();
+                }
+                case zldsp::compressor::Style::kBus: {
+                    bus_comps_[0].reset();
+                    bus_comps_[1].reset();
+                }
+                default: break;
+            }
+        }
         // load stereo link
         c_stereo_link_ = 1.0 - std::clamp(stereo_link_.load(), 0.0, 0.5);
         // load wet values
@@ -63,11 +87,11 @@ namespace zlp {
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
             const auto oversample_sr = main_spec_.sampleRate * static_cast<double>(oversample_mul);
-            for (auto &t: {&tracker1_, &tracker2_}) {
-                t->prepare(oversample_sr);
+            for (auto &t: tracker_) {
+                t.prepare(oversample_sr);
             }
-            for (auto &f: {&follower1_, &follower2_}) {
-                f->prepare(oversample_sr);
+            for (auto &f: follower_) {
+                f.prepare(oversample_sr);
             }
             // prepare oversampled side-buffer
             oversampled_side_buffer_.setSize(2, static_cast<int>(main_spec_.maximumBlockSize) * oversample_mul);
@@ -88,12 +112,12 @@ namespace zlp {
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 1) {
             zldsp::splitter::MSSplitter<double>::split(main_buffer.getWritePointer(0),
-                main_buffer.getWritePointer(1),
-                static_cast<size_t>(main_buffer.getNumSamples()));
+                                                       main_buffer.getWritePointer(1),
+                                                       static_cast<size_t>(main_buffer.getNumSamples()));
             if (c_ext_side_chain_) {
                 zldsp::splitter::MSSplitter<double>::split(side_buffer.getWritePointer(0),
-                    side_buffer.getWritePointer(1),
-                    static_cast<size_t>(side_buffer.getNumSamples()));
+                                                           side_buffer.getWritePointer(1),
+                                                           static_cast<size_t>(side_buffer.getNumSamples()));
             }
         }
         // up-sample side buffer
@@ -119,9 +143,9 @@ namespace zlp {
             } else {
                 // copy the oversampled main buffer to the oversampled side buffer
                 oversampled_side_buffer_.copyFrom(0, 0, os_main_block.getChannelPointer(0),
-                                                 static_cast<int>(os_main_block.getNumSamples()));
+                                                  static_cast<int>(os_main_block.getNumSamples()));
                 oversampled_side_buffer_.copyFrom(1, 0, os_main_block.getChannelPointer(1),
-                                                 static_cast<int>(os_main_block.getNumSamples()));
+                                                  static_cast<int>(os_main_block.getNumSamples()));
                 // process the oversampled buffers
                 processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
                               oversampled_side_buffer_.getWritePointer(0), oversampled_side_buffer_.getWritePointer(1),
@@ -144,13 +168,14 @@ namespace zlp {
                                    const size_t num_samples) {
         // prepare computer, trackers and followers
         computer_.prepareBuffer();
-        tracker1_.prepareBuffer();
-        tracker2_.prepareBuffer();
-        follower1_.prepareBuffer();
-        follower2_.prepareBuffer();
+        for (auto &t: tracker_) {
+            t.prepareBuffer();
+        }
+        for (auto &f: follower_) {
+            f.prepareBuffer();
+        }
         // process compress style
-        const auto c_style = comp_style_.load();
-        switch (c_style) {
+        switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
                 processSideBufferClean(side_buffer1, side_buffer2, num_samples);
                 break;
@@ -201,15 +226,18 @@ namespace zlp {
     }
 
     void Controller::processSideBufferClassic(double *buffer1, double *buffer2, const size_t num_samples) {
-        juce::ignoreUnused(buffer1, buffer2, num_samples);
+        classic_comps_[0].process(buffer1, num_samples);
+        classic_comps_[1].process(buffer2, num_samples);
     }
 
     void Controller::processSideBufferOptical(double *buffer1, double *buffer2, const size_t num_samples) {
-        juce::ignoreUnused(buffer1, buffer2, num_samples);
+        optical_comps_[0].process(buffer1, num_samples);
+        optical_comps_[1].process(buffer2, num_samples);
     }
 
     void Controller::processSideBufferBus(double *buffer1, double *buffer2, const size_t num_samples) {
-        juce::ignoreUnused(buffer1, buffer2, num_samples);
+        bus_comps_[0].process(buffer1, num_samples);
+        bus_comps_[1].process(buffer2, num_samples);
     }
 
     void Controller::handleAsyncUpdate() {

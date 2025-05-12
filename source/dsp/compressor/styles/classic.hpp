@@ -51,7 +51,7 @@ namespace zldsp::compressor {
             // get the db from the tracker
             const auto inputDB = tracker.getMomentaryDB();
             // pass through the computer and the follower
-            const auto smoothReductionDB = follower.processSample(inputDB - computer.processSample(inputDB));
+            const auto smoothReductionDB = follower.processSample(inputDB - computer.eval(inputDB));
             // apply the gain on the current sample and save it as the feedback sample for the next
             x0 = x * decibelsToGain(smoothReductionDB);
             return -smoothReductionDB;

@@ -53,6 +53,7 @@ namespace zlp {
         std::atomic<bool> side_swap_{false};
 
         std::atomic<zldsp::compressor::Style> comp_style_{zldsp::compressor::Style::kClean};
+        zldsp::compressor::Style c_comp_style_{zldsp::compressor::Style::kClean};
 
         std::atomic<bool> to_update_wet_{true};
         std::atomic<double> wet_{1.0}, wet1_{1.0}, wet2_{1.0};
@@ -82,13 +83,24 @@ namespace zlp {
 
         // computer, trackers and followers
         zldsp::compressor::KneeComputer<double, true> computer_{};
-        zldsp::compressor::RMSTracker<double, true> tracker1_{}, tracker2_{};
-        zldsp::compressor::PSFollower<double, true, true> follower1_{}, follower2_{};
+        std::array<zldsp::compressor::RMSTracker<double, true>, 2> tracker_{};
+        std::array<zldsp::compressor::PSFollower<double, true, true>, 2> follower_{};
         // clean compressors
         std::array<zldsp::compressor::CleanCompressor<double, true, true, true, true>, 2> clean_comps_ = {
-            zldsp::compressor::CleanCompressor{computer_, tracker1_, follower1_},
-            zldsp::compressor::CleanCompressor{computer_, tracker2_, follower2_}
-        };
+            zldsp::compressor::CleanCompressor{computer_, tracker_[0], follower_[0]},
+            zldsp::compressor::CleanCompressor{computer_, tracker_[1], follower_[1]}};
+        // classic compressors
+        std::array<zldsp::compressor::ClassicCompressor<double, true, true, true, true>, 2> classic_comps_ = {
+            zldsp::compressor::ClassicCompressor{computer_, tracker_[0], follower_[0]},
+            zldsp::compressor::ClassicCompressor{computer_, tracker_[1], follower_[1]}};
+        // optical compressors
+        std::array<zldsp::compressor::OpticalCompressor<double, true, true, true, true>, 2> optical_comps_ = {
+            zldsp::compressor::OpticalCompressor{computer_, tracker_[0], follower_[0]},
+            zldsp::compressor::OpticalCompressor{computer_, tracker_[1], follower_[1]}};
+        // bus compressors
+        std::array<zldsp::compressor::BusCompressor<double, true, true, true, true>, 2> bus_comps_ = {
+            zldsp::compressor::BusCompressor{computer_, tracker_[0], follower_[0]},
+            zldsp::compressor::BusCompressor{computer_, tracker_[1], follower_[1]}};
 
         zldsp::gain::Gain<double> output_gain_{};
 
