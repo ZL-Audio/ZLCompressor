@@ -19,35 +19,35 @@ namespace zldsp::compressor {
     template<typename FloatType, bool UseCurve, bool IsPeakMix, bool UseSmooth, bool UsePunch>
     class CleanCompressor {
     public:
-        CleanCompressor(KneeComputer<FloatType, UseCurve> &computer_,
-                        RMSTracker<FloatType, IsPeakMix> &tracker_,
-                        PSFollower<FloatType, UseSmooth, UsePunch> &follower_)
-            : computer(computer_), tracker(tracker_), follower(follower_) {
+        CleanCompressor(KneeComputer<FloatType, UseCurve> &computer,
+                        RMSTracker<FloatType, IsPeakMix> &tracker,
+                        PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+            : computer_(computer), tracker_(tracker), follower_(follower) {
         }
 
         void reset() {
-            follower.reset(FloatType(0));
+            follower_.reset(FloatType(0));
         }
 
         void process(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
             for (size_t i = 0; i < num_samples; ++i) {
-                tracker.processSample(vector[i]);
-                vector[i] = std::max(tracker.getMomentarySquare(), FloatType(1e-10));
+                tracker_.processSample(vector[i]);
+                vector[i] = std::max(tracker_.getMomentarySquare(), FloatType(1e-10));
             }
             // transfer square sum to db
-            const auto meanScale = FloatType(1) / static_cast<FloatType>(tracker.getCurrentBufferSize());
-            vector = FloatType(10) * kfr::log10(vector * meanScale);
+            const auto mean_scale = FloatType(1) / static_cast<FloatType>(tracker_.getCurrentBufferSize());
+            vector = FloatType(10) * kfr::log10(vector * mean_scale);
             // pass through the computer and the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = -follower.processSample(vector[i] - computer.eval(vector[i]));
+                vector[i] = -follower_.processSample(vector[i] - computer_.eval(vector[i]));
             }
         }
 
     private:
-        KneeComputer<FloatType, UseCurve> &computer;
-        RMSTracker<FloatType, IsPeakMix> &tracker;
-        PSFollower<FloatType, UseSmooth, UsePunch> &follower;
+        KneeComputer<FloatType, UseCurve> &computer_;
+        RMSTracker<FloatType, IsPeakMix> &tracker_;
+        PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
     };
 }

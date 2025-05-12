@@ -19,40 +19,40 @@ namespace zldsp::compressor {
     template<typename FloatType, bool UseCurve, bool IsPeakMix, bool UseSmooth, bool UsePunch>
     class OpticalCompressor {
     public:
-        OpticalCompressor(KneeComputer<FloatType, UseCurve> &computer_,
-                          RMSTracker<FloatType, IsPeakMix> &tracker_,
-                          PSFollower<FloatType, UseSmooth, UsePunch> &follower_)
-            : computer(computer_), tracker(tracker_), follower(follower_) {
+        OpticalCompressor(KneeComputer<FloatType, UseCurve> &computer,
+                          RMSTracker<FloatType, IsPeakMix> &tracker,
+                          PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+            : computer_(computer), tracker_(tracker), follower_(follower) {
         }
 
         void reset() {
-            follower.reset(FloatType(0));
+            follower_.reset(FloatType(0));
         }
 
         void process(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
             for (size_t i = 0; i < num_samples; ++i) {
-                tracker.processSample(vector[i]);
-                vector[i] = tracker.getMomentarySquare();
+                tracker_.processSample(vector[i]);
+                vector[i] = tracker_.getMomentarySquare();
             }
-            const auto meanScale = FloatType(1) / static_cast<FloatType>(tracker.getCurrentBufferSize());
-            vector = kfr::sqrt(vector * meanScale);
+            const auto mean_scale = FloatType(1) / static_cast<FloatType>(tracker_.getCurrentBufferSize());
+            vector = kfr::sqrt(vector * mean_scale);
             // pass through the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = std::max(follower.processSample(vector[i]), FloatType(1e-10));
+                vector[i] = std::max(follower_.processSample(vector[i]), FloatType(1e-10));
             }
             // transfer to db
             vector = FloatType(20) * kfr::log10(vector);
             // pass through the computer
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = computer.eval(vector[i]) - vector[i];
+                vector[i] = computer_.eval(vector[i]) - vector[i];
             }
         }
 
     private:
-        KneeComputer<FloatType, UseCurve> &computer;
-        RMSTracker<FloatType, IsPeakMix> &tracker;
-        PSFollower<FloatType, UseSmooth, UsePunch> &follower;
+        KneeComputer<FloatType, UseCurve> &computer_;
+        RMSTracker<FloatType, IsPeakMix> &tracker_;
+        PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
     };
 }

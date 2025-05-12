@@ -115,7 +115,7 @@ namespace zldsp::compressor {
         FloatType attack_{}, attack_c_{}, release_{}, release_c_{};
         FloatType punch_{}, punch_c_{}, smooth_{}, smooth_c_{};
         double exp_factor_{-0.1308996938995747};
-        std::atomic<FloatType> attack_time_{1}, release_time_{1}, smooth_portion_{0}, punch_portion_{0};
+        std::atomic<FloatType> attack_time_{50}, release_time_{100}, smooth_portion_{0}, punch_portion_{0};
         std::atomic<bool> to_update_{true};
 
         void update() {

@@ -12,20 +12,21 @@
 #include "../computer/computer.hpp"
 #include "../tracker/tracker.hpp"
 #include "../follower/follower.hpp"
+#include "../../chore/decibels.hpp"
 
 namespace zldsp::compressor {
     template<typename FloatType, bool UseCurve, bool IsPeakMix, bool UseSmooth, bool UsePunch>
     class BusCompressor {
     public:
-        BusCompressor(KneeComputer<FloatType, UseCurve> &computer_,
-                          RMSTracker<FloatType, IsPeakMix> &tracker_,
-                          PSFollower<FloatType, UseSmooth, UsePunch> &follower_)
-            : computer(computer_), tracker(tracker_), follower(follower_) {
+        BusCompressor(KneeComputer<FloatType, UseCurve> &computer,
+                          RMSTracker<FloatType, IsPeakMix> &tracker,
+                          PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+            : computer_(computer), tracker_(tracker), follower_(follower) {
         }
 
         void reset() {
-            follower.reset(FloatType(0));
-            g0 = FloatType(1);
+            follower_.reset(FloatType(0));
+            g0_ = FloatType(1);
         }
 
         void process(FloatType *buffer, const size_t num_samples) {
@@ -35,26 +36,21 @@ namespace zldsp::compressor {
         }
 
     private:
-        KneeComputer<FloatType, UseCurve> &computer;
-        RMSTracker<FloatType, IsPeakMix> &tracker;
-        PSFollower<FloatType, UseSmooth, UsePunch> &follower;
-        FloatType g0{FloatType(1)};
-
-        template<typename Type>
-        static Type decibelsToGain(const Type decibels) {
-            return std::pow(static_cast<Type>(10.0), decibels * static_cast<Type>(0.05));
-        }
+        KneeComputer<FloatType, UseCurve> &computer_;
+        RMSTracker<FloatType, IsPeakMix> &tracker_;
+        PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
+        FloatType g0_{FloatType(1)};
 
         FloatType processSample(FloatType x) {
             // pass the feedback gain * current sample through the tracker
-            tracker.processSample(x * g0);
+            tracker_.processSample(x * g0_);
             // get the db from the tracker
-            const auto inputDB = tracker.getMomentaryDB();
+            const auto input_db = tracker_.getMomentaryDB();
             // pass through the computer and the follower
-            const auto smoothReductionDB = follower.processSample(inputDB - computer.eval(inputDB));
+            const auto smooth_reduction_db = follower_.processSample(input_db - computer_.eval(input_db));
             // calculate the current gain and save it as the feedback gain for the next
-            g0 = decibelsToGain(smoothReductionDB);
-            return -smoothReductionDB;
+            g0_ = chore::decibelsToGain(smooth_reduction_db);
+            return -smooth_reduction_db;
         }
     };
 }
