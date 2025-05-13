@@ -26,16 +26,19 @@ namespace zlp {
         juce::AudioProcessorValueTreeState &parameters_ref_;
         Controller &controller_ref_;
 
+        zldsp::compressor::KneeComputer<double, true> &computer_ref_;
+        std::array<zldsp::compressor::PSFollower<double, true, true>, 2> &follower_ref_;
+
         constexpr static std::array kIDs{
             PCompStyle::kID,
             PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID,
-            PAttack::kID, PRelease::kID, PPunch::kID, PSmooth::kID
+            PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID
         };
 
         constexpr static std::array kDefaultVs{
             static_cast<float>(PCompStyle::kDefaultI),
             PThreshold::kDefaultV, PRatio::kDefaultV, PKneeW::kDefaultV, PCurve::kDefaultV,
-            PAttack::kDefaultV, PRelease::kDefaultV, PPunch::kDefaultV, PSmooth::kDefaultV
+            PAttack::kDefaultV, PRelease::kDefaultV, PPump::kDefaultV, PSmooth::kDefaultV
         };
 
         void parameterChanged(const juce::String &parameter_ID, float new_value) override;

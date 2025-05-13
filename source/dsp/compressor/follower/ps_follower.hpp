@@ -19,9 +19,9 @@ namespace zldsp::compressor {
      * a punch-smooth follower
      * @tparam FloatType
      * @tparam UseSmooth whether to use smooth
-     * @tparam UsePunch whether to use punch
+     * @tparam UsePP whether to use pump-punch
      */
-    template<typename FloatType, bool UseSmooth = false, bool UsePunch = false>
+    template<typename FloatType, bool UseSmooth = false, bool UsePP = false>
     class PSFollower {
     public:
         PSFollower() = default;
@@ -68,22 +68,33 @@ namespace zldsp::compressor {
             } else {
                 y0 = x >= y_ ? attack_ * y_ + attack_c_ * x : release_ * y_ + release_c_ * x;
             }
-            if (UsePunch) {
+            if (UsePP) {
                 const auto slope0 = y0 - y_;
-                if (punch_ >= FloatType(0)) {
-                    if (slope0 < slope_) {
-                        slope_ = punch_ * slope_ + punch_c_ * slope0;
-                    } else {
+                switch (pp_state_) {
+                    case PPState::kOff: {
                         slope_ = slope0;
+                        y_ = y0;
+                        break;
                     }
-                } else {
-                    if (slope0 > slope_ && slope_ >= FloatType(0)) {
-                        slope_ = punch_ * slope_ + punch_c_ * slope0;
-                    } else {
-                        slope_ = slope0;
+                    case PPState::kPump: {
+                        if (slope0 < slope_) {
+                            slope_ = pp_ * slope_ + pp_c_ * slope0;
+                        } else {
+                            slope_ = slope0;
+                        }
+                        y_ += slope_;
+                        break;
+                    }
+                    case PPState::kPunch: {
+                        if (slope0 > slope_ && slope_ >= FloatType(0)) {
+                            slope_ = pp_ * slope_ + pp_c_ * slope0;
+                        } else {
+                            slope_ = slope0;
+                        }
+                        y_ += slope_;
+                        break;
                     }
                 }
-                y_ += slope_;
             } else {
                 y_ = y0;
             }
@@ -100,8 +111,8 @@ namespace zldsp::compressor {
             to_update_.store(true);
         }
 
-        void setPunch(const FloatType x) {
-            punch_portion_.store(std::clamp(x, FloatType(-1), FloatType(1)));
+        void setPumpPunch(const FloatType x) {
+            pp_portion_.store(std::clamp(x, FloatType(-1), FloatType(1)));
             to_update_.store(true);
         }
 
@@ -113,9 +124,14 @@ namespace zldsp::compressor {
     private:
         FloatType y_{}, state_{}, slope_{};
         FloatType attack_{}, attack_c_{}, release_{}, release_c_{};
-        FloatType punch_{}, punch_c_{}, smooth_{}, smooth_c_{};
+
+        enum PPState { kOff, kPunch, kPump };
+
+        PPState pp_state_{PPState::kOff};
+        FloatType pp_{}, pp_c_{}, smooth_{}, smooth_c_{};
+
         double exp_factor_{-0.1308996938995747};
-        std::atomic<FloatType> attack_time_{50}, release_time_{100}, smooth_portion_{0}, punch_portion_{0};
+        std::atomic<FloatType> attack_time_{50}, release_time_{100}, pp_portion_{0}, smooth_portion_{0};
         std::atomic<bool> to_update_{true};
 
         void update() {
@@ -123,14 +139,15 @@ namespace zldsp::compressor {
             const auto current_attack_time = static_cast<double>(attack_time_.load());
             const auto current_release_time = static_cast<double>(release_time_.load());
             const auto current_smooth_portion = static_cast<double>(smooth_portion_.load());
-            const auto current_punch_portion = static_cast<double>(punch_portion_.load());
+            const auto current_pp_portion = static_cast<double>(pp_portion_.load());
             // update attack
             if (current_attack_time < 0.001) {
                 attack_ = FloatType(0);
             } else {
-                if (UsePunch) {
+                if (UsePP) {
                     attack_ = static_cast<FloatType>(std::exp(
-                        exp_factor_ / current_attack_time / (1. - std::pow(std::abs(current_punch_portion), 2.) * 0.125)));
+                        exp_factor_ / current_attack_time / (
+                            1. - std::pow(std::abs(current_pp_portion), 2.) * 0.125)));
                 } else {
                     attack_ = static_cast<FloatType>(std::exp(exp_factor_ / current_attack_time));
                 }
@@ -148,15 +165,17 @@ namespace zldsp::compressor {
                 smooth_ = static_cast<FloatType>(current_smooth_portion);
                 smooth_c_ = FloatType(1) - smooth_;
             }
-            if (UsePunch) {
-                // update punch
-                if (current_attack_time < 0.001 || std::abs(current_punch_portion) < 0.001) {
-                    punch_ = FloatType(0);
+            if (UsePP) {
+                // update pump-punch
+                if (current_attack_time < 0.001 || std::abs(current_pp_portion) < 0.001) {
+                    pp_ = FloatType(0);
+                    pp_state_ = PPState::kOff;
                 } else {
-                    punch_ = static_cast<FloatType>(std::exp(
-                        exp_factor_ / current_attack_time / std::abs(current_punch_portion)));
+                    pp_state_ = current_pp_portion > 0 ? PPState::kPump : PPState::kPunch;
+                    pp_ = static_cast<FloatType>(std::exp(
+                        exp_factor_ / current_attack_time / std::abs(current_pp_portion)));
                 }
-                punch_c_ = FloatType(1) - punch_;
+                pp_c_ = FloatType(1) - pp_;
             }
         }
     };

@@ -166,13 +166,8 @@ namespace zlp {
         auto static constexpr kID = "knee_width";
         auto static constexpr kName = "Knee Width";
         inline auto static const kRange =
-                juce::NormalisableRange<float>(0.f, 1.f, .01f, .5f);
-        auto static constexpr kDefaultV = 0.25f;
-
-        template<typename FloatType>
-        inline static FloatType formatV(const FloatType x) {
-            return std::max(x * FloatType(60), FloatType(0.01));
-        }
+                juce::NormalisableRange<float>(0.f, 32.f, .01f, .5f);
+        auto static constexpr kDefaultV = 8.f;
     };
 
     class PCurve : public FloatParameters<PCurve> {
@@ -182,6 +177,11 @@ namespace zlp {
         inline auto static const kRange =
                 juce::NormalisableRange<float>(0.f, 100.f, .1f);
         auto static constexpr kDefaultV = 50.f;
+
+        template<typename FloatType>
+        inline static FloatType formatV(const FloatType x) {
+            return x * FloatType(0.02) - FloatType(1);
+        }
     };
 
     class PAttack : public FloatParameters<PAttack> {
@@ -202,27 +202,37 @@ namespace zlp {
         auto static constexpr kDefaultV = 500.f;
     };
 
-    class PPunch : public FloatParameters<PPunch> {
+    class PPump : public FloatParameters<PPump> {
     public:
-        auto static constexpr kID = "punch";
-        auto static constexpr kName = "Punch";
-        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 1.f, .01f);
-        auto static constexpr kDefaultV = 0.5f;
+        auto static constexpr kID = "pump";
+        auto static constexpr kName = "Pump";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .01f);
+        auto static constexpr kDefaultV = 50.f;
+
+        template<typename FloatType>
+        inline static FloatType formatV(const FloatType x) {
+            return x * FloatType(0.02) - FloatType(1);
+        }
     };
 
     class PSmooth : public FloatParameters<PSmooth> {
     public:
         auto static constexpr kID = "smooth";
         auto static constexpr kName = "Smooth";
-        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 1.f, .01f);
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .01f);
         auto static constexpr kDefaultV = 0.f;
+
+        template<typename FloatType>
+        inline static FloatType formatV(const FloatType x) {
+            return x * FloatType(0.01);
+        }
     };
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
-                   PAttack::get(), PRelease::get(), PPunch::get(), PSmooth::get());
+                   PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get());
         return layout;
     }
 
