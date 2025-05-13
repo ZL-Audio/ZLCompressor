@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
+#include "controller.hpp"
 
 namespace zlp {
     inline auto static constexpr kVersionHint = 1;
@@ -133,10 +133,10 @@ namespace zlp {
         }
     };
 
-    class PCompType : public ChoiceParameters<PCompType> {
+    class PCompStyle : public ChoiceParameters<PCompStyle> {
     public:
-        auto static constexpr kID = "comp_type";
-        auto static constexpr kName = "Compressor Type";
+        auto static constexpr kID = "comp_style";
+        auto static constexpr kName = "Compressor Style";
         inline auto static const kChoices = juce::StringArray{
             "Clean", "Classic", "Optical", "Bus"
         };
@@ -149,14 +149,14 @@ namespace zlp {
         auto static constexpr kName = "Threshold (dB)";
         inline auto static const kRange =
                 juce::NormalisableRange<float>(-80.f, 0.f, .1f);
-        auto static constexpr kDefaultV = -40.f;
+        auto static constexpr kDefaultV = -18.f;
     };
 
     class PRatio : public FloatParameters<PRatio> {
     public:
         auto static constexpr kID = "ratio";
         auto static constexpr kName = "Ratio";
-        auto static constexpr kDefaultV = 1.f;
+        auto static constexpr kDefaultV = 4.f;
         inline auto static const kRange = getLogMidRange(1.f, 100.f, 4.f, 0.01f);
                 // juce::NormalisableRange<float>(1.f, 100.f, 0.01f, 0.2160127f);
     };
@@ -220,7 +220,7 @@ namespace zlp {
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
-        layout.add(PCompType::get(),
+        layout.add(PCompStyle::get(),
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
                    PAttack::get(), PRelease::get(), PPunch::get(), PSmooth::get());
         return layout;

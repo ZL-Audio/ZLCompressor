@@ -49,7 +49,7 @@ namespace zldsp::compressor {
             // pass through the computer and the follower
             const auto smooth_reduction_db = follower_.processSample(input_db - computer_.eval(input_db));
             // calculate the current gain and save it as the feedback gain for the next
-            g0_ = chore::decibelsToGain(smooth_reduction_db);
+            g0_ = chore::decibelsToGain(-smooth_reduction_db);
             return -smooth_reduction_db;
         }
     };

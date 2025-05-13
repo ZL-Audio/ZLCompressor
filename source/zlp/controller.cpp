@@ -43,7 +43,7 @@ namespace zlp {
         c_ext_side_chain_ = ext_side_chain_.load();
         // load stereo mode
         c_stereo_mode_ = stereo_mode_.load();
-        // load compressor style
+        // load compressor style, if different reset the interal state
         if (c_comp_style_ != comp_style_.load()) {
             c_comp_style_ = comp_style_.load();
             switch (c_comp_style_) {

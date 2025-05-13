@@ -9,5 +9,6 @@
 
 #pragma once
 
-#include "dsp_definitions.hpp"
+#include "zlp_definitions.hpp"
 #include "controller.hpp"
+#include "compress_attach.hpp"

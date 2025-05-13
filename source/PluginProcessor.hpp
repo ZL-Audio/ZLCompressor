@@ -69,6 +69,7 @@ public:
 
 private:
     zlp::Controller controller_;
+    zlp::CompressAttach compress_attach_;
     juce::AudioBuffer<double> double_buffer_;
 
     enum ChannelLayout {
@@ -76,6 +77,7 @@ private:
         kMain2Aux0, kMain2Aux1, kMain2Aux2,
         kInvalid
     };
+
     ChannelLayout channel_layout_{kInvalid};
 
     void doubleBufferCopyFrom(int dest_chan, const juce::AudioBuffer<float> &buffer, int src_chan);

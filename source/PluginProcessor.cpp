@@ -20,7 +20,8 @@ PluginProcessor::PluginProcessor()
       parameters_(*this, nullptr,
                   juce::Identifier("ZLCompressorParameters"),
                   zlp::getParameterLayout()),
-      controller_(*this) {
+      controller_(*this),
+      compress_attach_(*this, parameters_, controller_) {
 }
 
 PluginProcessor::~PluginProcessor() = default;
@@ -270,7 +271,8 @@ bool PluginProcessor::hasEditor() const {
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {
-    return new PluginEditor(*this);
+    return new juce::GenericAudioProcessorEditor(*this);
+    // return new PluginEditor(*this);
 }
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock &dest_data) {

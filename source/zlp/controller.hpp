@@ -33,6 +33,16 @@ namespace zlp {
 
         auto &getMagAvgAnalyzer() { return mag_avg_analyzer_; }
 
+        auto &getComputer() { return computer_; }
+
+        auto &getTracker() { return tracker_; }
+
+        auto &getFollower() { return follower_; }
+
+        void setCompStyle(const zldsp::compressor::Style style) {
+            comp_style_.store(style);
+        }
+
     private:
         juce::AudioProcessor &processor_ref_;
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};

@@ -10,4 +10,33 @@
 #include "compress_attach.hpp"
 
 namespace zlp {
+    CompressAttach::CompressAttach(juce::AudioProcessor &processor,
+                                   juce::AudioProcessorValueTreeState &parameters,
+                                   Controller &controller)
+        : processor_ref_(processor),
+          parameters_ref_(parameters),
+          controller_ref_(controller) {
+        for (auto &ID: kIDs) {
+            parameters_ref_.addParameterListener(ID, this);
+        }
+        for (size_t i = 0; i < kIDs.size(); ++i) {
+            parameterChanged(kIDs[i], kDefaultVs[i]);
+        }
+    }
+
+    CompressAttach::~CompressAttach() {
+        for (auto &ID: kIDs) {
+            parameters_ref_.removeParameterListener(ID, this);
+        }
+    }
+
+    void CompressAttach::parameterChanged(const juce::String &parameter_ID, float new_value) {
+        if (parameter_ID == PCompStyle::kID) {
+            controller_ref_.setCompStyle(static_cast<zldsp::compressor::Style>(new_value));
+        } else if (parameter_ID == PThreshold::kID) {
+            controller_ref_.getComputer().setThreshold(new_value);
+        } else if (parameter_ID == PRatio::kID) {
+            controller_ref_.getComputer().setRatio(new_value);
+        }
+    }
 } // zlp

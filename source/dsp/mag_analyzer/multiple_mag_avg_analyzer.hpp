@@ -21,7 +21,7 @@ namespace zldsp::analyzer {
 
         void prepare(const double sample_rate) override {
             this->sample_rate_.store(sample_rate);
-            this->setTimeLength(0.001 * 999.0);
+            this->setTimeLength(0.001f * 999.0f);
             std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }
 
