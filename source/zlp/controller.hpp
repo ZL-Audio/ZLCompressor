@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include "compressor/compressor.hpp"
-#include "gain/gain.hpp"
-#include "splitter/splitter.hpp"
-#include "mag_analyzer/mag_analyzer.hpp"
+#include "../dsp/compressor/compressor.hpp"
+#include "../dsp/gain/gain.hpp"
+#include "../dsp/splitter/splitter.hpp"
+#include "../dsp/mag_analyzer/mag_analyzer.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>

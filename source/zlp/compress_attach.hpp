@@ -9,4 +9,10 @@
 
 #pragma once
 
-#include "ms_splitter.hpp"
+namespace zlp {
+
+class CompressAttach {
+
+};
+
+} // zlp

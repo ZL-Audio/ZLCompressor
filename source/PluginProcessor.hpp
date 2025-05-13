@@ -11,7 +11,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "dsp/dsp.hpp"
+#include "zlp/zlp.hpp"
 
 #if (MSVC)
 #include "ipps.h"
