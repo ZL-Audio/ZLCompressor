@@ -47,10 +47,10 @@ namespace zldsp::compressor {
             // get the db from the tracker
             const auto input_db = tracker_.getMomentaryDB();
             // pass through the computer and the follower
-            const auto smooth_reduction_db = follower_.processSample(input_db - computer_.eval(input_db));
+            const auto smooth_reduction_db = -follower_.processSample(input_db - computer_.eval(input_db));
             // apply the gain on the current sample and save it as the feedback sample for the next
-            x0_ = x * chore::decibelsToGain(-smooth_reduction_db);
-            return -smooth_reduction_db;
+            x0_ = x * chore::decibelsToGain(smooth_reduction_db);
+            return smooth_reduction_db;
         }
     };
 }

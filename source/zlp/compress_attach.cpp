@@ -16,6 +16,7 @@ namespace zlp {
         : processor_ref_(processor),
           parameters_ref_(parameters),
           controller_ref_(controller) {
+        juce::ignoreUnused(processor_ref_);
         for (auto &ID: kIDs) {
             parameters_ref_.addParameterListener(ID, this);
         }
