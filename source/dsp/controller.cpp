@@ -16,7 +16,8 @@ namespace zlp {
 
     void Controller::prepare(const juce::dsp::ProcessSpec &spec) {
         main_spec_ = spec;
-        mag_analyzer_.prepare(spec);
+        mag_analyzer_.prepare(spec.sampleRate);
+        mag_avg_analyzer_.prepare(spec.sampleRate);
         output_gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.1);
 
         pre_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
@@ -103,6 +104,11 @@ namespace zlp {
         prepareBuffer();
         juce::AudioBuffer<double> main_buffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
         juce::AudioBuffer<double> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
+        pre_pointers_[0] = pre_buffer_.getWritePointer(0);
+        pre_pointers_[1] = pre_buffer_.getWritePointer(1);
+        main_pointers_[0] = main_buffer.getWritePointer(0);
+        main_pointers_[1] = main_buffer.getWritePointer(1);
+
         pre_buffer_.makeCopyOf(main_buffer, true);
 
         if (!ext_side_chain_.load()) {
@@ -155,12 +161,13 @@ namespace zlp {
             main_oversampler.processSamplesDown(main_block);
         }
 
-        mag_analyzer_.process({pre_buffer_, main_buffer});
-        mag_avg_analyzer_.process({pre_buffer_, main_buffer});
+        mag_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
+                              static_cast<size_t>(buffer.getNumSamples()));
+        mag_avg_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
+                              static_cast<size_t>(buffer.getNumSamples()));
 
-        write_pointers_[0] = main_buffer.getWritePointer(0);
-        write_pointers_[1] = main_buffer.getWritePointer(1);
-        output_gain_.process(std::span(write_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
+
+        output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
     }
 
     void Controller::processBuffer(double *main_buffer1, double *main_buffer2,

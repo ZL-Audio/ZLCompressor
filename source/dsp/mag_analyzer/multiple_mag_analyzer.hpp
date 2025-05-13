@@ -9,55 +9,33 @@
 
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_dsp/juce_dsp.h>
-
-#include "../chore/decibels.hpp"
-#include "../container/abstract_fifo.hpp"
+#include "multiple_mag_base.hpp"
 
 namespace zldsp::analyzer {
     template<typename FloatType, size_t MagNum, size_t PointNum>
-    class MultipleMagAnalyzer {
+    class MultipleMagAnalyzer : public MultipleMagBase<FloatType, MagNum, PointNum> {
     public:
-        enum MagType {
-            kPeak, kRMS
-        };
-
         explicit MultipleMagAnalyzer() = default;
 
-        void prepare(const juce::dsp::ProcessSpec &spec) {
-            sample_rate_.store(spec.sampleRate);
-            setTimeLength(time_length_.load());
-            std::fill(current_mags_.begin(), current_mags_.end(), FloatType(-999));
-        }
+        ~MultipleMagAnalyzer() override = default;
 
-        void process(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers) {
-            switch (mag_type_.load()) {
-                case MagType::kPeak: {
-                    processBuffer<MagType::kPeak>(buffers);
-                    break;
-                }
-                case MagType::kRMS: {
-                    processBuffer<MagType::kRMS>(buffers);
-                    break;
-                }
-                default: {
-                }
-            }
+        void prepare(const double sample_rate) override {
+            this->sample_rate_.store(sample_rate);
+            this->setTimeLength(this->time_length_.load());
+            std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }
 
         int run(const int num_to_read = PointNum) {
-            juce::ScopedNoDenormals no_denormals;
             // calculate the number of points put into circular buffers
-            const int fifo_num_ready = abstract_fifo_.getNumReady();
-            if (to_reset_.exchange(false)) {
+            const int fifo_num_ready = this->abstract_fifo_.getNumReady();
+            if (this->to_reset_.exchange(false)) {
                 for (size_t i = 0; i < MagNum; ++i) {
-                    std::fill(circular_mags_[i].begin(), circular_mags_[i].end(), -240.f);
+                    std::fill(this->circular_mags_[i].begin(), this->circular_mags_[i].end(), -240.f);
                 }
                 // clear FIFOs
-                zldsp::container::AbstractFIFO::Range range;
-                abstract_fifo_.prepareToRead(fifo_num_ready, range);
-                abstract_fifo_.finishedRead(fifo_num_ready);
+                zldsp::container::AbstractFIFO::Range range{};
+                this->abstract_fifo_.prepareToRead(fifo_num_ready, range);
+                this->abstract_fifo_.finishedRead(fifo_num_ready);
                 return 0;
             }
             const int num_ready = fifo_num_ready >= static_cast<int>(PointNum / 2)
@@ -67,17 +45,17 @@ namespace zldsp::analyzer {
             const auto num_ready_shift = static_cast<size_t>(num_ready);
             // shift circular buffers
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &circular_peak{circular_mags_[i]};
+                auto &circular_peak{this->circular_mags_[i]};
                 std::rotate(circular_peak.begin(),
                             circular_peak.begin() + num_ready_shift,
                             circular_peak.end());
             }
             // read from FIFOs
-            zldsp::container::AbstractFIFO::Range range;
-            abstract_fifo_.prepareToRead(num_ready, range);
+            zldsp::container::AbstractFIFO::Range range{};
+            this->abstract_fifo_.prepareToRead(num_ready, range);
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &circular_peak{circular_mags_[i]};
-                auto &peak_fifo{mag_fifos_[i]};
+                auto &circular_peak{this->circular_mags_[i]};
+                auto &peak_fifo{this->mag_fifos_[i]};
                 size_t j = circular_peak.size() - static_cast<size_t>(num_ready);
                 if (range.block_size1 > 0) {
                     std::copy(&peak_fifo[static_cast<size_t>(range.start_index1)],
@@ -91,7 +69,7 @@ namespace zldsp::analyzer {
                               &circular_peak[j]);
                 }
             }
-            abstract_fifo_.finishedRead(num_ready);
+            this->abstract_fifo_.finishedRead(num_ready);
 
             return num_ready;
         }
@@ -105,117 +83,14 @@ namespace zldsp::analyzer {
             float x = x0 - shift * delta_x;
             for (size_t idx = 0; idx < PointNum; ++idx) {
                 for (size_t i = 0; i < MagNum; ++i) {
-                    const auto y = magToY(circular_mags_[i][idx], y0, height, min_db, max_db);
+                    const auto y = magToY(this->circular_mags_[i][idx], y0, height, min_db, max_db);
                     paths[i].get().lineTo(x, y);
                 }
                 x += delta_x;
             }
         }
 
-        void setTimeLength(const float x) {
-            time_length_.store(x);
-            to_update_time_length_.store(true);
-        }
-
-        void setToReset() { to_reset_.store(true); }
-
-        void setMagType(const MagType x) { mag_type_.store(x); }
-
     protected:
-        std::atomic<double> sample_rate_{48000.0};
-        std::array<std::array<float, PointNum>, MagNum> mag_fifos_{};
-        zldsp::container::AbstractFIFO abstract_fifo_{PointNum};
-        std::array<std::array<float, PointNum>, MagNum> circular_mags_{};
-        size_t circular_idx_{0};
-
-        std::atomic<float> time_length_{7.f};
-        double current_pos_{0.}, max_pos_{1.};
-        int current_num_samples_{0};
-        std::atomic<bool> to_update_time_length_{true};
-        std::array<FloatType, MagNum> current_mags_{};
-
-        std::atomic<bool> to_reset_{false};
-        std::atomic<MagType> mag_type_{MagType::kRMS};
-
-        template<MagType CurrentMagType>
-        void processBuffer(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> &buffers) {
-            int start_idx{0}, end_idx{0};
-            int num_samples = buffers[0].get().getNumSamples();
-            if (num_samples == 0) { return; }
-            if (to_update_time_length_.exchange(false)) {
-                max_pos_ = sample_rate_.load() * static_cast<double>(time_length_.load()) / static_cast<double>(
-                               PointNum - 1);
-                current_pos_ = 0;
-                current_num_samples_ = 0;
-            }
-            while (true) {
-                const auto remain_num = static_cast<int>(std::round(max_pos_ - current_pos_));
-                if (num_samples >= remain_num) {
-                    start_idx = end_idx;
-                    end_idx = end_idx + remain_num;
-                    num_samples -= remain_num;
-                    updateMags<CurrentMagType>(buffers, start_idx, remain_num);
-                    current_pos_ = current_pos_ + static_cast<double>(remain_num) - max_pos_;
-                    if (abstract_fifo_.getNumFree() > 0) {
-
-                        zldsp::container::AbstractFIFO::Range range;
-                        abstract_fifo_.prepareToWrite(1, range);
-                        const auto write_idx = range.block_size1 > 0 ? range.start_index1 : range.start_index2;
-                        switch (CurrentMagType) {
-                            case MagType::kPeak: {
-                                for (size_t i = 0; i < MagNum; ++i) {
-                                    mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::gainToDecibels(
-                                        static_cast<float>(current_mags_[i]));
-                                }
-                                break;
-                            }
-                            case MagType::kRMS: {
-                                for (size_t i = 0; i < MagNum; ++i) {
-                                    mag_fifos_[i][static_cast<size_t>(write_idx)] = 0.5f * zldsp::chore::gainToDecibels(
-                                        static_cast<float>(
-                                            current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
-                                }
-                                current_num_samples_ = 0;
-                                break;
-                            }
-                        }
-                        abstract_fifo_.finishedWrite(1);
-
-                        std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
-                    }
-                } else {
-                    updateMags<CurrentMagType>(buffers, start_idx, num_samples);
-                    current_pos_ += static_cast<double>(num_samples);
-                    break;
-                }
-            }
-        }
-
-        template<MagType CurrentMagType>
-        void updateMags(std::array<std::reference_wrapper<juce::AudioBuffer<FloatType> >, MagNum> buffers,
-                        const int start_idx, const int num_samples) {
-            for (size_t i = 0; i < MagNum; ++i) {
-                auto &buffer = buffers[i];
-                switch (CurrentMagType) {
-                    case MagType::kPeak: {
-                        const auto current_magnitude = buffer.get().getMagnitude(start_idx, num_samples);
-                        current_mags_[i] = std::max(current_mags_[i], current_magnitude);
-                    }
-                    case MagType::kRMS: {
-                        FloatType current_s{FloatType(0)};
-                        for (int j = 0; j < buffer.get().getNumChannels(); ++j) {
-                            auto *data = buffer.get().getReadPointer(j, start_idx);
-                            for (auto idx = 0; idx < num_samples; ++idx) {
-                                current_s += data[static_cast<size_t>(idx)] * data[static_cast<size_t>(idx)];
-                            }
-                        }
-                        current_mags_[i] += current_s;
-                        current_num_samples_ += num_samples;
-                    }
-                }
-            }
-        }
-
         static float magToY(const float mag, const float y0, const float height,
                             const float min_db, const float max_db) {
             return y0 + height * (max_db - mag) / (max_db - min_db);

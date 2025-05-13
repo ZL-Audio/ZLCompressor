@@ -14,6 +14,9 @@
 #include "splitter/splitter.hpp"
 #include "mag_analyzer/mag_analyzer.hpp"
 
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
+
 namespace zlp {
     class Controller final : private juce::AsyncUpdater {
     public:
@@ -34,7 +37,7 @@ namespace zlp {
         juce::AudioProcessor &processor_ref_;
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
         juce::AudioBuffer<double> pre_buffer_;
-        std::array<double *, 2> write_pointers_{};
+        std::array<double *, 2> pre_pointers_{}, main_pointers_{};
 
         zldsp::analyzer::MagReductionAnalyzer<double, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<double, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
