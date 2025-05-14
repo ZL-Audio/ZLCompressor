@@ -69,12 +69,14 @@ JUCE template from [pamplejuce](https://github.com/sudara/pamplejuce)
 
 ## Reference
 
-Giannoulis, Dimitrios, Michael Massberg, and Joshua D. Reiss. *Digital dynamic range compressor design—A tutorial and analysis*. Journal of the Audio Engineering Society. (2012).
+Dimitrios Giannoulis, Michael Massberg, and Joshua D. Reiss. *Digital dynamic range compressor design—A tutorial and analysis*. Journal of the Audio Engineering Society. (2012).
 
-Vicanek, Martin. *Matched One-Pole Digital Shelving Filters*. (2019).
+Martin Vicanek. *Matched One-Pole Digital Shelving Filters*. (2019).
 
-Vicanek, Martin. *Matched Second Order Digital Filters*. (2016).
+Martin Vicanek. *Matched Second Order Digital Filters*. (2016).
 
-Redmon, Nigel. *Cascading filters*. (2016).
+Nigel Redmon. *Cascading filters*. (2016).
 
-Moler, Cleve. [*Makima Piecewise Cubic Interpolation*](https://blogs.mathworks.com/cleve/2019/04/29/makima-piecewise-cubic-interpolation/). MathWorks Blogs. (2019).
+Cleve Moler. [*Makima Piecewise Cubic Interpolation*](https://blogs.mathworks.com/cleve/2019/04/29/makima-piecewise-cubic-interpolation/). MathWorks Blogs. (2019).
+
+Stefan Bilbao, Fabián Esqueda, Julian D. Parker, and Vesa Välimäki. *Antiderivative antialiasing for memoryless nonlinearities*. IEEE Signal Processing Letters 24.7. (2017).
