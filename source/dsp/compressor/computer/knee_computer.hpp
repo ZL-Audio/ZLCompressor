@@ -52,29 +52,35 @@ namespace zldsp::compressor {
     /**
      * a computer that computes the current compression
      * @tparam FloatType
-     * @tparam UseCurve whether to use the curve
      */
-    template<typename FloatType, bool UseCurve = false>
+    template<typename FloatType>
     class KneeComputer final {
     public:
         KneeComputer() = default;
 
-        void prepareBuffer() {
+        bool prepareBuffer() {
             if (to_interpolate_.exchange(false)) {
                 interpolate();
+                return true;
             }
+            return false;
+        }
+
+        void copyFrom(KneeComputer &other) {
+            low_th_ = other.low_th_;
+            high_th_ = other.high_th_;
+            para_mid_g0_ = other.para_mid_g0_;
+            para_high_g0_ = other.para_high_g0_;
         }
 
         FloatType eval(FloatType x) {
             if (x <= low_th_) {
                 return x;
             } else if (x >= high_th_) {
-                const auto y = UseCurve ? paras_[2] + paras_[3] * x + paras_[4] * x * x : paras_[2] + paras_[3] * x;
-                return y;
+                x = std::min(x, FloatType(0));
+                return (para_high_g0_[0] * x + para_high_g0_[1]) * x + para_high_g0_[2];
             } else {
-                const auto xx = x + paras_[1];
-                const auto y = x + paras_[0] * xx * xx;
-                return y;
+                return (para_mid_g0_[0] * x + para_mid_g0_[1]) * x + para_mid_g0_[2];
             }
         }
 
@@ -122,7 +128,7 @@ namespace zldsp::compressor {
         std::atomic<FloatType> threshold_{-18}, ratio_{2};
         std::atomic<FloatType> knee_w_{FloatType(0.25)}, curve_{0};
         FloatType low_th_{0}, high_th_{0};
-        std::array<FloatType, 5> paras_;
+        std::array<FloatType, 3> para_mid_g0_, para_high_g0_;
         std::atomic<bool> to_interpolate_{true};
 
         void interpolate() {
@@ -132,29 +138,28 @@ namespace zldsp::compressor {
             const auto currentCurve = curve_.load();
             low_th_ = currentThreshold - currentKneeW;
             high_th_ = currentThreshold + currentKneeW;
-            paras_[0] = FloatType(1) / currentRatio - FloatType(1);
-            paras_[1] = -low_th_;
-            paras_[0] *= FloatType(1) / (currentKneeW * FloatType(4));
-            if (UseCurve) {
-                if (currentCurve >= FloatType(0)) {
-                    const auto alpha = FloatType(1) - currentCurve, beta = currentCurve;
-                    linear_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                    down_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                    paras_[2] = alpha * linear_curve_.c + beta * down_curve_.c;
-                    paras_[3] = alpha * linear_curve_.b + beta * down_curve_.b;
-                    paras_[4] = beta * down_curve_.a;
-                } else {
-                    const auto alpha = FloatType(1) + currentCurve, beta = -currentCurve;
-                    linear_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                    up_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                    paras_[2] = alpha * linear_curve_.c + beta * up_curve_.c;
-                    paras_[3] = alpha * linear_curve_.b + beta * up_curve_.b;
-                    paras_[4] = beta * up_curve_.a;
-                }
-            } else {
+            { // update mid curve parameters
+                const auto a0 = (FloatType(1) / currentRatio - FloatType(1)) / (currentKneeW * FloatType(4));
+                const auto a1 = -low_th_;
+                para_mid_g0_[0] = a0;
+                const auto a0a1 = a0 * a1;
+                para_mid_g0_[1] = FloatType(2) * a0a1 + FloatType(1);
+                para_mid_g0_[2] = a0a1 * a1;
+            }
+            if (currentCurve >= FloatType(0)) {
+                const auto alpha = FloatType(1) - currentCurve, beta = currentCurve;
                 linear_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                paras_[2] = linear_curve_.c;
-                paras_[3] = linear_curve_.b;
+                down_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
+                para_high_g0_[2] = alpha * linear_curve_.c + beta * down_curve_.c;
+                para_high_g0_[1] = alpha * linear_curve_.b + beta * down_curve_.b;
+                para_high_g0_[0] = beta * down_curve_.a;
+            } else {
+                const auto alpha = FloatType(1) + currentCurve, beta = -currentCurve;
+                linear_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
+                up_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
+                para_high_g0_[2] = alpha * linear_curve_.c + beta * up_curve_.c;
+                para_high_g0_[1] = alpha * linear_curve_.b + beta * up_curve_.b;
+                para_high_g0_[0] = beta * up_curve_.a;
             }
         }
     };

@@ -43,7 +43,7 @@ namespace zlp {
         c_ext_side_chain_ = ext_side_chain_.load();
         // load stereo mode
         c_stereo_mode_ = stereo_mode_.load();
-        // load compressor style, if different reset the interal state
+        // load compressor style, if they are different, reset the internal state
         if (c_comp_style_ != comp_style_.load()) {
             c_comp_style_ = comp_style_.load();
             switch (c_comp_style_) {
@@ -60,10 +60,7 @@ namespace zlp {
                     optical_comps_[0].reset();
                     optical_comps_[1].reset();
                 }
-                case zldsp::compressor::Style::kBus: {
-                    bus_comps_[0].reset();
-                    bus_comps_[1].reset();
-                }
+                case zldsp::compressor::Style::kBus:
                 default: break;
             }
         }
@@ -164,7 +161,7 @@ namespace zlp {
         mag_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
                               static_cast<size_t>(buffer.getNumSamples()));
         mag_avg_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
-                              static_cast<size_t>(buffer.getNumSamples()));
+                                  static_cast<size_t>(buffer.getNumSamples()));
 
 
         output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
@@ -174,13 +171,11 @@ namespace zlp {
                                    double *side_buffer1, double *side_buffer2,
                                    const size_t num_samples) {
         // prepare computer, trackers and followers
-        computer_.prepareBuffer();
-        for (auto &t: tracker_) {
-            t.prepareBuffer();
-        }
-        for (auto &f: follower_) {
-            f.prepareBuffer();
-        }
+        if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
+        tracker_[0].prepareBuffer();
+        tracker_[1].prepareBuffer();
+        if (follower_[0].prepareBuffer()) { follower_[1].copyFrom(follower_[0]); }
+
         // process compress style
         switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
@@ -243,8 +238,10 @@ namespace zlp {
     }
 
     void Controller::processSideBufferBus(double *buffer1, double *buffer2, const size_t num_samples) {
-        bus_comps_[0].process(buffer1, num_samples);
-        bus_comps_[1].process(buffer2, num_samples);
+        auto v1 = kfr::make_univector(buffer1, num_samples);
+        auto v2 = kfr::make_univector(buffer2, num_samples);
+        v1 = v1 - v1;
+        v2 = v2 - v2;
     }
 
     void Controller::handleAsyncUpdate() {

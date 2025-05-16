@@ -47,9 +47,30 @@ namespace zldsp::compressor {
         /**
          * update values before processing a buffer
          */
-        void prepareBuffer() {
+        bool prepareBuffer() {
             if (to_update_.exchange(false)) {
                 update();
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * update values before processing a buffer by copying parameters from another follower
+         */
+        void copyFrom(PSFollower &other) {
+            attack_ = other.attack_;
+            attack_c_ = other.attack_c_;
+            release_ = other.release_;
+            release_c_ = other.release_c_;
+            if (UseSmooth) {
+                smooth_ = other.smooth_;
+                smooth_c_ = other.smooth_c_;
+            }
+            if (UsePP) {
+                pp_ = other.pp_;
+                pp_state_ = other.pp_state_;
+                pp_c_ = other.pp_c_;
             }
         }
 

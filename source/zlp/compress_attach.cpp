@@ -16,8 +16,8 @@ namespace zlp {
         : processor_ref_(processor),
           parameters_ref_(parameters),
           controller_ref_(controller),
-          computer_ref_(controller.getComputer()),
-          follower_ref_(controller.getFollower()) {
+          computer_ref_(controller.getComputer()[0]),
+          follower_ref_(controller.getFollower()[0]) {
         juce::ignoreUnused(processor_ref_);
         for (auto &ID: kIDs) {
             parameters_ref_.addParameterListener(ID, this);
@@ -45,19 +45,15 @@ namespace zlp {
         } else if (parameter_ID == PCurve::kID) {
             computer_ref_.setCurve(PCurve::formatV(new_value));
         } else if (parameter_ID == PAttack::kID) {
-            follower_ref_[0].setAttack(new_value);
-            follower_ref_[1].setAttack(new_value);
+            follower_ref_.setAttack(new_value);
         } else if (parameter_ID == PRelease::kID) {
-            follower_ref_[0].setRelease(new_value);
-            follower_ref_[1].setRelease(new_value);
+            follower_ref_.setRelease(new_value);
         } else if (parameter_ID == PPump::kID) {
             const auto x = PPump::formatV(new_value);
-            follower_ref_[0].setPumpPunch(x);
-            follower_ref_[1].setPumpPunch(x);
+            follower_ref_.setPumpPunch(x);
         } else if (parameter_ID == PSmooth::kID) {
             const auto x = PSmooth::formatV(new_value);
-            follower_ref_[0].setSmooth(x);
-            follower_ref_[1].setSmooth(x);
+            follower_ref_.setSmooth(x);
         }
     }
 } // zlp

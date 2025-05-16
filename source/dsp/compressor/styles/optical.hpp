@@ -16,10 +16,10 @@
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType, bool UseCurve, bool IsPeakMix, bool UseSmooth, bool UsePunch>
+    template<typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
     class OpticalCompressor {
     public:
-        OpticalCompressor(KneeComputer<FloatType, UseCurve> &computer,
+        OpticalCompressor(KneeComputer<FloatType> &computer,
                           RMSTracker<FloatType, IsPeakMix> &tracker,
                           PSFollower<FloatType, UseSmooth, UsePunch> &follower)
             : computer_(computer), tracker_(tracker), follower_(follower) {
@@ -51,7 +51,7 @@ namespace zldsp::compressor {
         }
 
     private:
-        KneeComputer<FloatType, UseCurve> &computer_;
+        KneeComputer<FloatType> &computer_;
         RMSTracker<FloatType, IsPeakMix> &tracker_;
         PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
     };
