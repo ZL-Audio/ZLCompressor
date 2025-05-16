@@ -9,45 +9,41 @@
 
 #pragma once
 
-#include "../computer/computer.hpp"
-#include "../tracker/tracker.hpp"
-#include "../follower/follower.hpp"
-
-#include "../../vector/vector.hpp"
+#include "style_base.hpp"
 
 namespace zldsp::compressor {
     template<typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
-    class CleanCompressor {
+    class CleanCompressor : public CompressorStyleBase<CleanCompressor<FloatType, IsPeakMix, UseSmooth, UsePunch>,
+                FloatType, IsPeakMix, UseSmooth, UsePunch> {
     public:
+        using base = CompressorStyleBase<CleanCompressor, FloatType, IsPeakMix, UseSmooth, UsePunch>;
+
         CleanCompressor(KneeComputer<FloatType> &computer,
                         RMSTracker<FloatType, IsPeakMix> &tracker,
                         PSFollower<FloatType, UseSmooth, UsePunch> &follower)
-            : computer_(computer), tracker_(tracker), follower_(follower) {
+            : base(computer, tracker, follower) {
         }
 
-        void reset() {
-            follower_.reset(FloatType(0));
+        void reset() override {
+            base::follower_.reset(FloatType(0));
         }
 
-        void process(FloatType *buffer, const size_t num_samples) {
+        template<PPState CurrentPPState, bool CurrentADAA>
+        void processImpl(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
             for (size_t i = 0; i < num_samples; ++i) {
-                tracker_.processSample(vector[i]);
-                vector[i] = std::max(tracker_.getMomentarySquare(), FloatType(1e-10));
+                base::tracker_.processSample(vector[i]);
+                vector[i] = std::max(base::tracker_.getMomentarySquare(), FloatType(1e-10));
             }
             // transfer square sum to db
-            const auto mean_scale = FloatType(1) / static_cast<FloatType>(tracker_.getCurrentBufferSize());
+            const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
             vector = FloatType(10) * kfr::log10(vector * mean_scale);
             // pass through the computer and the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = -follower_.processSample(vector[i] - computer_.eval(vector[i]));
+                vector[i] = -base::follower_.template processSample<CurrentPPState>(
+                    vector[i] - base::computer_.template eval<CurrentADAA>(vector[i]));
             }
         }
-
-    private:
-        KneeComputer<FloatType> &computer_;
-        RMSTracker<FloatType, IsPeakMix> &tracker_;
-        PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
     };
 }

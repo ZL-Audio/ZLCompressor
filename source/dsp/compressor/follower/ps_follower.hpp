@@ -15,6 +15,8 @@
 #include <algorithm>
 
 namespace zldsp::compressor {
+    enum PPState { kOff, kPunch, kPump };
+
     /**
      * a punch-smooth follower
      * @tparam FloatType
@@ -60,17 +62,13 @@ namespace zldsp::compressor {
          */
         void copyFrom(PSFollower &other) {
             attack_ = other.attack_;
-            attack_c_ = other.attack_c_;
             release_ = other.release_;
-            release_c_ = other.release_c_;
             if (UseSmooth) {
                 smooth_ = other.smooth_;
-                smooth_c_ = other.smooth_c_;
             }
             if (UsePP) {
-                pp_ = other.pp_;
                 pp_state_ = other.pp_state_;
-                pp_c_ = other.pp_c_;
+                pp_ = other.pp_;
             }
         }
 
@@ -79,19 +77,20 @@ namespace zldsp::compressor {
          * @param x
          * @return
          */
+        template<PPState CurrentPPState = PPState::kOff>
         FloatType processSample(const FloatType x) {
             FloatType y0;
             if (UseSmooth) {
-                state_ = std::max(x, release_ * state_ + release_c_ * x);
-                const auto y1 = attack_ * y_ + attack_c_ * state_;
-                const auto y2 = x >= y_ ? attack_ * y_ + attack_c_ * x : release_ * y_ + release_c_ * x;
-                y0 = smooth_ * y1 + smooth_c_ * y2;
+                state_ = std::max(x, release_ * (state_ - x) + x);
+                const auto y1 = attack_ * (y_ - state_) + state_;
+                const auto y2 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
+                y0 = smooth_ * (y1 - y2) + y2;
             } else {
-                y0 = x >= y_ ? attack_ * y_ + attack_c_ * x : release_ * y_ + release_c_ * x;
+                y0 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
             }
             if (UsePP) {
                 const auto slope0 = y0 - y_;
-                switch (pp_state_) {
+                switch (CurrentPPState) {
                     case PPState::kOff: {
                         slope_ = slope0;
                         y_ = y0;
@@ -99,7 +98,7 @@ namespace zldsp::compressor {
                     }
                     case PPState::kPump: {
                         if (slope0 < slope_) {
-                            slope_ = pp_ * slope_ + pp_c_ * slope0;
+                            slope_ = pp_ * (slope_ - slope0) + slope0;
                         } else {
                             slope_ = slope0;
                         }
@@ -108,7 +107,7 @@ namespace zldsp::compressor {
                     }
                     case PPState::kPunch: {
                         if (slope0 > slope_ && slope_ >= FloatType(0)) {
-                            slope_ = pp_ * slope_ + pp_c_ * slope0;
+                            slope_ = pp_ * (slope_ - slope0) + slope0;
                         } else {
                             slope_ = slope0;
                         }
@@ -142,14 +141,14 @@ namespace zldsp::compressor {
             to_update_.store(true);
         }
 
+        PPState getCurrentPPState() const { return pp_state_; }
+
     private:
         FloatType y_{}, state_{}, slope_{};
-        FloatType attack_{}, attack_c_{}, release_{}, release_c_{};
-
-        enum PPState { kOff, kPunch, kPump };
+        FloatType attack_{}, release_{};
 
         PPState pp_state_{PPState::kOff};
-        FloatType pp_{}, pp_c_{}, smooth_{}, smooth_c_{};
+        FloatType pp_{}, smooth_{};
 
         double exp_factor_{-0.1308996938995747};
         std::atomic<FloatType> attack_time_{50}, release_time_{100}, pp_portion_{0}, smooth_portion_{0};
@@ -173,18 +172,15 @@ namespace zldsp::compressor {
                     attack_ = static_cast<FloatType>(std::exp(exp_factor_ / current_attack_time));
                 }
             }
-            attack_c_ = FloatType(1) - attack_;
             // update release
             if (current_release_time < 0.001) {
                 release_ = FloatType(0);
             } else {
                 release_ = static_cast<FloatType>(std::exp(exp_factor_ / current_release_time));
             }
-            release_c_ = FloatType(1) - release_;
             if (UseSmooth) {
                 // update smooth
                 smooth_ = static_cast<FloatType>(current_smooth_portion);
-                smooth_c_ = FloatType(1) - smooth_;
             }
             if (UsePP) {
                 // update pump-punch
@@ -196,7 +192,6 @@ namespace zldsp::compressor {
                     pp_ = static_cast<FloatType>(std::exp(
                         exp_factor_ / current_attack_time / std::abs(current_pp_portion)));
                 }
-                pp_c_ = FloatType(1) - pp_;
             }
         }
     };

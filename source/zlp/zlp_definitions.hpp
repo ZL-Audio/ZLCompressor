@@ -207,11 +207,11 @@ namespace zlp {
         auto static constexpr kID = "pump";
         auto static constexpr kName = "Pump";
         inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .01f);
-        auto static constexpr kDefaultV = 50.f;
+        auto static constexpr kDefaultV = 0.f;
 
         template<typename FloatType>
         inline static FloatType formatV(const FloatType x) {
-            return x * FloatType(0.02) - FloatType(1);
+            return x * FloatType(0.01);
         }
     };
 

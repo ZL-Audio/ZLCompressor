@@ -73,6 +73,7 @@ namespace zldsp::compressor {
             para_high_g0_ = other.para_high_g0_;
         }
 
+        template <bool CurrentADAA = false>
         FloatType eval(FloatType x) {
             if (x <= low_th_) {
                 return x;

@@ -126,8 +126,6 @@ namespace zlp {
 
         void processSideBufferOptical(double *buffer1, double *buffer2, size_t num_samples);
 
-        void processSideBufferBus(double *buffer1, double *buffer2, size_t num_samples);
-
         void handleAsyncUpdate() override;
     };
 } // zlDSP

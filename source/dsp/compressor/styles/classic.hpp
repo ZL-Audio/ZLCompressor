@@ -16,41 +16,39 @@
 
 namespace zldsp::compressor {
     template<typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
-    class ClassicCompressor {
+    class ClassicCompressor : public CompressorStyleBase<ClassicCompressor<FloatType, IsPeakMix, UseSmooth, UsePunch>,
+                FloatType, IsPeakMix, UseSmooth, UsePunch> {
     public:
+        using base = CompressorStyleBase<ClassicCompressor, FloatType, IsPeakMix, UseSmooth, UsePunch>;
+
         ClassicCompressor(KneeComputer<FloatType> &computer,
                           RMSTracker<FloatType, IsPeakMix> &tracker,
                           PSFollower<FloatType, UseSmooth, UsePunch> &follower)
-            : computer_(computer), tracker_(tracker), follower_(follower) {
+            : base(computer, tracker, follower) {
         }
 
-        void reset() {
-            follower_.reset(FloatType(0));
+        void reset() override {
+            base::follower_.reset(FloatType(0));
             x0_ = FloatType(0);
         }
 
-        void process(FloatType *buffer, const size_t num_samples) {
+        template<PPState CurrentPPState, bool CurrentADAA>
+        void processImpl(FloatType *buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
-                buffer[i] = processSample(buffer[i]);
+                // pass the feedback sample through the tracker
+                base::tracker_.processSample(x0_);
+                // get the db from the tracker
+                const auto input_db = base::tracker_.getMomentaryDB();
+                // pass through the computer and the follower
+                const auto smooth_reduction_db = -base::follower_.template processSample<CurrentPPState>(
+                    input_db - base::computer_.template eval<CurrentADAA>(input_db));
+                // apply the gain on the current sample and save it as the feedback sample for the next
+                x0_ = buffer[i] * chore::decibelsToGain(smooth_reduction_db);
+                buffer[i] = smooth_reduction_db;
             }
         }
 
     private:
-        KneeComputer<FloatType> &computer_;
-        RMSTracker<FloatType, IsPeakMix> &tracker_;
-        PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
         FloatType x0_{FloatType(0)};
-
-        FloatType processSample(FloatType x) {
-            // pass the feedback sample through the tracker
-            tracker_.processSample(x0_);
-            // get the db from the tracker
-            const auto input_db = tracker_.getMomentaryDB();
-            // pass through the computer and the follower
-            const auto smooth_reduction_db = -follower_.processSample(input_db - computer_.eval(input_db));
-            // apply the gain on the current sample and save it as the feedback sample for the next
-            x0_ = x * chore::decibelsToGain(smooth_reduction_db);
-            return smooth_reduction_db;
-        }
     };
 }

@@ -60,7 +60,6 @@ namespace zlp {
                     optical_comps_[0].reset();
                     optical_comps_[1].reset();
                 }
-                case zldsp::compressor::Style::kBus:
                 default: break;
             }
         }
@@ -190,10 +189,6 @@ namespace zlp {
                 processSideBufferOptical(side_buffer1, side_buffer2, num_samples);
                 break;
             }
-            case zldsp::compressor::Style::kBus: {
-                processSideBufferBus(side_buffer1, side_buffer2, num_samples);
-                break;
-            }
             default: return;
         }
         // apply the stereo link
@@ -235,13 +230,6 @@ namespace zlp {
     void Controller::processSideBufferOptical(double *buffer1, double *buffer2, const size_t num_samples) {
         optical_comps_[0].process(buffer1, num_samples);
         optical_comps_[1].process(buffer2, num_samples);
-    }
-
-    void Controller::processSideBufferBus(double *buffer1, double *buffer2, const size_t num_samples) {
-        auto v1 = kfr::make_univector(buffer1, num_samples);
-        auto v2 = kfr::make_univector(buffer2, num_samples);
-        v1 = v1 - v1;
-        v2 = v2 - v2;
     }
 
     void Controller::handleAsyncUpdate() {
