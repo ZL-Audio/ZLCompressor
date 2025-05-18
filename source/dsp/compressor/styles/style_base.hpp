@@ -29,30 +29,18 @@ namespace zldsp::compressor {
 
         virtual void reset() = 0;
 
-        void process(FloatType *buffer, const size_t num_samples, const bool current_adaa = false) {
+        void process(FloatType *buffer, const size_t num_samples) {
             switch (follower_.getCurrentPPState()) {
                 case PPState::kOff: {
-                    if (current_adaa) {
-                        static_cast<Derived *>(this)->template processImpl < PPState::kOff, true > (buffer, num_samples);
-                    } else {
-                        static_cast<Derived *>(this)->template processImpl < PPState::kOff, false > (buffer, num_samples);
-                    }
+                    static_cast<Derived *>(this)->template processImpl<PPState::kOff>(buffer, num_samples);
                     break;
                 }
                 case PPState::kPunch: {
-                    if (current_adaa) {
-                        static_cast<Derived *>(this)->template processImpl < PPState::kPunch, true > (buffer, num_samples);
-                    } else {
-                        static_cast<Derived *>(this)->template processImpl < PPState::kPunch, false > (buffer, num_samples);
-                    }
+                    static_cast<Derived *>(this)->template processImpl<PPState::kOff>(buffer, num_samples);
                     break;
                 }
                 case PPState::kPump: {
-                    if (current_adaa) {
-                        static_cast<Derived *>(this)->template processImpl <PPState::kPump, true> (buffer, num_samples);
-                    } else {
-                        static_cast<Derived *>(this)->template processImpl <PPState::kPump, false> (buffer, num_samples);
-                    }
+                    static_cast<Derived *>(this)->template processImpl<PPState::kOff>(buffer, num_samples);
                     break;
                 }
                 default: break;

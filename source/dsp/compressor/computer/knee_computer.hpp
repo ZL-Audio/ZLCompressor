@@ -14,8 +14,6 @@
 #include <array>
 #include <algorithm>
 
-#include "../../adaa/adaa.hpp"
-
 namespace zldsp::compressor {
     template<typename FloatType>
     struct LinearCurve {
@@ -73,7 +71,6 @@ namespace zldsp::compressor {
             para_high_g0_ = other.para_high_g0_;
         }
 
-        template <bool CurrentADAA = false>
         FloatType eval(FloatType x) {
             if (x <= low_th_) {
                 return x;

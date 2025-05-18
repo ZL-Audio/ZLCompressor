@@ -28,7 +28,7 @@ namespace zldsp::compressor {
             base::follower_.reset(FloatType(0));
         }
 
-        template<PPState CurrentPPState, bool CurrentADAA>
+        template<PPState CurrentPPState>
         void processImpl(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
@@ -46,7 +46,7 @@ namespace zldsp::compressor {
             vector = FloatType(20) * kfr::log10(vector);
             // pass through the computer
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = base::computer_.template eval<CurrentADAA>(vector[i]) - vector[i];
+                vector[i] = base::computer_.eval(vector[i]) - vector[i];
             }
         }
     };

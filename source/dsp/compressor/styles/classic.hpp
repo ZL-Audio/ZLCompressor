@@ -32,7 +32,7 @@ namespace zldsp::compressor {
             x0_ = FloatType(0);
         }
 
-        template<PPState CurrentPPState, bool CurrentADAA>
+        template<PPState CurrentPPState>
         void processImpl(FloatType *buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 // pass the feedback sample through the tracker
@@ -41,7 +41,7 @@ namespace zldsp::compressor {
                 const auto input_db = base::tracker_.getMomentaryDB();
                 // pass through the computer and the follower
                 const auto smooth_reduction_db = -base::follower_.template processSample<CurrentPPState>(
-                    input_db - base::computer_.template eval<CurrentADAA>(input_db));
+                    input_db - base::computer_.eval(input_db));
                 // apply the gain on the current sample and save it as the feedback sample for the next
                 x0_ = buffer[i] * chore::decibelsToGain(smooth_reduction_db);
                 buffer[i] = smooth_reduction_db;

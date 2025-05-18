@@ -78,5 +78,3 @@ Martin Vicanek. *Matched Second Order Digital Filters*. (2016).
 Nigel Redmon. *Cascading filters*. (2016).
 
 Cleve Moler. [*Makima Piecewise Cubic Interpolation*](https://blogs.mathworks.com/cleve/2019/04/29/makima-piecewise-cubic-interpolation/). MathWorks Blogs. (2019).
-
-Stefan Bilbao, Fabián Esqueda, Julian D. Parker, and Vesa Välimäki. *Antiderivative antialiasing for memoryless nonlinearities*. IEEE Signal Processing Letters 24.7. (2017).
