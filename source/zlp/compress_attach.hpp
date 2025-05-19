@@ -26,7 +26,7 @@ namespace zlp {
         juce::AudioProcessorValueTreeState &parameters_ref_;
         Controller &controller_ref_;
 
-        zldsp::compressor::KneeComputer<double> &computer_ref_;
+        zldsp::compressor::KneeComputer<double, true> &computer_ref_;
         zldsp::compressor::PSFollower<double, true, true> &follower_ref_;
 
         constexpr static std::array kIDs{

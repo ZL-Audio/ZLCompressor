@@ -14,6 +14,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "follower_base.hpp"
+
 namespace zldsp::compressor {
     enum PPState { kOff, kPunch, kPump };
 
@@ -24,7 +26,7 @@ namespace zldsp::compressor {
      * @tparam UsePP whether to use pump-punch
      */
     template<typename FloatType, bool UseSmooth = false, bool UsePP = false>
-    class PSFollower {
+    class PSFollower final : public FollowerBase<FloatType> {
     public:
         PSFollower() = default;
 
@@ -32,7 +34,7 @@ namespace zldsp::compressor {
          * call before processing starts
          * @param sr sampleRate
          */
-        void prepare(const double sr) {
+        void prepare(const double sr) override {
             exp_factor_ = -2.0 * std::numbers::pi * 1000.0 / sr;
             to_update_.store(true);
         }
@@ -40,7 +42,7 @@ namespace zldsp::compressor {
         /**
          * reset the follower
          */
-        void reset(const FloatType x) {
+        void reset(const FloatType x) override {
             y_ = x;
             state_ = x;
             slope_ = FloatType(0);
@@ -49,7 +51,7 @@ namespace zldsp::compressor {
         /**
          * update values before processing a buffer
          */
-        bool prepareBuffer() {
+        bool prepareBuffer() override {
             if (to_update_.exchange(false)) {
                 update();
                 return true;
@@ -72,13 +74,7 @@ namespace zldsp::compressor {
             }
         }
 
-        /**
-         * process a sample
-         * @param x
-         * @return
-         */
-        template<PPState CurrentPPState = PPState::kOff>
-        FloatType processSample(const FloatType x) {
+        FloatType processSample(const FloatType x) override {
             FloatType y0;
             if (UseSmooth) {
                 state_ = std::max(x, release_ * (state_ - x) + x);
@@ -90,7 +86,7 @@ namespace zldsp::compressor {
             }
             if (UsePP) {
                 const auto slope0 = y0 - y_;
-                switch (CurrentPPState) {
+                switch (pp_state_) {
                     case PPState::kOff: {
                         slope_ = slope0;
                         y_ = y0;
@@ -140,8 +136,6 @@ namespace zldsp::compressor {
             smooth_portion_.store(std::clamp(x, FloatType(0), FloatType(1)));
             to_update_.store(true);
         }
-
-        PPState getCurrentPPState() const { return pp_state_; }
 
     private:
         FloatType y_{}, state_{}, slope_{};

@@ -12,15 +12,15 @@
 #include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
-    class OpticalCompressor : public CompressorStyleBase<OpticalCompressor<FloatType, IsPeakMix, UseSmooth, UsePunch>,
-                FloatType, IsPeakMix, UseSmooth, UsePunch>{
+    template<typename FloatType, bool IsPeakMix>
+    class OpticalCompressor : public CompressorStyleBase<OpticalCompressor<FloatType, IsPeakMix>,
+                FloatType, IsPeakMix>{
     public:
-        using base = CompressorStyleBase<OpticalCompressor, FloatType, IsPeakMix, UseSmooth, UsePunch>;
+        using base = CompressorStyleBase<OpticalCompressor, FloatType, IsPeakMix>;
 
-        OpticalCompressor(KneeComputer<FloatType> &computer,
+        OpticalCompressor(ComputerBase<FloatType> &computer,
                           RMSTracker<FloatType, IsPeakMix> &tracker,
-                          PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+                          FollowerBase<FloatType> &follower)
             : base(computer, tracker, follower) {
         }
 
@@ -28,8 +28,7 @@ namespace zldsp::compressor {
             base::follower_.reset(FloatType(0));
         }
 
-        template<PPState CurrentPPState>
-        void processImpl(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType *buffer, const size_t num_samples) override {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
             for (size_t i = 0; i < num_samples; ++i) {
@@ -40,13 +39,13 @@ namespace zldsp::compressor {
             vector = kfr::sqrt(vector * mean_scale);
             // pass through the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = std::max(base::follower_.template processSample<CurrentPPState>(vector[i]), FloatType(1e-10));
+                vector[i] = std::max(base::follower_.processSample(vector[i]), FloatType(1e-10));
             }
             // transfer to db
             vector = FloatType(20) * kfr::log10(vector);
             // pass through the computer
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = base::computer_.eval(vector[i]) - vector[i];
+                vector[i] = base::computer_.eval(vector[i]);
             }
         }
     };

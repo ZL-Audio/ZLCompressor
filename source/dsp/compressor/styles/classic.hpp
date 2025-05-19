@@ -15,15 +15,15 @@
 #include "../../chore/decibels.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
-    class ClassicCompressor : public CompressorStyleBase<ClassicCompressor<FloatType, IsPeakMix, UseSmooth, UsePunch>,
-                FloatType, IsPeakMix, UseSmooth, UsePunch> {
+    template<typename FloatType, bool IsPeakMix>
+    class ClassicCompressor : public CompressorStyleBase<ClassicCompressor<FloatType, IsPeakMix>,
+                FloatType, IsPeakMix> {
     public:
-        using base = CompressorStyleBase<ClassicCompressor, FloatType, IsPeakMix, UseSmooth, UsePunch>;
+        using base = CompressorStyleBase<ClassicCompressor, FloatType, IsPeakMix>;
 
-        ClassicCompressor(KneeComputer<FloatType> &computer,
+        ClassicCompressor(ComputerBase<FloatType> &computer,
                           RMSTracker<FloatType, IsPeakMix> &tracker,
-                          PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+                          FollowerBase<FloatType> &follower)
             : base(computer, tracker, follower) {
         }
 
@@ -32,16 +32,14 @@ namespace zldsp::compressor {
             x0_ = FloatType(0);
         }
 
-        template<PPState CurrentPPState>
-        void processImpl(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType *buffer, const size_t num_samples) override {
             for (size_t i = 0; i < num_samples; ++i) {
                 // pass the feedback sample through the tracker
                 base::tracker_.processSample(x0_);
                 // get the db from the tracker
                 const auto input_db = base::tracker_.getMomentaryDB();
                 // pass through the computer and the follower
-                const auto smooth_reduction_db = -base::follower_.template processSample<CurrentPPState>(
-                    input_db - base::computer_.eval(input_db));
+                const auto smooth_reduction_db = -base::follower_.processSample(-base::computer_.eval(input_db));
                 // apply the gain on the current sample and save it as the feedback sample for the next
                 x0_ = buffer[i] * chore::decibelsToGain(smooth_reduction_db);
                 buffer[i] = smooth_reduction_db;

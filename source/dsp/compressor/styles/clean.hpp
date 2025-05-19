@@ -12,15 +12,15 @@
 #include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
-    class CleanCompressor : public CompressorStyleBase<CleanCompressor<FloatType, IsPeakMix, UseSmooth, UsePunch>,
-                FloatType, IsPeakMix, UseSmooth, UsePunch> {
+    template<typename FloatType, bool IsPeakMix>
+    class CleanCompressor : public CompressorStyleBase<CleanCompressor<FloatType, IsPeakMix>,
+                FloatType, IsPeakMix> {
     public:
-        using base = CompressorStyleBase<CleanCompressor, FloatType, IsPeakMix, UseSmooth, UsePunch>;
+        using base = CompressorStyleBase<CleanCompressor, FloatType, IsPeakMix>;
 
-        CleanCompressor(KneeComputer<FloatType> &computer,
+        CleanCompressor(ComputerBase<FloatType> &computer,
                         RMSTracker<FloatType, IsPeakMix> &tracker,
-                        PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+                        FollowerBase<FloatType> &follower)
             : base(computer, tracker, follower) {
         }
 
@@ -28,8 +28,7 @@ namespace zldsp::compressor {
             base::follower_.reset(FloatType(0));
         }
 
-        template<PPState CurrentPPState>
-        void processImpl(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType *buffer, const size_t num_samples) override {
             auto vector = kfr::make_univector(buffer, num_samples);
             // pass through the tracker
             for (size_t i = 0; i < num_samples; ++i) {
@@ -41,8 +40,7 @@ namespace zldsp::compressor {
             vector = FloatType(10) * kfr::log10(vector * mean_scale);
             // pass through the computer and the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = -base::follower_.template processSample<CurrentPPState>(
-                    vector[i] - base::computer_.eval(vector[i]));
+                vector[i] = -base::follower_.processSample(-base::computer_.eval(vector[i]));
             }
         }
     };

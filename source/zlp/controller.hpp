@@ -93,23 +93,23 @@ namespace zlp {
         };
 
         // computer, trackers and followers
-        std::array<zldsp::compressor::KneeComputer<double>, 2> computer_{};
+        std::array<zldsp::compressor::KneeComputer<double, true>, 2> computer_{};
         std::array<zldsp::compressor::RMSTracker<double, true>, 2> tracker_{};
         std::array<zldsp::compressor::PSFollower<double, true, true>, 2> follower_{};
         // clean compressors
-        std::array<zldsp::compressor::CleanCompressor<double, true, true, true>, 2> clean_comps_ = {
-            zldsp::compressor::CleanCompressor{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::CleanCompressor{computer_[1], tracker_[1], follower_[1]}
+        std::array<zldsp::compressor::CleanCompressor<double, true>, 2> clean_comps_ = {
+            zldsp::compressor::CleanCompressor<double, true>{computer_[0], tracker_[0], follower_[0]},
+            zldsp::compressor::CleanCompressor<double, true>{computer_[1], tracker_[1], follower_[1]}
         };
         // classic compressors
-        std::array<zldsp::compressor::ClassicCompressor<double, true, true, true>, 2> classic_comps_ = {
-            zldsp::compressor::ClassicCompressor{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::ClassicCompressor{computer_[1], tracker_[1], follower_[1]}
+        std::array<zldsp::compressor::ClassicCompressor<double, true>, 2> classic_comps_ = {
+            zldsp::compressor::ClassicCompressor<double, true>{computer_[0], tracker_[0], follower_[0]},
+            zldsp::compressor::ClassicCompressor<double, true>{computer_[1], tracker_[1], follower_[1]}
         };
         // optical compressors
-        std::array<zldsp::compressor::OpticalCompressor<double, true, true, true>, 2> optical_comps_ = {
-            zldsp::compressor::OpticalCompressor{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::OpticalCompressor{computer_[1], tracker_[1], follower_[1]}
+        std::array<zldsp::compressor::OpticalCompressor<double, true>, 2> optical_comps_ = {
+            zldsp::compressor::OpticalCompressor<double, true>{computer_[0], tracker_[0], follower_[0]},
+            zldsp::compressor::OpticalCompressor<double, true>{computer_[1], tracker_[1], follower_[1]}
         };
 
         zldsp::gain::Gain<double> output_gain_{};

@@ -14,49 +14,19 @@
 #include <array>
 #include <algorithm>
 
+#include "computer_base.hpp"
+
 namespace zldsp::compressor {
-    template<typename FloatType>
-    struct LinearCurve {
-        FloatType b, c;
-
-        void setPara(FloatType t, FloatType r, FloatType) {
-            b = FloatType(1) / r;
-            c = t * (FloatType(1) - FloatType(1) / r);
-        }
-    };
-
-    template<typename FloatType>
-    struct DownCurve {
-        FloatType a, c;
-        static constexpr FloatType b{FloatType(0)};
-
-        void setPara(FloatType t, FloatType r, FloatType w) {
-            a = FloatType(0.5) / (r * std::min(t + w, FloatType(-0.0001)));
-            c = FloatType(0.5) * (w - t) / r + t;
-        }
-    };
-
-    template<typename FloatType>
-    struct UpCurve {
-        FloatType a, c;
-        static constexpr FloatType b{FloatType(1)};
-
-        void setPara(FloatType t, FloatType r, FloatType w) {
-            a = FloatType(0.5) * (FloatType(1) - r) / (r * std::min(t + w, FloatType(-0.0001)));
-            c = FloatType(0.5) * (FloatType(1) - r) * (w - t) / r;
-        }
-    };
-
     /**
      * a computer that computes the current compression
      * @tparam FloatType
      */
-    template<typename FloatType>
-    class KneeComputer final {
+    template<typename FloatType, bool OutputDiff = false>
+    class KneeComputer final : public ComputerBase<FloatType> {
     public:
         KneeComputer() = default;
 
-        bool prepareBuffer() {
+        bool prepareBuffer() override {
             if (to_interpolate_.exchange(false)) {
                 interpolate();
                 return true;
@@ -71,24 +41,15 @@ namespace zldsp::compressor {
             para_high_g0_ = other.para_high_g0_;
         }
 
-        FloatType eval(FloatType x) {
+        FloatType eval(FloatType x) override {
             if (x <= low_th_) {
-                return x;
+                return OutputDiff ? FloatType(0) : x;
             } else if (x >= high_th_) {
                 x = std::min(x, FloatType(0));
                 return (para_high_g0_[0] * x + para_high_g0_[1]) * x + para_high_g0_[2];
             } else {
                 return (para_mid_g0_[0] * x + para_mid_g0_[1]) * x + para_mid_g0_[2];
             }
-        }
-
-        /**
-         * computes the current compression
-         * @param x input level (in dB)
-         * @return current compression (in dB)
-         */
-        FloatType process(FloatType x) {
-            return eval(x) - x;
         }
 
         inline void setThreshold(FloatType v) {
@@ -120,9 +81,38 @@ namespace zldsp::compressor {
         inline FloatType getCurve() const { return curve_.load(); }
 
     private:
-        LinearCurve<FloatType> linear_curve_;
-        DownCurve<FloatType> down_curve_;
-        UpCurve<FloatType> up_curve_;
+        struct LinearCurve {
+            FloatType b, c;
+
+            void setPara(FloatType t, FloatType r, FloatType) {
+                b = FloatType(1) / r;
+                c = t * (FloatType(1) - FloatType(1) / r);
+            }
+        };
+
+        struct DownCurve {
+            FloatType a, c;
+            static constexpr FloatType b{FloatType(0)};
+
+            void setPara(FloatType t, FloatType r, FloatType w) {
+                a = FloatType(0.5) / (r * std::min(t + w, FloatType(-0.0001)));
+                c = FloatType(0.5) * (w - t) / r + t;
+            }
+        };
+
+        struct UpCurve {
+            FloatType a, c;
+            static constexpr FloatType b{FloatType(1)};
+
+            void setPara(FloatType t, FloatType r, FloatType w) {
+                a = FloatType(0.5) * (FloatType(1) - r) / (r * std::min(t + w, FloatType(-0.0001)));
+                c = FloatType(0.5) * (FloatType(1) - r) * (w - t) / r;
+            }
+        };
+
+        LinearCurve linear_curve_;
+        DownCurve down_curve_;
+        UpCurve up_curve_;
         std::atomic<FloatType> threshold_{-18}, ratio_{2};
         std::atomic<FloatType> knee_w_{FloatType(0.25)}, curve_{0};
         FloatType low_th_{0}, high_th_{0};
@@ -135,13 +125,17 @@ namespace zldsp::compressor {
             const auto currentRatio = ratio_.load();
             const auto currentCurve = curve_.load();
             low_th_ = currentThreshold - currentKneeW;
-            high_th_ = currentThreshold + currentKneeW;
-            { // update mid curve parameters
+            high_th_ = currentThreshold + currentKneeW; {
+                // update mid curve parameters
                 const auto a0 = (FloatType(1) / currentRatio - FloatType(1)) / (currentKneeW * FloatType(4));
                 const auto a1 = -low_th_;
                 para_mid_g0_[0] = a0;
                 const auto a0a1 = a0 * a1;
-                para_mid_g0_[1] = FloatType(2) * a0a1 + FloatType(1);
+                if (OutputDiff) {
+                    para_mid_g0_[1] = FloatType(2) * a0a1;
+                } else {
+                    para_mid_g0_[1] = FloatType(2) * a0a1 + FloatType(1);
+                }
                 para_mid_g0_[2] = a0a1 * a1;
             }
             if (currentCurve >= FloatType(0)) {
@@ -158,6 +152,9 @@ namespace zldsp::compressor {
                 para_high_g0_[2] = alpha * linear_curve_.c + beta * up_curve_.c;
                 para_high_g0_[1] = alpha * linear_curve_.b + beta * up_curve_.b;
                 para_high_g0_[0] = beta * up_curve_.a;
+            }
+            if (OutputDiff) {
+                para_high_g0_[1] -= FloatType(1);
             }
         }
     };

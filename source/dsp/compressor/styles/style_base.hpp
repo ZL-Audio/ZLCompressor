@@ -16,12 +16,12 @@
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
-    template<typename Derived, typename FloatType, bool IsPeakMix, bool UseSmooth, bool UsePunch>
+    template<typename Derived, typename FloatType, bool IsPeakMix>
     class CompressorStyleBase {
     public:
-        CompressorStyleBase(KneeComputer<FloatType> &computer,
+        CompressorStyleBase(ComputerBase<FloatType> &computer,
                             RMSTracker<FloatType, IsPeakMix> &tracker,
-                            PSFollower<FloatType, UseSmooth, UsePunch> &follower)
+                            FollowerBase<FloatType> &follower)
             : computer_(computer), tracker_(tracker), follower_(follower) {
         }
 
@@ -29,27 +29,11 @@ namespace zldsp::compressor {
 
         virtual void reset() = 0;
 
-        void process(FloatType *buffer, const size_t num_samples) {
-            switch (follower_.getCurrentPPState()) {
-                case PPState::kOff: {
-                    static_cast<Derived *>(this)->template processImpl<PPState::kOff>(buffer, num_samples);
-                    break;
-                }
-                case PPState::kPunch: {
-                    static_cast<Derived *>(this)->template processImpl<PPState::kOff>(buffer, num_samples);
-                    break;
-                }
-                case PPState::kPump: {
-                    static_cast<Derived *>(this)->template processImpl<PPState::kOff>(buffer, num_samples);
-                    break;
-                }
-                default: break;
-            }
-        }
+        virtual void process(FloatType *buffer, size_t num_samples) = 0;
 
     protected:
-        KneeComputer<FloatType> &computer_;
+        ComputerBase<FloatType> &computer_;
         RMSTracker<FloatType, IsPeakMix> &tracker_;
-        PSFollower<FloatType, UseSmooth, UsePunch> &follower_;
+        FollowerBase<FloatType> &follower_;
     };
 }
