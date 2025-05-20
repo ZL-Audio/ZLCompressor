@@ -30,14 +30,25 @@ namespace zlpanel {
                                           juce::PathStrokeType::rounded));
     }
 
-    void RMSPanel::run(double nextTimeStamp) {
-        juce::ignoreUnused(nextTimeStamp);
-        const auto currentBound = atomic_bound_.load();
+    void RMSPanel::run(double next_time_stamp) {
+        juce::ignoreUnused(next_time_stamp);
+        const auto current_bound = atomic_bound_.load();
         avg_analyzer_ref_.run();
+        avg_analyzer_ref_.createPath({in_xs_, out_xs}, ys_, 72,
+            current_bound.getWidth(), current_bound.getHeight());
+        // avg_analyzer_ref_.createPath({next_in_path_, next_out_path_}, {true, false},
+        //                        currentBound, 72);
         next_in_path_.clear();
         next_out_path_.clear();
-        avg_analyzer_ref_.createPath({next_in_path_, next_out_path_}, {true, false},
-                               currentBound, 72); {
+        next_in_path_.startNewSubPath(0.f, 0.f);
+        next_in_path_.lineTo(in_xs_[0], ys_[0]);
+        next_out_path_.lineTo(out_xs[0], ys_[0]);
+        for (size_t i = 0; i < 72; ++i) {
+            next_in_path_.lineTo(in_xs_[i], ys_[i]);
+            next_out_path_.lineTo(out_xs[i], ys_[i]);
+        }
+        next_in_path_.lineTo(0.f, current_bound.getHeight());
+        { // update the paths with lock
             const juce::GenericScopedLock guard{path_lock_};
             in_path_ = next_in_path_;
             out_path_ = next_out_path_;

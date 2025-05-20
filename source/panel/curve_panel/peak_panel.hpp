@@ -34,6 +34,7 @@ namespace zlpanel {
         zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressorController::kAnalyzerPointNum> &mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
+        std::array<float, zlp::CompressorController::kAnalyzerPointNum> xs_, in_ys_, out_ys_, reduction_ys_;
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         juce::SpinLock path_lock_;
@@ -46,5 +47,7 @@ namespace zlpanel {
         bool is_first_point_{true};
         double smooth_error_{0.f};
         int cons_error_count_{0};
+
+        void updatePaths(juce::Rectangle<float> bound);
     };
 } // zlpanel

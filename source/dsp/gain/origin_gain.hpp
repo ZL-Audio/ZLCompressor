@@ -22,7 +22,7 @@ namespace zldsp::gain {
         Gain() noexcept = default;
 
         void reset() {
-            gain_.setCurrentAndTarget(FloatType(0));
+            gain_.setCurrentAndTarget(FloatType(1));
         }
 
         void setGainLinear(FloatType newGain) noexcept {

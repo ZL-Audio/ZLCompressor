@@ -11,7 +11,6 @@
 
 #include <span>
 #include <atomic>
-#include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../vector/kfr_import.hpp"
 #include "../chore/decibels.hpp"

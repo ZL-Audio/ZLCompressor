@@ -21,7 +21,7 @@ namespace zlpanel {
 
         void paint(juce::Graphics &g) override;
 
-        void run(double nextTimeStamp);
+        void run(double next_time_stamp);
 
         void resized() override;
 
@@ -31,6 +31,7 @@ namespace zlpanel {
         zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, zlp::CompressorController::kAvgAnalyzerPointNum> &avg_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
+        std::array<float, zlp::CompressorController::kAvgAnalyzerPointNum> in_xs_, out_xs, ys_;
         juce::Path in_path_, out_path_;
         juce::Path next_in_path_, next_out_path_;
         juce::SpinLock path_lock_;

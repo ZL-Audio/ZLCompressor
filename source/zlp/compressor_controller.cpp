@@ -156,14 +156,11 @@ namespace zlp {
             // downsample the main buffer
             main_oversampler.processSamplesDown(main_block);
         }
-
-        mag_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
+        output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
+        mag_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}, std::span{main_pointers_}},
                               static_cast<size_t>(buffer.getNumSamples()));
         mag_avg_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
                                   static_cast<size_t>(buffer.getNumSamples()));
-
-
-        output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
     }
 
     void CompressorController::processBuffer(float *main_buffer1, float *main_buffer2,

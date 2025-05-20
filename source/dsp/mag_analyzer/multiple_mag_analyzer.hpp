@@ -74,26 +74,20 @@ namespace zldsp::analyzer {
             return num_ready;
         }
 
-        void createPath(std::array<std::reference_wrapper<juce::Path>, MagNum> paths,
-                        const juce::Rectangle<float> bound,
-                        const float shift = 0.f,
-                        const float min_db = -72.f, const float max_db = 0.f) {
-            const auto delta_x = bound.getWidth() / static_cast<float>(PointNum - 1);
-            const auto x0 = bound.getX(), y0 = bound.getY(), height = bound.getHeight();
-            float x = x0 - shift * delta_x;
-            for (size_t idx = 0; idx < PointNum; ++idx) {
-                for (size_t i = 0; i < MagNum; ++i) {
-                    const auto y = magToY(this->circular_mags_[i][idx], y0, height, min_db, max_db);
-                    paths[i].get().lineTo(x, y);
-                }
-                x += delta_x;
+        void createPath(std::span<float> xs, std::array<std::span<float>, MagNum> ys,
+            const float width, const float height, const float shift = 0.f,
+            const float min_db = -72.f, const float max_db = 0.f) {
+            const auto delta_x = width / static_cast<float>(PointNum - 1);
+            xs[0] = -shift * delta_x;
+            for (size_t idx = 1; idx < PointNum; ++idx) {
+                xs[idx] = xs[idx - 1] + delta_x;
             }
-        }
-
-    protected:
-        static float magToY(const float mag, const float y0, const float height,
-                            const float min_db, const float max_db) {
-            return y0 + height * (max_db - mag) / (max_db - min_db);
+            const float scale = height / (max_db - min_db);
+            for (size_t i = 0; i < MagNum; ++i) {
+                auto mag_vector = kfr::make_univector(this->circular_mags_[i]);
+                auto y_vector = kfr::make_univector(ys[i]);
+                y_vector = (max_db - mag_vector) * scale;
+            }
         }
     };
 }

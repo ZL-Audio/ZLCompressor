@@ -16,6 +16,7 @@ namespace zlpanel {
         for (auto &path: {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
+        mag_analyzer_ref_.setMagType(zldsp::analyzer::MagType::kPeak);
         mag_analyzer_ref_.setToReset();
         setTimeLength(6.f);
     }
@@ -48,17 +49,18 @@ namespace zlpanel {
     }
 
     void PeakPanel::run(const double next_time_stamp) {
+        const auto current_bound = atomic_bound_.load();
         if (is_first_point_) {
             if (mag_analyzer_ref_.run(1) > 0) {
                 is_first_point_ = false;
                 current_count_ = 0.;
-                start_time_ = next_time_stamp; {
-                    next_in_path_.clear();
-                    next_out_path_.clear();
-                    next_reduction_path_.clear();
-                }
-                mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
-                                       atomic_bound_.load(), 0.f, 0.f);
+                start_time_ = next_time_stamp;
+                mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
+                    current_bound.getWidth(), current_bound.getHeight(), 0.f,
+                    -72.f, 0.f);
+                updatePaths(current_bound);
+                // mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
+                //                        atomic_bound_.load(), 0.f, 0.f);
             }
         } else {
             const auto target_count = (next_time_stamp - start_time_) * num_per_second_.load();
@@ -81,13 +83,13 @@ namespace zlpanel {
                 cons_error_count_ = 0;
             }
             if (cons_error_count_ < 5) {
-                const auto shift = target_count - current_count_; {
-                    next_in_path_.clear();
-                    next_out_path_.clear();
-                    next_reduction_path_.clear();
-                }
-                mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
-                                                             atomic_bound_.load(), static_cast<float>(shift), 0.f);
+                const auto shift = target_count - current_count_;
+                mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
+                    current_bound.getWidth(), current_bound.getHeight(), static_cast<float>(shift),
+                    -72.f, 0.f);
+                updatePaths(current_bound);
+                // mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
+                //                                              atomic_bound_.load(), static_cast<float>(shift), 0.f);
             }
         } {
             const juce::GenericScopedLock guard{path_lock_};
@@ -95,5 +97,22 @@ namespace zlpanel {
             out_path_ = next_out_path_;
             reduction_path_ = next_reduction_path_;
         }
+    }
+
+    void PeakPanel::updatePaths(juce::Rectangle<float> bound) {
+        next_in_path_.clear();
+        next_out_path_.clear();
+        next_reduction_path_.clear();
+
+        next_in_path_.startNewSubPath(xs_[0], bound.getBottom());
+        next_in_path_.lineTo(xs_[0], in_ys_[0]);
+        next_out_path_.startNewSubPath(xs_[0], out_ys_[0]);
+        next_reduction_path_.startNewSubPath(xs_[0], reduction_ys_[0]);
+        for (size_t i = 1; i < xs_.size(); ++i) {
+            next_in_path_.lineTo(xs_[i], in_ys_[i]);
+            next_out_path_.lineTo(xs_[i], out_ys_[i]);
+            next_reduction_path_.lineTo(xs_[i], reduction_ys_[i]);
+        }
+        next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
     }
 } // zlpanel

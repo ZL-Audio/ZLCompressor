@@ -48,13 +48,13 @@ namespace zldsp::analyzer {
             }
             this->abstract_fifo_.finishedRead(num_ready);
 
-            std::array<double, MagNum> maximum_counts{};
+            std::array<float, MagNum> maximum_counts{};
             for (size_t i = 0; i < MagNum; ++i) {
                 maximum_counts[i] = *std::max_element(cumulative_counts_[i].begin(), cumulative_counts_[i].end());
             }
-            const auto maximum_count = std::max(999.0 / this->time_length_.load(),
+            const auto maximum_count = std::max(999.f / this->time_length_.load(),
                                                 *std::max_element(maximum_counts.begin(), maximum_counts.end()));
-            const auto maximum_count_r = 1.0 / maximum_count;
+            const auto maximum_count_r = 1.f / maximum_count;
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &cumulative_count{cumulative_counts_[i]};
                 auto &avg_count{avg_counts_[i]};
@@ -62,50 +62,31 @@ namespace zldsp::analyzer {
             }
         }
 
-        void createPath(std::array<std::reference_wrapper<juce::Path>, MagNum> paths,
-                        const std::array<bool, MagNum> is_close_path,
-                        const juce::Rectangle<float> bound, size_t end_idx) {
-            end_idx = std::min(end_idx, BinNum);
-            const auto delta_y = bound.getHeight() / static_cast<float>(end_idx - 1);
-            for (size_t i = 0; i < MagNum; ++i) {
-                const auto y = bound.getY();
-                const auto &avg_count{avg_counts_[i]};
-                constexpr size_t idx = 0;
-                const auto x = bound.getX() + static_cast<float>(avg_count[idx]) * bound.getWidth();
-                if (is_close_path[i]) {
-                    paths[i].get().startNewSubPath(bound.getTopLeft());
-                    paths[i].get().lineTo(x, y);
-                } else {
-                    paths[i].get().startNewSubPath(x, y);
-                }
-            }
-
-            for (size_t i = 0; i < MagNum; ++i) {
-                auto y = delta_y;
-                const auto &avg_count{avg_counts_[i]};
-                for (size_t idx = 1; idx < end_idx; ++idx) {
-                    const auto x = bound.getX() + static_cast<float>(avg_count[idx]) * bound.getWidth();
-                    paths[i].get().lineTo(x, y);
-                    y += delta_y;
-                }
+        void createPath(std::array<std::span<float>, MagNum> xs, std::span<float> ys, size_t end_idx,
+                        const float width, const float height) {
+            end_idx = std::min(std::min(end_idx, BinNum), ys.size());
+            const auto delta_y = height / static_cast<float>(end_idx - 1);
+            ys[0] = 0.f;
+            for (size_t i = 1; i < end_idx; ++i) {
+                ys[i] = ys[i - 1] + delta_y;
             }
             for (size_t i = 0; i < MagNum; ++i) {
-                if (is_close_path[i]) {
-                    paths[i].get().lineTo(bound.getBottomLeft());
-                    paths[i].get().closeSubPath();
-                }
+                auto avg_vector = kfr::make_univector(avg_counts_[i].data(), end_idx);
+                auto x_vector = kfr::make_univector(xs[i].data(), end_idx);
+                x_vector = avg_vector * width;
+                zldsp::vector::multiply(xs[i].data(), avg_counts_[i].data(), width, end_idx);
             }
         }
 
     protected:
-        std::array<std::array<double, BinNum>, MagNum> cumulative_counts_{};
-        std::array<std::array<double, BinNum>, MagNum> avg_counts_{};
+        std::array<std::array<float, BinNum>, MagNum> cumulative_counts_{};
+        std::array<std::array<float, BinNum>, MagNum> avg_counts_{};
 
-        static inline void updateHist(std::array<double, BinNum> &hist, const double x) {
-            const auto idx = static_cast<size_t>(std::max(0., std::round(-x)));
+        static inline void updateHist(std::array<float, BinNum> &hist, const float x) {
+            const auto idx = static_cast<size_t>(std::max(0.f, std::round(-x)));
             if (idx < BinNum) {
-                zldsp::vector::multiply(hist.data(),0.999999, hist.size());
-                hist[idx] += 1.;
+                zldsp::vector::multiply(hist.data(),0.999999f, hist.size());
+                hist[idx] += 1.f;
             }
         }
     };

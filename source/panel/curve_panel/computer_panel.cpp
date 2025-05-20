@@ -15,7 +15,7 @@ namespace zlpanel {
         next_comp_path_.preallocateSpace(static_cast<int>(numPoint) * 3);
         computer_.setThreshold(-18.f);
         computer_.setKneeW(5.f);
-        computer_.setCurve(1.f);
+        computer_.setCurve(0.f);
     }
 
     void ComputerPanel::paint(juce::Graphics &g) {
