@@ -29,8 +29,6 @@ namespace zldsp::compressor {
 
         virtual void reset() = 0;
 
-        virtual void process(FloatType *buffer, size_t num_samples) = 0;
-
     protected:
         ComputerBase<FloatType> &computer_;
         RMSTracker<FloatType> &tracker_;

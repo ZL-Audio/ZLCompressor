@@ -29,12 +29,18 @@ namespace zldsp::compressor {
             x0_ = FloatType(0);
         }
 
-        void process(FloatType *buffer, const size_t num_samples) override {
+        template <bool UseRMS = false>
+        void process(FloatType *buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
-                // pass the feedback sample through the tracker
-                base::tracker_.processSample(x0_);
-                // get the db from the tracker
-                const auto input_db = base::tracker_.getMomentaryDB();
+                FloatType input_db;
+                if (UseRMS) {
+                    // pass the feedback sample through the tracker
+                    base::tracker_.processSample(x0_);
+                    // get the db from the tracker
+                    input_db = base::tracker_.getMomentaryDB();
+                } else {
+                    input_db = chore::gainToDecibels(std::abs(x0_));
+                }
                 // pass through the computer and the follower
                 const auto smooth_reduction_db = -base::follower_.processSample(-base::computer_.eval(input_db));
                 // apply the gain on the current sample and save it as the feedback sample for the next

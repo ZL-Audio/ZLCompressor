@@ -27,16 +27,21 @@ namespace zldsp::compressor {
             base::follower_.reset(FloatType(0));
         }
 
-        void process(FloatType *buffer, const size_t num_samples) override {
+        template <bool UseRMS = false>
+        void process(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
-            // pass through the tracker
-            for (size_t i = 0; i < num_samples; ++i) {
-                base::tracker_.processSample(vector[i]);
-                vector[i] = std::max(base::tracker_.getMomentarySquare(), FloatType(1e-10));
+            if (UseRMS) {
+                // pass through the tracker
+                for (size_t i = 0; i < num_samples; ++i) {
+                    base::tracker_.processSample(vector[i]);
+                    vector[i] = base::tracker_.getMomentarySquare();
+                }
+                // transfer square sum to db
+                const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
+                vector = FloatType(10) * kfr::log10(kfr::max(vector * mean_scale, FloatType(1e-12)));
+            } else {
+                vector = FloatType(20) * kfr::log10(kfr::max(kfr::abs(vector), FloatType(1e-12)));
             }
-            // transfer square sum to db
-            const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
-            vector = FloatType(10) * kfr::log10(vector * mean_scale);
             // pass through the computer and the follower
             for (size_t i = 0; i < num_samples; ++i) {
                 vector[i] = -base::follower_.processSample(-base::computer_.eval(vector[i]));

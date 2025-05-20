@@ -23,9 +23,9 @@ namespace zlp {
         pre_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
         // allocate memories for up to 8x oversampling
         for (auto &t: tracker_) {
-            t.setMaximumMomentarySeconds(0.04 * 8.01);
+            t.setMaximumMomentarySeconds(0.04f * 8.01f);
             t.prepare(spec.sampleRate);
-            t.setMaximumMomentarySeconds(0.04);
+            t.setMaximumMomentarySeconds(0.04f);
         }
         oversampled_side_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize) * 8);
         // init oversamplers
@@ -68,8 +68,8 @@ namespace zlp {
         // load wet values
         if (to_update_wet_.exchange(false)) {
             const auto c_wet = wet_.load();
-            c_wet1_ = wet1_.load() * c_wet * 0.05; // 0.05 accounts for the db to gain transformation
-            c_wet2_ = wet2_.load() * c_wet * 0.05;
+            c_wet1_ = wet1_.load() * c_wet * 0.05f; // 0.05 accounts for the db to gain transformation
+            c_wet2_ = wet2_.load() * c_wet * 0.05f;
         }
         // load oversampling idx, set up trackers/followers and update latency
         if (oversample_idx_.load() != c_oversample_idx_) {
