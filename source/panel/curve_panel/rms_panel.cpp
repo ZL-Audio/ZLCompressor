@@ -42,12 +42,13 @@ namespace zlpanel {
         next_out_path_.clear();
         next_in_path_.startNewSubPath(0.f, 0.f);
         next_in_path_.lineTo(in_xs_[0], ys_[0]);
-        next_out_path_.lineTo(out_xs[0], ys_[0]);
+        next_out_path_.startNewSubPath(out_xs[0], ys_[0]);
         for (size_t i = 0; i < 72; ++i) {
             next_in_path_.lineTo(in_xs_[i], ys_[i]);
             next_out_path_.lineTo(out_xs[i], ys_[i]);
         }
         next_in_path_.lineTo(0.f, current_bound.getHeight());
+        next_in_path_.closeSubPath();
         { // update the paths with lock
             const juce::GenericScopedLock guard{path_lock_};
             in_path_ = next_in_path_;
