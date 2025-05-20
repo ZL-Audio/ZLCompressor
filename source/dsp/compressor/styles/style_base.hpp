@@ -16,11 +16,11 @@
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
-    template<typename Derived, typename FloatType, bool IsPeakMix>
+    template<typename FloatType>
     class CompressorStyleBase {
     public:
         CompressorStyleBase(ComputerBase<FloatType> &computer,
-                            RMSTracker<FloatType, IsPeakMix> &tracker,
+                            RMSTracker<FloatType> &tracker,
                             FollowerBase<FloatType> &follower)
             : computer_(computer), tracker_(tracker), follower_(follower) {
         }
@@ -33,7 +33,7 @@ namespace zldsp::compressor {
 
     protected:
         ComputerBase<FloatType> &computer_;
-        RMSTracker<FloatType, IsPeakMix> &tracker_;
+        RMSTracker<FloatType> &tracker_;
         FollowerBase<FloatType> &follower_;
     };
 }

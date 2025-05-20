@@ -9,20 +9,17 @@
 
 #pragma once
 
-#include "../computer/computer.hpp"
-#include "../tracker/tracker.hpp"
-#include "../follower/follower.hpp"
 #include "../../chore/decibels.hpp"
+#include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType, bool IsPeakMix>
-    class ClassicCompressor : public CompressorStyleBase<ClassicCompressor<FloatType, IsPeakMix>,
-                FloatType, IsPeakMix> {
+    template<typename FloatType>
+    class ClassicCompressor final : public CompressorStyleBase<FloatType> {
     public:
-        using base = CompressorStyleBase<ClassicCompressor, FloatType, IsPeakMix>;
+        using base = CompressorStyleBase<FloatType>;
 
         ClassicCompressor(ComputerBase<FloatType> &computer,
-                          RMSTracker<FloatType, IsPeakMix> &tracker,
+                          RMSTracker<FloatType> &tracker,
                           FollowerBase<FloatType> &follower)
             : base(computer, tracker, follower) {
         }

@@ -12,14 +12,13 @@
 #include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType, bool IsPeakMix>
-    class OpticalCompressor : public CompressorStyleBase<OpticalCompressor<FloatType, IsPeakMix>,
-                FloatType, IsPeakMix>{
+    template<typename FloatType>
+    class OpticalCompressor final : public CompressorStyleBase<FloatType>{
     public:
-        using base = CompressorStyleBase<OpticalCompressor, FloatType, IsPeakMix>;
+        using base = CompressorStyleBase<FloatType>;
 
         OpticalCompressor(ComputerBase<FloatType> &computer,
-                          RMSTracker<FloatType, IsPeakMix> &tracker,
+                          RMSTracker<FloatType> &tracker,
                           FollowerBase<FloatType> &follower)
             : base(computer, tracker, follower) {
         }

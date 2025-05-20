@@ -19,9 +19,8 @@ namespace zldsp::compressor {
     /**
      * a tracker that tracks the momentary RMS loudness of the audio signal
      * @tparam FloatType
-     * @tparam IsPeakMix
      */
-    template<typename FloatType, bool IsPeakMix = false>
+    template<typename FloatType>
     class RMSTracker {
     public:
         inline static FloatType kMinusInfinityDB = FloatType(-240);
@@ -64,17 +63,11 @@ namespace zldsp::compressor {
                 while (square_buffer_.size() > c_buffer_size_) {
                     square_sum_ -= square_buffer_.popFront();
                 }
-                if (IsPeakMix) {
-                    c_peak_mix_ = peak_mix_.load();
-                    c_peak_mix_c_ = FloatType(1) - c_peak_mix_;
-                }
             }
         }
 
         void processSample(const FloatType x) {
-            const FloatType square = IsPeakMix
-                                         ? std::abs(x) * (c_peak_mix_ + std::abs(x) * c_peak_mix_c_)
-                                         : x * x;
+            const FloatType square = x * x;
             if (square_buffer_.size() == c_buffer_size_) {
                 square_sum_ -= square_buffer_.popFront();
             }
@@ -101,16 +94,6 @@ namespace zldsp::compressor {
             return buffer_size_.load();
         }
 
-        /**
-         * thread-safe, lock-free
-         * set the peak-mix portion
-         * @param x the peak-mix portion
-         */
-        void setPeakMix(const FloatType x) {
-            peak_mix_.store(x);
-            to_update_.store(true);
-        }
-
         size_t getCurrentBufferSize() const { return c_buffer_size_; }
 
         FloatType getMomentarySquare() {
@@ -132,8 +115,6 @@ namespace zldsp::compressor {
         size_t c_buffer_size_{1};
         FloatType c_buffer_size_r{FloatType(1)};
         std::atomic<size_t> buffer_size_{1};
-        FloatType c_peak_mix_{0}, c_peak_mix_c_{1};
-        std::atomic<FloatType> peak_mix_{0};
         std::atomic<bool> to_update_{true};
 
         void setMomentarySize(size_t size) {
