@@ -7,14 +7,14 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "controller.hpp"
+#include "compressor_controller.hpp"
 
 namespace zlp {
-    Controller::Controller(juce::AudioProcessor &processor)
+    CompressorController::CompressorController(juce::AudioProcessor &processor)
         : processor_ref_(processor) {
     }
 
-    void Controller::prepare(const juce::dsp::ProcessSpec &spec) {
+    void CompressorController::prepare(const juce::dsp::ProcessSpec &spec) {
         main_spec_ = spec;
         mag_analyzer_.prepare(spec.sampleRate);
         mag_avg_analyzer_.prepare(spec.sampleRate);
@@ -38,7 +38,7 @@ namespace zlp {
     }
 
 
-    void Controller::prepareBuffer() {
+    void CompressorController::prepareBuffer() {
         // load external side-chain
         c_ext_side_chain_ = ext_side_chain_.load();
         // load stereo mode
@@ -64,7 +64,7 @@ namespace zlp {
             }
         }
         // load stereo link
-        c_stereo_link_ = 1.0 - std::clamp(stereo_link_.load(), 0.0, 0.5);
+        c_stereo_link_ = 1.f - std::clamp(stereo_link_.load(), 0.f, .5f);
         // load wet values
         if (to_update_wet_.exchange(false)) {
             const auto c_wet = wet_.load();
@@ -83,7 +83,7 @@ namespace zlp {
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
-            const auto oversample_sr = main_spec_.sampleRate * static_cast<double>(oversample_mul);
+            const auto oversample_sr = main_spec_.sampleRate * static_cast<float>(oversample_mul);
             for (auto &t: tracker_) {
                 t.prepare(oversample_sr);
             }
@@ -96,10 +96,10 @@ namespace zlp {
         }
     }
 
-    void Controller::process(juce::AudioBuffer<double> &buffer) {
+    void CompressorController::process(juce::AudioBuffer<float> &buffer) {
         prepareBuffer();
-        juce::AudioBuffer<double> main_buffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
-        juce::AudioBuffer<double> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
+        juce::AudioBuffer<float> main_buffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
+        juce::AudioBuffer<float> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
         pre_pointers_[0] = pre_buffer_.getWritePointer(0);
         pre_pointers_[1] = pre_buffer_.getWritePointer(1);
         main_pointers_[0] = main_buffer.getWritePointer(0);
@@ -113,11 +113,11 @@ namespace zlp {
 
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 1) {
-            zldsp::splitter::MSSplitter<double>::split(main_buffer.getWritePointer(0),
+            zldsp::splitter::MSSplitter<float>::split(main_buffer.getWritePointer(0),
                                                        main_buffer.getWritePointer(1),
                                                        static_cast<size_t>(main_buffer.getNumSamples()));
             if (c_ext_side_chain_) {
-                zldsp::splitter::MSSplitter<double>::split(side_buffer.getWritePointer(0),
+                zldsp::splitter::MSSplitter<float>::split(side_buffer.getWritePointer(0),
                                                            side_buffer.getWritePointer(1),
                                                            static_cast<size_t>(side_buffer.getNumSamples()));
             }
@@ -129,13 +129,13 @@ namespace zlp {
                           buffer.getWritePointer(2), buffer.getWritePointer(3),
                           static_cast<size_t>(buffer.getNumSamples()));
         } else {
-            juce::dsp::AudioBlock<double> main_block(main_buffer);
+            juce::dsp::AudioBlock<float> main_block(main_buffer);
             // upsample the main buffer
             auto &main_oversampler = oversample_stages_main_[c_oversample_stage_idx_];
             auto os_main_block = main_oversampler.processSamplesUp(main_block);
             if (c_ext_side_chain_) {
                 // upsample the side buffer
-                juce::dsp::AudioBlock<double> side_block(side_buffer);
+                juce::dsp::AudioBlock<float> side_block(side_buffer);
                 auto &side_oversampler = oversample_stages_side_[c_oversample_stage_idx_];
                 auto os_side_block = side_oversampler.processSamplesUp(side_block);
                 // process the oversampled buffers
@@ -166,8 +166,8 @@ namespace zlp {
         output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
     }
 
-    void Controller::processBuffer(double *main_buffer1, double *main_buffer2,
-                                   double *side_buffer1, double *side_buffer2,
+    void CompressorController::processBuffer(float *main_buffer1, float *main_buffer2,
+                                   float *side_buffer1, float *side_buffer2,
                                    const size_t num_samples) {
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
@@ -217,22 +217,22 @@ namespace zlp {
     }
 
 
-    void Controller::processSideBufferClean(double *buffer1, double *buffer2, const size_t num_samples) {
+    void CompressorController::processSideBufferClean(float *buffer1, float *buffer2, const size_t num_samples) {
         clean_comps_[0].process(buffer1, num_samples);
         clean_comps_[1].process(buffer2, num_samples);
     }
 
-    void Controller::processSideBufferClassic(double *buffer1, double *buffer2, const size_t num_samples) {
+    void CompressorController::processSideBufferClassic(float *buffer1, float *buffer2, const size_t num_samples) {
         classic_comps_[0].process(buffer1, num_samples);
         classic_comps_[1].process(buffer2, num_samples);
     }
 
-    void Controller::processSideBufferOptical(double *buffer1, double *buffer2, const size_t num_samples) {
+    void CompressorController::processSideBufferOptical(float *buffer1, float *buffer2, const size_t num_samples) {
         optical_comps_[0].process(buffer1, num_samples);
         optical_comps_[1].process(buffer2, num_samples);
     }
 
-    void Controller::handleAsyncUpdate() {
+    void CompressorController::handleAsyncUpdate() {
         processor_ref_.setLatencySamples(oversample_latency_.load());
     }
 } // zlDSP

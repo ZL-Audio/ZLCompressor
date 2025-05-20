@@ -10,24 +10,24 @@
 #pragma once
 
 #include "zlp_definitions.hpp"
-#include "controller.hpp"
+#include "compressor_controller.hpp"
 
 namespace zlp {
     class CompressAttach final : private juce::AudioProcessorValueTreeState::Listener {
     public:
         explicit CompressAttach(juce::AudioProcessor &processor,
                                 juce::AudioProcessorValueTreeState &parameters,
-                                Controller &controller);
+                                CompressorController &controller);
 
         ~CompressAttach() override;
 
     private:
         juce::AudioProcessor &processor_ref_;
         juce::AudioProcessorValueTreeState &parameters_ref_;
-        Controller &controller_ref_;
+        CompressorController &controller_ref_;
 
-        zldsp::compressor::KneeComputer<double, true> &computer_ref_;
-        zldsp::compressor::PSFollower<double, true, true> &follower_ref_;
+        zldsp::compressor::KneeComputer<float, true> &computer_ref_;
+        zldsp::compressor::PSFollower<float, true, true> &follower_ref_;
 
         constexpr static std::array kIDs{
             PCompStyle::kID,

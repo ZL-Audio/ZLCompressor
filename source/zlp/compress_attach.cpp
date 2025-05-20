@@ -12,7 +12,7 @@
 namespace zlp {
     CompressAttach::CompressAttach(juce::AudioProcessor &processor,
                                    juce::AudioProcessorValueTreeState &parameters,
-                                   Controller &controller)
+                                   CompressorController &controller)
         : processor_ref_(processor),
           parameters_ref_(parameters),
           controller_ref_(controller),

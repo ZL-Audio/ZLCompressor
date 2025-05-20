@@ -27,11 +27,11 @@ namespace zlpanel {
 
         void setTimeLength(const float x) {
             mag_analyzer_ref_.setTimeLength(x);
-            num_per_second_.store(static_cast<double>(zlp::Controller::kAnalyzerPointNum - 1) / static_cast<double>(x));
+            num_per_second_.store(static_cast<double>(zlp::CompressorController::kAnalyzerPointNum - 1) / static_cast<double>(x));
         }
 
     private:
-        zldsp::analyzer::MagReductionAnalyzer<double, zlp::Controller::kAnalyzerPointNum> &mag_analyzer_ref_;
+        zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressorController::kAnalyzerPointNum> &mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
         juce::Path in_path_, out_path_, reduction_path_;

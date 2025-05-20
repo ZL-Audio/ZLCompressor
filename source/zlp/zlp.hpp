@@ -10,5 +10,5 @@
 #pragma once
 
 #include "zlp_definitions.hpp"
-#include "controller.hpp"
+#include "compressor_controller.hpp"
 #include "compress_attach.hpp"

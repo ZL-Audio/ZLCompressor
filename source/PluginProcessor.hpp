@@ -65,11 +65,12 @@ public:
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    inline zlp::Controller &getController() { return controller_; }
+    inline zlp::CompressorController &getController() { return compressor_controller_; }
 
 private:
-    zlp::Controller controller_;
+    zlp::CompressorController compressor_controller_;
     zlp::CompressAttach compress_attach_;
+    juce::AudioBuffer<float> float_buffer_;
     juce::AudioBuffer<double> double_buffer_;
 
     enum ChannelLayout {
@@ -79,14 +80,6 @@ private:
     };
 
     ChannelLayout channel_layout_{kInvalid};
-
-    void doubleBufferCopyFrom(int dest_chan, const juce::AudioBuffer<float> &buffer, int src_chan);
-
-    void doubleBufferCopyTo(int src_chan, juce::AudioBuffer<float> &buffer, int dest_chan) const;
-
-    void doubleBufferCopyFrom(int dest_chan, const juce::AudioBuffer<double> &buffer, int src_chan);
-
-    void doubleBufferCopyTo(int src_chan, juce::AudioBuffer<double> &buffer, int dest_chan) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

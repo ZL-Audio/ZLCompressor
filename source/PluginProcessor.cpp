@@ -20,8 +20,8 @@ PluginProcessor::PluginProcessor()
       parameters_(*this, nullptr,
                   juce::Identifier("ZLCompressorParameters"),
                   zlp::getParameterLayout()),
-      controller_(*this),
-      compress_attach_(*this, parameters_, controller_) {
+      compressor_controller_(*this),
+      compress_attach_(*this, parameters_, compressor_controller_) {
 }
 
 PluginProcessor::~PluginProcessor() = default;
@@ -88,9 +88,11 @@ void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_
         static_cast<juce::uint32>(samples_per_block),
         2
     };
-    double_buffer_.setSize(4, samples_per_block);
+    float_buffer_.setSize(4, samples_per_block);
+    float_buffer_.clear();
+    double_buffer_.setSize(2, samples_per_block);
     double_buffer_.clear();
-    controller_.prepare(spec);
+    compressor_controller_.prepare(spec);
     // determine current channel layout
     const auto *main_bus = getBus(true, 0);
     const auto *aux_bus = getBus(true, 1);
@@ -141,63 +143,54 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
-    double_buffer_.setSize(4, buffer.getNumSamples(), false, false, true);
+    const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
+    float_buffer_.setSize(4, buffer.getNumSamples(), false, false, true);
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 0);
-            doubleBufferCopyFrom(2, buffer, 0);
-            doubleBufferCopyFrom(3, buffer, 0);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
+            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux1: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 0);
-            doubleBufferCopyFrom(2, buffer, 1);
-            doubleBufferCopyFrom(3, buffer, 1);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
+            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(3), buffer.getReadPointer(1), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux2: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 0);
-            doubleBufferCopyFrom(2, buffer, 1);
-            doubleBufferCopyFrom(3, buffer, 2);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
+            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux0: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 1);
-            doubleBufferCopyFrom(2, buffer, 0);
-            doubleBufferCopyFrom(3, buffer, 1);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
-            doubleBufferCopyTo(1, buffer, 1);
+            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux1: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 1);
-            doubleBufferCopyFrom(2, buffer, 2);
-            doubleBufferCopyFrom(3, buffer, 2);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
-            doubleBufferCopyTo(1, buffer, 1);
+            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(2), buffer.getReadPointer(2), buffer_size);
+            zldsp::vector::copy(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux2: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 1);
-            doubleBufferCopyFrom(2, buffer, 2);
-            doubleBufferCopyFrom(3, buffer, 3);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
-            doubleBufferCopyTo(1, buffer, 1);
+            compressor_controller_.process(buffer);
             break;
         }
         case ChannelLayout::kInvalid: {
@@ -208,57 +201,60 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
-    double_buffer_.setSize(4, buffer.getNumSamples(), false, false, true);
+    const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
+    float_buffer_.setSize(4, buffer.getNumSamples(), false, false, true);
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 0);
-            doubleBufferCopyFrom(2, buffer, 0);
-            doubleBufferCopyFrom(3, buffer, 0);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
+            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux1: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 0);
-            doubleBufferCopyFrom(2, buffer, 1);
-            doubleBufferCopyFrom(3, buffer, 1);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
+            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(1), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux2: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 0);
-            doubleBufferCopyFrom(2, buffer, 1);
-            doubleBufferCopyFrom(3, buffer, 2);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
+            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux0: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 1);
-            doubleBufferCopyFrom(2, buffer, 0);
-            doubleBufferCopyFrom(3, buffer, 1);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
-            doubleBufferCopyTo(1, buffer, 1);
+            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux1: {
-            doubleBufferCopyFrom(0, buffer, 0);
-            doubleBufferCopyFrom(1, buffer, 1);
-            doubleBufferCopyFrom(2, buffer, 2);
-            doubleBufferCopyFrom(3, buffer, 2);
-            controller_.process(double_buffer_);
-            doubleBufferCopyTo(0, buffer, 0);
-            doubleBufferCopyTo(1, buffer, 1);
+            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(2), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux2: {
-            controller_.process(buffer);
+            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(2), buffer_size);
+            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(3), buffer_size);
+            compressor_controller_.process(float_buffer_);
+            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::convert(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
             break;
         }
         case ChannelLayout::kInvalid: {
@@ -290,34 +286,6 @@ void PluginProcessor::setStateInformation(const void *data, int size_in_bytes) {
         parameters_.replaceState(temp_tree.getChildWithName(parameters_.state.getType()));
         // parameters_NA_.replaceState(temp_tree.getChildWithName(parameters_NA_.state.getType()));
     }
-}
-
-void PluginProcessor::doubleBufferCopyFrom(const int dest_chan,
-                                           const juce::AudioBuffer<float> &buffer, const int src_chan) {
-    zldsp::vector::convert(double_buffer_.getWritePointer(dest_chan),
-                           buffer.getReadPointer(src_chan),
-                           static_cast<size_t>(buffer.getNumSamples()));
-}
-
-void PluginProcessor::doubleBufferCopyFrom(const int dest_chan,
-                                           const juce::AudioBuffer<double> &buffer, const int src_chan) {
-    zldsp::vector::copy(double_buffer_.getWritePointer(dest_chan),
-                        buffer.getReadPointer(src_chan),
-                        static_cast<size_t>(buffer.getNumSamples()));
-}
-
-void PluginProcessor::doubleBufferCopyTo(const int src_chan,
-                                         juce::AudioBuffer<float> &buffer, int const dest_chan) const {
-    zldsp::vector::convert(buffer.getWritePointer(dest_chan),
-                           double_buffer_.getReadPointer(src_chan),
-                           static_cast<size_t>(buffer.getNumSamples()));
-}
-
-void PluginProcessor::doubleBufferCopyTo(const int src_chan,
-                                         juce::AudioBuffer<double> &buffer, int const dest_chan) const {
-    zldsp::vector::copy(buffer.getWritePointer(dest_chan),
-                        double_buffer_.getReadPointer(src_chan),
-                        static_cast<size_t>(buffer.getNumSamples()));
 }
 
 juce::AudioProcessor *JUCE_CALLTYPE
