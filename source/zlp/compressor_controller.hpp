@@ -44,6 +44,10 @@ namespace zlp {
             comp_style_.store(style);
         }
 
+        void setOversampleIdx(const int idx) {
+            oversample_idx_.store(idx);
+        }
+
     private:
         juce::AudioProcessor &processor_ref_;
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};

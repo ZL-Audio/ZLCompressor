@@ -228,11 +228,22 @@ namespace zlp {
         }
     };
 
+    class POversample : public ChoiceParameters<POversample> {
+    public:
+        auto static constexpr kID = "oversample";
+        auto static constexpr kName = "Oversample";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "2x", "4x", "8x"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
-                   PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get());
+                   PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
+                   POversample::get());
         return layout;
     }
 

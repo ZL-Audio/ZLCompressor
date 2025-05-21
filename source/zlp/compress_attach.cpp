@@ -54,6 +54,8 @@ namespace zlp {
         } else if (parameter_ID == PSmooth::kID) {
             const auto x = PSmooth::formatV(new_value);
             follower_ref_.setSmooth(x);
+        } else if (parameter_ID == POversample::kID) {
+            controller_ref_.setOversampleIdx(static_cast<int>(new_value));
         }
     }
 } // zlp

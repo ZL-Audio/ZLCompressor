@@ -32,13 +32,15 @@ namespace zlp {
         constexpr static std::array kIDs{
             PCompStyle::kID,
             PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID,
-            PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID
+            PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID,
+            POversample::kID
         };
 
         constexpr static std::array kDefaultVs{
             static_cast<float>(PCompStyle::kDefaultI),
             PThreshold::kDefaultV, PRatio::kDefaultV, PKneeW::kDefaultV, PCurve::kDefaultV,
-            PAttack::kDefaultV, PRelease::kDefaultV, PPump::kDefaultV, PSmooth::kDefaultV
+            PAttack::kDefaultV, PRelease::kDefaultV, PPump::kDefaultV, PSmooth::kDefaultV,
+            static_cast<float>(POversample::kDefaultI)
         };
 
         void parameterChanged(const juce::String &parameter_ID, float new_value) override;

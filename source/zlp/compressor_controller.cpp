@@ -37,7 +37,8 @@ namespace zlp {
         }
 
         oversample_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2,
-            oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(spec.sampleRate));
+                                  oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(spec.
+                                      sampleRate));
         oversample_delay_.setDelayInSamples(0);
     }
 
@@ -97,8 +98,7 @@ namespace zlp {
             for (auto &f: follower_) {
                 f.prepare(oversample_sr);
             }
-            // prepare oversampled side-buffer
-            oversampled_side_buffer_.setSize(2, static_cast<int>(main_spec_.maximumBlockSize) * oversample_mul);
+            // update the latency
             triggerAsyncUpdate();
         }
     }
@@ -113,24 +113,28 @@ namespace zlp {
         main_pointers_[1] = main_buffer.getWritePointer(1);
         pre_buffer_.makeCopyOf(main_buffer, true);
 
-        if (!ext_side_chain_.load()) {
-            side_buffer.makeCopyOf(main_buffer, true);
-        }
-
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 1) {
             zldsp::splitter::MSSplitter<float>::split(main_buffer.getWritePointer(0),
-                                                       main_buffer.getWritePointer(1),
-                                                       static_cast<size_t>(main_buffer.getNumSamples()));
+                                                      main_buffer.getWritePointer(1),
+                                                      static_cast<size_t>(main_buffer.getNumSamples()));
             if (c_ext_side_chain_) {
                 zldsp::splitter::MSSplitter<float>::split(side_buffer.getWritePointer(0),
-                                                           side_buffer.getWritePointer(1),
-                                                           static_cast<size_t>(side_buffer.getNumSamples()));
+                                                          side_buffer.getWritePointer(1),
+                                                          static_cast<size_t>(side_buffer.getNumSamples()));
             }
         }
         // upsample side buffer
         if (c_oversample_idx_ == 0) {
-            if (!c_ext_side_chain_) side_buffer.makeCopyOf(main_buffer, true);
+            if (!c_ext_side_chain_) {
+                // copy side buffer to main buffer
+                zldsp::vector::copy(side_buffer.getWritePointer(0),
+                                    main_buffer.getReadPointer(0),
+                                    static_cast<size_t>(buffer.getNumSamples()));
+                zldsp::vector::copy(side_buffer.getWritePointer(1),
+                                    main_buffer.getReadPointer(1),
+                                    static_cast<size_t>(buffer.getNumSamples()));
+            }
             processBuffer(buffer.getWritePointer(0), buffer.getWritePointer(1),
                           buffer.getWritePointer(2), buffer.getWritePointer(3),
                           static_cast<size_t>(buffer.getNumSamples()));
@@ -150,10 +154,10 @@ namespace zlp {
                               os_main_block.getNumSamples());
             } else {
                 // copy the oversampled main buffer to the oversampled side buffer
-                oversampled_side_buffer_.copyFrom(0, 0, os_main_block.getChannelPointer(0),
-                                                  static_cast<int>(os_main_block.getNumSamples()));
-                oversampled_side_buffer_.copyFrom(1, 0, os_main_block.getChannelPointer(1),
-                                                  static_cast<int>(os_main_block.getNumSamples()));
+                zldsp::vector::copy(oversampled_side_buffer_.getWritePointer(0),
+                                    os_main_block.getChannelPointer(0), os_main_block.getNumSamples());
+                zldsp::vector::copy(oversampled_side_buffer_.getWritePointer(1),
+                                    os_main_block.getChannelPointer(1), os_main_block.getNumSamples());
                 // process the oversampled buffers
                 processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
                               oversampled_side_buffer_.getWritePointer(0), oversampled_side_buffer_.getWritePointer(1),
@@ -172,8 +176,8 @@ namespace zlp {
     }
 
     void CompressorController::processBuffer(float *main_buffer1, float *main_buffer2,
-                                   float *side_buffer1, float *side_buffer2,
-                                   const size_t num_samples) {
+                                             float *side_buffer1, float *side_buffer2,
+                                             const size_t num_samples) {
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
         tracker_[0].prepareBuffer();
@@ -220,7 +224,6 @@ namespace zlp {
             main_v2 = main_v2 * side_v2;
         }
     }
-
 
     void CompressorController::processSideBufferClean(float *buffer1, float *buffer2, const size_t num_samples) {
         clean_comps_[0].process(buffer1, num_samples);

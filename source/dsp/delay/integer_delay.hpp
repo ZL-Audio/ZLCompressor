@@ -92,7 +92,7 @@ namespace zldsp::delay {
         }
 
         void setDelayInSamples(const int delay_samples) {
-            setDelay(static_cast<FloatType>(delay_samples) / sample_rate_);
+            setDelay(static_cast<FloatType>(delay_samples) / static_cast<FloatType>(sample_rate_));
         }
 
     private:
