@@ -37,8 +37,8 @@ namespace zlp {
         }
 
         oversample_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2,
-                                  oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(spec.
-                                      sampleRate));
+                                  oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(
+                                      spec.sampleRate));
         oversample_delay_.setDelayInSamples(0);
     }
 
@@ -81,8 +81,8 @@ namespace zlp {
             c_oversample_idx_ = oversample_idx_.load();
             if (c_oversample_idx_ > 0) {
                 c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
-                const auto oversample_latency = static_cast<int>(
-                    oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples());
+                const auto oversample_latency = static_cast<int>(std::round(
+                    oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples()));
                 oversample_latency_.store(oversample_latency);
                 oversample_delay_.setDelayInSamples(oversample_latency);
             } else {
