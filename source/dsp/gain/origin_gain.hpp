@@ -47,8 +47,7 @@ namespace zldsp::gain {
 
         [[nodiscard]] bool isSmoothing() const noexcept { return gain_.isSmoothing(); }
 
-        void prepare(const double sample_rate,
-                     const size_t max_num_samples,
+        void prepare(const double sample_rate, const size_t max_num_samples,
                      const double ramp_length_in_seconds) noexcept {
             gain_.prepare(sample_rate, ramp_length_in_seconds);
             gain_vs_.resize(max_num_samples);

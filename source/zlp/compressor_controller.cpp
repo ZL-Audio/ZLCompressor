@@ -35,6 +35,10 @@ namespace zlp {
         for (auto &os: oversample_stages_side_) {
             os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
         }
+
+        oversample_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2,
+            oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(spec.sampleRate));
+        oversample_delay_.setDelayInSamples(0);
     }
 
 
@@ -76,10 +80,13 @@ namespace zlp {
             c_oversample_idx_ = oversample_idx_.load();
             if (c_oversample_idx_ > 0) {
                 c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
-                oversample_latency_.store(
-                    static_cast<int>(oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples()));
+                const auto oversample_latency = static_cast<int>(
+                    oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples());
+                oversample_latency_.store(oversample_latency);
+                oversample_delay_.setDelayInSamples(oversample_latency);
             } else {
                 oversample_latency_.store(0);
+                oversample_delay_.setDelay(0);
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
@@ -104,7 +111,6 @@ namespace zlp {
         pre_pointers_[1] = pre_buffer_.getWritePointer(1);
         main_pointers_[0] = main_buffer.getWritePointer(0);
         main_pointers_[1] = main_buffer.getWritePointer(1);
-
         pre_buffer_.makeCopyOf(main_buffer, true);
 
         if (!ext_side_chain_.load()) {
@@ -122,7 +128,7 @@ namespace zlp {
                                                            static_cast<size_t>(side_buffer.getNumSamples()));
             }
         }
-        // up-sample side buffer
+        // upsample side buffer
         if (c_oversample_idx_ == 0) {
             if (!c_ext_side_chain_) side_buffer.makeCopyOf(main_buffer, true);
             processBuffer(buffer.getWritePointer(0), buffer.getWritePointer(1),
@@ -155,6 +161,8 @@ namespace zlp {
             }
             // downsample the main buffer
             main_oversampler.processSamplesDown(main_block);
+            // delay the pre buffer
+            oversample_delay_.process(pre_pointers_, static_cast<size_t>(pre_buffer_.getNumSamples()));
         }
         output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
         mag_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}, std::span{main_pointers_}},

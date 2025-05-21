@@ -12,6 +12,7 @@
 #include "../dsp/compressor/compressor.hpp"
 #include "../dsp/gain/gain.hpp"
 #include "../dsp/splitter/splitter.hpp"
+#include "../dsp/delay/delay.hpp"
 #include "../dsp/mag_analyzer/mag_analyzer.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -113,6 +114,8 @@ namespace zlp {
         };
 
         zldsp::gain::Gain<float> output_gain_{};
+
+        zldsp::delay::IntegerDelay<float> oversample_delay_{};
 
         void prepareBuffer();
 
