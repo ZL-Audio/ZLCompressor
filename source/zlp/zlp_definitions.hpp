@@ -12,7 +12,9 @@
 #include "compressor_controller.hpp"
 
 namespace zlp {
-    inline auto static constexpr kVersionHint = 1;
+    inline static constexpr int kVersionHint = 1;
+
+    inline static constexpr size_t kBandNUM = 8;
 
     template<typename FloatType>
     inline juce::NormalisableRange<FloatType> getLogMidRange(
