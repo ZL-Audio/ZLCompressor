@@ -12,16 +12,20 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../PluginProcessor.hpp"
+#include "../gui/gui.hpp"
 #include "curve_panel/curve_panel.hpp"
 
 namespace zlpanel {
     class MainPanel final : public juce::Component {
     public:
-        explicit MainPanel(PluginProcessor &processor);
+        explicit MainPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
         void resized() override;
 
+        void repaintCallBack(const double time_stamp);
+
     private:
+        zlgui::UIBase &base_;
         CurvePanel curve_panel_;
     };
 } // zlpanel

@@ -57,7 +57,7 @@ namespace zlgui::attachment {
         std::atomic<bool> &updater_flag_ref_;
         std::atomic<int> atomic_index_{0};
 
-        void parameterChanged(const juce::String &parameter_ID, const float new_value) override {
+        void parameterChanged(const juce::String &, const float new_value) override {
             atomic_index_.store(static_cast<int>(new_value));
             updater_flag_ref_.store(true);
         }

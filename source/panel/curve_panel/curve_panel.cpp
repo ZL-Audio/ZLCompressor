@@ -12,8 +12,7 @@
 namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &processor)
         : Thread("curve_panel"),
-          peak_panel_(processor), rms_panel_(processor),
-          vblank_(this, [this](const double time_stamp) { repaintCallBack(time_stamp); }) {
+          peak_panel_(processor), rms_panel_(processor) {
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);

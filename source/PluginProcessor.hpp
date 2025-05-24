@@ -12,6 +12,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "zlp/zlp.hpp"
+#include "state/state.hpp"
 
 #if (MSVC)
 #include "ipps.h"
@@ -19,7 +20,10 @@
 
 class PluginProcessor : public juce::AudioProcessor {
 public:
+    zlstate::DummyProcessor dummy_processor_;
     juce::AudioProcessorValueTreeState parameters_;
+    juce::AudioProcessorValueTreeState state_;
+    zlstate::Property property_;
 
     PluginProcessor();
 

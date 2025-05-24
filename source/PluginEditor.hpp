@@ -13,9 +13,14 @@
 #include "BinaryData.h"
 
 #include "panel/main_panel.hpp"
+#include "gui/gui.hpp"
+#include "state/state.hpp"
 
 //==============================================================================
-class PluginEditor : public juce::AudioProcessorEditor {
+class PluginEditor : public juce::AudioProcessorEditor,
+                     private juce::Timer,
+                     private juce::AudioProcessorValueTreeState::Listener,
+                     private juce::AsyncUpdater {
 public:
     explicit PluginEditor(PluginProcessor &);
 
@@ -26,10 +31,30 @@ public:
 
     void resized() override;
 
+    void visibilityChanged() override;
+
+    void parentHierarchyChanged() override;
+
+    void minimisationStateChanged(bool isNowMinimised) override;
+
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
     PluginProcessor &processor_ref_;
+    zlstate::Property &property_;
+    juce::Value last_ui_width_, last_ui_height_;
+    std::atomic<bool> is_size_changed_{false};
+
+    zlgui::UIBase ui_base_;
     zlpanel::MainPanel main_panel_;
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
+
+    std::unique_ptr<juce::VBlankAttachment> vblank_;
+
+    void timerCallback() override;
+
+    void parameterChanged(const juce::String &parameter_id, float new_value) override;
+
+    void handleAsyncUpdate() override;
+
+    void updateIsShowing();
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

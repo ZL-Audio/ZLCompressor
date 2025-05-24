@@ -19,7 +19,7 @@ namespace zlgui {
         explicit ClickButton(UIBase &base,
                              juce::Drawable *normal_image = nullptr,
                              juce::Drawable *normal_on_image = nullptr,
-                             const juce::String &tooltip_text)
+                             const juce::String &tooltip_text = "")
             : ui_base_(base), normal_(normal_image), normal_on_(normal_on_image) {
             if (normal_on_image != nullptr) {
                 button_.setToggleable(true);

@@ -131,7 +131,7 @@ namespace zlstate {
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout getNAParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
-        layout.add(PEQMaxDB::get());
+        layout.add(PEQMaxDB::get(), PAnalyzerMinDB::get());
         return layout;
     }
 
@@ -144,7 +144,7 @@ namespace zlstate {
     public:
         auto static constexpr kID = "window_w";
         auto static constexpr kName = "";
-        inline static constexpr float minV = 600.f;
+        inline static constexpr float minV = 282.f;
         inline static constexpr float maxV = 6000.f;
         inline static constexpr float kDefaultV = 704.f;
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);
@@ -352,14 +352,16 @@ namespace zlstate {
                    PRefreshSpeed::get(),
                    PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
                    PSingleCurveThickness::get(), PSumCurveThickness::get());
-        addOneColour(layout, "pre", 255 - 8, 255 - 9, 255 - 11, true, 0.1f);
-        addOneColour(layout, "post", 255 - 8, 255 - 9, 255 - 11, true, 0.1f);
-        addOneColour(layout, "side", 252, 18, 197, true, 0.1f);
-        addOneColour(layout, "grid", 255 - 8, 255 - 9, 255 - 11, true, .25f);
         addOneColour(layout, "text", 255 - 8, 255 - 9, 255 - 11, true, 1.f);
         addOneColour(layout, "background", (255 - 214) / 2, (255 - 223) / 2, (255 - 236) / 2, true, 1.f);
         addOneColour(layout, "shadow", 0, 0, 0, true, 1.f);
         addOneColour(layout, "glow", 70, 66, 62, true, 1.f);
+
+        addOneColour(layout, "pre", 255 - 8, 255 - 9, 255 - 11, true, 0.1f);
+        addOneColour(layout, "post", 255 - 8, 255 - 9, 255 - 11, true, 0.1f);
+        addOneColour(layout, "reduction", 252, 18, 197, true, 0.1f);
+        addOneColour(layout, "computer", 255, 165, 0, true, 1.f);
+
         layout.add(PColourMap1Idx::get(), PColourMap2Idx::get());
         return layout;
     }

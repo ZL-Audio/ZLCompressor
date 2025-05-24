@@ -17,9 +17,13 @@ PluginProcessor::PluginProcessor()
           .withInput("Aux", juce::AudioChannelSet::stereo(), true)
           .withOutput("Output", juce::AudioChannelSet::stereo(), true)
       ),
+      dummy_processor_(),
       parameters_(*this, nullptr,
                   juce::Identifier("ZLCompressorParameters"),
                   zlp::getParameterLayout()),
+      state_(dummy_processor_, nullptr,
+             juce::Identifier("ZLCompressorState"),
+             zlstate::getStateParameterLayout()),
       compressor_controller_(*this),
       compress_attach_(*this, parameters_, compressor_controller_) {
 }

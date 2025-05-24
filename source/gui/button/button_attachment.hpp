@@ -57,7 +57,7 @@ namespace zlgui::attachment {
         std::atomic<bool> &updater_flag_ref_;
         std::atomic<bool> atomic_flag_{false};
 
-        void parameterChanged(const juce::String &parameter_ID, const float new_value) override {
+        void parameterChanged(const juce::String &, const float new_value) override {
             atomic_flag_.store(new_value > .5f);
             updater_flag_ref_.store(true);
         }
