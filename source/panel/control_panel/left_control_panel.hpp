@@ -11,41 +11,33 @@
 
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
-#include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class ComputerPanel final : public juce::Component,
-                                private juce::AudioProcessorValueTreeState::Listener {
+    class LeftControlPanel final : public juce::Component {
     public:
-        static constexpr size_t kNumPoint = 100;
-
-        explicit ComputerPanel(PluginProcessor &p, zlgui::UIBase &base);
-
-        ~ComputerPanel() override;
+        explicit LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
         void paint(juce::Graphics &g) override;
 
-        void run();
-
         void resized() override;
+
+        void repaintCallBack();
 
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
-        static constexpr std::array kComputerIDs{
-            zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID
-        };
-        std::atomic<float> &threshold_ref_, &ratio_ref_, &knee_ref_, &curve_ref_;
+        zlgui::attachment::ComponentUpdater updater_;
 
-        zldsp::compressor::KneeComputer<float> computer_{};
-        AtomicBound<float> atomic_bound_;
+        zlgui::slider::CompactLinearSlider knee_slider_;
+        zlgui::attachment::SliderAttachment<true> knee_attachment_;
 
-        std::atomic<bool> to_update_{true};
-        juce::Path comp_path_, next_comp_path_;
-        juce::SpinLock path_lock_;
+        zlgui::slider::CompactLinearSlider curve_slider_;
+        zlgui::attachment::SliderAttachment<true> curve_attachment_;
 
-        std::atomic<float> min_db_{-72.f};
+        zlgui::slider::TwoValueRotarySlider<true, false> th_slider_;
+        zlgui::attachment::SliderAttachment<true> th_attachment_;
 
-        void parameterChanged(const juce::String &parameterID, float newValue) override;
+        zlgui::slider::TwoValueRotarySlider<true, false> ratio_slider_;
+        zlgui::attachment::SliderAttachment<true> ratio_attachment_;
     };
 } // zlpanel

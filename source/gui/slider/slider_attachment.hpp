@@ -20,17 +20,11 @@ namespace zlgui::attachment {
         SliderAttachment(juce::Slider &slider,
                          juce::AudioProcessorValueTreeState &apvts, const juce::String &parameter_ID,
                          std::atomic<bool> &updater_flag,
-                         const juce::NotificationType notification_type =
-                                 juce::NotificationType::sendNotificationSync)
+                         const juce::NotificationType notification_type = juce::NotificationType::sendNotificationSync)
             : slider_(slider), notification_type_(notification_type),
               apvts_(apvts), parameter_ID_(parameter_ID),
               parameter_ref_(*apvts_.getParameter(parameter_ID_)),
               updater_flag_ref_(updater_flag) {
-            // add parameter listener
-            if (UpdateFromAPVTS) {
-                apvts_.addParameterListener(parameter_ID_, this);
-                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
-            }
             // setup slider values
             slider_.valueFromTextFunction = [this](const juce::String &text) {
                 return static_cast<double>(parameter_ref_.convertFrom0to1(parameter_ref_.getValueForText(text)));
@@ -64,6 +58,11 @@ namespace zlgui::attachment {
             slider_.setNormalisableRange(new_range);
             // add slider listener
             slider_.addListener(this);
+            // add parameter listener
+            if (UpdateFromAPVTS) {
+                apvts_.addParameterListener(parameter_ID_, this);
+                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+            }
         }
 
         ~SliderAttachment() override {
@@ -73,6 +72,8 @@ namespace zlgui::attachment {
         void updateComponent() override {
             if (UpdateFromAPVTS) {
                 const auto current_value = atomic_value_.load();
+                DBG(current_value);
+                DBG(slider_.getValue());
                 if (std::abs(current_value - slider_.getValue()) > 1e-6f) {
                     slider_.setValue(current_value, notification_type_);
                 }

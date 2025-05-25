@@ -7,9 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#pragma once
+#include "right_control_panel.hpp"
 
-#include "compact_combobox/compact_combobox.hpp"
-#include "left_right_combobox/left_right_combobox.hpp"
-#include "click_combobox/click_combobox.hpp"
-#include "combobox_attachment.hpp"
+namespace zlpanel {
+} // zlpanel

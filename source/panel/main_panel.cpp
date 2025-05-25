@@ -11,16 +11,31 @@
 
 namespace zlpanel {
     MainPanel::MainPanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : base_(base), curve_panel_(processor) {
-        addAndMakeVisible(curve_panel_);
+        : base_(base),
+          curve_panel_(processor, base_),
+          control_panel_(processor, base_) {
         juce::ignoreUnused(base_);
+        addAndMakeVisible(curve_panel_);
+        addAndMakeVisible(control_panel_);
     }
 
     void MainPanel::resized() {
-        curve_panel_.setBounds(getLocalBounds());
+        auto bound = getLocalBounds();
+        if (static_cast<float>(bound.getHeight()) < 0.47f * static_cast<float>(bound.getWidth())) {
+            bound.setHeight(juce::roundToInt(0.47f * static_cast<float>(bound.getWidth())));
+        }
+
+        const auto fontSize = static_cast<float>(bound.getWidth()) * 0.014287762237762238f;
+        base_.setFontSize(fontSize);
+
+        const auto controlBound = bound.removeFromBottom(juce::roundToInt(fontSize * 7.348942487176095f));
+        control_panel_.setBounds(controlBound);
+
+        curve_panel_.setBounds(bound);
     }
 
     void MainPanel::repaintCallBack(const double time_stamp) {
         curve_panel_.repaintCallBack(time_stamp);
+        control_panel_.repaintCallBack(time_stamp);
     }
 } // zlpanel

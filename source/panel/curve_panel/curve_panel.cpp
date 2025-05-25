@@ -10,9 +10,9 @@
 #include "curve_panel.hpp"
 
 namespace zlpanel {
-    CurvePanel::CurvePanel(PluginProcessor &processor)
+    CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
         : Thread("curve_panel"),
-          peak_panel_(processor), rms_panel_(processor) {
+          peak_panel_(p), rms_panel_(p), computer_panel_(p, base) {
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);

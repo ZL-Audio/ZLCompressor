@@ -9,7 +9,23 @@
 
 #pragma once
 
-#include "compact_combobox/compact_combobox.hpp"
-#include "left_right_combobox/left_right_combobox.hpp"
-#include "click_combobox/click_combobox.hpp"
-#include "combobox_attachment.hpp"
+#include "left_control_panel.hpp"
+#include "mid_control_panel.hpp"
+#include "right_control_panel.hpp"
+
+namespace zlpanel {
+    class ControlPanel : public juce::Component {
+    public:
+        explicit ControlPanel(PluginProcessor &p, zlgui::UIBase &base);
+
+        void resized() override;
+
+        void repaintCallBack(double time_stamp);
+
+    private:
+        double previous_time_stamp{0.};
+        LeftControlPanel left_control_panel_;
+        // MidControlPanel mid_control_panel_;
+        // RightControlPanel right_control_panel_;
+    };
+} // zlpanel

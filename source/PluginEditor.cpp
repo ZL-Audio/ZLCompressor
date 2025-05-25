@@ -15,9 +15,9 @@ PluginEditor::PluginEditor(PluginProcessor &p)
       property_(p.property_),
       ui_base_(p.state_),
       main_panel_(p, ui_base_) {
-    // for (auto &ID: kIDs) {
-    //     processor_ref_.state_.addParameterListener(ID, this);
-    // }
+    for (auto &ID: kIDs) {
+        processor_ref_.state_.addParameterListener(ID, this);
+    }
     // set font
     const auto font_face = juce::Typeface::createSystemTypefaceFor(
         BinaryData::MiSansLatinMedium_ttf, BinaryData::MiSansLatinMedium_ttfSize);
@@ -43,9 +43,9 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 
 PluginEditor::~PluginEditor() {
     vblank_.reset();
-    // for (auto &id: kIDs) {
-    //     processor_ref_.state_.removeParameterListener(id, this);
-    // }
+    for (auto &id: kIDs) {
+        processor_ref_.state_.removeParameterListener(id, this);
+    }
     stopTimer();
 }
 
@@ -55,12 +55,8 @@ void PluginEditor::paint(juce::Graphics &g) {
 
 void PluginEditor::resized() {
     main_panel_.setBounds(getLocalBounds());
-    if (static_cast<int>(last_ui_width_.getValue()) != getWidth()
-        || static_cast<int>(last_ui_height_.getValue()) != getHeight()) {
-        last_ui_width_ = getWidth();
-        last_ui_height_ = getHeight();
-        property_.saveAPVTS(processor_ref_.state_);
-    }
+    last_ui_width_ = getWidth();
+    last_ui_height_ = getHeight();
 }
 
 void PluginEditor::visibilityChanged() {
@@ -77,14 +73,15 @@ void PluginEditor::minimisationStateChanged(bool) {
 
 void PluginEditor::parameterChanged(const juce::String &parameter_id, float new_value) {
     juce::ignoreUnused(parameter_id, new_value);
+    is_size_changed_.store(parameter_id == zlstate::PWindowH::kID || parameter_id == zlstate::PWindowW::kID);
     triggerAsyncUpdate();
 }
 
 void PluginEditor::handleAsyncUpdate() {
     property_.saveAPVTS(processor_ref_.state_);
-    // if (!is_size_changed_.exchange(false)) {
-    //     sendLookAndFeelChange();
-    // }
+    if (!is_size_changed_.exchange(false)) {
+        sendLookAndFeelChange();
+    }
 }
 
 void PluginEditor::timerCallback() {

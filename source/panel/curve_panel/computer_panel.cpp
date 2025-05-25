@@ -10,12 +10,23 @@
 #include "computer_panel.hpp"
 
 namespace zlpanel {
-    ComputerPanel::ComputerPanel() {
-        comp_path_.preallocateSpace(static_cast<int>(numPoint) * 3);
-        next_comp_path_.preallocateSpace(static_cast<int>(numPoint) * 3);
-        computer_.setThreshold(-18.f);
-        computer_.setKneeW(5.f);
-        computer_.setCurve(0.f);
+    ComputerPanel::ComputerPanel(PluginProcessor &p, zlgui::UIBase &base)
+        : p_ref_(p), base_(base),
+          threshold_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PThreshold::kID)),
+          ratio_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PRatio::kID)),
+          knee_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PKneeW::kID)),
+          curve_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PCurve::kID)) {
+        comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
+        next_comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
+        for (auto &ID : kComputerIDs) {
+            p_ref_.parameters_.addParameterListener(ID, this);
+        }
+    }
+
+    ComputerPanel::~ComputerPanel() {
+        for (auto &ID : kComputerIDs) {
+            p_ref_.parameters_.removeParameterListener(ID, this);
+        }
     }
 
     void ComputerPanel::paint(juce::Graphics &g) {
@@ -32,17 +43,22 @@ namespace zlpanel {
 
     void ComputerPanel::run() {
         if (!to_update_.exchange(false)) { return; }
+        computer_.setThreshold(threshold_ref_.load());
+        computer_.setRatio(ratio_ref_.load());
+        computer_.setKneeW(knee_ref_.load());
+        computer_.setCurve(zlp::PCurve::formatV(curve_ref_.load()));
+
         const auto current_min_db = min_db_.load();
         computer_.prepareBuffer();
         const auto bound = atomic_bound_.load();
         auto db_in = current_min_db;
-        const auto delta_db_in = -current_min_db / static_cast<float>(numPoint - 1);
-        const auto delta_y = bound.getHeight() / static_cast<float>(numPoint - 1);
+        const auto delta_db_in = -current_min_db / static_cast<float>(kNumPoint - 1);
+        const auto delta_y = bound.getHeight() / static_cast<float>(kNumPoint - 1);
         auto x = bound.getX();
         const auto delta_x = delta_y;
         next_comp_path_.clear();
         PathMinimizer minimizer{next_comp_path_};
-        for (size_t i = 0; i < numPoint; ++i) {
+        for (size_t i = 0; i < kNumPoint; ++i) {
             const auto db_out = computer_.eval(db_in);
             const auto y = db_out / current_min_db * bound.getHeight() + bound.getY();
             if (i == 0) {
@@ -60,6 +76,10 @@ namespace zlpanel {
 
     void ComputerPanel::resized() {
         atomic_bound_.store(getLocalBounds().toFloat());
+        to_update_.store(true);
+    }
+
+    void ComputerPanel::parameterChanged(const juce::String &, float) {
         to_update_.store(true);
     }
 } // zlpanel

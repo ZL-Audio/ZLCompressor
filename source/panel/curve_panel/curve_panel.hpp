@@ -12,6 +12,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../PluginProcessor.hpp"
+#include "../../gui/gui.hpp"
 #include "rms_panel.hpp"
 #include "peak_panel.hpp"
 #include "computer_panel.hpp"
@@ -21,7 +22,7 @@ namespace zlpanel {
     class CurvePanel final : public juce::Component,
                              private juce::Thread {
     public:
-        explicit CurvePanel(PluginProcessor &processor);
+        explicit CurvePanel(PluginProcessor &p, zlgui::UIBase &base);
 
         ~CurvePanel() override;
 

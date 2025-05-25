@@ -18,32 +18,22 @@ namespace zlp {
 
     template<typename FloatType>
     inline juce::NormalisableRange<FloatType> getLogMidRange(
-        const FloatType xMin, const FloatType xMax, const FloatType xMid, const FloatType xInterval) {
-        const FloatType rng1{std::log(xMid / xMin) * FloatType(2)};
-        const FloatType rng2{std::log(xMax / xMid) * FloatType(2)};
+        const FloatType x_min, const FloatType x_max, const FloatType x_mid, const FloatType x_interval) {
+        const FloatType rng1{std::log(x_mid / x_min) * FloatType(2)};
+        const FloatType rng2{std::log(x_max / x_mid) * FloatType(2)};
         return {
-            xMin, xMax,
+            x_min, x_max,
             [=](FloatType, FloatType, const FloatType v) {
-                return v < FloatType(.5) ? std::exp(v * rng1) * xMin : std::exp((v - FloatType(.5)) * rng2) * xMid;
+                return v < FloatType(.5) ? std::exp(v * rng1) * x_min : std::exp((v - FloatType(.5)) * rng2) * x_mid;
             },
             [=](FloatType, FloatType, const FloatType v) {
-                return v < xMid ? std::log(v / xMin) / rng1 : FloatType(.5) + std::log(v / xMid) / rng2;
+                return v < x_mid ? std::log(v / x_min) / rng1 : FloatType(.5) + std::log(v / x_mid) / rng2;
             },
             [=](FloatType, FloatType, const FloatType v) {
-                const FloatType x = xMin + xInterval * std::round((v - xMin) / xInterval);
-                return x <= xMin ? xMin : (x >= xMax ? xMax : x);
+                const FloatType x = x_min + x_interval * std::round((v - x_min) / x_interval);
+                return x <= x_min ? x_min : (x >= x_max ? x_max : x);
             }
         };
-    }
-
-    inline juce::NormalisableRange<double> logMidRange(
-        const double xMin, const double xMax, const double xMid, const double xInterval) {
-        return getLogMidRange<double>(xMin, xMax, xMid, xInterval);
-    }
-
-    inline juce::NormalisableRange<float> logMidRange(
-        const float xMin, const float xMax, const float xMid, const float xInterval) {
-        return getLogMidRange<float>(xMin, xMax, xMid, xInterval);
     }
 
     // float
@@ -149,8 +139,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "threshold";
         auto static constexpr kName = "Threshold (dB)";
-        inline auto static const kRange =
-                juce::NormalisableRange<float>(-80.f, 0.f, .1f);
+        inline auto static const kRange = juce::NormalisableRange<float>(-80.f, 0.f, .1f);
         auto static constexpr kDefaultV = -18.f;
     };
 
@@ -160,15 +149,13 @@ namespace zlp {
         auto static constexpr kName = "Ratio";
         auto static constexpr kDefaultV = 4.f;
         inline auto static const kRange = getLogMidRange(1.f, 100.f, 4.f, 0.01f);
-                // juce::NormalisableRange<float>(1.f, 100.f, 0.01f, 0.2160127f);
     };
 
     class PKneeW : public FloatParameters<PKneeW> {
     public:
         auto static constexpr kID = "knee_width";
         auto static constexpr kName = "Knee Width";
-        inline auto static const kRange =
-                juce::NormalisableRange<float>(0.f, 32.f, .01f, .5f);
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 32.f, .01f, .5f);
         auto static constexpr kDefaultV = 8.f;
     };
 
@@ -176,8 +163,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "curve";
         auto static constexpr kName = "Curve";
-        inline auto static const kRange =
-                juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
         auto static constexpr kDefaultV = 50.f;
 
         template<typename FloatType>
@@ -189,7 +175,7 @@ namespace zlp {
     class PAttack : public FloatParameters<PAttack> {
     public:
         auto static constexpr kID = "attack";
-        auto static constexpr kName = "Attack (ms)";
+        auto static constexpr kName = "Attack";
         inline auto static const kRange =
                 juce::NormalisableRange<float>(0.f, 500.f, 0.01f, 0.3010299956639812f);
         auto static constexpr kDefaultV = 50.f;
@@ -198,7 +184,7 @@ namespace zlp {
     class PRelease : public FloatParameters<PRelease> {
     public:
         auto static constexpr kID = "release";
-        auto static constexpr kName = "Release (ms)";
+        auto static constexpr kName = "Release";
         inline auto static const kRange =
                 juce::NormalisableRange<float>(0.f, 5000.f, 0.01f, 0.3010299956639812f);
         auto static constexpr kDefaultV = 500.f;

@@ -32,13 +32,14 @@ namespace zlgui::attachment {
 
         void updateComponents() {
             if (updater_flag_.exchange(false)) {
+                DBG(attachments_.size());
                 for (auto& attachment : attachments_) {
                     attachment->updateComponent();
                 }
             }
         }
 
-        std::atomic<bool>& getUpdaterFlag() { return updater_flag_; }
+        std::atomic<bool>& getFlag() { return updater_flag_; }
 
     private:
         std::unordered_set<ComponentAttachment*> attachments_;

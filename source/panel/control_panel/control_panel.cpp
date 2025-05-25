@@ -7,27 +7,24 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#include "../PluginProcessor.hpp"
-#include "../gui/gui.hpp"
-#include "curve_panel/curve_panel.hpp"
-#include "control_panel/control_panel.hpp"
+#include "control_panel.hpp"
 
 namespace zlpanel {
-    class MainPanel final : public juce::Component {
-    public:
-        explicit MainPanel(PluginProcessor &processor, zlgui::UIBase &base);
+    ControlPanel::ControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+        : left_control_panel_(p, base) {
+        addAndMakeVisible(left_control_panel_);
+    }
 
-        void resized() override;
+    void ControlPanel::resized() {
+        auto bound = getLocalBounds();
+        const auto height = bound.getHeight();
+        left_control_panel_.setBounds(bound.removeFromLeft(4 * height));
+    }
 
-        void repaintCallBack(const double time_stamp);
-
-    private:
-        zlgui::UIBase &base_;
-        CurvePanel curve_panel_;
-        ControlPanel control_panel_;
-    };
+    void ControlPanel::repaintCallBack(const double time_stamp) {
+        if (time_stamp - previous_time_stamp > 0.1) {
+            left_control_panel_.repaintCallBack();
+            previous_time_stamp = time_stamp;
+        }
+    }
 } // zlpanel

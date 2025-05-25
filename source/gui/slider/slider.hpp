@@ -12,3 +12,4 @@
 #include "compact_linear_slider/compact_linear_slider.hpp"
 #include "two_value_rotary_slider/two_value_rotary_slider.hpp"
 #include "extra_slider/snapping_slider.h"
+#include "slider_attachment.hpp"

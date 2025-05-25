@@ -9,7 +9,10 @@
 
 #pragma once
 
-#include "compact_combobox/compact_combobox.hpp"
-#include "left_right_combobox/left_right_combobox.hpp"
-#include "click_combobox/click_combobox.hpp"
-#include "combobox_attachment.hpp"
+namespace zlpanel {
+
+class RightControlPanel {
+
+};
+
+} // zlpanel

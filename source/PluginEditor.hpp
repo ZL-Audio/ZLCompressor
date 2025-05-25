@@ -43,6 +43,10 @@ private:
     juce::Value last_ui_width_, last_ui_height_;
     std::atomic<bool> is_size_changed_{false};
 
+    static constexpr std::array kIDs{
+        zlstate::PWindowW::kID, zlstate::PWindowH::kID,
+    };
+
     zlgui::UIBase ui_base_;
     zlpanel::MainPanel main_panel_;
 

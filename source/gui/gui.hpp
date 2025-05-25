@@ -10,6 +10,7 @@
 #pragma once
 
 #include "interface_definitions.hpp"
+#include "attachment/component_updater.hpp"
 #include "button/button.hpp"
 #include "combobox/combobox.hpp"
 #include "slider/slider.hpp"
