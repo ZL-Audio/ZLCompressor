@@ -72,8 +72,6 @@ namespace zlgui::attachment {
         void updateComponent() override {
             if (UpdateFromAPVTS) {
                 const auto current_value = atomic_value_.load();
-                DBG(current_value);
-                DBG(slider_.getValue());
                 if (std::abs(current_value - slider_.getValue()) > 1e-6f) {
                     slider_.setValue(current_value, notification_type_);
                 }

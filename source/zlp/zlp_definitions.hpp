@@ -36,6 +36,28 @@ namespace zlp {
         };
     }
 
+    template<typename FloatType>
+    inline juce::NormalisableRange<FloatType> getLinearMidRange(
+        const FloatType x_min, const FloatType x_max, const FloatType x_mid, const FloatType x_interval) {
+        return {
+            x_min, x_max,
+            [=](FloatType, FloatType, const FloatType v) {
+                return v < FloatType(.5)
+                ? FloatType(2) * v * (x_mid - x_min) + x_min
+                : FloatType(2) * (v - FloatType(0.5)) * (x_max - x_mid) + x_mid;
+            },
+            [=](FloatType, FloatType, const FloatType v) {
+                return v < x_mid
+                ? FloatType(.5) * (v - x_min) / (x_mid - x_min)
+                : FloatType(.5) + FloatType(.5) * (v - x_mid) / (x_max - x_mid);
+            },
+            [=](FloatType, FloatType, const FloatType v) {
+                const FloatType x = x_min + x_interval * std::round((v - x_min) / x_interval);
+                return x <= x_min ? x_min : (x >= x_max ? x_max : x);
+            }
+        };
+    }
+
     // float
     template<class T>
     class FloatParameters {
@@ -139,7 +161,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "threshold";
         auto static constexpr kName = "Threshold (dB)";
-        inline auto static const kRange = juce::NormalisableRange<float>(-80.f, 0.f, .1f);
+        inline auto static const kRange = getLinearMidRange(-80.f, 0.f, -18.f, 0.1f);
         auto static constexpr kDefaultV = -18.f;
     };
 

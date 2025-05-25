@@ -18,13 +18,13 @@ namespace zlpanel {
           curve_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PCurve::kID)) {
         comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         next_comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
-        for (auto &ID : kComputerIDs) {
+        for (auto &ID: kComputerIDs) {
             p_ref_.parameters_.addParameterListener(ID, this);
         }
     }
 
     ComputerPanel::~ComputerPanel() {
-        for (auto &ID : kComputerIDs) {
+        for (auto &ID: kComputerIDs) {
             p_ref_.parameters_.removeParameterListener(ID, this);
         }
     }
@@ -55,15 +55,14 @@ namespace zlpanel {
         auto x = bound.getX();
         const auto delta_x = delta_y;
         next_comp_path_.clear();
+        const auto mul = bound.getHeight() / current_min_db;
         PathMinimizer minimizer{next_comp_path_};
+        minimizer.startNewSubPath(x - bound.getHeight(),
+                                  computer_.eval(current_min_db * 2.f) * mul + bound.getY());
         for (size_t i = 0; i < kNumPoint; ++i) {
             const auto db_out = computer_.eval(db_in);
-            const auto y = db_out / current_min_db * bound.getHeight() + bound.getY();
-            if (i == 0) {
-                minimizer.startNewSubPath(x, y);
-            } else {
-                minimizer.lineTo(x, y);
-            }
+            const auto y = db_out * mul + bound.getY();
+            minimizer.lineTo(x, y);
             x += delta_x;
             db_in += delta_db_in;
         }

@@ -32,7 +32,6 @@ namespace zlgui::attachment {
 
         void updateComponents() {
             if (updater_flag_.exchange(false)) {
-                DBG(attachments_.size());
                 for (auto& attachment : attachments_) {
                     attachment->updateComponent();
                 }

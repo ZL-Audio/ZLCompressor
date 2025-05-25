@@ -29,10 +29,10 @@ namespace zlpanel {
         zlgui::attachment::ComponentUpdater updater_;
         zlgui::label::NameLookAndFeel label_laf_;
 
-        zlgui::slider::CompactLinearSlider knee_slider_;
+        zlgui::slider::CompactLinearSlider<true, true, true> knee_slider_;
         zlgui::attachment::SliderAttachment<true> knee_attachment_;
 
-        zlgui::slider::CompactLinearSlider curve_slider_;
+        zlgui::slider::CompactLinearSlider<true, true, true> curve_slider_;
         zlgui::attachment::SliderAttachment<true> curve_attachment_;
 
         juce::Label th_label_;

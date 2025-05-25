@@ -144,7 +144,7 @@ namespace zlstate {
     public:
         auto static constexpr kID = "window_w";
         auto static constexpr kName = "";
-        inline static constexpr float minV = 282.f;
+        inline static constexpr float minV = 600.f;
         inline static constexpr float maxV = 6000.f;
         inline static constexpr float kDefaultV = 704.f;
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);

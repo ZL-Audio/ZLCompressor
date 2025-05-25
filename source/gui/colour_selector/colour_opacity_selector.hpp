@@ -37,7 +37,7 @@ namespace zlgui::colour_selector {
     private:
         zlgui::UIBase &ui_base_;
         ColourSelector selector_;
-        zlgui::slider::CompactLinearSlider slider_;
+        zlgui::slider::CompactLinearSlider<> slider_;
         bool opacity_on_;
         std::array<float, 2> weights_{};
 

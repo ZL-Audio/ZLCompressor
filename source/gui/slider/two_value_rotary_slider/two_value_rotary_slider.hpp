@@ -154,13 +154,13 @@ namespace zlgui::slider {
     public:
         explicit TwoValueRotarySlider(const juce::String &label_text, UIBase &base,
                                       const juce::String &tooltip_text = "")
-            : ui_base_(base), background_(ui_base_),
-              slider1_(base, label_text), slider2_(base, label_text), display_(base),
+            : base_(base), background_(base_), display_(base),
+              slider1_(base, label_text), slider2_(base, label_text),
               label_look_and_feel_(base), label_look_and_feel1_(base), label_look_and_feel2_(base),
               text_box_laf_(base) {
             addAndMakeVisible(background_);
             for (auto const s: {&slider1_, &slider2_}) {
-                s->setSliderStyle(ui_base_.getRotaryStyle());
+                s->setSliderStyle(base_.getRotaryStyle());
                 s->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0, 0);
                 s->setDoubleClickReturnValue(true, 0.0);
                 s->setScrollWheelEnabled(true);
@@ -214,6 +214,7 @@ namespace zlgui::slider {
                 label2_.addListener(this);
             }
 
+            // set up tooltip
             if (tooltip_text.length() > 0) {
                 SettableTooltipClient::setTooltip(tooltip_text);
             }
@@ -304,7 +305,7 @@ namespace zlgui::slider {
         }
 
         void mouseDoubleClick(const juce::MouseEvent &event) override {
-            if (ui_base_.getIsSliderDoubleClickOpenEditor() != event.mods.isCommandDown()) {
+            if (base_.getIsSliderDoubleClickOpenEditor() != event.mods.isCommandDown()) {
                 const auto portion = static_cast<float>(event.getPosition().getY()
                                      ) / static_cast<float>(getLocalBounds().getHeight());
                 if (portion < .5f || !show_slider2_) {
@@ -401,12 +402,11 @@ namespace zlgui::slider {
         }
 
     private:
-        UIBase &ui_base_;
+        UIBase &base_;
         Background background_;
+        Display display_;
 
         SnappingSlider slider1_, slider2_;
-
-        Display display_;
 
         label::NameLookAndFeel label_look_and_feel_, label_look_and_feel1_, label_look_and_feel2_;
         label::NameLookAndFeel text_box_laf_;
@@ -430,8 +430,8 @@ namespace zlgui::slider {
             }
             // remove trailing zeros
             while (label_to_display.contains(".")) {
-                const auto lastS = label_to_display.getLastCharacter();
-                if (lastS == '.' || lastS == '0') {
+                const auto last_s = label_to_display.getLastCharacter();
+                if (last_s == '.' || last_s == '0') {
                     label_to_display = label_to_display.dropLastCharacters(1);
                 } else {
                     break;
@@ -457,10 +457,10 @@ namespace zlgui::slider {
             }
 
             editor.setJustification(juce::Justification::centred);
-            editor.setColour(juce::TextEditor::outlineColourId, ui_base_.getTextColor());
-            editor.setColour(juce::TextEditor::highlightedTextColourId, ui_base_.getTextColor());
-            editor.applyFontToAllText(juce::FontOptions{ui_base_.getFontSize() * kFontHuge});
-            editor.applyColourToAllText(ui_base_.getTextColor(), true);
+            editor.setColour(juce::TextEditor::outlineColourId, base_.getTextColor());
+            editor.setColour(juce::TextEditor::highlightedTextColourId, base_.getTextColor());
+            editor.applyFontToAllText(juce::FontOptions{base_.getFontSize() * kFontHuge});
+            editor.applyColourToAllText(base_.getTextColor(), true);
         }
 
         void editorHidden(juce::Label *l, juce::TextEditor &editor) override {
@@ -505,10 +505,10 @@ namespace zlgui::slider {
             int actual_drag_distance;
             if (is_shift_pressed_) {
                 actual_drag_distance = juce::roundToInt(
-                    static_cast<float>(drag_distance_) / ui_base_.getSensitivity(SensitivityIdx::kMouseDragFine));
+                    static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDragFine));
             } else {
                 actual_drag_distance = juce::roundToInt(
-                    static_cast<float>(drag_distance_) / ui_base_.getSensitivity(SensitivityIdx::kMouseDrag));
+                    static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDrag));
             }
             actual_drag_distance = std::max(actual_drag_distance, 1);
             slider1_.setMouseDragSensitivity(actual_drag_distance);

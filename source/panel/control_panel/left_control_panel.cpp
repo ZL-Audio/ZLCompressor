@@ -33,7 +33,7 @@ namespace zlpanel {
         label_laf_.setFontScale(1.5f);
 
         th_label_.setText("Threshold", juce::dontSendNotification);
-        th_label_.setJustificationType(juce::Justification::centred);
+        th_label_.setJustificationType(juce::Justification::centredLeft);
         th_label_.setLookAndFeel(&label_laf_);
         th_label_.setBufferedToImage(true);
         addAndMakeVisible(th_label_);
@@ -43,7 +43,7 @@ namespace zlpanel {
 
         ratio_label_.setText("Ratio", juce::dontSendNotification);
         ratio_label_.setLookAndFeel(&label_laf_);
-        ratio_label_.setJustificationType(juce::Justification::centred);
+        ratio_label_.setJustificationType(juce::Justification::centredLeft);
         ratio_label_.setBufferedToImage(true);
         addAndMakeVisible(ratio_label_);
         ratio_slider_.setBufferedToImage(true);
@@ -58,7 +58,7 @@ namespace zlpanel {
 
     void LeftControlPanel::resized() {
         auto bound = getLocalBounds();
-        const auto label_height = juce::roundToInt(base_.getFontSize() * 1.5f);
+        const auto label_height = 0; //juce::roundToInt(base_.getFontSize() * 1.5f);
         const auto height = bound.getHeight() - label_height;
         const auto lr_padding = juce::roundToInt(base_.getFontSize() * .2f);
         const auto ud_padding = juce::roundToInt(base_.getFontSize() * .2f);

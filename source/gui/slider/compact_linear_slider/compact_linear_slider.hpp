@@ -10,37 +10,180 @@
 #pragma once
 
 #include "../../label/name_look_and_feel.hpp"
-#include "compact_linear_slider_look_and_feel.hpp"
 #include "../extra_slider/snapping_slider.h"
 
 namespace zlgui::slider {
-    class CompactLinearSlider : public juce::Component,
-                                private juce::Label::Listener,
-                                private juce::Slider::Listener,
-                                public juce::SettableTooltipClient {
+    template<bool UseBackground = true, bool UseDisplay = true, bool UseName = true>
+    class CompactLinearSlider final : public juce::Component,
+                                      private juce::Label::Listener,
+                                      private juce::Slider::Listener,
+                                      public juce::SettableTooltipClient {
+    private:
+        class Background final : public juce::Component {
+        public:
+            explicit Background(UIBase &base) : base_(base) {
+                setInterceptsMouseClicks(false, false);
+                setBufferedToImage(true);
+            }
+
+            void paint(juce::Graphics &g) override {
+                base_.fillRoundedInnerShadowRectangle(g, getLocalBounds().toFloat(),
+                                                      base_.getFontSize() * 0.5f, {.blur_radius = 0.66f});
+            }
+
+        private:
+            UIBase &base_;
+        };
+
+        class Display final : public juce::Component {
+        public:
+            explicit Display(UIBase &base) : base_(base) {
+                setInterceptsMouseClicks(false, false);
+            }
+
+            void paint(juce::Graphics &g) override {
+                auto bound = getLocalBounds().toFloat();
+                bound = bound.withWidth(value_ * bound.getWidth());
+                g.saveState();
+                g.reduceClipRegion(mask_);
+                g.setColour(base_.getTextHideColor());
+                g.fillRect(bound);
+                g.restoreState();
+            }
+
+            void resized() override {
+                setSliderValue(value_);
+            }
+
+            void setSliderValue(const float x) {
+                value_ = x;
+                mask_.clear();
+                mask_.addRoundedRectangle(getLocalBounds().toFloat(), base_.getFontSize() * 0.5f);
+                repaint();
+            }
+
+        private:
+            UIBase &base_;
+            float value_{0.f};
+            juce::Path mask_;
+        };
+
     public:
         explicit CompactLinearSlider(const juce::String &label_text, UIBase &base,
-                                     const juce::String &tooltip_text = "");
+                                     const juce::String &tooltip_text = "")
+            : base_(base), background_(base), display_(base_),
+              slider_(base),
+              name_look_and_feel_(base), text_look_and_feel_(base) {
+            juce::ignoreUnused(base_);
 
-        ~CompactLinearSlider() override;
+            slider_.setSliderStyle(juce::Slider::LinearHorizontal);
+            slider_.setTextBoxIsEditable(false);
+            slider_.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0, 0);
+            slider_.setDoubleClickReturnValue(true, 0.0);
+            slider_.setScrollWheelEnabled(true);
+            slider_.setInterceptsMouseClicks(false, false);
+            slider_.addListener(this);
 
-        void resized() override;
+            if (UseBackground) { addAndMakeVisible(background_); }
+            if (UseDisplay) { addAndMakeVisible(display_); }
 
-        void mouseUp(const juce::MouseEvent &event) override;
+            text_.setText(getDisplayValue(slider_), juce::dontSendNotification);
+            text_.setJustificationType(juce::Justification::centred);
+            text_look_and_feel_.setFontScale(kFontHuge);
+            text_.setLookAndFeel(&text_look_and_feel_);
+            text_.setInterceptsMouseClicks(false, false);
+            text_.addListener(this);
+            addAndMakeVisible(text_);
 
-        void mouseDown(const juce::MouseEvent &event) override;
+            // setup label
+            if (UseName) {
+                text_look_and_feel_.setAlpha(0.f);
+                label_.setText(label_text, juce::dontSendNotification);
+                label_.setJustificationType(juce::Justification::centred);
+                label_.setLookAndFeel(&name_look_and_feel_);
+                name_look_and_feel_.setFontScale(kFontHuge);
+                label_.setInterceptsMouseClicks(false, false);
+                addAndMakeVisible(label_);
+            }
 
-        void mouseDrag(const juce::MouseEvent &event) override;
+            // set up tooltip
+            if (tooltip_text.length() > 0) {
+                SettableTooltipClient::setTooltip(tooltip_text);
+            }
 
-        void mouseEnter(const juce::MouseEvent &event) override;
+            setEditable(true);
+        }
 
-        void mouseExit(const juce::MouseEvent &event) override;
+        ~CompactLinearSlider() override = default;
 
-        void mouseMove(const juce::MouseEvent &event) override;
+        void resized() override {
+            const auto bound = getLocalBounds();
+            if (UseBackground) { background_.setBounds(bound); }
+            if (UseDisplay) { display_.setBounds(bound); }
+            slider_.setBounds(bound);
+            text_.setBounds(bound);
+            if (UseName) { label_.setBounds(bound); }
+        }
 
-        void mouseDoubleClick(const juce::MouseEvent &event) override;
+        void mouseUp(const juce::MouseEvent &event) override {
+            if (event.getNumberOfClicks() > 1 || event.mods.isCommandDown() || event.mods.isRightButtonDown()) {
+                return;
+            }
+            slider_.mouseUp(event);
+        }
 
-        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
+        void mouseDown(const juce::MouseEvent &event) override {
+            if (event.getNumberOfClicks() > 1 || event.mods.isCommandDown() || event.mods.isRightButtonDown()) {
+                return;
+            }
+            slider_.mouseDown(event);
+        }
+
+        void mouseDrag(const juce::MouseEvent &event) override {
+            if (event.mods.isRightButtonDown()) {
+                return;
+            }
+            slider_.mouseDrag(event);
+        }
+
+        void mouseEnter(const juce::MouseEvent &event) override {
+            slider_.mouseEnter(event);
+            if (UseName) {
+                text_look_and_feel_.setAlpha(1.f);
+                name_look_and_feel_.setAlpha(0.f);
+                text_.repaint();
+                label_.repaint();
+            }
+        }
+
+        void mouseExit(const juce::MouseEvent &event) override {
+            slider_.mouseExit(event);
+            if (text_.getCurrentTextEditor() != nullptr) {
+                return;
+            }
+            if (UseName) {
+                text_look_and_feel_.setAlpha(0.f);
+                name_look_and_feel_.setAlpha(1.f);
+                text_.repaint();
+                label_.repaint();
+            }
+        }
+
+        void mouseMove(const juce::MouseEvent &event) override {
+            slider_.mouseMove(event);
+        }
+
+        void mouseDoubleClick(const juce::MouseEvent &event) override {
+            if (base_.getIsSliderDoubleClickOpenEditor() != event.mods.isCommandDown()) {
+                text_.showEditor();
+            } else {
+                slider_.mouseDoubleClick(event);
+            }
+        }
+
+        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override {
+            slider_.mouseWheelMove(event, wheel);
+        }
 
         inline juce::Slider &getSlider() { return slider_; }
 
@@ -51,34 +194,79 @@ namespace zlgui::slider {
             repaint();
         }
 
-        inline void setPadding(const float lr, const float ub) {
-            lr_pad_ = lr;
-            ub_pad_ = ub;
-        }
-
         void updateDisplayValue() {
             text_.setText(getDisplayValue(slider_), juce::dontSendNotification);
             text_.repaint();
         }
 
     private:
-        UIBase &ui_base_;
+        UIBase &base_;
+        Background background_;
+        Display display_;
 
-        CompactLinearSliderLookAndFeel slider_look_and_feel_;
-        label::NameLookAndFeel name_look_and_feel_, text_look_and_feel_;
         SnappingSlider slider_;
+
         juce::Label label_, text_;
+        label::NameLookAndFeel name_look_and_feel_, text_look_and_feel_;
 
-        float lr_pad_ = 0, ub_pad_ = 0;
+        static juce::String getDisplayValue(juce::Slider &s) {
+            auto value = s.getValue();
+            juce::String label_to_display = juce::String(s.getTextFromValue(value)).substring(0, 4);
+            if (value < 10000 && label_to_display.contains(".")) {
+                label_to_display = juce::String(value).substring(0, 5);
+            }
+            if (value > 10000) {
+                value = value / 1000;
+                label_to_display = juce::String(value).substring(0, 4) + "K";
+            }
+            // remove trailing zeros
+            while (label_to_display.contains(".")) {
+                const auto last_s = label_to_display.getLastCharacter();
+                if (last_s == '.' || last_s == '0') {
+                    label_to_display = label_to_display.dropLastCharacters(1);
+                } else {
+                    break;
+                }
+            }
+            return label_to_display;
+        }
 
-        juce::String getDisplayValue(juce::Slider &s);
+        void labelTextChanged(juce::Label *) override {
+        }
 
-        void labelTextChanged(juce::Label *label_that_has_changed) override;
+        void editorShown(juce::Label *, juce::TextEditor &editor) override {
+            editor.setInterceptsMouseClicks(false, false);
+            editor.setInputRestrictions(0, "-0123456789.kK");
+            text_.addMouseListener(this, true);
 
-        void editorShown(juce::Label *l, juce::TextEditor &editor) override;
+            editor.setJustification(juce::Justification::centred);
+            editor.setColour(juce::TextEditor::outlineColourId, base_.getTextColor());
+            editor.setColour(juce::TextEditor::highlightedTextColourId, base_.getTextColor());
+            editor.applyFontToAllText(juce::FontOptions{base_.getFontSize() * kFontHuge});
+            editor.applyColourToAllText(base_.getTextColor(), true);
+        }
 
-        void editorHidden(juce::Label *l, juce::TextEditor &editor) override;
+        void editorHidden(juce::Label *, juce::TextEditor &editor) override {
+            text_.removeMouseListener(this);
+            auto k = 1.0;
+            const auto ctext = editor.getText();
+            if (ctext.contains("k") || ctext.contains("K")) {
+                k = 1000.0;
+            }
+            const auto actual_value = ctext.getDoubleValue() * k;
 
-        void sliderValueChanged(juce::Slider *slider) override;
+            slider_.setValue(actual_value, juce::sendNotificationAsync);
+
+            text_look_and_feel_.setAlpha(0.f);
+            name_look_and_feel_.setAlpha(1.f);
+            text_.repaint();
+            label_.repaint();
+        }
+
+        void sliderValueChanged(juce::Slider *) override {
+            text_.setText(getDisplayValue(slider_), juce::dontSendNotification);
+            display_.setSliderValue(
+                static_cast<float>(slider_.getNormalisableRange().convertTo0to1(slider_.getValue())));
+        }
     };
 }
