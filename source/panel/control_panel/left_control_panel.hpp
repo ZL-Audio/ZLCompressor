@@ -27,6 +27,7 @@ namespace zlpanel {
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
+        zlgui::label::NameLookAndFeel label_laf_;
 
         zlgui::slider::CompactLinearSlider knee_slider_;
         zlgui::attachment::SliderAttachment<true> knee_attachment_;
@@ -34,10 +35,12 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider curve_slider_;
         zlgui::attachment::SliderAttachment<true> curve_attachment_;
 
-        zlgui::slider::TwoValueRotarySlider<true, false> th_slider_;
+        juce::Label th_label_;
+        zlgui::slider::TwoValueRotarySlider<true, false, false> th_slider_;
         zlgui::attachment::SliderAttachment<true> th_attachment_;
 
-        zlgui::slider::TwoValueRotarySlider<true, false> ratio_slider_;
+        juce::Label ratio_label_;
+        zlgui::slider::TwoValueRotarySlider<true, false, false> ratio_slider_;
         zlgui::attachment::SliderAttachment<true> ratio_attachment_;
     };
 } // zlpanel

@@ -16,7 +16,7 @@
 #include "../extra_slider/snapping_slider.h"
 
 namespace zlgui::slider {
-    template<bool Opaque = true, bool UseSecondSlider = true>
+    template<bool Opaque = true, bool UseSecondSlider = true, bool UseName = true>
     class TwoValueRotarySlider final : public juce::Component,
                                        private juce::Label::Listener,
                                        private juce::Slider::Listener,
@@ -43,9 +43,16 @@ namespace zlgui::slider {
                 const auto diameter = juce::jmin(bounds.getWidth(), bounds.getHeight());
                 bounds = bounds.withSizeKeepingCentre(diameter, diameter);
                 // draw knob background
-                const auto oldBounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.5f, {});
-                const auto newBounds = base_.drawShadowEllipse(g, oldBounds, base_.getFontSize() * 0.5f, {});
-                base_.drawInnerShadowEllipse(g, newBounds, base_.getFontSize() * 0.15f, {.flip = true});
+                const auto old_bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.5f, {});
+                const auto new_bounds = base_.drawShadowEllipse(g, old_bounds, base_.getFontSize() * 0.5f, {});
+                base_.drawInnerShadowEllipse(g, new_bounds, base_.getFontSize() * 0.15f, {.flip = true});
+                // draw pie segment
+                juce::Path shadow;
+                shadow.addPieSegment(bounds,
+                                     kEndAngle - juce::MathConstants<float>::pi * 1.5f,
+                                     kStartAngle + juce::MathConstants<float>::pi * .5f, 0);
+                g.setColour(base_.getBackgroundColor());
+                g.fillPath(shadow);
             }
 
         private:
@@ -63,11 +70,11 @@ namespace zlgui::slider {
                 g.reduceClipRegion(mask_);
 
                 base_.drawShadowEllipse(g, arrow1_, base_.getFontSize() * 0.5f,
-                                      {.fit = false, .draw_bright = false, .draw_dark = true});
+                                        {.fit = false, .draw_bright = false, .draw_dark = true});
                 g.setColour(base_.getTextHideColor());
                 g.fillPath(filling1_);
                 // fill the pie segment between two values
-                if (show_slider2_ && UseSecondSlider) {
+                if (UseSecondSlider && show_slider2_) {
                     if (value1_ > value2_) {
                         g.setColour(base_.getColorMap2(0).withAlpha(.75f));
                     } else {
@@ -82,8 +89,8 @@ namespace zlgui::slider {
                 bound_ = getLocalBounds().toFloat();
                 const auto diameter = juce::jmin(bound_.getWidth(), bound_.getHeight());
                 bound_ = bound_.withSizeKeepingCentre(diameter, diameter);
-                old_bound_ = base_.getInnerShadowEllipseArea(bound_, base_.getFontSize() * 0.5f, {});
-                new_bound_ = base_.getShadowEllipseArea(old_bound_, base_.getFontSize() * 0.5f, {});
+                old_bound_ = UIBase::getInnerShadowEllipseArea(bound_, base_.getFontSize() * 0.5f, {});
+                new_bound_ = UIBase::getShadowEllipseArea(old_bound_, base_.getFontSize() * 0.5f, {});
                 arrow_unit_ = (diameter - new_bound_.getWidth()) * 0.5f;
 
                 mask_.clear();
@@ -103,10 +110,10 @@ namespace zlgui::slider {
                 angle1_ = rotationAngle;
                 filling1_.clear();
                 filling1_.addPieSegment(bound_,
-                    kStartAngle + juce::MathConstants<float>::pi * .5f,
-                    rotationAngle + juce::MathConstants<float>::pi * .5f,
-                    0);
-                if (show_slider2_ && UseSecondSlider) {
+                                        kStartAngle + juce::MathConstants<float>::pi * .5f,
+                                        rotationAngle + juce::MathConstants<float>::pi * .5f,
+                                        0);
+                if (UseSecondSlider && show_slider2_) {
                     setSlider2Value(value2_);
                 } else {
                     repaint();
@@ -119,9 +126,9 @@ namespace zlgui::slider {
                     const auto rotationAngle = kStartAngle + x * (kEndAngle - kStartAngle);
                     filling2_.clear();
                     filling2_.addPieSegment(bound_,
-                        angle1_ + juce::MathConstants<float>::pi * .5f,
-                        rotationAngle + juce::MathConstants<float>::pi * .5f,
-                        0);
+                                            angle1_ + juce::MathConstants<float>::pi * .5f,
+                                            rotationAngle + juce::MathConstants<float>::pi * .5f,
+                                            0);
                     repaint();
                 }
             }
@@ -149,7 +156,8 @@ namespace zlgui::slider {
                                       const juce::String &tooltip_text = "")
             : ui_base_(base), background_(ui_base_),
               slider1_(base, label_text), slider2_(base, label_text), display_(base),
-              label_look_and_feel_(base), label_look_and_feel1_(base), label_look_and_feel2_(base), text_box_laf_(base) {
+              label_look_and_feel_(base), label_look_and_feel1_(base), label_look_and_feel2_(base),
+              text_box_laf_(base) {
             addAndMakeVisible(background_);
             for (auto const s: {&slider1_, &slider2_}) {
                 s->setSliderStyle(ui_base_.getRotaryStyle());
@@ -165,16 +173,17 @@ namespace zlgui::slider {
             }
             addAndMakeVisible(display_);
 
-            label_.setText(label_text, juce::dontSendNotification);
-            label_.setJustificationType(juce::Justification::centred);
-            label_.setBufferedToImage(true);
-            label1_.setText(getDisplayValue(slider1_), juce::dontSendNotification);
+            if (UseName) {
+                label_.setText(label_text, juce::dontSendNotification);
+                label_.setJustificationType(juce::Justification::centred);
+                label_.setBufferedToImage(true);
+                label_look_and_feel_.setFontScale(1.75f);
+                label_.setLookAndFeel(&label_look_and_feel_);
+            }
 
-            label_look_and_feel_.setFontScale(1.75f);
+            label1_.setText(getDisplayValue(slider1_), juce::dontSendNotification);
             label_look_and_feel1_.setFontScale(kFontHuge);
             label1_.setJustificationType(juce::Justification::centredBottom);
-
-            label_.setLookAndFeel(&label_look_and_feel_);
             label1_.setLookAndFeel(&label_look_and_feel1_);
 
             if (UseSecondSlider) {
@@ -188,12 +197,15 @@ namespace zlgui::slider {
                 l->setInterceptsMouseClicks(false, false);
             }
 
-            addAndMakeVisible(label_);
-            addChildComponent(label1_);
+            if (UseName) {
+                addAndMakeVisible(label_);
+                addChildComponent(label1_);
+            } else {
+                addAndMakeVisible(label1_);
+            }
 
             setEditable(true);
             label1_.setEditable(false, true);
-
             label1_.addListener(this);
 
             if (UseSecondSlider) {
@@ -219,9 +231,7 @@ namespace zlgui::slider {
         }
 
         void paint(juce::Graphics &g) override {
-            if (Opaque) {
-                g.fillAll(ui_base_.getBackgroundColor());
-            }
+            juce::ignoreUnused(g);
         }
 
         void mouseUp(const juce::MouseEvent &event) override {
@@ -262,27 +272,30 @@ namespace zlgui::slider {
         void mouseEnter(const juce::MouseEvent &event) override {
             slider1_.mouseEnter(event);
             slider2_.mouseEnter(event);
-            label_.setVisible(false);
-            label1_.setVisible(true);
-            label1_.setText(getDisplayValue(slider1_), juce::dontSendNotification);
-            if (show_slider2_) {
-                label2_.setVisible(true);
-                label2_.setText(getDisplayValue(slider2_), juce::dontSendNotification);
+            if (UseName) {
+                label_.setVisible(false);
+                label1_.setVisible(true);
+                label1_.setText(getDisplayValue(slider1_), juce::dontSendNotification);
+                if (show_slider2_) {
+                    label2_.setVisible(true);
+                    label2_.setText(getDisplayValue(slider2_), juce::dontSendNotification);
+                }
             }
         }
 
         void mouseExit(const juce::MouseEvent &event) override {
             slider1_.mouseExit(event);
             slider2_.mouseExit(event);
+            if (UseName) {
+                if (label1_.getCurrentTextEditor() != nullptr || label2_.getCurrentTextEditor() != nullptr) {
+                    return;
+                }
 
-            if (label1_.getCurrentTextEditor() != nullptr || label2_.getCurrentTextEditor() != nullptr) {
-                return;
-            }
-
-            label_.setVisible(true);
-            label1_.setVisible(false);
-            if (show_slider2_) {
-                label2_.setVisible(false);
+                label_.setVisible(true);
+                label1_.setVisible(false);
+                if (show_slider2_) {
+                    label2_.setVisible(false);
+                }
             }
         }
 
@@ -320,16 +333,17 @@ namespace zlgui::slider {
 
         void resized() override {
             auto bound = getLocalBounds().toFloat();
-            bound = bound.withSizeKeepingCentre(bound.getWidth() - lr_pad_,
-                                                bound.getHeight() - ub_pad_);
             background_.setBounds(bound.toNearestInt());
-            slider1_.setBounds(bound.toNearestInt());
-            slider2_.setBounds(bound.toNearestInt());
             display_.setBounds(bound.toNearestInt());
-
-            auto labelBound = bound.withSizeKeepingCentre(bound.getWidth() * 0.7f,
-                                                          bound.getHeight() * 0.6f);
-            label_.setBounds(labelBound.toNearestInt());
+            slider1_.setBounds(bound.toNearestInt());
+            if (UseSecondSlider) {
+                slider2_.setBounds(bound.toNearestInt());
+            }
+            if (UseName) {
+                auto labelBound = bound.withSizeKeepingCentre(bound.getWidth() * 0.7f,
+                                                              bound.getHeight() * 0.6f);
+                label_.setBounds(labelBound.toNearestInt());
+            }
 
             setShowSlider2(show_slider2_);
         }
@@ -342,8 +356,6 @@ namespace zlgui::slider {
             show_slider2_ = x && UseSecondSlider;
 
             auto bound = getLocalBounds().toFloat();
-            bound = bound.withSizeKeepingCentre(bound.getWidth() - lr_pad_,
-                                                bound.getHeight() - ub_pad_);
 
             auto labelBound = bound.withSizeKeepingCentre(bound.getWidth() * 0.6f,
                                                           bound.getHeight() * 0.5f);
@@ -351,8 +363,8 @@ namespace zlgui::slider {
                 const auto valueBound1 = labelBound.removeFromTop(labelBound.getHeight() * 0.5f);
                 const auto valueBound2 = labelBound;
                 label1_.setBounds(valueBound1.toNearestInt());
-                label2_.setBounds(valueBound2.toNearestInt());
                 label1_.setJustificationType(juce::Justification::centredBottom);
+                label2_.setBounds(valueBound2.toNearestInt());
                 label2_.setJustificationType(juce::Justification::centredTop);
             } else {
                 labelBound = labelBound.withSizeKeepingCentre(labelBound.getWidth(), labelBound.getHeight() * .5f);
@@ -361,11 +373,6 @@ namespace zlgui::slider {
                 label1_.setJustificationType(juce::Justification::centred);
             }
             display_.setShowSlider2(show_slider2_);
-        }
-
-        inline void setPadding(const float lr, const float ub) {
-            lr_pad_ = lr;
-            ub_pad_ = ub;
         }
 
         inline void setEditable(const bool x) {
@@ -386,9 +393,11 @@ namespace zlgui::slider {
 
         void updateDisplay() {
             display_.setSlider1Value(
-                    static_cast<float>(slider1_.getNormalisableRange().convertTo0to1(slider1_.getValue())));
-            display_.setSlider2Value(
+                static_cast<float>(slider1_.getNormalisableRange().convertTo0to1(slider1_.getValue())));
+            if (UseSecondSlider) {
+                display_.setSlider2Value(
                     static_cast<float>(slider2_.getNormalisableRange().convertTo0to1(slider2_.getValue())));
+            }
         }
 
     private:
@@ -405,7 +414,6 @@ namespace zlgui::slider {
         juce::Label label_, label1_, label2_;
 
         bool show_slider2_{false}, editable_{true};
-        float lr_pad_{0.f}, ub_pad_{0.f};
 
         int drag_distance_{10};
         bool is_shift_pressed_{false};
@@ -440,9 +448,11 @@ namespace zlgui::slider {
             juce::ignoreUnused(l);
             editor.setInputRestrictions(0, kAllowedChars);
 
-            label_.setVisible(false);
-            label1_.setVisible(true);
-            if (show_slider2_) {
+            if (UseName) {
+                label_.setVisible(false);
+                label1_.setVisible(true);
+            }
+            if (UseSecondSlider && show_slider2_) {
                 label2_.setVisible(true);
             }
 
@@ -466,13 +476,14 @@ namespace zlgui::slider {
             if (l == &label1_) {
                 slider1_.setValue(actual_value, juce::sendNotificationAsync);
             }
-            if (l == &label2_) {
+            if (UseSecondSlider && l == &label2_) {
                 slider2_.setValue(actual_value, juce::sendNotificationAsync);
             }
-
-            label_.setVisible(true);
-            label1_.setVisible(false);
-            if (show_slider2_) {
+            if (UseName) {
+                label_.setVisible(true);
+                label1_.setVisible(false);
+            }
+            if (UseSecondSlider && show_slider2_) {
                 label2_.setVisible(false);
             }
         }
@@ -483,7 +494,7 @@ namespace zlgui::slider {
                 display_.setSlider1Value(
                     static_cast<float>(slider1_.getNormalisableRange().convertTo0to1(slider1_.getValue())));
             }
-            if (slider == &slider2_) {
+            if (UseSecondSlider && slider == &slider2_) {
                 label2_.setText(getDisplayValue(slider2_), juce::dontSendNotification);
                 display_.setSlider2Value(
                     static_cast<float>(slider2_.getNormalisableRange().convertTo0to1(slider2_.getValue())));
@@ -501,7 +512,9 @@ namespace zlgui::slider {
             }
             actual_drag_distance = std::max(actual_drag_distance, 1);
             slider1_.setMouseDragSensitivity(actual_drag_distance);
-            slider2_.setMouseDragSensitivity(actual_drag_distance);
+            if (UseSecondSlider) {
+                slider2_.setMouseDragSensitivity(actual_drag_distance);
+            }
         }
     };
 }

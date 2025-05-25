@@ -34,11 +34,9 @@ namespace zlpanel {
         if (!guard.isLocked()) {
             return;
         }
-        g.setColour(juce::Colours::orange);
+        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour));
         g.strokePath(comp_path_,
-                     juce::PathStrokeType(2.5f,
-                                          juce::PathStrokeType::curved,
-                                          juce::PathStrokeType::rounded));
+                     juce::PathStrokeType(2.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
 
     void ComputerPanel::run() {
