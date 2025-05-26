@@ -27,13 +27,12 @@ namespace zlstate {
         std::unique_ptr<juce::PropertiesFile> ui_file_;
         juce::ReadWriteLock read_write_lock_;
 
-        inline auto static const kPath =
+        inline static const auto kPath =
                 juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                 .getChildFile("Audio")
                 .getChildFile("Presets")
                 .getChildFile(JucePlugin_Manufacturer)
                 .getChildFile(JucePlugin_Name);
-        inline auto static const kUIPath =
-                kPath.getChildFile("ui.xml");
+        inline static const auto kUIPath = kPath.getChildFile("ui.xml");
     };
 }

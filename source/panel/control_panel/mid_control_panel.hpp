@@ -9,10 +9,48 @@
 
 #pragma once
 
+#include "../../PluginProcessor.hpp"
+#include "../../gui/gui.hpp"
+#include "../helper/helper.hpp"
+
 namespace zlpanel {
+    class MidControlPanel final : public juce::Component {
+    public:
+        explicit MidControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
-class MidControlPanel {
+        void paint(juce::Graphics &g) override;
 
-};
+        void resized() override;
 
+        void repaintCallBack();
+
+    private:
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
+        zlgui::attachment::ComponentUpdater updater_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> knee_slider_;
+        zlgui::attachment::SliderAttachment<true> knee_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> curve_slider_;
+        zlgui::attachment::SliderAttachment<true> curve_attachment_;
+
+        zlgui::slider::TwoValueRotarySlider<true, false, false> th_slider_;
+        zlgui::attachment::SliderAttachment<true> th_attachment_;
+
+        zlgui::slider::TwoValueRotarySlider<true, false, false> ratio_slider_;
+        zlgui::attachment::SliderAttachment<true> ratio_attachment_;
+
+        zlgui::slider::TwoValueRotarySlider<true, false, false> attack_slider_;
+        zlgui::attachment::SliderAttachment<true> attack_attachment_;
+
+        zlgui::slider::TwoValueRotarySlider<true, false, false> release_slider_;
+        zlgui::attachment::SliderAttachment<true> release_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> pump_slider_;
+        zlgui::attachment::SliderAttachment<true> pump_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> smooth_slider_;
+        zlgui::attachment::SliderAttachment<true> smooth_attachment_;
+    };
 } // zlpanel

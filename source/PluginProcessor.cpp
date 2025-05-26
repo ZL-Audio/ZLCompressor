@@ -24,6 +24,7 @@ PluginProcessor::PluginProcessor()
       state_(dummy_processor_, nullptr,
              juce::Identifier("ZLCompressorState"),
              zlstate::getStateParameterLayout()),
+      property_(state_),
       compressor_controller_(*this),
       compress_attach_(*this, parameters_, compressor_controller_) {
 }

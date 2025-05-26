@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "left_control_panel.hpp"
+#include "mid_control_panel.hpp"
 #include "mid_control_panel.hpp"
 #include "right_control_panel.hpp"
 
@@ -24,8 +24,8 @@ namespace zlpanel {
 
     private:
         double previous_time_stamp{0.};
-        LeftControlPanel left_control_panel_;
-        // MidControlPanel mid_control_panel_;
+        MidControlPanel mid_control_panel_;
+        // MidControlPanel left_control_panel_;
         // RightControlPanel right_control_panel_;
     };
 } // zlpanel

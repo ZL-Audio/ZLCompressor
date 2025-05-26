@@ -71,9 +71,9 @@ namespace zlgui::slider {
     public:
         explicit CompactLinearSlider(const juce::String &label_text, UIBase &base,
                                      const juce::String &tooltip_text = "")
-            : base_(base), background_(base), display_(base_),
-              slider_(base),
-              name_look_and_feel_(base), text_look_and_feel_(base) {
+            : base_(base), background_(base_), display_(base_),
+              slider_(base_),
+              name_look_and_feel_(base_), text_look_and_feel_(base_) {
             juce::ignoreUnused(base_);
 
             slider_.setSliderStyle(juce::Slider::LinearHorizontal);

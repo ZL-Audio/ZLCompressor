@@ -9,6 +9,6 @@
 
 #pragma once
 
-#include "path_minimizer.hpp"
-#include "atomic_bound.hpp"
-#include "panel_constants.hpp"
+namespace zlpanel {
+    static constexpr float kPaddingScale = .4f;
+}
