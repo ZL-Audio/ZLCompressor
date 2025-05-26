@@ -24,17 +24,17 @@ namespace zlgui::dragger {
             kLeftArrow
         };
 
-        explicit DraggerLookAndFeel(UIBase &base) : ui_base_(base) {
+        explicit DraggerLookAndFeel(UIBase &base) : base_(base) {
         }
 
         void drawToggleButton(juce::Graphics &g, juce::ToggleButton &button,
                               bool should_draw_button_as_highlighted,
                               bool should_draw_button_as_down) override {
             if (should_draw_button_as_down || button.getToggleState()) {
-                g.setColour(ui_base_.getTextColor());
+                g.setColour(base_.getTextColor());
                 g.fillPath(outline_path_);
             } else if (should_draw_button_as_highlighted || is_selected_) {
-                g.setColour(ui_base_.getTextColor().withMultipliedAlpha(0.5f));
+                g.setColour(base_.getTextColor().withMultipliedAlpha(0.5f));
                 g.fillPath(outline_path_);
             }
 
@@ -47,7 +47,7 @@ namespace zlgui::dragger {
                 } else {
                     g.setColour(juce::Colours::black);
                 }
-                g.setFont(ui_base_.getFontSize() * label_scale_);
+                g.setFont(base_.getFontSize() * label_scale_);
                 auto bound = button.getLocalBounds().toFloat();
                 const auto radius = std::min(bound.getHeight(), bound.getWidth());
                 bound = bound.withSizeKeepingCentre(radius, radius);
@@ -155,6 +155,6 @@ namespace zlgui::dragger {
         DraggerShape dragger_shape_{DraggerShape::kRound};
         juce::String label_;
         float label_scale_ = 1.f;
-        UIBase &ui_base_;
+        UIBase &base_;
     };
 }

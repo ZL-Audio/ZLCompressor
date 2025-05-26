@@ -11,9 +11,9 @@
 
 namespace zlgui::dragger {
     Dragger::Dragger(UIBase &base)
-        : ui_base_(base), dragger_laf_(base) {
+        : base_(base), dragger_laf_(base) {
         button_.addMouseListener(this, false);
-        dragger_laf_.setColour(ui_base_.getColorMap1(1));
+        dragger_laf_.setColour(base_.getColorMap1(1));
         button_.setClickingTogglesState(false);
         setInterceptsMouseClicks(false, true);
         button_.setLookAndFeel(&dragger_laf_);
@@ -58,8 +58,8 @@ namespace zlgui::dragger {
         const auto old_shift = shift;
         // apply sensitivity
         if (e.mods.isShiftDown()) {
-            shift.setX(shift.getX() * ui_base_.getSensitivity(SensitivityIdx::kMouseDragFine));
-            shift.setY(shift.getY() * ui_base_.getSensitivity(SensitivityIdx::kMouseDragFine));
+            shift.setX(shift.getX() * base_.getSensitivity(SensitivityIdx::kMouseDragFine));
+            shift.setY(shift.getY() * base_.getSensitivity(SensitivityIdx::kMouseDragFine));
         }
         if (e.mods.isCommandDown()) {
             if (e.mods.isLeftButtonDown()) {
@@ -95,7 +95,7 @@ namespace zlgui::dragger {
     void Dragger::setButtonArea(const juce::Rectangle<float> bound) {
         button_area_ = bound;
 
-        const auto radius = static_cast<int>(std::round(ui_base_.getFontSize() * scale_ * .5f));
+        const auto radius = static_cast<int>(std::round(base_.getFontSize() * scale_ * .5f));
         button_.setBounds(juce::Rectangle<int>(-radius, -radius, radius * 2, radius * 2));
         updateButton({-99999.f, -99999.f});
 

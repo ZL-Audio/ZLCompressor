@@ -11,7 +11,7 @@
 
 namespace zlgui {
     CompactButton::CompactButton(const juce::String &labelText, UIBase &base, const juce::String &tooltip_text)
-        : ui_base_(base), laf_(ui_base_) {
+        : base_(base), laf_(base_) {
         button_.setClickingTogglesState(true);
         button_.setButtonText(labelText);
         button_.setLookAndFeel(&laf_);

@@ -20,7 +20,7 @@ namespace zlgui {
                              juce::Drawable *normal_image = nullptr,
                              juce::Drawable *normal_on_image = nullptr,
                              const juce::String &tooltip_text = "")
-            : ui_base_(base), normal_(normal_image), normal_on_(normal_on_image) {
+            : base_(base), normal_(normal_image), normal_on_(normal_on_image) {
             if (normal_on_image != nullptr) {
                 button_.setToggleable(true);
                 button_.setClickingTogglesState(true);
@@ -37,13 +37,7 @@ namespace zlgui {
         ~ClickButton() override = default;
 
         void resized() override {
-            auto bound = getLocalBounds().toFloat();
-            const auto width = bound.getWidth(), height = bound.getHeight();
-            bound.removeFromLeft(l_pad_ * width);
-            bound.removeFromRight(r_pad_ * width);
-            bound.removeFromTop(u_pad_ * height);
-            bound.removeFromBottom(d_pad_ * height);
-            button_.setBounds(bound.toNearestInt());
+            button_.setBounds(getLocalBounds());
         }
 
         inline juce::DrawableButton &getButton() { return button_; }
@@ -60,32 +54,24 @@ namespace zlgui {
             if (normal_ != nullptr) {
                 normal_img_ = normal_->createCopy();
                 over_img_ = normal_->createCopy();
-                normal_img_->replaceColour(juce::Colour(0, 0, 0), ui_base_.getTextColor().withAlpha(.5f));
-                over_img_->replaceColour(juce::Colour(0, 0, 0), ui_base_.getTextColor());
+                normal_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(.5f));
+                over_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
             }
             if (normal_on_ != nullptr) {
                 normal_on_img_ = normal_on_->createCopy();
                 over_on_img_ = normal_on_img_->createCopy();
-                normal_on_img_->replaceColour(juce::Colour(0, 0, 0), ui_base_.getTextColor().withAlpha(.5f));
-                over_on_img_->replaceColour(juce::Colour(0, 0, 0), ui_base_.getTextColor());
+                normal_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(.5f));
+                over_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
             }
             button_.setImages(normal_img_.get(), over_img_.get(), nullptr, nullptr,
                              normal_on_img_.get(), over_on_img_.get(), nullptr, nullptr);
         }
 
-        void setPadding(const float l, const float r, const float u, const float d) {
-            l_pad_ = l;
-            r_pad_ = r;
-            u_pad_ = u;
-            d_pad_ = d;
-        }
-
     private:
-        zlgui::UIBase &ui_base_;
+        zlgui::UIBase &base_;
         juce::DrawableButton button_{"", juce::DrawableButton::ImageFitted};
         juce::Drawable *normal_ = nullptr, *normal_on_ = nullptr;
 
-        float l_pad_{0.f}, r_pad_{0.f}, u_pad_{0.f}, d_pad_{0.f};
         std::unique_ptr<juce::Drawable> normal_img_, normal_on_img_, over_img_, over_on_img_;
     };
 } // zlgui

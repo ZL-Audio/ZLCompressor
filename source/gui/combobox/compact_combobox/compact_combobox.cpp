@@ -13,7 +13,7 @@ namespace zlgui::combobox {
     CompactCombobox::CompactCombobox(const juce::String &label_text, const juce::StringArray &choices,
                                      UIBase &base, const juce::String &tooltip_text,
                                      const std::vector<juce::String> &item_labels)
-        : ui_base_(base),
+        : base_(base),
           box_laf_(base) {
         juce::ignoreUnused(label_text);
         if (item_labels.size() < static_cast<size_t>(choices.size())) {
@@ -46,14 +46,13 @@ namespace zlgui::combobox {
 
 
     CompactCombobox::~CompactCombobox() {
-        // animator.cancelAllAnimations(false);
         combo_box_.setLookAndFeel(nullptr);
     }
 
     void CompactCombobox::resized() {
         auto bound = getLocalBounds().toFloat();
         bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            juce::jmin(bound.getHeight(), ui_base_.getFontSize() * 2.f));
+                                            juce::jmin(bound.getHeight(), base_.getFontSize() * 2.f));
         combo_box_.setBounds(bound.toNearestInt());
     }
 
@@ -71,14 +70,10 @@ namespace zlgui::combobox {
 
     void CompactCombobox::mouseEnter(const juce::MouseEvent &event) {
         combo_box_.mouseEnter(event);
-        box_laf_.setBoxAlpha(1.f);
-        combo_box_.repaint();
     }
 
     void CompactCombobox::mouseExit(const juce::MouseEvent &event) {
         combo_box_.mouseExit(event);
-        box_laf_.setBoxAlpha(0.f);
-        combo_box_.repaint();
     }
 
     void CompactCombobox::mouseMove(const juce::MouseEvent &event) {

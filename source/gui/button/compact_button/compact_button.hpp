@@ -29,9 +29,8 @@ namespace zlgui {
         inline juce::ToggleButton &getButton() { return button_; }
 
         inline void setEditable(const bool x) {
-            laf_.setEditable(x);
+            setAlpha(x ? 1.f : .5f);
             button_.setInterceptsMouseClicks(x, false);
-            repaint();
         }
 
         inline void setDrawable(juce::Drawable *x) { laf_.setDrawable(x); }
@@ -47,7 +46,7 @@ namespace zlgui {
         }
 
     private:
-        UIBase &ui_base_;
+        UIBase &base_;
 
         juce::ToggleButton button_;
         CompactButtonLookAndFeel laf_;

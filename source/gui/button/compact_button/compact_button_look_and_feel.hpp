@@ -16,58 +16,54 @@
 namespace zlgui {
     class CompactButtonLookAndFeel final : public juce::LookAndFeel_V4 {
     public:
-        explicit CompactButtonLookAndFeel(UIBase &base) : ui_base_(base) {
+        explicit CompactButtonLookAndFeel(UIBase &base) : base_(base) {
         }
 
         void drawToggleButton(juce::Graphics &g, juce::ToggleButton &button, bool, bool) override {
-            const auto isPressed = button.getToggleState() ^ reverse_;
+            const auto is_pressed = button.getToggleState() ^ reverse_;
 
             auto bounds = button.getLocalBounds().toFloat();
             if (with_shadow_) {
-                bounds = ui_base_.drawShadowEllipse(g, bounds, ui_base_.getFontSize() * 0.4f * shrink_scale_, {});
-                bounds = ui_base_.drawInnerShadowEllipse(g, bounds, ui_base_.getFontSize() * 0.15f * shrink_scale_,
+                bounds = base_.drawShadowEllipse(g, bounds, base_.getFontSize() * 0.4f * shrink_scale_, {});
+                bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.15f * shrink_scale_,
                                                          {.flip = true});
             } else {
-                bounds = ui_base_.getShadowEllipseArea(bounds, ui_base_.getFontSize() * 0.3f * shrink_scale_, {});
-                g.setColour(ui_base_.getBackgroundColor());
+                bounds = base_.getShadowEllipseArea(bounds, base_.getFontSize() * 0.3f * shrink_scale_, {});
+                g.setColour(base_.getBackgroundColor());
                 g.fillEllipse(bounds);
             }
-            if (isPressed) {
+            if (is_pressed) {
                 if (with_shadow_) {
-                    const auto innerBound = ui_base_.getShadowEllipseArea(bounds, ui_base_.getFontSize() * 0.1f, {});
-                    ui_base_.drawInnerShadowEllipse(g, innerBound, ui_base_.getFontSize() * 0.375f, {
-                                                        .dark_shadow_color = ui_base_.getDarkShadowColor().
+                    const auto innerBound = base_.getShadowEllipseArea(bounds, base_.getFontSize() * 0.1f, {});
+                    base_.drawInnerShadowEllipse(g, innerBound, base_.getFontSize() * 0.375f, {
+                                                        .dark_shadow_color = base_.getDarkShadowColor().
                                                         withMultipliedAlpha(button_depth_),
-                                                        .bright_shadow_color = ui_base_.getBrightShadowColor().
+                                                        .bright_shadow_color = base_.getBrightShadowColor().
                                                         withMultipliedAlpha(button_depth_),
                                                         .change_dark = true,
                                                         .change_bright = true
                                                     });
                 }
             }
-            if (editable_) {
-                if (drawable_ == nullptr) {
-                    const auto textBound = button.getLocalBounds().toFloat();
-                    if (isPressed) {
-                        g.setColour(ui_base_.getTextColor().withAlpha(1.f));
-                    } else {
-                        g.setColour(ui_base_.getTextColor().withAlpha(0.5f));
-                    }
-                    g.setFont(ui_base_.getFontSize() * scale_);
-                    g.drawText(button.getButtonText(), textBound.toNearestInt(), juce::Justification::centred);
+            if (drawable_ == nullptr) {
+                const auto textBound = button.getLocalBounds().toFloat();
+                if (is_pressed) {
+                    g.setColour(base_.getTextColor().withAlpha(1.f));
                 } else {
-                    const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * .5f * scale_;
-                    const auto draw_bound = bounds.withSizeKeepingCentre(radius, radius);
-                    if (isPressed) {
-                        internal_img_->drawWithin(g, draw_bound, juce::RectanglePlacement::Flags::centred, 1.f);
-                    } else {
-                        internal_img_->drawWithin(g, draw_bound, juce::RectanglePlacement::Flags::centred, .5f);
-                    }
+                    g.setColour(base_.getTextColor().withAlpha(0.5f));
+                }
+                g.setFont(base_.getFontSize() * scale_);
+                g.drawText(button.getButtonText(), textBound.toNearestInt(), juce::Justification::centred);
+            } else {
+                const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * .5f * scale_;
+                const auto draw_bound = bounds.withSizeKeepingCentre(radius, radius);
+                if (is_pressed) {
+                    internal_img_->drawWithin(g, draw_bound, juce::RectanglePlacement::Flags::centred, 1.f);
+                } else {
+                    internal_img_->drawWithin(g, draw_bound, juce::RectanglePlacement::Flags::centred, .5f);
                 }
             }
         }
-
-        inline void setEditable(const bool f) { editable_ = f; }
 
         [[nodiscard]] inline float getDepth() const { return button_depth_; }
 
@@ -89,16 +85,16 @@ namespace zlgui {
         void updateImages() {
             if (drawable_ != nullptr) {
                 internal_img_ = drawable_->createCopy();
-                internal_img_->replaceColour(juce::Colour(0, 0, 0), ui_base_.getTextColor());
+                internal_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
             }
         }
 
     private:
-        bool editable_{true}, reverse_{false}, with_shadow_{true};
+        UIBase &base_;
+
+        bool reverse_{false}, with_shadow_{true};
         float button_depth_{0.f}, shrink_scale_{1.f}, scale_{1.f};
         juce::Drawable *drawable_ = nullptr;
         std::unique_ptr<juce::Drawable> internal_img_;
-
-        UIBase &ui_base_;
     };
 }

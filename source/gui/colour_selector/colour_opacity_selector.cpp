@@ -14,7 +14,7 @@ namespace zlgui::colour_selector {
                                                  const bool use_opacity,
                                                  const float width_s, const float height_s,
                                                  const float w1, const float w2)
-        : ui_base_(base),
+        : base_(base),
           selector_(base, parent, width_s, height_s),
           slider_("Opacity", base),
           opacity_on_(use_opacity) {
@@ -36,8 +36,8 @@ namespace zlgui::colour_selector {
     void ColourOpacitySelector::resized() {
         auto bound = getLocalBounds().toFloat();
         bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            ui_base_.getFontSize() * kFontLarge * 1.75f);
-        const auto padding = ui_base_.getFontSize() * 2.f;
+                                            base_.getFontSize() * kFontLarge * 1.75f);
+        const auto padding = base_.getFontSize() * 2.f;
         const auto width = bound.getWidth() - padding;
         selector_.setBounds(bound.removeFromLeft(width * weights_[0]).toNearestInt());
         if (opacity_on_) {

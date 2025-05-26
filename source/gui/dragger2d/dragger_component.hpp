@@ -87,7 +87,7 @@ namespace zlgui::dragger {
         }
 
     private:
-        UIBase &ui_base_;
+        UIBase &base_;
         DraggerLookAndFeel dragger_laf_;
         juce::ToggleButton button_;
         float x_portion_{0.f}, y_portion_{0.f};

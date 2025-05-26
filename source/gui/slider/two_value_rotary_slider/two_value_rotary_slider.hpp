@@ -377,15 +377,9 @@ namespace zlgui::slider {
         }
 
         inline void setEditable(const bool x) {
-            editable_ = x;
-            label_look_and_feel_.setEditable(x);
-            label_look_and_feel1_.setEditable(x);
-            label_look_and_feel2_.setEditable(x);
+            setAlpha(x ? 1.f : .5f);
             setInterceptsMouseClicks(x, false);
-            label_.repaint();
         }
-
-        inline bool getEditable() const { return editable_; }
 
         void setMouseDragSensitivity(const int x) {
             drag_distance_ = x;
@@ -413,7 +407,7 @@ namespace zlgui::slider {
 
         juce::Label label_, label1_, label2_;
 
-        bool show_slider2_{false}, editable_{true};
+        bool show_slider2_{false};
 
         int drag_distance_{10};
         bool is_shift_pressed_{false};

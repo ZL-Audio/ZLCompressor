@@ -16,14 +16,14 @@
 namespace zlgui {
     class CallOutBoxLAF final : public juce::LookAndFeel_V4 {
     public:
-        explicit CallOutBoxLAF(UIBase &base) : ui_base_(base) {
+        explicit CallOutBoxLAF(UIBase &base) : base_(base) {
         }
 
         void drawCallOutBoxBackground(juce::CallOutBox &box, juce::Graphics &g,
                                       const juce::Path &,
                                       juce::Image &) override {
-            g.setColour(ui_base_.getBackgroundColor());
-            g.fillRoundedRectangle(box.getLocalBounds().toFloat(), ui_base_.getFontSize() * .5f);
+            g.setColour(base_.getBackgroundColor());
+            g.fillRoundedRectangle(box.getLocalBounds().toFloat(), base_.getFontSize() * .5f);
         }
 
         int getCallOutBoxBorderSize(const juce::CallOutBox &) override {
@@ -35,6 +35,6 @@ namespace zlgui {
         }
 
     private:
-        UIBase &ui_base_;
+        UIBase &base_;
     };
 }

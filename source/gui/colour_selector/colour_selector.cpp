@@ -16,8 +16,8 @@ namespace zlgui::colour_selector {
             : selector_(selectorFlags,
                        juce::roundToInt(base.getFontSize() * 0.5f),
                        juce::roundToInt(base.getFontSize() * 0.33f)),
-              ui_base_(base) {
-            selector_.setColour(juce::ColourSelector::ColourIds::backgroundColourId, ui_base_.getBackgroundColor());
+              base_(base) {
+            selector_.setColour(juce::ColourSelector::ColourIds::backgroundColourId, base_.getBackgroundColor());
             addAndMakeVisible(selector_);
         }
 
@@ -28,8 +28,8 @@ namespace zlgui::colour_selector {
         void resized() override {
             auto bound = getLocalBounds().toFloat();
             bound = bound.withSizeKeepingCentre(
-                bound.getWidth() - ui_base_.getFontSize() * .5f,
-                bound.getHeight() - ui_base_.getFontSize() * .5f);
+                bound.getWidth() - base_.getFontSize() * .5f,
+                bound.getHeight() - base_.getFontSize() * .5f);
             selector_.setBounds(bound.toNearestInt());
         }
 
@@ -37,21 +37,21 @@ namespace zlgui::colour_selector {
 
     private:
         juce::ColourSelector selector_;
-        zlgui::UIBase &ui_base_;
+        zlgui::UIBase &base_;
     };
 
     ColourSelector::ColourSelector(zlgui::UIBase &base, juce::Component &parent,
                                    const float width_s, const float height_s)
-        : ui_base_(base), laf_(ui_base_), parent_ref_(parent),
+        : base_(base), laf_(base_), parent_ref_(parent),
           selector_width_s_(width_s), selector_height_s_(height_s) {
     }
 
     void ColourSelector::paint(juce::Graphics &g) {
-        g.fillAll(ui_base_.getTextColor().withAlpha(.875f));
+        g.fillAll(base_.getTextColor().withAlpha(.875f));
         auto bound = getLocalBounds().toFloat();
-        bound = bound.withSizeKeepingCentre(bound.getWidth() - ui_base_.getFontSize() * .375f,
-                                            bound.getHeight() - ui_base_.getFontSize() * .375f);
-        g.setColour(ui_base_.getBackgroundColor());
+        bound = bound.withSizeKeepingCentre(bound.getWidth() - base_.getFontSize() * .375f,
+                                            bound.getHeight() - base_.getFontSize() * .375f);
+        g.setColour(base_.getBackgroundColor());
         g.fillRect(bound);
         g.setColour(colour_);
         g.fillRect(bound);
@@ -60,11 +60,11 @@ namespace zlgui::colour_selector {
     void ColourSelector::mouseDown(const juce::MouseEvent &event) {
         juce::ignoreUnused(event);
         auto colour_selector = std::make_unique<SelectorBox>(
-            juce::ColourSelector::ColourSelectorOptions::showColourspace, ui_base_);
+            juce::ColourSelector::ColourSelectorOptions::showColourspace, base_);
         colour_selector->getSelector().setCurrentColour(colour_);
         colour_selector->getSelector().addChangeListener(this);
-        colour_selector->setSize(juce::roundToInt(selector_width_s_ * ui_base_.getFontSize()),
-                                juce::roundToInt(selector_height_s_ * ui_base_.getFontSize()));
+        colour_selector->setSize(juce::roundToInt(selector_width_s_ * base_.getFontSize()),
+                                juce::roundToInt(selector_height_s_ * base_.getFontSize()));
         auto &box = juce::CallOutBox::launchAsynchronously(std::move(colour_selector),
                                                            parent_ref_.getLocalArea(this, getLocalBounds()),
                                                            &parent_ref_);

@@ -11,8 +11,8 @@
 
 namespace zlgui::colour_selector {
     ColourMapSelector::ColourMapSelector(zlgui::UIBase &base, const float box_width)
-        : ui_base_(base),
-          map_box_("", zlstate::PColourMapIdx::kChoices, ui_base_),
+        : base_(base),
+          map_box_("", zlstate::PColourMapIdx::kChoices, base_),
           map_box_width_p_(box_width) {
         addAndMakeVisible(map_box_);
         map_box_.getBox().addListener(this);
@@ -21,12 +21,12 @@ namespace zlgui::colour_selector {
     void ColourMapSelector::paint(juce::Graphics &g) {
         auto bound = getLocalBounds().toFloat();
         bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            ui_base_.getFontSize() * kFontLarge * 1.75f);
-        bound.removeFromLeft(bound.getWidth() * map_box_width_p_ + ui_base_.getFontSize());
-        g.setColour(ui_base_.getTextColor().withAlpha(.875f));
+                                            base_.getFontSize() * kFontLarge * 1.75f);
+        bound.removeFromLeft(bound.getWidth() * map_box_width_p_ + base_.getFontSize());
+        g.setColour(base_.getTextColor().withAlpha(.875f));
         g.fillRect(bound);
-        bound = bound.withSizeKeepingCentre(bound.getWidth() - ui_base_.getFontSize() * .375f,
-                                            bound.getHeight() - ui_base_.getFontSize() * .375f);
+        bound = bound.withSizeKeepingCentre(bound.getWidth() - base_.getFontSize() * .375f,
+                                            bound.getHeight() - base_.getFontSize() * .375f);
         const auto &current_colour_map = zlgui::kColourMaps[static_cast<size_t>(map_box_.getBox().getSelectedId() - 1)];
         const auto single_colour_map_width = bound.getWidth() / static_cast<float>(current_colour_map.size());
         for (const auto &colour : current_colour_map) {
@@ -38,7 +38,7 @@ namespace zlgui::colour_selector {
     void ColourMapSelector::resized() {
         auto bound = getLocalBounds().toFloat();
         bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            ui_base_.getFontSize() * kFontLarge * 1.75f);
+                                            base_.getFontSize() * kFontLarge * 1.75f);
         const auto box_bound = bound.removeFromLeft(bound.getWidth() * map_box_width_p_);
         map_box_.setBounds(box_bound.toNearestInt());
     }

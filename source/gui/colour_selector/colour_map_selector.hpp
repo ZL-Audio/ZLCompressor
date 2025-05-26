@@ -26,7 +26,7 @@ namespace zlgui::colour_selector {
         juce::ComboBox &getBox() { return map_box_.getBox(); }
 
     private:
-        UIBase &ui_base_;
+        UIBase &base_;
         combobox::CompactCombobox map_box_;
         float map_box_width_p_{.5f};
 

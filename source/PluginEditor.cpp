@@ -13,8 +13,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
       processor_ref_(p),
       property_(p.property_),
-      ui_base_(p.state_),
-      main_panel_(p, ui_base_) {
+      base_(p.state_),
+      main_panel_(p, base_) {
     for (auto &ID: kIDs) {
         processor_ref_.state_.addParameterListener(ID, this);
     }
@@ -89,9 +89,9 @@ void PluginEditor::timerCallback() {
 }
 
 void PluginEditor::updateIsShowing() {
-    if (isShowing() != ui_base_.getIsEditorShowing()) {
-        ui_base_.setIsEditorShowing(isShowing());
-        if (ui_base_.getIsEditorShowing()) {
+    if (isShowing() != base_.getIsEditorShowing()) {
+        base_.setIsEditorShowing(isShowing());
+        if (base_.getIsEditorShowing()) {
             vblank_ = std::make_unique<juce::VBlankAttachment>(
                 &main_panel_, [this](const double x) { main_panel_.repaintCallBack(x); });
         } else {

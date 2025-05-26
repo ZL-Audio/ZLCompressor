@@ -36,7 +36,7 @@ namespace zlgui::combobox {
         void mouseMove(const juce::MouseEvent &event) override;
 
         inline void setEditable(const bool x) {
-            box_laf_.setEditable(x);
+            setAlpha(x ? 1.f : .25f);
             setInterceptsMouseClicks(x, false);
         }
 
@@ -45,7 +45,7 @@ namespace zlgui::combobox {
         inline CompactComboboxLookAndFeel &getLAF() { return box_laf_; }
 
     private:
-        zlgui::UIBase &ui_base_;
+        zlgui::UIBase &base_;
         CompactComboboxLookAndFeel box_laf_;
         juce::ComboBox combo_box_;
     };

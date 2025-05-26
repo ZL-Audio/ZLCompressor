@@ -40,7 +40,7 @@ namespace zlgui::colour_selector {
         }
 
     private:
-        zlgui::UIBase &ui_base_;
+        zlgui::UIBase &base_;
         zlgui::CallOutBoxLAF laf_;
         juce::Component &parent_ref_;
         float selector_width_s_, selector_height_s_;

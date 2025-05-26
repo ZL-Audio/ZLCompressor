@@ -47,7 +47,7 @@ private:
         zlstate::PWindowW::kID, zlstate::PWindowH::kID,
     };
 
-    zlgui::UIBase ui_base_;
+    zlgui::UIBase base_;
     zlpanel::MainPanel main_panel_;
 
     std::unique_ptr<juce::VBlankAttachment> vblank_;

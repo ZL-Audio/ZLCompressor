@@ -188,10 +188,8 @@ namespace zlgui::slider {
         inline juce::Slider &getSlider() { return slider_; }
 
         inline void setEditable(const bool x) {
-            name_look_and_feel_.setEditable(x);
-            text_look_and_feel_.setEditable(x);
+            setAlpha(x ? 1.f : .5f);
             setInterceptsMouseClicks(x, false);
-            repaint();
         }
 
         void updateDisplayValue() {
