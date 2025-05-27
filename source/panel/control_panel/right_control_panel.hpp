@@ -9,10 +9,40 @@
 
 #pragma once
 
+#include "../../PluginProcessor.hpp"
+#include "../../gui/gui.hpp"
+#include "../helper/helper.hpp"
+
 namespace zlpanel {
+    class RightControlPanel : public juce::Component {
+    public:
+        explicit RightControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
-class RightControlPanel {
+        void paint(juce::Graphics &g) override;
 
-};
+        void resized() override;
 
+        void repaintCallBack();
+
+    private:
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
+        zlgui::attachment::ComponentUpdater updater_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> range_slider_;
+        zlgui::attachment::SliderAttachment<true> range_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> hold_slider_;
+        zlgui::attachment::SliderAttachment<true> hold_attachment_;
+
+        juce::Label gain_label_;
+        zlgui::slider::TwoValueRotarySlider<true, false, false> gain_slider_;
+        zlgui::attachment::SliderAttachment<true> gain_attachment_;
+
+        juce::Label wet_label_;
+        zlgui::slider::TwoValueRotarySlider<true, false, false> wet_slider_;
+        zlgui::attachment::SliderAttachment<true> wet_attachment_;
+
+        zlgui::label::NameLookAndFeel label_laf_;
+    };
 } // zlpanel

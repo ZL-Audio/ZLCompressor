@@ -20,9 +20,14 @@ namespace zlpanel {
     }
 
     void MainPanel::resized() {
-        auto bound = getLocalBounds();
-        if (static_cast<float>(bound.getHeight()) < 0.47f * static_cast<float>(bound.getWidth())) {
-            bound.setHeight(juce::roundToInt(0.47f * static_cast<float>(bound.getWidth())));
+        auto bound = getLocalBounds(); {
+            const auto height = static_cast<float>(bound.getHeight());
+            const auto width = static_cast<float>(bound.getWidth());
+            if (height < width * 0.47f) {
+                bound.setHeight(juce::roundToInt(width * .47f));
+            } else if (height > width * 1.f) {
+                bound.setWidth(juce::roundToInt(height * 1.f));
+            }
         }
 
         const auto fontSize = static_cast<float>(bound.getWidth()) * 0.014287762237762238f;

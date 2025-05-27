@@ -11,19 +11,22 @@
 
 namespace zlpanel {
     ControlPanel::ControlPanel(PluginProcessor &p, zlgui::UIBase &base)
-        : mid_control_panel_(p, base) {
+        : mid_control_panel_(p, base), right_control_panel_(p, base) {
         addAndMakeVisible(mid_control_panel_);
+        addAndMakeVisible(right_control_panel_);
     }
 
     void ControlPanel::resized() {
         auto bound = getLocalBounds();
         const auto height = bound.getHeight();
-        mid_control_panel_.setBounds(bound.removeFromLeft(8 * height));
+        mid_control_panel_.setBounds(bound.removeFromLeft(6 * height));
+        right_control_panel_.setBounds(bound);
     }
 
     void ControlPanel::repaintCallBack(const double time_stamp) {
         if (time_stamp - previous_time_stamp > 0.1) {
             mid_control_panel_.repaintCallBack();
+            right_control_panel_.repaintCallBack();
             previous_time_stamp = time_stamp;
         }
     }

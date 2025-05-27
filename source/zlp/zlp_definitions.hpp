@@ -188,7 +188,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "ratio";
         auto static constexpr kName = "Ratio";
-        auto static constexpr kDefaultV = 4.f;
+        auto static constexpr kDefaultV = 3.f;
         inline auto static const kRange = getLogMidRange(1.f, 100.f, 3.f, 0.01f);
     };
 
@@ -255,10 +255,10 @@ namespace zlp {
         }
     };
 
-    class PBound : public FloatParameters<PBound> {
+    class PRange : public FloatParameters<PRange> {
     public:
-        auto static constexpr kID = "bound";
-        auto static constexpr kName = "Bound";
+        auto static constexpr kID = "range";
+        auto static constexpr kName = "Range";
         inline auto static const kRange = getLinearMidRange(0.f, 80.f, 18.f, .1f);
         auto static constexpr kDefaultV = 80.f;
     };
@@ -271,20 +271,20 @@ namespace zlp {
         auto static constexpr kDefaultV = 0.f;
     };
 
-    class PWet : public FloatParameters<PWet> {
-    public:
-        auto static constexpr kID = "wet";
-        auto static constexpr kName = "Wet";
-        inline auto static const kRange = getLogMidRangeShift(20.f, 1020.f, 120.f, 0.01f, -20.f);
-        auto static constexpr kDefaultV = 0.f;
-    };
-
     class POutGain : public FloatParameters<POutGain> {
     public:
         auto static constexpr kID = "out_gain";
         auto static constexpr kName = "Out Gain";
-        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 30.f, .1f);
+        inline auto static const kRange = getLogMidRangeShift(2.f, 32.f, 12.f, 0.01f, -2.f);
         auto static constexpr kDefaultV = 0.f;
+    };
+
+    class PWet : public FloatParameters<PWet> {
+    public:
+        auto static constexpr kID = "wet";
+        auto static constexpr kName = "Wet";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        auto static constexpr kDefaultV = 100.f;
     };
 
     class POversample : public ChoiceParameters<POversample> {
@@ -302,7 +302,7 @@ namespace zlp {
         layout.add(PCompStyle::get(),
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
                    PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
-                   PHold::get(), PBound::get(), PWet::get(), POutGain::get(),
+                   PHold::get(), PRange::get(), PWet::get(), POutGain::get(),
                    POversample::get());
         return layout;
     }

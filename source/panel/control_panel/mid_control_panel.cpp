@@ -16,13 +16,13 @@ namespace zlpanel {
           knee_attachment_(knee_slider_.getSlider(), p_ref_.parameters_, zlp::PKneeW::kID, updater_.getFlag()),
           curve_slider_("Curve", base_),
           curve_attachment_(curve_slider_.getSlider(), p_ref_.parameters_, zlp::PCurve::kID, updater_.getFlag()),
-          th_slider_("Threshold", base_),
+          th_slider_("Threshold", base_, "", 1.25f),
           th_attachment_(th_slider_.getSlider1(), p_ref_.parameters_, zlp::PThreshold::kID, updater_.getFlag()),
-          ratio_slider_("Ratio", base_),
+          ratio_slider_("Ratio", base_, "", 1.25f),
           ratio_attachment_(ratio_slider_.getSlider1(), p_ref_.parameters_, zlp::PRatio::kID, updater_.getFlag()),
-          attack_slider_("Attack", base_),
+          attack_slider_("Attack", base_, "", 1.25f),
           attack_attachment_(attack_slider_.getSlider1(), p_ref_.parameters_, zlp::PAttack::kID, updater_.getFlag()),
-          release_slider_("Release", base_),
+          release_slider_("Release", base_, "", 1.25f),
           release_attachment_(release_slider_.getSlider1(), p_ref_.parameters_, zlp::PRelease::kID, updater_.getFlag()),
           pump_slider_("Pump", base_),
           pump_attachment_(pump_slider_.getSlider(), p_ref_.parameters_, zlp::PPump::kID, updater_.getFlag()),
@@ -76,9 +76,12 @@ namespace zlpanel {
         bound.removeFromBottom(padding);
 
         const auto height = bound.getHeight();
-        const auto half_height = (height - padding) / 2; {
+        const auto half_height = (height - 2 * padding) / 2; {
             bound.removeFromRight(padding);
             auto t_bound = bound.removeFromRight(height);
+            const auto extra_padding = (t_bound.getHeight() - 2 * half_height) / 4;
+            t_bound.removeFromTop(extra_padding);
+            t_bound.removeFromBottom(extra_padding);
             pump_slider_.setBounds(t_bound.removeFromTop(half_height));
             smooth_slider_.setBounds(t_bound.removeFromBottom(half_height));
         } {
@@ -100,6 +103,9 @@ namespace zlpanel {
         } {
             bound.removeFromRight(padding);
             auto t_bound = bound.removeFromRight(height);
+            const auto extra_padding = (t_bound.getHeight() - 2 * half_height) / 4;
+            t_bound.removeFromTop(extra_padding);
+            t_bound.removeFromBottom(extra_padding);
             knee_slider_.setBounds(t_bound.removeFromTop(half_height));
             curve_slider_.setBounds(t_bound.removeFromBottom(half_height));
         }

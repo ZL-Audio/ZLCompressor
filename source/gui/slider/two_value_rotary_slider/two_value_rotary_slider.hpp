@@ -29,7 +29,8 @@ namespace zlgui::slider {
     private:
         class Background final : public juce::Component {
         public:
-            explicit Background(UIBase &base) : base_(base) {
+            explicit Background(UIBase &base, const float thick_scale)
+                : base_(base), thick_scale_(thick_scale) {
                 setOpaque(Opaque);
                 setInterceptsMouseClicks(false, false);
                 setBufferedToImage(true);
@@ -43,8 +44,8 @@ namespace zlgui::slider {
                 const auto diameter = juce::jmin(bounds.getWidth(), bounds.getHeight());
                 bounds = bounds.withSizeKeepingCentre(diameter, diameter);
                 // draw knob background
-                const auto old_bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.5f, {});
-                const auto new_bounds = base_.drawShadowEllipse(g, old_bounds, base_.getFontSize() * 0.5f, {});
+                const auto old_bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.5f * thick_scale_, {});
+                const auto new_bounds = base_.drawShadowEllipse(g, old_bounds, base_.getFontSize() * 0.5f * thick_scale_, {});
                 base_.drawInnerShadowEllipse(g, new_bounds, base_.getFontSize() * 0.15f, {.flip = true});
                 // draw pie segment
                 juce::Path shadow;
@@ -57,20 +58,19 @@ namespace zlgui::slider {
 
         private:
             UIBase &base_;
+            float thick_scale_{1.f};
         };
 
         class Display final : public juce::Component {
         public:
-            explicit Display(UIBase &base) : base_(base) {
+            explicit Display(UIBase &base, const float thick_scale)
+                : base_(base), thick_scale_(thick_scale) {
                 setInterceptsMouseClicks(false, false);
             }
 
             void paint(juce::Graphics &g) override {
                 g.saveState();
                 g.reduceClipRegion(mask_);
-
-                base_.drawShadowEllipse(g, arrow1_, base_.getFontSize() * 0.5f,
-                                        {.fit = false, .draw_bright = false, .draw_dark = true});
                 g.setColour(base_.getTextHideColor());
                 g.fillPath(filling1_);
                 // fill the pie segment between two values
@@ -89,8 +89,8 @@ namespace zlgui::slider {
                 bound_ = getLocalBounds().toFloat();
                 const auto diameter = juce::jmin(bound_.getWidth(), bound_.getHeight());
                 bound_ = bound_.withSizeKeepingCentre(diameter, diameter);
-                old_bound_ = UIBase::getInnerShadowEllipseArea(bound_, base_.getFontSize() * 0.5f, {});
-                new_bound_ = UIBase::getShadowEllipseArea(old_bound_, base_.getFontSize() * 0.5f, {});
+                old_bound_ = UIBase::getInnerShadowEllipseArea(bound_, base_.getFontSize() * 0.5f * thick_scale_, {});
+                new_bound_ = UIBase::getShadowEllipseArea(old_bound_, base_.getFontSize() * 0.5f * thick_scale_, {});
                 arrow_unit_ = (diameter - new_bound_.getWidth()) * 0.5f;
 
                 mask_.clear();
@@ -142,6 +142,7 @@ namespace zlgui::slider {
 
         private:
             UIBase &base_;
+            float thick_scale_{1.f};
             juce::Rectangle<float> bound_, old_bound_, new_bound_;
             float value1_{0.f}, value2_{0.f};
             float arrow_unit_{0.f}, angle1_{0.f};
@@ -153,8 +154,9 @@ namespace zlgui::slider {
 
     public:
         explicit TwoValueRotarySlider(const juce::String &label_text, UIBase &base,
-                                      const juce::String &tooltip_text = "")
-            : base_(base), background_(base_), display_(base),
+                                      const juce::String &tooltip_text = "",
+                                      float thick_scale = 1.f)
+            : base_(base), background_(base_, thick_scale), display_(base, thick_scale),
               slider1_(base, label_text), slider2_(base, label_text),
               label_look_and_feel_(base), label_look_and_feel1_(base), label_look_and_feel2_(base),
               text_box_laf_(base) {

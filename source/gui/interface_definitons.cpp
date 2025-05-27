@@ -194,7 +194,7 @@ namespace zlgui {
     }
 
     juce::Rectangle<float> UIBase::getInnerShadowEllipseArea(juce::Rectangle<float> box_bounds,
-                                                             float corner_size,
+                                                             const float corner_size,
                                                              const FillShadowEllipseArgs &margs) {
         juce::ignoreUnused(margs);
         const auto radius = juce::jmax(juce::roundToInt(corner_size * 1.5f), 1);
