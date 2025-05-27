@@ -50,6 +50,11 @@ namespace zldsp::container {
             return data_[static_cast<size_t>(front_pos)];
         }
 
+        T getFront() {
+            const auto front_pos = (pos_ - c_num_ + cap_) % cap_;
+            return data_[static_cast<size_t>(front_pos)];
+        }
+
     private:
         std::vector<T> data_;
         int pos_{0}, c_num_{0}, cap_{0};

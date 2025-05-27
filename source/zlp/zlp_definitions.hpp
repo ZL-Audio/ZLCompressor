@@ -42,7 +42,7 @@ namespace zlp {
         const FloatType x_interval, const FloatType shift) {
         const auto range = getLogMidRange<FloatType>(x_min, x_max, x_mid, x_interval);
         return {
-            x_min, x_max,
+            x_min + shift, x_max + shift,
             [=](FloatType, FloatType, const FloatType v) {
                 return range.convertFrom0to1(v) + shift;
             },
@@ -267,7 +267,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "hold";
         auto static constexpr kName = "Hold";
-        inline auto static const kRange = getLogMidRangeShift(20.f, 1020.f, 120.f, 0.01f, -20.f);
+        inline auto static const kRange = getLogMidRangeShift(20.f, 1020.f, 120.f, 0.1f, -20.f);
         auto static constexpr kDefaultV = 0.f;
     };
 

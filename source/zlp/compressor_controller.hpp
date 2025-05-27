@@ -48,6 +48,26 @@ namespace zlp {
             oversample_idx_.store(idx);
         }
 
+        void setHoldLength(const float millisecond) {
+            hold_length_.store(millisecond * 1e-3f);
+            to_update_hold_.store(true);
+        }
+
+        void setRange(const float db) {
+            range_.store(db);
+            to_update_range_.store(true);
+        }
+
+        void setOutputGain(const float db) {
+            output_gain_db_.store(db);
+            to_update_output_gain_.store(true);
+        }
+
+        void setWet(const float percent) {
+            wet_.store(percent * 0.01f);
+            to_update_wet_.store(true);
+        }
+
     private:
         juce::AudioProcessor &processor_ref_;
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
@@ -117,21 +137,34 @@ namespace zlp {
             zldsp::compressor::OpticalCompressor<float>{computer_[1], tracker_[1], follower_[1]}
         };
 
+        std::atomic<bool> to_update_hold_{true};
+        std::atomic<float> hold_length_{0.0};
+        std::array<zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMin>, 2> hold_buffer_ = {
+            zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMin>{},
+            zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMin>{},
+        };
+
+        std::atomic<bool> to_update_range_{true};
+        std::atomic<float> range_{80.f};
+        float c_range_{80.f};
+
+        std::atomic<bool> to_update_output_gain_{true};
+        std::atomic<float> output_gain_db_{0.f};
         zldsp::gain::Gain<float> output_gain_{};
 
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
 
         void prepareBuffer();
 
-        void processBuffer(float *main_buffer1, float *main_buffer2,
-                           float *side_buffer1, float *side_buffer2,
+        void processBuffer(float *main_buffer0, float *main_buffer1,
+                           float *side_buffer0, float *side_buffer1,
                            size_t num_samples);
 
-        void processSideBufferClean(float *buffer1, float *buffer2, size_t num_samples);
+        void processSideBufferClean(float *buffer0, float *buffer1, size_t num_samples);
 
-        void processSideBufferClassic(float *buffer1, float *buffer2, size_t num_samples);
+        void processSideBufferClassic(float *buffer0, float *buffer1, size_t num_samples);
 
-        void processSideBufferOptical(float *buffer1, float *buffer2, size_t num_samples);
+        void processSideBufferOptical(float *buffer0, float *buffer1, size_t num_samples);
 
         void handleAsyncUpdate() override;
     };

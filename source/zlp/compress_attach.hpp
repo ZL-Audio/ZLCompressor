@@ -33,6 +33,7 @@ namespace zlp {
             PCompStyle::kID,
             PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID,
             PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID,
+            PHold::kID, PRange::kID, POutGain::kID, PWet::kID,
             POversample::kID
         };
 
@@ -40,6 +41,7 @@ namespace zlp {
             static_cast<float>(PCompStyle::kDefaultI),
             PThreshold::kDefaultV, PRatio::kDefaultV, PKneeW::kDefaultV, PCurve::kDefaultV,
             PAttack::kDefaultV, PRelease::kDefaultV, PPump::kDefaultV, PSmooth::kDefaultV,
+            PHold::kDefaultV, PRange::kDefaultV, POutGain::kDefaultV, PWet::kDefaultV,
             static_cast<float>(POversample::kDefaultI)
         };
 

@@ -54,6 +54,14 @@ namespace zlp {
         } else if (parameter_ID == PSmooth::kID) {
             const auto x = PSmooth::formatV(new_value);
             follower_ref_.setSmooth(x);
+        } else if (parameter_ID == PHold::kID) {
+            controller_ref_.setHoldLength(new_value);
+        } else if (parameter_ID == PRange::kID) {
+            controller_ref_.setRange(new_value);
+        } else if (parameter_ID == POutGain::kID) {
+            controller_ref_.setOutputGain(new_value);
+        } else if (parameter_ID == PWet::kID) {
+            controller_ref_.setWet(new_value);
         } else if (parameter_ID == POversample::kID) {
             controller_ref_.setOversampleIdx(static_cast<int>(new_value));
         }

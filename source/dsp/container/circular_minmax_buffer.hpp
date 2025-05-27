@@ -9,8 +9,9 @@
 
 #pragma once
 
-#include <vector>
+#include <limits>
 #include <algorithm>
+#include <deque>
 
 namespace zldsp::container {
     /**
@@ -19,81 +20,73 @@ namespace zldsp::container {
      * @tparam FindMin
      * @tparam FindMax
      */
-    template<typename T, bool FindMin, bool FindMax>
+    enum MinMaxBufferType {
+        kFindMin, kFindMax
+    };
+
+    template<typename T, MinMaxBufferType BufferType>
     class CircularMinMaxBuffer {
     public:
         explicit CircularMinMaxBuffer(const size_t capacity = 1) {
-            static_assert(FindMin != FindMax);
-            data_.resize_(capacity);
+            setCapacity(capacity);
         }
-
-        [[nodiscard]] size_t capacity() const { return data_.size_(); }
 
         void setCapacity(const size_t capacity) {
-            data_.resize_(capacity);
+            minmax_deque_.resize(capacity, {T(), 0});
+            minmax_deque_.clear();
         }
 
-        void setSize(const int x) {
-            if (x < size_) {
-                const auto shift = static_cast<size_t>(size_ - x);
-                for (size_t i = 0; i < static_cast<size_t>(x); ++i) {
-                    data_[i] = data_[i + shift];
+        void setSize(const size_t x) {
+            size_ = static_cast<unsigned long long>(x);
+            if (static_cast<unsigned long long>(x) < count_) {
+                while (!minmax_deque_.empty() && minmax_deque_.front().second <= head_ - count_) {
+                    minmax_deque_.pop_front();
                 }
             }
-            size_ = x;
-            if (FindMin) {
-                std::fill(data_.begin() + size_, data_.end(), static_cast<T>(1e6));
-            }
-            if (FindMax) {
-                std::fill(data_.begin() + size_, data_.end(), static_cast<T>(-1e6));
-            }
-            updateMinMaxPos();
         }
 
+        size_t getSize() const { return size_; }
+
         void clear() {
-            std::fill(data_.begin(), data_.end(), T());
-            pos_ = 0;
-            minmax_pos_ = 0;
+            count_ = 0;
         }
 
         T push(T x) {
-            data_[static_cast<size_t>(pos_)] = x;
-            if (FindMin) {
-                if (x < minmax_value_) {
-                    minmax_value_ = x;
-                    minmax_pos_ = pos_;
-                } else if (pos_ == minmax_pos_) {
-                    updateMinMaxPos();
+            // increment head and count
+            head_++;
+            count_ = std::min(count_ + 1, size_);
+            // prevent overflow (very unlikely)
+            if (head_ == std::numeric_limits<unsigned long long>::max()) {
+                const auto shift = minmax_deque_.front().second;
+                for (auto &data : minmax_deque_) {
+                    data.second -= shift;
+                }
+                head_ -= shift;
+            }
+            // remove samples which fail out of the window
+            while (!minmax_deque_.empty() && minmax_deque_.front().second <= head_ - count_) {
+                minmax_deque_.pop_front();
+            }
+            // maintain monotonicity
+            if (BufferType == kFindMin) {
+                while (!minmax_deque_.empty() && minmax_deque_.back().first >= x) {
+                    minmax_deque_.pop_back();
                 }
             }
-            if (FindMax) {
-                if (x > minmax_value_) {
-                    minmax_value_ = x;
-                    minmax_pos_ = pos_;
-                } else if (pos_ == minmax_pos_) {
-                    updateMinMaxPos();
+            if (BufferType == kFindMax) {
+                while (!minmax_deque_.empty() && minmax_deque_.back().first <= x) {
+                    minmax_deque_.pop_back();
                 }
             }
-            pos_ = (pos_ + 1) % size_;
-            return minmax_value_;
+
+            // Add new value with its index
+            minmax_deque_.emplace_back(x, head_);
+
+            return minmax_deque_.front().first;
         }
 
     private:
-        std::vector<T> data_;
-        int pos_ = 0, minmax_pos_ = 0, size_ = 0;
-        T minmax_value_;
-
-        void updateMinMaxPos() {
-            if (FindMin) {
-                const auto *min_element = std::min_element(data_.begin(), data_.begin() + size_);
-                minmax_value_ = *min_element;
-                minmax_pos_ = static_cast<int>(std::distance(data_.begin(), min_element));
-            }
-            if (FindMax) {
-                const auto *max_element = std::max_element(data_.begin(), data_.begin() + size_);
-                minmax_value_ = *max_element;
-                minmax_pos_ = static_cast<int>(std::distance(data_.begin(), max_element));
-            }
-        }
+        unsigned long long head_{0}, count_{0}, size_{0};
+        std::deque<std::pair<T, unsigned long long>> minmax_deque_;
     };
 }

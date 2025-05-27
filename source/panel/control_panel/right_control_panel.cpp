@@ -62,7 +62,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
 
         bound.removeFromBottom(padding); {
-            const auto height = bound.getHeight();
+            const auto height = bound.getHeight() - padding;
             const auto half_height = (height - 2 * padding) / 2;
             bound.removeFromLeft(padding);
             auto t_bound = bound.removeFromLeft(height);

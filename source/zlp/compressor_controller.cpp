@@ -35,15 +35,49 @@ namespace zlp {
         for (auto &os: oversample_stages_side_) {
             os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
         }
-
         oversample_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2,
                                   oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(
                                       spec.sampleRate));
         oversample_delay_.setDelayInSamples(0);
+        // init hold buffers
+        for (auto &h : hold_buffer_) {
+            h.setCapacity(static_cast<size_t>(8.0 * spec.sampleRate));
+        }
     }
 
 
     void CompressorController::prepareBuffer() {
+        // load oversampling idx, set up trackers/followers and update latency
+        if (oversample_idx_.load() != c_oversample_idx_) {
+            c_oversample_idx_ = oversample_idx_.load();
+            if (c_oversample_idx_ > 0) {
+                c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
+                const auto oversample_latency = static_cast<int>(std::round(
+                    oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples()));
+                oversample_latency_.store(oversample_latency);
+                oversample_delay_.setDelayInSamples(oversample_latency);
+            } else {
+                oversample_latency_.store(0);
+                oversample_delay_.setDelay(0);
+            }
+            const auto oversample_mul = 1 << c_oversample_idx_;
+            // prepare tracker and followers with the multiplied samplerate
+            const auto oversample_sr = main_spec_.sampleRate * static_cast<double>(oversample_mul);
+            for (auto &t: tracker_) {
+                t.prepare(oversample_sr);
+            }
+            for (auto &f: follower_) {
+                f.prepare(oversample_sr);
+            }
+            // prepare the hold buffer with the multiplied samplerate
+            for (auto &h : hold_buffer_) {
+                h.setCapacity(static_cast<size_t>(oversample_sr));
+            }
+            to_update_hold_.store(true);
+            // update the latency
+            triggerAsyncUpdate();
+        }
+
         // load external side-chain
         c_ext_side_chain_ = ext_side_chain_.load();
         // load stereo mode
@@ -70,36 +104,27 @@ namespace zlp {
         }
         // load stereo link
         c_stereo_link_ = 1.f - std::clamp(stereo_link_.load(), 0.f, .5f);
+        // load hold values
+        if (to_update_hold_.exchange(false)) {
+            const auto oversample_mul = 1 << c_oversample_idx_;
+            const auto hold_size = static_cast<size_t>(
+                main_spec_.sampleRate * hold_length_.load()) * static_cast<size_t>(oversample_mul);
+            hold_buffer_[0].setSize(hold_size);
+            hold_buffer_[1].setSize(hold_size);
+        }
         // load wet values
         if (to_update_wet_.exchange(false)) {
             const auto c_wet = wet_.load();
             c_wet1_ = wet1_.load() * c_wet * 0.05f; // 0.05 accounts for the db to gain transformation
             c_wet2_ = wet2_.load() * c_wet * 0.05f;
+            to_update_range_.store(true);
+            to_update_output_gain_.store(true);
         }
-        // load oversampling idx, set up trackers/followers and update latency
-        if (oversample_idx_.load() != c_oversample_idx_) {
-            c_oversample_idx_ = oversample_idx_.load();
-            if (c_oversample_idx_ > 0) {
-                c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
-                const auto oversample_latency = static_cast<int>(std::round(
-                    oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples()));
-                oversample_latency_.store(oversample_latency);
-                oversample_delay_.setDelayInSamples(oversample_latency);
-            } else {
-                oversample_latency_.store(0);
-                oversample_delay_.setDelay(0);
-            }
-            const auto oversample_mul = 1 << c_oversample_idx_;
-            // prepare tracker and followers with the multiplied samplerate
-            const auto oversample_sr = main_spec_.sampleRate * static_cast<float>(oversample_mul);
-            for (auto &t: tracker_) {
-                t.prepare(oversample_sr);
-            }
-            for (auto &f: follower_) {
-                f.prepare(oversample_sr);
-            }
-            // update the latency
-            triggerAsyncUpdate();
+        if (to_update_range_.exchange(false)) {
+            c_range_ = range_.load() * wet_.load();
+        }
+        if (to_update_output_gain_.exchange(false)) {
+            output_gain_.setGainDecibels(output_gain_db_.load() * wet_.load());
         }
     }
 
@@ -175,8 +200,8 @@ namespace zlp {
                                   static_cast<size_t>(buffer.getNumSamples()));
     }
 
-    void CompressorController::processBuffer(float *main_buffer1, float *main_buffer2,
-                                             float *side_buffer1, float *side_buffer2,
+    void CompressorController::processBuffer(float *main_buffer0, float *main_buffer1,
+                                             float *side_buffer0, float *side_buffer1,
                                              const size_t num_samples) {
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
@@ -187,57 +212,64 @@ namespace zlp {
         // process compress style
         switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
-                processSideBufferClean(side_buffer1, side_buffer2, num_samples);
+                processSideBufferClean(side_buffer0, side_buffer1, num_samples);
                 break;
             }
             case zldsp::compressor::Style::kClassic: {
-                processSideBufferClassic(side_buffer1, side_buffer2, num_samples);
+                processSideBufferClassic(side_buffer0, side_buffer1, num_samples);
                 break;
             }
             case zldsp::compressor::Style::kOptical: {
-                processSideBufferOptical(side_buffer1, side_buffer2, num_samples);
+                processSideBufferOptical(side_buffer0, side_buffer1, num_samples);
                 break;
             }
             default: return;
         }
+        // apply the hold
+        if (hold_buffer_[0].getSize() > 0) {
+            for (size_t i = 0; i < num_samples; ++i) {
+                side_buffer0[i] = hold_buffer_[0].push(side_buffer0[i]);
+                side_buffer1[i] = hold_buffer_[1].push(side_buffer1[i]);
+            }
+        }
         // apply the stereo link
         for (size_t i = 0; i < num_samples; ++i) {
-            const auto x = side_buffer1[i];
-            const auto y = side_buffer2[i];
+            const auto x = side_buffer0[i];
+            const auto y = side_buffer1[i];
             const auto xy = c_stereo_link_ * (x - y);
-            side_buffer1[i] = y + xy;
-            side_buffer2[i] = x - xy;
+            side_buffer0[i] = y + xy;
+            side_buffer1[i] = x - xy;
         }
         // process wet values and convert decibel to gain
+        auto side_v0 = kfr::make_univector(side_buffer0, num_samples);
         auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
-        auto side_v2 = kfr::make_univector(side_buffer2, num_samples);
-        side_v1 = kfr::exp10(side_v1 * c_wet1_);
-        side_v2 = kfr::exp10(side_v2 * c_wet2_);
+        side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
+        side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
         // apply gain on the main buffer
+        auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        auto main_v2 = kfr::make_univector(main_buffer2, num_samples);
         if (side_swap_.load()) {
-            main_v1 = main_v1 * side_v2;
-            main_v2 = main_v2 * side_v1;
+            main_v0 = main_v0 * side_v1;
+            main_v1 = main_v1 * side_v0;
         } else {
+            main_v0 = main_v0 * side_v0;
             main_v1 = main_v1 * side_v1;
-            main_v2 = main_v2 * side_v2;
         }
     }
 
-    void CompressorController::processSideBufferClean(float *buffer1, float *buffer2, const size_t num_samples) {
-        clean_comps_[0].process(buffer1, num_samples);
-        clean_comps_[1].process(buffer2, num_samples);
+    void CompressorController::processSideBufferClean(float *buffer0, float *buffer1, const size_t num_samples) {
+        clean_comps_[0].process(buffer0, num_samples);
+        clean_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::processSideBufferClassic(float *buffer1, float *buffer2, const size_t num_samples) {
-        classic_comps_[0].process(buffer1, num_samples);
-        classic_comps_[1].process(buffer2, num_samples);
+    void CompressorController::processSideBufferClassic(float *buffer0, float *buffer1, const size_t num_samples) {
+        classic_comps_[0].process(buffer0, num_samples);
+        classic_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::processSideBufferOptical(float *buffer1, float *buffer2, const size_t num_samples) {
-        optical_comps_[0].process(buffer1, num_samples);
-        optical_comps_[1].process(buffer2, num_samples);
+    void CompressorController::processSideBufferOptical(float *buffer0, float *buffer1, const size_t num_samples) {
+        optical_comps_[0].process(buffer0, num_samples);
+        optical_comps_[1].process(buffer1, num_samples);
     }
 
     void CompressorController::handleAsyncUpdate() {
