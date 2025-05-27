@@ -33,7 +33,7 @@ namespace zlpanel {
 
         label_laf_.setFontScale(1.5f);
 
-        gain_label_.setText("Gain", juce::dontSendNotification);
+        gain_label_.setText("Makeup", juce::dontSendNotification);
         gain_label_.setJustificationType(juce::Justification::centred);
         gain_label_.setLookAndFeel(&label_laf_);
         gain_label_.setBufferedToImage(true);

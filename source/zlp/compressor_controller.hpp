@@ -71,8 +71,8 @@ namespace zlp {
     private:
         juce::AudioProcessor &processor_ref_;
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
-        juce::AudioBuffer<float> pre_buffer_;
-        std::array<float *, 2> pre_pointers_{}, main_pointers_{};
+        juce::AudioBuffer<float> pre_buffer_, post_buffer_;
+        std::array<float *, 2> pre_pointers_{}, post_pointers_{}, main_pointers_{};
 
         zldsp::analyzer::MagReductionAnalyzer<float, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;

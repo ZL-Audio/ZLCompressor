@@ -273,8 +273,8 @@ namespace zlp {
 
     class POutGain : public FloatParameters<POutGain> {
     public:
-        auto static constexpr kID = "out_gain";
-        auto static constexpr kName = "Out Gain";
+        auto static constexpr kID = "makeup";
+        auto static constexpr kName = "Makeup Gain";
         inline auto static const kRange = getLogMidRangeShift(2.f, 32.f, 12.f, 0.01f, -2.f);
         auto static constexpr kDefaultV = 0.f;
     };

@@ -21,6 +21,11 @@ namespace zlp {
         output_gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.1);
 
         pre_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
+        pre_pointers_[0] = pre_buffer_.getWritePointer(0);
+        pre_pointers_[1] = pre_buffer_.getWritePointer(1);
+        post_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
+        post_pointers_[0] = post_buffer_.getWritePointer(0);
+        post_pointers_[1] = post_buffer_.getWritePointer(1);
         // allocate memories for up to 8x oversampling
         for (auto &t: tracker_) {
             t.setMaximumMomentarySeconds(0.04f * 8.01f);
@@ -132,8 +137,6 @@ namespace zlp {
         prepareBuffer();
         juce::AudioBuffer<float> main_buffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
         juce::AudioBuffer<float> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
-        pre_pointers_[0] = pre_buffer_.getWritePointer(0);
-        pre_pointers_[1] = pre_buffer_.getWritePointer(1);
         main_pointers_[0] = main_buffer.getWritePointer(0);
         main_pointers_[1] = main_buffer.getWritePointer(1);
         pre_buffer_.makeCopyOf(main_buffer, true);
@@ -193,10 +196,15 @@ namespace zlp {
             // delay the pre buffer
             oversample_delay_.process(pre_pointers_, static_cast<size_t>(pre_buffer_.getNumSamples()));
         }
-        output_gain_.process(std::span(main_pointers_), static_cast<size_t>(main_buffer.getNumSamples()));
-        mag_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}, std::span{main_pointers_}},
+        // copy to post buffer
+        zldsp::vector::copy(post_pointers_[0], main_pointers_[0], static_cast<size_t>(buffer.getNumSamples()));
+        zldsp::vector::copy(post_pointers_[1], main_pointers_[1], static_cast<size_t>(buffer.getNumSamples()));
+        // makeup gain
+        output_gain_.process(main_pointers_, static_cast<size_t>(main_buffer.getNumSamples()));
+
+        mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers_},
                               static_cast<size_t>(buffer.getNumSamples()));
-        mag_avg_analyzer_.process({std::span(pre_pointers_), std::span{main_pointers_}},
+        mag_avg_analyzer_.process({pre_pointers_, main_pointers_},
                                   static_cast<size_t>(buffer.getNumSamples()));
     }
 
