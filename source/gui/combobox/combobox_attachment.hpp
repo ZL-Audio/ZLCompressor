@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../attachment/component_attachment.hpp"
+#include "../attachment/component_updater.hpp"
 
 namespace zlgui::attachment {
     template<bool UpdateFromAPVTS = true>
@@ -18,14 +18,15 @@ namespace zlgui::attachment {
                                      private juce::ComboBox::Listener {
     public:
         ComboBoxAttachment(juce::ComboBox &box,
-                           juce::AudioProcessorValueTreeState &apvts, const juce::String &parameter_ID,
-                           std::atomic<bool> &updater_flag,
+                           juce::AudioProcessorValueTreeState &apvts,
+                           const juce::String &parameter_ID,
+                           ComponentUpdater &updater,
                            const juce::NotificationType notification_type =
                                    juce::NotificationType::sendNotificationSync)
             : box_(box), notification_type_(notification_type),
               apvts_(apvts), parameter_ID_(parameter_ID),
               parameter_ref_(*apvts_.getParameter(parameter_ID_)),
-              updater_flag_ref_(updater_flag) {
+              updater_ref_(updater) {
             // add parameter listener
             if (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ID_, this);
@@ -33,9 +34,12 @@ namespace zlgui::attachment {
             }
             // add combobox listener
             box_.addListener(this);
+            // add to updater
+            updater_ref_.addAttachment(*this);
         }
 
         ~ComboBoxAttachment() override {
+            updater_ref_.removeAttachment(*this);
             apvts_.removeParameterListener(parameter_ID_, this);
         }
 
@@ -54,12 +58,12 @@ namespace zlgui::attachment {
         juce::AudioProcessorValueTreeState &apvts_;
         juce::String parameter_ID_;
         juce::RangedAudioParameter &parameter_ref_;
-        std::atomic<bool> &updater_flag_ref_;
+        ComponentUpdater &updater_ref_;
         std::atomic<int> atomic_index_{0};
 
         void parameterChanged(const juce::String &, const float new_value) override {
             atomic_index_.store(static_cast<int>(new_value), std::memory_order::relaxed);
-            updater_flag_ref_.store(true, std::memory_order::release);
+            updater_ref_.getFlag().store(true, std::memory_order::release);
         }
 
         void comboBoxChanged(juce::ComboBox *) override {

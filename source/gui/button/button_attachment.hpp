@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../attachment/component_attachment.hpp"
+#include "../attachment/component_updater.hpp"
 
 namespace zlgui::attachment {
     template<bool UpdateFromAPVTS = true>
@@ -18,14 +18,14 @@ namespace zlgui::attachment {
                                    private juce::Button::Listener {
     public:
         ButtonAttachment(juce::Button &button,
-                         juce::AudioProcessorValueTreeState &apvts, const juce::String &parameter_ID,
-                         std::atomic<bool> &updater_flag,
-                         const juce::NotificationType notification_type =
-                                 juce::NotificationType::sendNotificationSync)
+                         juce::AudioProcessorValueTreeState &apvts,
+                         const juce::String &parameter_ID,
+                         ComponentUpdater &updater,
+                         const juce::NotificationType notification_type = juce::NotificationType::sendNotificationSync)
             : button_(button), notification_type_(notification_type),
               apvts_(apvts), parameter_ID_(parameter_ID),
               parameter_ref_(*apvts_.getParameter(parameter_ID_)),
-              updater_flag_ref_(updater_flag) {
+              updater_ref_(updater) {
             // add parameter listener
             if (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ID_, this);
@@ -33,9 +33,12 @@ namespace zlgui::attachment {
             }
             // add combobox listener
             button_.addListener(this);
+            // add to updater
+            updater_ref_.addAttachment(*this);
         }
 
         ~ButtonAttachment() override {
+            updater_ref_.removeAttachment(*this);
             apvts_.removeParameterListener(parameter_ID_, this);
         }
 
@@ -54,12 +57,12 @@ namespace zlgui::attachment {
         juce::AudioProcessorValueTreeState &apvts_;
         juce::String parameter_ID_;
         juce::RangedAudioParameter &parameter_ref_;
-        std::atomic<bool> &updater_flag_ref_;
+        ComponentUpdater &updater_ref_;
         std::atomic<bool> atomic_flag_{false};
 
         void parameterChanged(const juce::String &, const float new_value) override {
             atomic_flag_.store(new_value > .5f, std::memory_order::relaxed);
-            updater_flag_ref_.store(true, std::memory_order::release);
+            updater_ref_.getFlag().store(true, std::memory_order::release);
         }
 
         void buttonStateChanged(juce::Button *) override {

@@ -13,53 +13,45 @@ namespace zlpanel {
     MidControlPanel::MidControlPanel(PluginProcessor &p, zlgui::UIBase &base)
         : p_ref_(p), base_(base),
           knee_slider_("Knee", base_),
-          knee_attachment_(knee_slider_.getSlider(), p_ref_.parameters_, zlp::PKneeW::kID, updater_.getFlag()),
+          knee_attachment_(knee_slider_.getSlider(), p_ref_.parameters_, zlp::PKneeW::kID, updater_),
           curve_slider_("Curve", base_),
-          curve_attachment_(curve_slider_.getSlider(), p_ref_.parameters_, zlp::PCurve::kID, updater_.getFlag()),
+          curve_attachment_(curve_slider_.getSlider(), p_ref_.parameters_, zlp::PCurve::kID, updater_),
           th_slider_("Threshold", base_, "", 1.25f),
-          th_attachment_(th_slider_.getSlider1(), p_ref_.parameters_, zlp::PThreshold::kID, updater_.getFlag()),
+          th_attachment_(th_slider_.getSlider1(), p_ref_.parameters_, zlp::PThreshold::kID, updater_),
           ratio_slider_("Ratio", base_, "", 1.25f),
-          ratio_attachment_(ratio_slider_.getSlider1(), p_ref_.parameters_, zlp::PRatio::kID, updater_.getFlag()),
+          ratio_attachment_(ratio_slider_.getSlider1(), p_ref_.parameters_, zlp::PRatio::kID, updater_),
           attack_slider_("Attack", base_, "", 1.25f),
-          attack_attachment_(attack_slider_.getSlider1(), p_ref_.parameters_, zlp::PAttack::kID, updater_.getFlag()),
+          attack_attachment_(attack_slider_.getSlider1(), p_ref_.parameters_, zlp::PAttack::kID, updater_),
           release_slider_("Release", base_, "", 1.25f),
-          release_attachment_(release_slider_.getSlider1(), p_ref_.parameters_, zlp::PRelease::kID, updater_.getFlag()),
+          release_attachment_(release_slider_.getSlider1(), p_ref_.parameters_, zlp::PRelease::kID, updater_),
           pump_slider_("Pump", base_),
-          pump_attachment_(pump_slider_.getSlider(), p_ref_.parameters_, zlp::PPump::kID, updater_.getFlag()),
+          pump_attachment_(pump_slider_.getSlider(), p_ref_.parameters_, zlp::PPump::kID, updater_),
           smooth_slider_("Smooth", base_),
-          smooth_attachment_(smooth_slider_.getSlider(), p_ref_.parameters_, zlp::PSmooth::kID, updater_.getFlag()) {
+          smooth_attachment_(smooth_slider_.getSlider(), p_ref_.parameters_, zlp::PSmooth::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
         knee_slider_.setBufferedToImage(true);
-        updater_.addAttachment(knee_attachment_);
         addAndMakeVisible(knee_slider_);
 
         curve_slider_.setBufferedToImage(true);
-        updater_.addAttachment(curve_attachment_);
         addAndMakeVisible(curve_slider_);
 
         th_slider_.setBufferedToImage(true);
-        updater_.addAttachment(th_attachment_);
         addAndMakeVisible(th_slider_);
 
         ratio_slider_.setBufferedToImage(true);
-        updater_.addAttachment(ratio_attachment_);
         addAndMakeVisible(ratio_slider_);
 
         attack_slider_.setBufferedToImage(true);
-        updater_.addAttachment(attack_attachment_);
         addAndMakeVisible(attack_slider_);
 
         release_slider_.setBufferedToImage(true);
-        updater_.addAttachment(release_attachment_);
         addAndMakeVisible(release_slider_);
 
         pump_slider_.setBufferedToImage(true);
-        updater_.addAttachment(pump_attachment_);
         addAndMakeVisible(pump_slider_);
 
         smooth_slider_.setBufferedToImage(true);
-        updater_.addAttachment(smooth_attachment_);
         addAndMakeVisible(smooth_slider_);
     }
 

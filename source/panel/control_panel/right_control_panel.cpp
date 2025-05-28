@@ -13,22 +13,20 @@ namespace zlpanel {
     RightControlPanel::RightControlPanel(PluginProcessor &p, zlgui::UIBase &base)
         : p_ref_(p), base_(base),
           range_slider_("Range", base_),
-          range_attachment_(range_slider_.getSlider(), p.parameters_, zlp::PRange::kID, updater_.getFlag()),
+          range_attachment_(range_slider_.getSlider(), p.parameters_, zlp::PRange::kID, updater_),
           hold_slider_("Hold", base_),
-          hold_attachment_(hold_slider_.getSlider(), p.parameters_, zlp::PHold::kID, updater_.getFlag()),
+          hold_attachment_(hold_slider_.getSlider(), p.parameters_, zlp::PHold::kID, updater_),
           gain_slider_("Output Gain", base_, "", 1.f),
-          gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_.getFlag()),
+          gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_),
           wet_slider_("Wet", base_),
-          wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_.getFlag()),
+          wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_),
           label_laf_(base_) {
         juce::ignoreUnused(p_ref_, base_);
 
         range_slider_.setBufferedToImage(true);
-        updater_.addAttachment(range_attachment_);
         addAndMakeVisible(range_slider_);
 
         hold_slider_.setBufferedToImage(true);
-        updater_.addAttachment(hold_attachment_);
         addAndMakeVisible(hold_slider_);
 
         label_laf_.setFontScale(1.5f);
@@ -39,7 +37,6 @@ namespace zlpanel {
         gain_label_.setBufferedToImage(true);
         addAndMakeVisible(gain_label_);
         gain_slider_.setBufferedToImage(true);
-        updater_.addAttachment(gain_attachment_);
         addAndMakeVisible(gain_slider_);
 
         wet_label_.setText("Wet", juce::dontSendNotification);
@@ -48,7 +45,6 @@ namespace zlpanel {
         wet_label_.setBufferedToImage(true);
         addAndMakeVisible(wet_label_);
         wet_slider_.setBufferedToImage(true);
-        updater_.addAttachment(wet_attachment_);
         addAndMakeVisible(wet_slider_);
     }
 
