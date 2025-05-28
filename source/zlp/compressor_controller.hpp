@@ -41,35 +41,46 @@ namespace zlp {
         auto &getFollower() { return follower_; }
 
         void setCompStyle(const zldsp::compressor::Style style) {
-            comp_style_.store(style);
+            comp_style_.store(style, std::memory_order::relaxed);
         }
 
         void setOversampleIdx(const int idx) {
-            oversample_idx_.store(idx);
+            oversample_idx_.store(idx, std::memory_order::relaxed);
         }
 
         void setHoldLength(const float millisecond) {
-            hold_length_.store(millisecond * 1e-3f);
-            to_update_hold_.store(true);
+            hold_length_.store(millisecond * 1e-3f, std::memory_order::relaxed);
+            to_update_hold_.store(true, std::memory_order::release);
         }
 
         void setRange(const float db) {
-            range_.store(db);
-            to_update_range_.store(true);
+            range_.store(db, std::memory_order::relaxed);
+            to_update_range_.store(true, std::memory_order::release);
         }
 
         void setOutputGain(const float db) {
-            output_gain_db_.store(db);
-            to_update_output_gain_.store(true);
+            output_gain_db_.store(db, std::memory_order::relaxed);
+            to_update_output_gain_.store(true, std::memory_order::release);
         }
 
         void setWet(const float percent) {
-            wet_.store(percent * 0.01f);
-            to_update_wet_.store(true);
+            wet_.store(percent * 0.01f, std::memory_order::relaxed);
+            to_update_wet_.store(true, std::memory_order::release);
+        }
+
+        void setMagAnalyzerOn(const bool f) {
+            mag_analyzer_on_.store(f, std::memory_order::relaxed);
+        }
+
+        void setSpecAnalyzerOn(const bool f) {
+            spec_analyzer_on_.store(f, std::memory_order::relaxed);
         }
 
     private:
         juce::AudioProcessor &processor_ref_;
+        std::atomic<bool> mag_analyzer_on_{true}, spec_analyzer_on_{false};
+        bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
+
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
         juce::AudioBuffer<float> pre_buffer_, post_buffer_;
         std::array<float *, 2> pre_pointers_{}, post_pointers_{}, main_pointers_{};

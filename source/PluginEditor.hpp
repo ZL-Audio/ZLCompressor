@@ -38,7 +38,7 @@ public:
     void minimisationStateChanged(bool isNowMinimised) override;
 
 private:
-    PluginProcessor &processor_ref_;
+    PluginProcessor &p_ref_;
     zlstate::Property &property_;
     juce::Value last_ui_width_, last_ui_height_;
     std::atomic<bool> is_size_changed_{false};

@@ -11,12 +11,12 @@
 
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
-      processor_ref_(p),
+      p_ref_(p),
       property_(p.property_),
       base_(p.state_),
       main_panel_(p, base_) {
     for (auto &ID: kIDs) {
-        processor_ref_.state_.addParameterListener(ID, this);
+        p_ref_.state_.addParameterListener(ID, this);
     }
     // set font
     const auto font_face = juce::Typeface::createSystemTypefaceFor(
@@ -44,9 +44,10 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 PluginEditor::~PluginEditor() {
     vblank_.reset();
     for (auto &id: kIDs) {
-        processor_ref_.state_.removeParameterListener(id, this);
+        p_ref_.state_.removeParameterListener(id, this);
     }
     stopTimer();
+    p_ref_.getController().setMagAnalyzerOn(false);
 }
 
 void PluginEditor::paint(juce::Graphics &g) {
@@ -78,7 +79,7 @@ void PluginEditor::parameterChanged(const juce::String &parameter_id, float new_
 }
 
 void PluginEditor::handleAsyncUpdate() {
-    property_.saveAPVTS(processor_ref_.state_);
+    property_.saveAPVTS(p_ref_.state_);
     if (!is_size_changed_.exchange(false)) {
         sendLookAndFeelChange();
     }
@@ -91,6 +92,7 @@ void PluginEditor::timerCallback() {
 void PluginEditor::updateIsShowing() {
     if (isShowing() != base_.getIsEditorShowing()) {
         base_.setIsEditorShowing(isShowing());
+        p_ref_.getController().setMagAnalyzerOn(base_.getIsEditorShowing());
         if (base_.getIsEditorShowing()) {
             vblank_ = std::make_unique<juce::VBlankAttachment>(
                 &main_panel_, [this](const double x) { main_panel_.repaintCallBack(x); });

@@ -52,9 +52,12 @@ namespace zlp {
 
 
     void CompressorController::prepareBuffer() {
+        c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
+        c_spec_analyzer_on_ = spec_analyzer_on_.load(std::memory_order::relaxed);
         // load oversampling idx, set up trackers/followers and update latency
-        if (oversample_idx_.load() != c_oversample_idx_) {
-            c_oversample_idx_ = oversample_idx_.load();
+        const auto new_oversample_idx = oversample_idx_.load(std::memory_order::relaxed);
+        if (new_oversample_idx != c_oversample_idx_) {
+            c_oversample_idx_ = new_oversample_idx;
             if (c_oversample_idx_ > 0) {
                 c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
                 const auto oversample_latency = static_cast<int>(std::round(
@@ -84,12 +87,13 @@ namespace zlp {
         }
 
         // load external side-chain
-        c_ext_side_chain_ = ext_side_chain_.load();
+        c_ext_side_chain_ = ext_side_chain_.load(std::memory_order::relaxed);
         // load stereo mode
-        c_stereo_mode_ = stereo_mode_.load();
+        c_stereo_mode_ = stereo_mode_.load(std::memory_order::relaxed);
         // load compressor style, if they are different, reset the internal state
-        if (c_comp_style_ != comp_style_.load()) {
-            c_comp_style_ = comp_style_.load();
+        const auto new_comp_style = comp_style_.load(std::memory_order::relaxed);
+        if (c_comp_style_ != new_comp_style) {
+            c_comp_style_ = new_comp_style;
             switch (c_comp_style_) {
                 case zldsp::compressor::Style::kClean: {
                     clean_comps_[0].reset();
@@ -108,28 +112,31 @@ namespace zlp {
             }
         }
         // load stereo link
-        c_stereo_link_ = 1.f - std::clamp(stereo_link_.load(), 0.f, .5f);
+        c_stereo_link_ = 1.f - std::clamp(stereo_link_.load(std::memory_order::relaxed), 0.f, .5f);
         // load hold values
-        if (to_update_hold_.exchange(false)) {
+        if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
             const auto oversample_mul = 1 << c_oversample_idx_;
             const auto hold_size = static_cast<size_t>(
-                main_spec_.sampleRate * hold_length_.load()) * static_cast<size_t>(oversample_mul);
+                main_spec_.sampleRate * hold_length_.load(std::memory_order::relaxed)
+                ) * static_cast<size_t>(oversample_mul);
             hold_buffer_[0].setSize(hold_size);
             hold_buffer_[1].setSize(hold_size);
         }
         // load wet values
-        if (to_update_wet_.exchange(false)) {
-            const auto c_wet = wet_.load();
-            c_wet1_ = wet1_.load() * c_wet * 0.05f; // 0.05 accounts for the db to gain transformation
-            c_wet2_ = wet2_.load() * c_wet * 0.05f;
+        if (to_update_wet_.exchange(false, std::memory_order::acquire)) {
+            const auto c_wet = wet_.load(std::memory_order::relaxed);
+            c_wet1_ = wet1_.load(std::memory_order::relaxed) * c_wet * 0.05f; // 0.05 accounts for the db to gain transformation
+            c_wet2_ = wet2_.load(std::memory_order::relaxed) * c_wet * 0.05f;
             to_update_range_.store(true);
             to_update_output_gain_.store(true);
         }
-        if (to_update_range_.exchange(false)) {
-            c_range_ = range_.load() * wet_.load();
+        if (to_update_range_.exchange(false, std::memory_order::acquire)) {
+            c_range_ = range_.load(
+                std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
         }
-        if (to_update_output_gain_.exchange(false)) {
-            output_gain_.setGainDecibels(output_gain_db_.load() * wet_.load());
+        if (to_update_output_gain_.exchange(false, std::memory_order::acquire)) {
+            output_gain_.setGainDecibels(
+                output_gain_db_.load(std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed));
         }
     }
 
@@ -139,7 +146,9 @@ namespace zlp {
         juce::AudioBuffer<float> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
         main_pointers_[0] = main_buffer.getWritePointer(0);
         main_pointers_[1] = main_buffer.getWritePointer(1);
-        pre_buffer_.makeCopyOf(main_buffer, true);
+        if (c_mag_analyzer_on_) {
+            pre_buffer_.makeCopyOf(main_buffer, true);
+        }
 
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 1) {
@@ -197,15 +206,19 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, static_cast<size_t>(pre_buffer_.getNumSamples()));
         }
         // copy to post buffer
-        zldsp::vector::copy(post_pointers_[0], main_pointers_[0], static_cast<size_t>(buffer.getNumSamples()));
-        zldsp::vector::copy(post_pointers_[1], main_pointers_[1], static_cast<size_t>(buffer.getNumSamples()));
+        if (c_mag_analyzer_on_) {
+            zldsp::vector::copy(post_pointers_[0], main_pointers_[0], static_cast<size_t>(buffer.getNumSamples()));
+            zldsp::vector::copy(post_pointers_[1], main_pointers_[1], static_cast<size_t>(buffer.getNumSamples()));
+        }
         // makeup gain
         output_gain_.process(main_pointers_, static_cast<size_t>(main_buffer.getNumSamples()));
 
-        mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers_},
-                              static_cast<size_t>(buffer.getNumSamples()));
-        mag_avg_analyzer_.process({pre_pointers_, main_pointers_},
+        if (c_mag_analyzer_on_) {
+            mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers_},
                                   static_cast<size_t>(buffer.getNumSamples()));
+            mag_avg_analyzer_.process({pre_pointers_, main_pointers_},
+                                      static_cast<size_t>(buffer.getNumSamples()));
+        }
     }
 
     void CompressorController::processBuffer(float *main_buffer0, float *main_buffer1,
