@@ -9,9 +9,7 @@
 
 #pragma once
 
-#include <limits>
-#include <algorithm>
-#include <deque>
+#include "circular_buffer.hpp"
 
 namespace zldsp::container {
     /**
@@ -32,20 +30,19 @@ namespace zldsp::container {
         }
 
         void setCapacity(const size_t capacity) {
-            minmax_deque_.resize(capacity, {T(), 0});
-            minmax_deque_.clear();
+            minmax_buffer_.setCapacity(capacity);
         }
 
         void setSize(const size_t x) {
             size_ = static_cast<unsigned long long>(x);
             if (static_cast<unsigned long long>(x) < count_) {
-                while (!minmax_deque_.empty() && minmax_deque_.front().second <= head_ - count_) {
-                    minmax_deque_.pop_front();
+                while (minmax_buffer_.size() > 0 && minmax_buffer_.getFront().second <= head_ - count_) {
+                    minmax_buffer_.popFront();
                 }
             }
         }
 
-        size_t getSize() const { return size_; }
+        [[nodiscard]] size_t getSize() const { return size_; }
 
         void clear() {
             count_ = 0;
@@ -57,36 +54,37 @@ namespace zldsp::container {
             count_ = std::min(count_ + 1, size_);
             // prevent overflow (very unlikely)
             if (head_ == std::numeric_limits<unsigned long long>::max()) {
-                const auto shift = minmax_deque_.front().second;
-                for (auto &data : minmax_deque_) {
-                    data.second -= shift;
+                const auto shift = minmax_buffer_.getFront().second;
+                for (size_t i = 0; i < minmax_buffer_.size(); ++i) {
+                    auto front = minmax_buffer_.popFront();
+                    front.second -= shift;
+                    minmax_buffer_.pushBack(front);
                 }
                 head_ -= shift;
             }
             // remove samples which fail out of the window
-            while (!minmax_deque_.empty() && minmax_deque_.front().second <= head_ - count_) {
-                minmax_deque_.pop_front();
+            while (minmax_buffer_.size() > 0 && minmax_buffer_.getFront().second <= head_ - count_) {
+                minmax_buffer_.popFront();
             }
             // maintain monotonicity
             if (BufferType == kFindMin) {
-                while (!minmax_deque_.empty() && minmax_deque_.back().first >= x) {
-                    minmax_deque_.pop_back();
+                while (minmax_buffer_.size() > 0 && minmax_buffer_.getBack().first >= x) {
+                    minmax_buffer_.popBack();
                 }
             }
             if (BufferType == kFindMax) {
-                while (!minmax_deque_.empty() && minmax_deque_.back().first <= x) {
-                    minmax_deque_.pop_back();
+                while (minmax_buffer_.size() > 0 && minmax_buffer_.getBack().first <= x) {
+                    minmax_buffer_.popBack();
                 }
             }
+            // push the new sample
+            minmax_buffer_.pushBack({x, head_});
 
-            // Add new value with its index
-            minmax_deque_.emplace_back(x, head_);
-
-            return minmax_deque_.front().first;
+            return minmax_buffer_.getFront().first;
         }
 
     private:
         unsigned long long head_{0}, count_{0}, size_{0};
-        std::deque<std::pair<T, unsigned long long>> minmax_deque_;
+        CircularBuffer<std::pair<T, unsigned long long>> minmax_buffer_{1};
     };
 }

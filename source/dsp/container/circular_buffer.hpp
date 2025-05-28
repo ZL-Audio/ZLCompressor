@@ -30,6 +30,7 @@ namespace zldsp::container {
         void setCapacity(const size_t capacity) {
             data_.resize(capacity);
             cap_ = static_cast<int>(capacity);
+            clear();
         }
 
         void clear() {
@@ -42,6 +43,17 @@ namespace zldsp::container {
             data_[static_cast<size_t>(pos_)] = x;
             pos_ = (pos_ + 1) % cap_;
             c_num_ = std::min(c_num_ + 1, cap_);
+        }
+
+        T popBack() {
+            pos_ = (pos_ + cap_ - 1) % cap_;
+            c_num_ -= 1;
+            return data_[static_cast<size_t>(pos_)];
+        }
+
+        T getBack() {
+            const auto back_pos = (pos_ + cap_ - 1) % cap_;
+            return data_[static_cast<size_t>(back_pos)];
         }
 
         T popFront() {
