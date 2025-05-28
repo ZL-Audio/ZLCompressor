@@ -20,13 +20,13 @@ namespace zldsp::analyzer {
         ~MultipleMagAvgAnalyzer() override = default;
 
         void prepare(const double sample_rate) override {
-            this->sample_rate_.store(sample_rate);
+            this->sample_rate_.store(sample_rate, std::memory_order::relaxed);
             this->setTimeLength(0.001f * 999.0f);
             std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }
 
         void run() {
-            if (this->to_reset_.exchange(false)) {
+            if (this->to_reset_.exchange(false, std::memory_order::acquire)) {
                 for (size_t i = 0; i < MagNum; ++i) {
                     auto &cumulative_count{cumulative_counts_[i]};
                     std::fill(cumulative_count.begin(), cumulative_count.end(), 0.);

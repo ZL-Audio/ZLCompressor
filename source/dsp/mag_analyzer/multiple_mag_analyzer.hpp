@@ -20,15 +20,15 @@ namespace zldsp::analyzer {
         ~MultipleMagAnalyzer() override = default;
 
         void prepare(const double sample_rate) override {
-            this->sample_rate_.store(sample_rate);
-            this->setTimeLength(this->time_length_.load());
+            this->sample_rate_.store(sample_rate, std::memory_order::relaxed);
+            this->setTimeLength(this->time_length_.load(std::memory_order::relaxed));
             std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }
 
         int run(const int num_to_read = PointNum) {
             // calculate the number of points put into circular buffers
             const int fifo_num_ready = this->abstract_fifo_.getNumReady();
-            if (this->to_reset_.exchange(false)) {
+            if (this->to_reset_.exchange(false, std::memory_order::acquire)) {
                 for (size_t i = 0; i < MagNum; ++i) {
                     std::fill(this->circular_mags_[i].begin(), this->circular_mags_[i].end(), -240.f);
                 }

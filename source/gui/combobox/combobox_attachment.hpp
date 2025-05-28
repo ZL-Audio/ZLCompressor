@@ -41,7 +41,7 @@ namespace zlgui::attachment {
 
         void updateComponent() override {
             if (UpdateFromAPVTS) {
-                const auto current_index = atomic_index_.load();
+                const auto current_index = atomic_index_.load(std::memory_order::relaxed);
                 if (current_index != box_.getSelectedItemIndex()) {
                     box_.setSelectedItemIndex(current_index, notification_type_);
                 }
@@ -58,15 +58,14 @@ namespace zlgui::attachment {
         std::atomic<int> atomic_index_{0};
 
         void parameterChanged(const juce::String &, const float new_value) override {
-            atomic_index_.store(static_cast<int>(new_value));
-            updater_flag_ref_.store(true);
+            atomic_index_.store(static_cast<int>(new_value), std::memory_order::relaxed);
+            updater_flag_ref_.store(true, std::memory_order::release);
         }
 
         void comboBoxChanged(juce::ComboBox *) override {
-            atomic_index_.store(box_.getSelectedItemIndex());
             parameter_ref_.beginChangeGesture();
-            parameter_ref_.
-                    setValueNotifyingHost(parameter_ref_.convertTo0to1(static_cast<float>(atomic_index_.load())));
+            parameter_ref_.setValueNotifyingHost(
+                parameter_ref_.convertTo0to1(static_cast<float>(box_.getSelectedItemIndex())));
             parameter_ref_.endChangeGesture();
         }
     };

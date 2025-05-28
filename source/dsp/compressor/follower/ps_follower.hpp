@@ -36,7 +36,7 @@ namespace zldsp::compressor {
          */
         void prepare(const double sr) override {
             exp_factor_ = -2.0 * std::numbers::pi * 1000.0 / sr;
-            to_update_.store(true);
+            to_update_.store(true, std::memory_order::release);
         }
 
         /**
@@ -52,7 +52,7 @@ namespace zldsp::compressor {
          * update values before processing a buffer
          */
         bool prepareBuffer() override {
-            if (to_update_.exchange(false)) {
+            if (to_update_.exchange(false, std::memory_order::acquire)) {
                 update();
                 return true;
             }
@@ -118,23 +118,23 @@ namespace zldsp::compressor {
         }
 
         void setAttack(const FloatType millisecond) {
-            attack_time_.store(std::max(FloatType(0), millisecond));
-            to_update_.store(true);
+            attack_time_.store(std::max(FloatType(0), millisecond), std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setRelease(const FloatType millisecond) {
-            release_time_.store(std::max(FloatType(0), millisecond));
-            to_update_.store(true);
+            release_time_.store(std::max(FloatType(0), millisecond), std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setPumpPunch(const FloatType x) {
-            pp_portion_.store(std::clamp(x, FloatType(-1), FloatType(1)));
-            to_update_.store(true);
+            pp_portion_.store(std::clamp(x, FloatType(-1), FloatType(1)), std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setSmooth(const FloatType x) {
-            smooth_portion_.store(std::clamp(x, FloatType(0), FloatType(1)));
-            to_update_.store(true);
+            smooth_portion_.store(std::clamp(x, FloatType(0), FloatType(1)), std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
     private:

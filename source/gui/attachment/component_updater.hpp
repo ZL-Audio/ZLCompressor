@@ -31,7 +31,7 @@ namespace zlgui::attachment {
         }
 
         void updateComponents() {
-            if (updater_flag_.exchange(false)) {
+            if (updater_flag_.exchange(false, std::memory_order::acquire)) {
                 for (auto& attachment : attachments_) {
                     attachment->updateComponent();
                 }

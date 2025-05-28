@@ -46,8 +46,8 @@ namespace zldsp::container {
          * @return
          */
         int getNumReady() const {
-            const int current_head = head_.load(std::memory_order_relaxed);
-            const int current_tail = tail_.load(std::memory_order_acquire);
+            const int current_head = head_.load(std::memory_order::relaxed);
+            const int current_tail = tail_.load(std::memory_order::acquire);
             if (current_tail >= current_head) {
                 return current_tail - current_head;
             }
@@ -59,8 +59,8 @@ namespace zldsp::container {
          * @return
          */
         int getNumFree() const {
-            const int current_head = head_.load(std::memory_order_acquire);
-            const int current_tail = tail_.load(std::memory_order_relaxed);
+            const int current_head = head_.load(std::memory_order::acquire);
+            const int current_tail = tail_.load(std::memory_order::relaxed);
             if (current_head > current_tail) {
                 return current_head - current_tail - 1;
             }
@@ -68,7 +68,7 @@ namespace zldsp::container {
         }
 
         void prepareToWrite(const int num_to_write, Range &range) const {
-            const int current_tail = tail_.load(std::memory_order_relaxed);
+            const int current_tail = tail_.load(std::memory_order::relaxed);
 
             range.block_size1 = std::min(num_to_write, capacity_ - current_tail);
             range.start_index1 = current_tail;
@@ -84,14 +84,14 @@ namespace zldsp::container {
 
         void finishedWrite(const int num_written) {
             if (num_written > 0) {
-                const int current_tail = tail_.load(std::memory_order_relaxed);
+                const int current_tail = tail_.load(std::memory_order::relaxed);
                 const int new_tail = (current_tail + num_written) % capacity_;
-                tail_.store(new_tail, std::memory_order_release);
+                tail_.store(new_tail, std::memory_order::release);
             }
         }
 
         void prepareToRead(const int num_to_read, Range &range) const {
-            const int current_head = head_.load(std::memory_order_relaxed);
+            const int current_head = head_.load(std::memory_order::relaxed);
 
             range.block_size1 = std::min(num_to_read, capacity_ - current_head);
             range.start_index1 = current_head;
@@ -107,9 +107,9 @@ namespace zldsp::container {
 
         void finishedRead(const int num_read) {
             if (num_read > 0) {
-                const int current_head = head_.load(std::memory_order_relaxed);
+                const int current_head = head_.load(std::memory_order::relaxed);
                 const int new_head = (current_head + num_read) % capacity_;
-                head_.store(new_head, std::memory_order_release);
+                head_.store(new_head, std::memory_order::release);
             }
         }
 

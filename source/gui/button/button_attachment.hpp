@@ -41,7 +41,7 @@ namespace zlgui::attachment {
 
         void updateComponent() override {
             if (UpdateFromAPVTS) {
-                const auto current_flag = atomic_flag_.load();
+                const auto current_flag = atomic_flag_.load(std::memory_order::relaxed);
                 if (current_flag != button_.getToggleState()) {
                     button_.setToggleState(current_flag, notification_type_);
                 }
@@ -58,13 +58,13 @@ namespace zlgui::attachment {
         std::atomic<bool> atomic_flag_{false};
 
         void parameterChanged(const juce::String &, const float new_value) override {
-            atomic_flag_.store(new_value > .5f);
-            updater_flag_ref_.store(true);
+            atomic_flag_.store(new_value > .5f, std::memory_order::relaxed);
+            updater_flag_ref_.store(true, std::memory_order::release);
         }
 
         void buttonStateChanged(juce::Button *) override {
             parameter_ref_.beginChangeGesture();
-            parameter_ref_.setValueNotifyingHost(static_cast<float>(atomic_flag_.load()));
+            parameter_ref_.setValueNotifyingHost(static_cast<float>(button_.getToggleState()));
             parameter_ref_.endChangeGesture();
         }
 

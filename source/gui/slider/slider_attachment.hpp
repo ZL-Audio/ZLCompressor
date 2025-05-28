@@ -71,7 +71,7 @@ namespace zlgui::attachment {
 
         void updateComponent() override {
             if (UpdateFromAPVTS) {
-                const auto current_value = atomic_value_.load();
+                const auto current_value = atomic_value_.load(std::memory_order::relaxed);
                 if (std::abs(current_value - slider_.getValue()) > 1e-6f) {
                     slider_.setValue(current_value, notification_type_);
                 }
@@ -88,8 +88,8 @@ namespace zlgui::attachment {
         std::atomic<float> atomic_value_{0.f};
 
         void parameterChanged(const juce::String &, const float new_value) override {
-            atomic_value_.store(new_value);
-            updater_flag_ref_.store(true);
+            atomic_value_.store(new_value, std::memory_order::relaxed);
+            updater_flag_ref_.store(true, std::memory_order::release);
         }
 
         void sliderValueChanged(juce::Slider *) override {

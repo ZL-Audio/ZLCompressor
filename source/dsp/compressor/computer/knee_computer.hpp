@@ -27,7 +27,7 @@ namespace zldsp::compressor {
         KneeComputer() = default;
 
         bool prepareBuffer() override {
-            if (to_interpolate_.exchange(false)) {
+            if (to_interpolate_.exchange(false, std::memory_order::acquire)) {
                 interpolate();
                 return true;
             }
@@ -53,32 +53,32 @@ namespace zldsp::compressor {
         }
 
         inline void setThreshold(FloatType v) {
-            threshold_.store(v);
-            to_interpolate_.store(true);
+            threshold_.store(v, std::memory_order::relaxed);
+            to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getThreshold() const { return threshold_.load(); }
+        inline FloatType getThreshold() const { return threshold_.load(std::memory_order::relaxed); }
 
         inline void setRatio(FloatType v) {
-            ratio_.store(std::max(FloatType(1), v));
-            to_interpolate_.store(true);
+            ratio_.store(std::max(FloatType(1), v), std::memory_order::relaxed);
+            to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getRatio() const { return ratio_.load(); }
+        inline FloatType getRatio() const { return ratio_.load(std::memory_order::relaxed); }
 
         inline void setKneeW(FloatType v) {
-            knee_w_.store(std::max(v, FloatType(0.01)));
-            to_interpolate_.store(true);
+            knee_w_.store(std::max(v, FloatType(0.01)), std::memory_order::relaxed);
+            to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getKneeW() const { return knee_w_.load(); }
+        inline FloatType getKneeW() const { return knee_w_.load(std::memory_order::relaxed); }
 
         inline void setCurve(FloatType v) {
-            curve_.store(std::clamp(v, FloatType(-1), FloatType(1)));
-            to_interpolate_.store(true);
+            curve_.store(std::clamp(v, FloatType(-1), FloatType(1)), std::memory_order::relaxed);
+            to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getCurve() const { return curve_.load(); }
+        inline FloatType getCurve() const { return curve_.load(std::memory_order::relaxed); }
 
     private:
         struct LinearCurve {
@@ -120,14 +120,14 @@ namespace zldsp::compressor {
         std::atomic<bool> to_interpolate_{true};
 
         void interpolate() {
-            const auto currentThreshold = threshold_.load();
-            const auto currentKneeW = knee_w_.load();
-            const auto currentRatio = ratio_.load();
-            const auto currentCurve = curve_.load();
-            low_th_ = currentThreshold - currentKneeW;
-            high_th_ = currentThreshold + currentKneeW; {
+            const auto current_threshold = threshold_.load(std::memory_order::relaxed);
+            const auto current_knee_w = knee_w_.load(std::memory_order::relaxed);
+            const auto current_ratio = ratio_.load(std::memory_order::relaxed);
+            const auto current_curve = curve_.load(std::memory_order::relaxed);
+            low_th_ = current_threshold - current_knee_w;
+            high_th_ = current_threshold + current_knee_w; {
                 // update mid curve parameters
-                const auto a0 = (FloatType(1) / currentRatio - FloatType(1)) / (currentKneeW * FloatType(4));
+                const auto a0 = (FloatType(1) / current_ratio - FloatType(1)) / (current_knee_w * FloatType(4));
                 const auto a1 = -low_th_;
                 para_mid_g0_[0] = a0;
                 const auto a0a1 = a0 * a1;
@@ -138,17 +138,17 @@ namespace zldsp::compressor {
                 }
                 para_mid_g0_[2] = a0a1 * a1;
             }
-            if (currentCurve >= FloatType(0)) {
-                const auto alpha = FloatType(1) - currentCurve, beta = currentCurve;
-                linear_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                down_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
+            if (current_curve >= FloatType(0)) {
+                const auto alpha = FloatType(1) - current_curve, beta = current_curve;
+                linear_curve_.setPara(current_threshold, current_ratio, current_knee_w);
+                down_curve_.setPara(current_threshold, current_ratio, current_knee_w);
                 para_high_g0_[2] = alpha * linear_curve_.c + beta * down_curve_.c;
                 para_high_g0_[1] = alpha * linear_curve_.b + beta * down_curve_.b;
                 para_high_g0_[0] = beta * down_curve_.a;
             } else {
-                const auto alpha = FloatType(1) + currentCurve, beta = -currentCurve;
-                linear_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
-                up_curve_.setPara(currentThreshold, currentRatio, currentKneeW);
+                const auto alpha = FloatType(1) + current_curve, beta = -current_curve;
+                linear_curve_.setPara(current_threshold, current_ratio, current_knee_w);
+                up_curve_.setPara(current_threshold, current_ratio, current_knee_w);
                 para_high_g0_[2] = alpha * linear_curve_.c + beta * up_curve_.c;
                 para_high_g0_[1] = alpha * linear_curve_.b + beta * up_curve_.b;
                 para_high_g0_[0] = beta * up_curve_.a;

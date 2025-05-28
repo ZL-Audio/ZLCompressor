@@ -32,7 +32,7 @@ namespace zldsp::analyzer {
 
         void process(std::array<std::span<FloatType *>, MagNum> buffers,
                      const size_t num_samples) {
-            switch (mag_type_.load()) {
+            switch (mag_type_.load(std::memory_order::relaxed)) {
                 case MagType::kPeak: {
                     processBuffer<MagType::kPeak>(buffers, static_cast<int>(num_samples));
                     break;
@@ -47,13 +47,13 @@ namespace zldsp::analyzer {
         }
 
         void setTimeLength(const float x) {
-            time_length_.store(x);
-            to_update_time_length_.store(true);
+            time_length_.store(x, std::memory_order::relaxed);
+            to_update_time_length_.store(true, std::memory_order::release);
         }
 
-        void setToReset() { to_reset_.store(true); }
+        void setToReset() { to_reset_.store(true, std::memory_order::release); }
 
-        void setMagType(const MagType x) { mag_type_.store(x); }
+        void setMagType(const MagType x) { mag_type_.store(x, std::memory_order::relaxed); }
 
     protected:
         std::atomic<double> sample_rate_{48000.0};
@@ -75,9 +75,9 @@ namespace zldsp::analyzer {
         void processBuffer(std::array<std::span<FloatType *>, MagNum> &buffers, int num_samples) {
             int start_idx{0}, end_idx{0};
             if (num_samples == 0) { return; }
-            if (to_update_time_length_.exchange(false)) {
-                max_pos_ = sample_rate_.load() * static_cast<double>(
-                               time_length_.load()) / static_cast<double>(PointNum - 1);
+            if (to_update_time_length_.exchange(false, std::memory_order::acquire)) {
+                max_pos_ = sample_rate_.load(std::memory_order::relaxed) * static_cast<double>(
+                               time_length_.load(std::memory_order::relaxed)) / static_cast<double>(PointNum - 1);
                 current_pos_ = 0;
                 current_num_samples_ = 0;
             }

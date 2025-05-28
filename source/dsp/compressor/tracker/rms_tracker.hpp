@@ -46,19 +46,18 @@ namespace zldsp::compressor {
          * @param sr sample_rate
          */
         void prepare(const double sr) {
-            sample_rate_.store(sr);
-            setMaximumMomentarySize(
-                static_cast<size_t>(static_cast<double>(maximum_time_length_) * sr));
+            sample_rate_.store(sr, std::memory_order::relaxed);
+            setMaximumMomentarySize(static_cast<size_t>(static_cast<double>(maximum_time_length_) * sr));
             reset();
-            setMomentarySeconds(time_length_.load());
+            setMomentarySeconds(time_length_.load(std::memory_order::relaxed));
         }
 
         /**
          * update values before processing a buffer
          */
         void prepareBuffer() {
-            if (to_update_.exchange(false)) {
-                c_buffer_size_ = buffer_size_.load();
+            if (to_update_.exchange(false, std::memory_order::acquire)) {
+                c_buffer_size_ = buffer_size_.load(std::memory_order::relaxed);
                 c_buffer_size_r = FloatType(1) / static_cast<FloatType>(c_buffer_size_);
                 while (square_buffer_.size() > c_buffer_size_) {
                     square_sum_ -= square_buffer_.popFront();
@@ -81,9 +80,9 @@ namespace zldsp::compressor {
          * @param second the time length of the tracker
          */
         void setMomentarySeconds(const FloatType second) {
-            time_length_.store(second);
-            setMomentarySize(static_cast<size_t>(static_cast<double>(second) * sample_rate_.load()));
-            to_update_.store(true);
+            time_length_.store(second, std::memory_order::relaxed);
+            setMomentarySize(static_cast<size_t>(static_cast<double>(second) * sample_rate_.load(std::memory_order::relaxed)));
+            to_update_.store(true, std::memory_order::release);
         }
 
         /**
@@ -91,7 +90,7 @@ namespace zldsp::compressor {
          * get the time length of the tracker
          */
         inline size_t getMomentarySize() const {
-            return buffer_size_.load();
+            return buffer_size_.load(std::memory_order::relaxed);
         }
 
         size_t getCurrentBufferSize() const { return c_buffer_size_; }
@@ -119,7 +118,7 @@ namespace zldsp::compressor {
 
         void setMomentarySize(size_t size) {
             size = std::max(static_cast<size_t>(1), size);
-            buffer_size_.store(size);
+            buffer_size_.store(size, std::memory_order::relaxed);
         }
 
         void setMaximumMomentarySize(size_t size) {
