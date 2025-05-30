@@ -69,13 +69,21 @@ public:
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    inline zlp::CompressorController &getController() { return compressor_controller_; }
+    void setUseExternalSide(const bool use_ext_side) {
+        use_ext_side_.store(use_ext_side, std::memory_order::relaxed);
+    }
+
+    inline zlp::CompressorController &getController() {
+        return compressor_controller_;
+    }
 
 private:
     zlp::CompressorController compressor_controller_;
     zlp::CompressAttach compress_attach_;
     juce::AudioBuffer<float> float_buffer_;
     juce::AudioBuffer<double> double_buffer_;
+    std::array<float *, 2> main_pointers_, float_side_pointers_;
+    std::array<double *, 2> double_side_pointers_;
 
     enum ChannelLayout {
         kMain1Aux0, kMain1Aux1, kMain1Aux2,
@@ -83,6 +91,7 @@ private:
         kInvalid
     };
 
+    std::atomic<bool> use_ext_side_{false};
     ChannelLayout channel_layout_{kInvalid};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)

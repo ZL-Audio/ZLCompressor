@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <span>
 #include "kfr_import.hpp"
 
 namespace zldsp::vector {
@@ -19,15 +20,24 @@ namespace zldsp::vector {
         v1 = v2;
     }
 
-    inline void convert(double *out, const float* in, const size_t size) {
-        for (size_t i = 0; i < size; ++i) {
-            out[i] = static_cast<double>(in[i]);
+    template<typename FloatType>
+    inline void copy(std::span<FloatType *> outs, std::span<FloatType *> ins, const size_t size) {
+        for (size_t i = 0; i < std::min(outs.size(), ins.size()); ++i) {
+            copy<FloatType>(outs[i], ins[i], size);
         }
     }
 
-    inline void convert(float *out, const double* in, const size_t size) {
+    template<typename FloatType1, typename FloatType2>
+    inline void copy(FloatType1 *out, const FloatType2* in, const size_t size) {
         for (size_t i = 0; i < size; ++i) {
-            out[i] = static_cast<float>(in[i]);
+            out[i] = static_cast<FloatType1>(in[i]);
+        }
+    }
+
+    template<typename FloatType1, typename FloatType2>
+    inline void copy(std::span<FloatType1 *> outs, std::span<FloatType2 *> ins, const size_t size) {
+        for (size_t i = 0; i < std::min(outs.size(), ins.size()); ++i) {
+            copy<FloatType1, FloatType2>(outs[i], ins[i], size);
         }
     }
 

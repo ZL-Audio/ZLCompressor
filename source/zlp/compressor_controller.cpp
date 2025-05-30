@@ -20,12 +20,14 @@ namespace zlp {
         mag_avg_analyzer_.prepare(spec.sampleRate);
         output_gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.1);
 
-        pre_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
-        pre_pointers_[0] = pre_buffer_.getWritePointer(0);
-        pre_pointers_[1] = pre_buffer_.getWritePointer(1);
-        post_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize));
-        post_pointers_[0] = post_buffer_.getWritePointer(0);
-        post_pointers_[1] = post_buffer_.getWritePointer(1);
+        pre_buffer_[0].resize(static_cast<size_t>(spec.maximumBlockSize));
+        pre_buffer_[1].resize(static_cast<size_t>(spec.maximumBlockSize));
+        pre_pointers_[0] = pre_buffer_[0].data();
+        pre_pointers_[1] = pre_buffer_[1].data();
+        post_buffer_[0].resize(static_cast<size_t>(spec.maximumBlockSize));
+        post_buffer_[1].resize(static_cast<size_t>(spec.maximumBlockSize));
+        post_pointers_[0] = post_buffer_[0].data();
+        post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to 8x oversampling
         for (auto &t: tracker_) {
             t.setMaximumMomentarySeconds(0.04f * 8.01f);
@@ -45,7 +47,7 @@ namespace zlp {
                                       spec.sampleRate));
         oversample_delay_.setDelayInSamples(0);
         // init hold buffers
-        for (auto &h : hold_buffer_) {
+        for (auto &h: hold_buffer_) {
             h.setCapacity(static_cast<size_t>(8.0 * spec.sampleRate));
         }
     }
@@ -78,7 +80,7 @@ namespace zlp {
                 f.prepare(oversample_sr);
             }
             // prepare the hold buffer with the multiplied samplerate
-            for (auto &h : hold_buffer_) {
+            for (auto &h: hold_buffer_) {
                 h.setCapacity(static_cast<size_t>(oversample_sr));
             }
             to_update_hold_.store(true);
@@ -86,8 +88,6 @@ namespace zlp {
             triggerAsyncUpdate();
         }
 
-        // load external side-chain
-        c_ext_side_chain_ = ext_side_chain_.load(std::memory_order::relaxed);
         // load stereo mode
         c_stereo_mode_ = stereo_mode_.load(std::memory_order::relaxed);
         // load compressor style, if they are different, reset the internal state
@@ -117,22 +117,23 @@ namespace zlp {
         if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
             const auto oversample_mul = 1 << c_oversample_idx_;
             const auto hold_size = static_cast<size_t>(
-                main_spec_.sampleRate * hold_length_.load(std::memory_order::relaxed)
-                ) * static_cast<size_t>(oversample_mul);
+                                       main_spec_.sampleRate * hold_length_.load(std::memory_order::relaxed)
+                                   ) * static_cast<size_t>(oversample_mul);
             hold_buffer_[0].setSize(hold_size);
             hold_buffer_[1].setSize(hold_size);
         }
         // load wet values
         if (to_update_wet_.exchange(false, std::memory_order::acquire)) {
             const auto c_wet = wet_.load(std::memory_order::relaxed);
-            c_wet1_ = wet1_.load(std::memory_order::relaxed) * c_wet * 0.05f; // 0.05 accounts for the db to gain transformation
+            c_wet1_ = wet1_.load(std::memory_order::relaxed) * c_wet * 0.05f;
+            // 0.05 accounts for the db to gain transformation
             c_wet2_ = wet2_.load(std::memory_order::relaxed) * c_wet * 0.05f;
             to_update_range_.store(true);
             to_update_output_gain_.store(true);
         }
         if (to_update_range_.exchange(false, std::memory_order::acquire)) {
             c_range_ = range_.load(
-                std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
+                           std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
         }
         if (to_update_output_gain_.exchange(false, std::memory_order::acquire)) {
             output_gain_.setGainDecibels(
@@ -140,84 +141,50 @@ namespace zlp {
         }
     }
 
-    void CompressorController::process(juce::AudioBuffer<float> &buffer) {
+    void CompressorController::process(std::array<float *, 2> main_pointers,
+                                       std::array<float *, 2> side_pointers,
+                                       const size_t num_samples) {
         prepareBuffer();
-        juce::AudioBuffer<float> main_buffer{buffer.getArrayOfWritePointers() + 0, 2, buffer.getNumSamples()};
-        juce::AudioBuffer<float> side_buffer{buffer.getArrayOfWritePointers() + 2, 2, buffer.getNumSamples()};
-        main_pointers_[0] = main_buffer.getWritePointer(0);
-        main_pointers_[1] = main_buffer.getWritePointer(1);
         if (c_mag_analyzer_on_) {
-            pre_buffer_.makeCopyOf(main_buffer, true);
+            zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
         }
 
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 1) {
-            zldsp::splitter::MSSplitter<float>::split(main_buffer.getWritePointer(0),
-                                                      main_buffer.getWritePointer(1),
-                                                      static_cast<size_t>(main_buffer.getNumSamples()));
-            if (c_ext_side_chain_) {
-                zldsp::splitter::MSSplitter<float>::split(side_buffer.getWritePointer(0),
-                                                          side_buffer.getWritePointer(1),
-                                                          static_cast<size_t>(side_buffer.getNumSamples()));
-            }
+            zldsp::splitter::MSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
+            zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
         // upsample side buffer
         if (c_oversample_idx_ == 0) {
-            if (!c_ext_side_chain_) {
-                // copy side buffer to main buffer
-                zldsp::vector::copy(side_buffer.getWritePointer(0),
-                                    main_buffer.getReadPointer(0),
-                                    static_cast<size_t>(buffer.getNumSamples()));
-                zldsp::vector::copy(side_buffer.getWritePointer(1),
-                                    main_buffer.getReadPointer(1),
-                                    static_cast<size_t>(buffer.getNumSamples()));
-            }
-            processBuffer(buffer.getWritePointer(0), buffer.getWritePointer(1),
-                          buffer.getWritePointer(2), buffer.getWritePointer(3),
-                          static_cast<size_t>(buffer.getNumSamples()));
+            processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples);
         } else {
-            juce::dsp::AudioBlock<float> main_block(main_buffer);
+            juce::dsp::AudioBlock<float> main_block(main_pointers.data(), 2, num_samples);
             // upsample the main buffer
             auto &main_oversampler = oversample_stages_main_[c_oversample_stage_idx_];
             auto os_main_block = main_oversampler.processSamplesUp(main_block);
-            if (c_ext_side_chain_) {
-                // upsample the side buffer
-                juce::dsp::AudioBlock<float> side_block(side_buffer);
-                auto &side_oversampler = oversample_stages_side_[c_oversample_stage_idx_];
-                auto os_side_block = side_oversampler.processSamplesUp(side_block);
-                // process the oversampled buffers
-                processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
-                              os_side_block.getChannelPointer(0), os_side_block.getChannelPointer(1),
-                              os_main_block.getNumSamples());
-            } else {
-                // copy the oversampled main buffer to the oversampled side buffer
-                zldsp::vector::copy(oversampled_side_buffer_.getWritePointer(0),
-                                    os_main_block.getChannelPointer(0), os_main_block.getNumSamples());
-                zldsp::vector::copy(oversampled_side_buffer_.getWritePointer(1),
-                                    os_main_block.getChannelPointer(1), os_main_block.getNumSamples());
-                // process the oversampled buffers
-                processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
-                              oversampled_side_buffer_.getWritePointer(0), oversampled_side_buffer_.getWritePointer(1),
-                              static_cast<size_t>(os_main_block.getNumSamples()));
-            }
+            // upsample the side buffer
+            juce::dsp::AudioBlock<float> side_block(side_pointers.data(), 2, num_samples);
+            auto &side_oversampler = oversample_stages_side_[c_oversample_stage_idx_];
+            auto os_side_block = side_oversampler.processSamplesUp(side_block);
+            // process the oversampled buffers
+            processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
+                          os_side_block.getChannelPointer(0), os_side_block.getChannelPointer(1),
+                          os_main_block.getNumSamples());
             // downsample the main buffer
             main_oversampler.processSamplesDown(main_block);
             // delay the pre buffer
-            oversample_delay_.process(pre_pointers_, static_cast<size_t>(pre_buffer_.getNumSamples()));
+            oversample_delay_.process(pre_pointers_, num_samples);
         }
         // copy to post buffer
         if (c_mag_analyzer_on_) {
-            zldsp::vector::copy(post_pointers_[0], main_pointers_[0], static_cast<size_t>(buffer.getNumSamples()));
-            zldsp::vector::copy(post_pointers_[1], main_pointers_[1], static_cast<size_t>(buffer.getNumSamples()));
+            zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
         }
         // makeup gain
-        output_gain_.process(main_pointers_, static_cast<size_t>(main_buffer.getNumSamples()));
+        output_gain_.process(main_pointers, num_samples);
 
         if (c_mag_analyzer_on_) {
-            mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers_},
-                                  static_cast<size_t>(buffer.getNumSamples()));
-            mag_avg_analyzer_.process({pre_pointers_, main_pointers_},
-                                      static_cast<size_t>(buffer.getNumSamples()));
+            mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
+            mag_avg_analyzer_.process({pre_pointers_, main_pointers}, num_samples);
         }
     }
 

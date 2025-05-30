@@ -28,7 +28,7 @@ namespace zlp {
 
         void prepare(const juce::dsp::ProcessSpec &spec);
 
-        void process(juce::AudioBuffer<float> &buffer);
+        void process(std::array<float *, 2>main_pointers, std::array<float *, 2> side_pointers, size_t num_samples);
 
         auto &getMagAnalyzer() { return mag_analyzer_; }
 
@@ -82,14 +82,12 @@ namespace zlp {
         bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
 
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
-        juce::AudioBuffer<float> pre_buffer_, post_buffer_;
-        std::array<float *, 2> pre_pointers_{}, post_pointers_{}, main_pointers_{};
+        std::array<kfr::univector<float>, 2> pre_buffer_, post_buffer_;
+        std::array<float *, 2> pre_pointers_{}, post_pointers_{};
+        // std::array<float *, 2> pre_pointers_{}, post_pointers_{}, main_pointers_{};
 
         zldsp::analyzer::MagReductionAnalyzer<float, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
-
-        std::atomic<bool> ext_side_chain_{false};
-        bool c_ext_side_chain_{false};
 
         std::atomic<int> stereo_mode_{0};
         int c_stereo_mode_{0};
@@ -113,19 +111,19 @@ namespace zlp {
         juce::AudioBuffer<float> oversampled_side_buffer_{};
         std::array<juce::dsp::Oversampling<float>, 3> oversample_stages_main_{
             juce::dsp::Oversampling<float>(2, 1,
-                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
+                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
             juce::dsp::Oversampling<float>(2, 2,
-                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
+                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
             juce::dsp::Oversampling<float>(2, 3,
-                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
+                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
         };
         std::array<juce::dsp::Oversampling<float>, 3> oversample_stages_side_{
             juce::dsp::Oversampling<float>(2, 1,
-                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
+                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
             juce::dsp::Oversampling<float>(2, 2,
-                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
+                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
             juce::dsp::Oversampling<float>(2, 3,
-                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
+                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
         };
 
         // computer, trackers and followers

@@ -95,7 +95,11 @@ void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_
     };
     float_buffer_.setSize(4, samples_per_block);
     float_buffer_.clear();
+    float_side_pointers_[0] = float_buffer_.getWritePointer(2);
+    float_side_pointers_[1] = float_buffer_.getWritePointer(3);
     double_buffer_.setSize(2, samples_per_block);
+    double_side_pointers_[0] = double_buffer_.getWritePointer(0);
+    double_side_pointers_[1] = double_buffer_.getWritePointer(1);
     double_buffer_.clear();
     compressor_controller_.prepare(spec);
     // determine current channel layout
@@ -148,54 +152,96 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
+    const auto c_use_ext_side = use_ext_side_.load(std::memory_order::relaxed);
     const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
-    float_buffer_.setSize(4, buffer.getNumSamples(), false, false, true);
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
-            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            main_pointers_[0] = buffer.getWritePointer(0);
+            main_pointers_[1] = float_buffer_.getWritePointer(1);
+            zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
+
+            zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux1: {
-            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(3), buffer.getReadPointer(1), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            main_pointers_[0] = buffer.getWritePointer(0);
+            main_pointers_[1] = float_buffer_.getWritePointer(1);
+            zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
+
+            if (c_use_ext_side) {
+                zldsp::vector::copy(double_side_pointers_[0], buffer.getReadPointer(1), buffer_size);
+                zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
+            } else {
+                zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux2: {
-            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            main_pointers_[0] = buffer.getWritePointer(0);
+            main_pointers_[1] = float_buffer_.getWritePointer(1);
+            zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
+
+            if (c_use_ext_side) {
+                zldsp::vector::copy(double_side_pointers_[0], buffer.getReadPointer(1), buffer_size);
+                zldsp::vector::copy(double_side_pointers_[1], buffer.getReadPointer(2), buffer_size);
+            } else {
+                zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux0: {
-            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
+            main_pointers_[0] = buffer.getWritePointer(0);
+            main_pointers_[1] = buffer.getWritePointer(1);
+
+            zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux1: {
-            zldsp::vector::copy(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(2), buffer.getReadPointer(2), buffer_size);
-            zldsp::vector::copy(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::copy(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
+            main_pointers_[0] = buffer.getWritePointer(0);
+            main_pointers_[1] = buffer.getWritePointer(1);
+
+            if (c_use_ext_side) {
+                zldsp::vector::copy(double_side_pointers_[0], buffer.getWritePointer(2), buffer_size);
+                zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
+            } else {
+                zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux2: {
-            compressor_controller_.process(buffer);
+            main_pointers_[0] = buffer.getWritePointer(0);
+            main_pointers_[1] = buffer.getWritePointer(1);
+
+            if (c_use_ext_side) {
+                zldsp::vector::copy(double_side_pointers_[0], buffer.getWritePointer(2), buffer_size);
+                zldsp::vector::copy(double_side_pointers_[1], buffer.getWritePointer(3), buffer_size);
+            } else {
+                zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
             break;
         }
         case ChannelLayout::kInvalid: {
@@ -206,60 +252,103 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
+    const auto c_use_ext_side = use_ext_side_.load(std::memory_order::relaxed);
     const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
-    float_buffer_.setSize(4, buffer.getNumSamples(), false, false, true);
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
-            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
+
+            double_side_pointers_[0] = buffer.getWritePointer(0);
+            zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux1: {
-            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(1), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
+
+            double_side_pointers_[0] = c_use_ext_side ? buffer.getWritePointer(1) : buffer.getWritePointer(0);
+            zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
             break;
         }
         case ChannelLayout::kMain1Aux2: {
-            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
+
+            if (c_use_ext_side) {
+                double_side_pointers_[0] = buffer.getWritePointer(1);
+                double_side_pointers_[1] = buffer.getWritePointer(2);
+            } else {
+                double_side_pointers_[0] = buffer.getWritePointer(0);
+                zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux0: {
-            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
+            zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[1], buffer.getWritePointer(1), buffer_size);
+
+            double_side_pointers_[0] = buffer.getWritePointer(0);
+            double_side_pointers_[1] = buffer.getWritePointer(1);
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux1: {
-            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(2), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(2), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
+            zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[1], buffer.getWritePointer(1), buffer_size);
+
+            if (c_use_ext_side) {
+                double_side_pointers_[0] = buffer.getWritePointer(2);
+                zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
+            } else {
+                double_side_pointers_[0] = buffer.getWritePointer(0);
+                double_side_pointers_[1] = buffer.getWritePointer(1);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
             break;
         }
         case ChannelLayout::kMain2Aux2: {
-            zldsp::vector::convert(float_buffer_.getWritePointer(0), buffer.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(1), buffer.getReadPointer(1), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(2), buffer.getReadPointer(2), buffer_size);
-            zldsp::vector::convert(float_buffer_.getWritePointer(3), buffer.getReadPointer(3), buffer_size);
-            compressor_controller_.process(float_buffer_);
-            zldsp::vector::convert(buffer.getWritePointer(0), float_buffer_.getReadPointer(0), buffer_size);
-            zldsp::vector::convert(buffer.getWritePointer(1), float_buffer_.getReadPointer(1), buffer_size);
+            zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
+            zldsp::vector::copy(main_pointers_[1], buffer.getWritePointer(1), buffer_size);
+
+            if (c_use_ext_side) {
+                double_side_pointers_[0] = buffer.getWritePointer(2);
+                double_side_pointers_[1] = buffer.getWritePointer(3);
+            } else {
+                double_side_pointers_[0] = buffer.getWritePointer(0);
+                double_side_pointers_[1] = buffer.getWritePointer(1);
+            }
+            // process side eq
+            zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
+
+            compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+            zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
             break;
         }
         case ChannelLayout::kInvalid: {
