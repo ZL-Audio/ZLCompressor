@@ -20,55 +20,68 @@ namespace zldsp::container {
     class CircularBuffer {
     public:
         explicit CircularBuffer(const size_t capacity) {
-            data_.resize(capacity);
+            setCapacity(capacity);
         }
 
         [[nodiscard]] size_t capacity() const { return data_.size(); }
 
-        [[nodiscard]] size_t size() const { return static_cast<size_t>(c_num_); }
+        [[nodiscard]] size_t size() const {
+            return tail_ >= head_
+            ? static_cast<size_t>(tail_ - head_)
+            : static_cast<size_t>(tail_ + static_cast<unsigned int>(data_.size()) - head_);
+        }
+
+        [[nodiscard]] bool isEmpty() const {
+            return tail_ == head_;
+        }
 
         void setCapacity(const size_t capacity) {
-            data_.resize(capacity);
-            cap_ = static_cast<int>(capacity);
+            data_.resize(capacity + 1);
             clear();
         }
 
         void clear() {
-            std::fill(data_.begin(), data_.end(), T());
-            pos_ = 0;
-            c_num_ = 0;
+            head_ = 0;
+            tail_ = 0;
         }
 
         void pushBack(T x) {
-            data_[static_cast<size_t>(pos_)] = x;
-            pos_ = (pos_ + 1) % cap_;
-            c_num_ = std::min(c_num_ + 1, cap_);
+            tail_ = (tail_ + 1) % static_cast<unsigned int>(data_.size());
+            data_[static_cast<size_t>(tail_)] = x;
+            if (tail_ == head_) {
+                popFront();
+            }
         }
 
         T popBack() {
-            pos_ = (pos_ + cap_ - 1) % cap_;
-            c_num_ -= 1;
-            return data_[static_cast<size_t>(pos_)];
+            const auto t = data_[static_cast<size_t>(tail_)];
+            tail_ = tail_ > 0 ? tail_ - 1 : static_cast<unsigned int>(data_.size()) - 1;
+            return t;
         }
 
         T getBack() {
-            const auto back_pos = (pos_ + cap_ - 1) % cap_;
-            return data_[static_cast<size_t>(back_pos)];
+            return data_[static_cast<size_t>(tail_)];
+        }
+
+        void pushFront(T x) {
+            data_[static_cast<size_t>(head_)] = x;
+            head_ = head_ > 0 ? head_ - 1 : static_cast<unsigned int>(data_.size()) - 1;
+            if (head_ == tail_) {
+                popBack();
+            }
         }
 
         T popFront() {
-            const auto front_pos = (pos_ - c_num_ + cap_) % cap_;
-            c_num_ -= 1;
-            return data_[static_cast<size_t>(front_pos)];
+            head_ = (head_ + 1) % static_cast<unsigned int>(data_.size());
+            return data_[static_cast<size_t>(head_)];
         }
 
         T getFront() {
-            const auto front_pos = (pos_ - c_num_ + cap_) % cap_;
-            return data_[static_cast<size_t>(front_pos)];
+            return data_[static_cast<size_t>((head_ + 1) % static_cast<unsigned int>(data_.size()))];
         }
 
     private:
         std::vector<T> data_;
-        int pos_{0}, c_num_{0}, cap_{0};
+        unsigned int head_{0}, tail_{0};
     };
 }

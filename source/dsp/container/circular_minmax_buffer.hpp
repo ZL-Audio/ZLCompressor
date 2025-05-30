@@ -36,7 +36,7 @@ namespace zldsp::container {
         void setSize(const size_t x) {
             size_ = static_cast<unsigned long long>(x);
             if (static_cast<unsigned long long>(x) < count_) {
-                while (minmax_buffer_.size() > 0 && minmax_buffer_.getFront().second <= head_ - count_) {
+                while (!minmax_buffer_.isEmpty() && minmax_buffer_.getFront().second <= head_ - count_) {
                     minmax_buffer_.popFront();
                 }
             }
@@ -63,17 +63,17 @@ namespace zldsp::container {
                 head_ -= shift;
             }
             // remove samples which fail out of the window
-            while (minmax_buffer_.size() > 0 && minmax_buffer_.getFront().second <= head_ - count_) {
+            while (!minmax_buffer_.isEmpty() && minmax_buffer_.getFront().second <= head_ - count_) {
                 minmax_buffer_.popFront();
             }
             // maintain monotonicity
             if (BufferType == kFindMin) {
-                while (minmax_buffer_.size() > 0 && minmax_buffer_.getBack().first >= x) {
+                while (!minmax_buffer_.isEmpty() && minmax_buffer_.getBack().first >= x) {
                     minmax_buffer_.popBack();
                 }
             }
             if (BufferType == kFindMax) {
-                while (minmax_buffer_.size() > 0 && minmax_buffer_.getBack().first <= x) {
+                while (!minmax_buffer_.isEmpty() && minmax_buffer_.getBack().first <= x) {
                     minmax_buffer_.popBack();
                 }
             }
