@@ -70,10 +70,14 @@ namespace zlgui::combobox {
 
     void CompactCombobox::mouseEnter(const juce::MouseEvent &event) {
         combo_box_.mouseEnter(event);
+        box_laf_.setBoxAlpha(1.f);
+        combo_box_.repaint();
     }
 
     void CompactCombobox::mouseExit(const juce::MouseEvent &event) {
         combo_box_.mouseExit(event);
+        box_laf_.setBoxAlpha(0.f);
+        combo_box_.repaint();
     }
 
     void CompactCombobox::mouseMove(const juce::MouseEvent &event) {

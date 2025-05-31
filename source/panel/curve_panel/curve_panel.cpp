@@ -11,12 +11,15 @@
 
 namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
-        : Thread("curve_panel"),
-          peak_panel_(p), rms_panel_(p), computer_panel_(p, base) {
+        : Thread("curve_panel"), base_(base),
+          peak_panel_(p), rms_panel_(p),
+          computer_panel_(p, base_),
+          bottom_control_panel_(p, base_) {
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);
         addAndMakeVisible(computer_panel_);
+        addAndMakeVisible(bottom_control_panel_);
         computer_panel_.setInterceptsMouseClicks(false, false);
         startThread(juce::Thread::Priority::low);
     }
@@ -28,7 +31,7 @@ namespace zlpanel {
     }
 
     void CurvePanel::paint(juce::Graphics &g) {
-        g.fillAll(juce::Colours::black);
+        g.fillAll(base_.getBackgroundColor());
     }
 
     void CurvePanel::paintOverChildren(juce::Graphics &g) {
@@ -37,12 +40,18 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
-        const auto bound = getLocalBounds().toFloat();
-        rms_panel_.setBounds(bound.withWidth(75.f).toNearestInt());
-        peak_panel_.setBounds(bound.toNearestInt());
-        const auto r = std::min(bound.getWidth(), bound.getHeight());
-        separate_panel_.setBounds(bound.withSize(r, r).toNearestInt());
-        computer_panel_.setBounds(bound.withSize(r * 1.5f, r).toNearestInt());
+        {
+            const auto bound = getLocalBounds().toFloat();
+            rms_panel_.setBounds(bound.withWidth(75.f).toNearestInt());
+            peak_panel_.setBounds(bound.toNearestInt());
+            const auto r = std::min(bound.getWidth(), bound.getHeight());
+            separate_panel_.setBounds(bound.withSize(r, r).toNearestInt());
+            computer_panel_.setBounds(bound.withSize(r * 1.5f, r).toNearestInt());
+        } {
+            auto bound = getLocalBounds();
+            bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bottom_control_panel_.setBounds(bound.removeFromLeft(bottom_control_panel_.getIdealWidth()));
+        }
     }
 
     void CurvePanel::run() {
@@ -60,6 +69,7 @@ namespace zlpanel {
     }
 
     void CurvePanel::repaintCallBack(const double time_stamp) {
+        bottom_control_panel_.repaintCallBack(time_stamp);
         if (repaint_count_ >= 0) {
             repaint_count_ = 0;
             next_stamp_.store(time_stamp);

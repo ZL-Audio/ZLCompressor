@@ -17,6 +17,7 @@
 #include "peak_panel.hpp"
 #include "computer_panel.hpp"
 #include "separate_panel.hpp"
+#include "bottom_control_panel.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -35,10 +36,12 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
+        zlgui::UIBase &base_;
         PeakPanel peak_panel_;
         RMSPanel rms_panel_;
         ComputerPanel computer_panel_;
         SeparatePanel separate_panel_;
+        BottomControlPanel bottom_control_panel_;
         std::atomic<double> next_stamp_{0.};
         double rms_previous_stamp_{0.};
         std::atomic<bool> to_run_rms_{false};

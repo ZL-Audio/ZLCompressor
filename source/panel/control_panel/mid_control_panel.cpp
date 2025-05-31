@@ -74,18 +74,9 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
-        // const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
 
         bound.removeFromTop(padding);
-        bound.removeFromBottom(padding); {
-            bound.removeFromRight(padding);
-            auto t_bound = bound.removeFromRight(slider_width);
-            const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
-            t_bound.removeFromTop(extra_padding);
-            t_bound.removeFromBottom(extra_padding);
-            pump_slider_.setBounds(t_bound.removeFromTop(slider_height));
-            smooth_slider_.setBounds(t_bound.removeFromBottom(slider_height));
-        } {
+        bound.removeFromBottom(padding);{
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             release_slider_.setBounds(t_bound);
@@ -93,6 +84,14 @@ namespace zlpanel {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             attack_slider_.setBounds(t_bound);
+        } {
+            bound.removeFromRight(padding);
+            auto t_bound = bound.removeFromRight(slider_width);
+            const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
+            t_bound.removeFromTop(extra_padding);
+            t_bound.removeFromBottom(extra_padding);
+            pump_slider_.setBounds(t_bound.removeFromTop(slider_height));
+            smooth_slider_.setBounds(t_bound.removeFromBottom(slider_height));
         } {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);

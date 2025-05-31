@@ -29,10 +29,10 @@ namespace zlgui {
     }
 
     void CompactButton::resized() {
-        auto bound = getLocalBounds().toFloat();
+        auto bound = getLocalBounds();
         const auto radius = juce::jmin(bound.getHeight(), bound.getWidth());
         bound = bound.withSizeKeepingCentre(radius, radius);
-        button_.setBounds(bound.toNearestInt());
+        button_.setBounds(bound);
     }
 
     void CompactButton::buttonDownAnimation() {

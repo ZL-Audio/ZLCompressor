@@ -31,13 +31,17 @@ namespace zlgui::combobox {
             if (isButtonDown || box.isPopupActive()) {
                 g.setColour(base_.getTextInactiveColor());
                 g.fillRoundedRectangle(boxBounds, cornerSize);
-            } else {
+            } else if (box_alpha_ > 1e-3f) {
                 base_.fillRoundedInnerShadowRectangle(g, boxBounds, cornerSize,
                                                       {
                                                           .blur_radius = 0.45f, .flip = true,
-                                                          .main_colour = base_.getBackgroundColor().withAlpha(.25f),
-                                                          .dark_shadow_color = base_.getDarkShadowColor(),
-                                                          .bright_shadow_color = base_.getBrightShadowColor(),
+                                                          .main_colour = base_.getBackgroundColor().
+                                                          withMultipliedAlpha(
+                                                              juce::jlimit(.25f, .5f, box_alpha_)),
+                                                          .dark_shadow_color = base_.getDarkShadowColor().
+                                                          withMultipliedAlpha(box_alpha_),
+                                                          .bright_shadow_color = base_.getBrightShadowColor().
+                                                          withMultipliedAlpha(box_alpha_),
                                                           .change_main = true, .change_dark = true,
                                                           .change_bright = true
                                                       });
@@ -122,8 +126,10 @@ namespace zlgui::combobox {
             }
         }
 
+        void setBoxAlpha(const float x) { box_alpha_ = x; }
+
     private:
-        float font_scale_{1.5f};
+        float font_scale_{1.5f}, box_alpha_{0.f};
         juce::PopupMenu::Options option_{};
 
         UIBase &base_;

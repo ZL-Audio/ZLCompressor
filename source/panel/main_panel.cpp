@@ -30,7 +30,7 @@ namespace zlpanel {
             }
         }
 
-        const auto font_size = static_cast<float>(bound.getWidth()) * 0.0163f;
+        const auto font_size = static_cast<float>(bound.getWidth()) * 0.016f;
         base_.setFontSize(font_size);
 
         const auto controlBound = bound.removeFromBottom(juce::roundToInt(font_size * 7.348f));

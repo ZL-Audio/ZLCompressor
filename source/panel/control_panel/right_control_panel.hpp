@@ -14,7 +14,7 @@
 #include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class RightControlPanel : public juce::Component {
+    class RightControlPanel final : public juce::Component {
     public:
         explicit RightControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 

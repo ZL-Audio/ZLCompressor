@@ -32,6 +32,7 @@ namespace zlpanel {
 
         gain_label_.setText("Makeup", juce::dontSendNotification);
         gain_label_.setJustificationType(juce::Justification::centred);
+        gain_label_.setInterceptsMouseClicks(false, false);
         gain_label_.setLookAndFeel(&label_laf_);
         gain_label_.setBufferedToImage(true);
         addAndMakeVisible(gain_label_);
@@ -40,6 +41,7 @@ namespace zlpanel {
 
         wet_label_.setText("Wet", juce::dontSendNotification);
         wet_label_.setJustificationType(juce::Justification::centred);
+        wet_label_.setInterceptsMouseClicks(false, false);
         wet_label_.setLookAndFeel(&label_laf_);
         wet_label_.setBufferedToImage(true);
         addAndMakeVisible(wet_label_);

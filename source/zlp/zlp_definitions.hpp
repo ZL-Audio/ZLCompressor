@@ -297,17 +297,40 @@ namespace zlp {
         int static constexpr kDefaultI = 0;
     };
 
+    class PExtSide : public BoolParameters<PExtSide> {
+    public:
+        auto static constexpr kID = "external_side";
+        auto static constexpr kName = "External Side";
+        auto static constexpr kDefaultV = false;
+    };
+
+    class PSideOut : public BoolParameters<PSideOut> {
+    public:
+        auto static constexpr kID = "side_out";
+        auto static constexpr kName = "Side Out";
+        auto static constexpr kDefaultV = false;
+    };
+
+    class PSideGain : public FloatParameters<PSideGain> {
+    public:
+        auto static constexpr kID = "side gain";
+        auto static constexpr kName = "Side Gain";
+        inline auto static const kRange = getLogMidRangeShift(2.f, 32.f, 12.f, 0.01f, -2.f);
+        auto static constexpr kDefaultV = 0.f;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
                    PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
                    PHold::get(), PRange::get(), PWet::get(), POutGain::get(),
+                   PExtSide::get(), PSideOut::get(), PSideGain::get(),
                    POversample::get());
         return layout;
     }
 
-    inline void updateParaNotifyHost(juce::RangedAudioParameter *para, float value) {
+    inline void updateParaNotifyHost(juce::RangedAudioParameter *para, const float value) {
         para->beginChangeGesture();
         para->setValueNotifyingHost(value);
         para->endChangeGesture();
