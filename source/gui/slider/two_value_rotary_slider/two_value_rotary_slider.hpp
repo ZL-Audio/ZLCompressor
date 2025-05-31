@@ -44,8 +44,10 @@ namespace zlgui::slider {
                 const auto diameter = juce::jmin(bounds.getWidth(), bounds.getHeight());
                 bounds = bounds.withSizeKeepingCentre(diameter, diameter);
                 // draw knob background
-                const auto old_bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.5f * thick_scale_, {});
-                const auto new_bounds = base_.drawShadowEllipse(g, old_bounds, base_.getFontSize() * 0.5f * thick_scale_, {});
+                const auto old_bounds = base_.drawInnerShadowEllipse(
+                    g, bounds, base_.getFontSize() * 0.5f * thick_scale_, {});
+                const auto new_bounds = base_.drawShadowEllipse(g, old_bounds,
+                                                                base_.getFontSize() * 0.5f * thick_scale_, {});
                 base_.drawInnerShadowEllipse(g, new_bounds, base_.getFontSize() * 0.15f, {.flip = true});
                 // draw pie segment
                 juce::Path shadow;
@@ -343,9 +345,9 @@ namespace zlgui::slider {
                 slider2_.setBounds(bound.toNearestInt());
             }
             if (UseName) {
-                auto labelBound = bound.withSizeKeepingCentre(bound.getWidth() * 0.7f,
-                                                              bound.getHeight() * 0.6f);
-                label_.setBounds(labelBound.toNearestInt());
+                const auto bound_size = std::min(bound.getWidth(), bound.getHeight());
+                const auto label_bound = bound.withSizeKeepingCentre(bound_size * 0.7f, bound_size * 0.6f);
+                label_.setBounds(label_bound.toNearestInt());
             }
 
             setShowSlider2(show_slider2_);

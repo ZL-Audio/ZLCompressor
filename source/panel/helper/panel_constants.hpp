@@ -11,4 +11,7 @@
 
 namespace zlpanel {
     static constexpr float kPaddingScale = .4f;
+    static constexpr float kSliderScale = 6.5f;
+    static constexpr float kSliderHeightScale = 2.8f;
+    static constexpr float kSmallSliderScale = 5.5f;
 }

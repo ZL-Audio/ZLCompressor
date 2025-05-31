@@ -20,6 +20,8 @@ namespace zlpanel {
 
         void paint(juce::Graphics &g) override;
 
+        int getIdealWidth() const;
+
         void resized() override;
 
         void repaintCallBack();
@@ -28,6 +30,8 @@ namespace zlpanel {
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
+
+        zlgui::label::NameLookAndFeel label_laf_;
 
         zlgui::slider::CompactLinearSlider<true, true, true> range_slider_;
         zlgui::attachment::SliderAttachment<true> range_attachment_;
@@ -42,7 +46,5 @@ namespace zlpanel {
         juce::Label wet_label_;
         zlgui::slider::TwoValueRotarySlider<true, false, false> wet_slider_;
         zlgui::attachment::SliderAttachment<true> wet_attachment_;
-
-        zlgui::label::NameLookAndFeel label_laf_;
     };
 } // zlpanel

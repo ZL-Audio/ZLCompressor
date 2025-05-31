@@ -53,6 +53,8 @@ namespace zlpanel {
 
         smooth_slider_.setBufferedToImage(true);
         addAndMakeVisible(smooth_slider_);
+
+        setOpaque(true);
     }
 
     void MidControlPanel::paint(juce::Graphics &g) {
@@ -60,46 +62,53 @@ namespace zlpanel {
         g.fillRect(getLocalBounds());
     }
 
+    int MidControlPanel::getIdealWidth() const {
+        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        // const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        return padding * 7 + slider_width * 6;
+    }
+
     void MidControlPanel::resized() {
         auto bound = getLocalBounds();
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+        // const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
 
         bound.removeFromTop(padding);
-        bound.removeFromBottom(padding);
-
-        const auto height = bound.getHeight();
-        const auto half_height = (height - 2 * padding) / 2; {
+        bound.removeFromBottom(padding); {
             bound.removeFromRight(padding);
-            auto t_bound = bound.removeFromRight(height);
-            const auto extra_padding = (t_bound.getHeight() - 2 * half_height) / 4;
+            auto t_bound = bound.removeFromRight(slider_width);
+            const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
             t_bound.removeFromTop(extra_padding);
             t_bound.removeFromBottom(extra_padding);
-            pump_slider_.setBounds(t_bound.removeFromTop(half_height));
-            smooth_slider_.setBounds(t_bound.removeFromBottom(half_height));
+            pump_slider_.setBounds(t_bound.removeFromTop(slider_height));
+            smooth_slider_.setBounds(t_bound.removeFromBottom(slider_height));
         } {
             bound.removeFromRight(padding);
-            const auto t_bound = bound.removeFromRight(height);
+            const auto t_bound = bound.removeFromRight(slider_width);
             release_slider_.setBounds(t_bound);
         } {
             bound.removeFromRight(padding);
-            const auto t_bound = bound.removeFromRight(height);
+            const auto t_bound = bound.removeFromRight(slider_width);
             attack_slider_.setBounds(t_bound);
         } {
             bound.removeFromRight(padding);
-            const auto t_bound = bound.removeFromRight(height);
+            const auto t_bound = bound.removeFromRight(slider_width);
             ratio_slider_.setBounds(t_bound);
         } {
             bound.removeFromRight(padding);
-            const auto t_bound = bound.removeFromRight(height);
+            const auto t_bound = bound.removeFromRight(slider_width);
             th_slider_.setBounds(t_bound);
         } {
             bound.removeFromRight(padding);
-            auto t_bound = bound.removeFromRight(height);
-            const auto extra_padding = (t_bound.getHeight() - 2 * half_height) / 4;
+            auto t_bound = bound.removeFromRight(slider_width);
+            const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
             t_bound.removeFromTop(extra_padding);
             t_bound.removeFromBottom(extra_padding);
-            knee_slider_.setBounds(t_bound.removeFromTop(half_height));
-            curve_slider_.setBounds(t_bound.removeFromBottom(half_height));
+            knee_slider_.setBounds(t_bound.removeFromTop(slider_height));
+            curve_slider_.setBounds(t_bound.removeFromBottom(slider_height));
         }
     }
 

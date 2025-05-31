@@ -17,11 +17,14 @@ namespace zlpanel {
     public:
         explicit ControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
+        void paint(juce::Graphics &g) override;
+
         void resized() override;
 
         void repaintCallBack(double time_stamp);
 
     private:
+        zlgui::UIBase &base_;
         double previous_time_stamp{0.};
         MidControlPanel mid_control_panel_;
         RightControlPanel right_control_panel_;

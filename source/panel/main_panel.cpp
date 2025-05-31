@@ -30,10 +30,10 @@ namespace zlpanel {
             }
         }
 
-        const auto fontSize = static_cast<float>(bound.getWidth()) * 0.014287762237762238f;
-        base_.setFontSize(fontSize);
+        const auto font_size = static_cast<float>(bound.getWidth()) * 0.0163f;
+        base_.setFontSize(font_size);
 
-        const auto controlBound = bound.removeFromBottom(juce::roundToInt(fontSize * 7.348942487176095f));
+        const auto controlBound = bound.removeFromBottom(juce::roundToInt(font_size * 7.348f));
         control_panel_.setBounds(controlBound);
 
         curve_panel_.setBounds(bound);

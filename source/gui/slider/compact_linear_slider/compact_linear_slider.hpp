@@ -204,8 +204,8 @@ namespace zlgui::slider {
 
         SnappingSlider slider_;
 
-        juce::Label label_, text_;
         label::NameLookAndFeel name_look_and_feel_, text_look_and_feel_;
+        juce::Label label_, text_;
 
         static juce::String getDisplayValue(juce::Slider &s) {
             auto value = s.getValue();

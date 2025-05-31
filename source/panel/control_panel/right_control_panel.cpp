@@ -11,7 +11,7 @@
 
 namespace zlpanel {
     RightControlPanel::RightControlPanel(PluginProcessor &p, zlgui::UIBase &base)
-        : p_ref_(p), base_(base),
+        : p_ref_(p), base_(base), label_laf_(base_),
           range_slider_("Range", base_),
           range_attachment_(range_slider_.getSlider(), p.parameters_, zlp::PRange::kID, updater_),
           hold_slider_("Hold", base_),
@@ -19,8 +19,7 @@ namespace zlpanel {
           gain_slider_("Output Gain", base_, "", 1.f),
           gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_),
           wet_slider_("Wet", base_),
-          wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_),
-          label_laf_(base_) {
+          wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
         range_slider_.setBufferedToImage(true);
@@ -46,6 +45,8 @@ namespace zlpanel {
         addAndMakeVisible(wet_label_);
         wet_slider_.setBufferedToImage(true);
         addAndMakeVisible(wet_slider_);
+
+        setOpaque(true);
     }
 
     void RightControlPanel::paint(juce::Graphics &g) {
@@ -53,30 +54,38 @@ namespace zlpanel {
         g.fillRect(getLocalBounds());
     }
 
+    int RightControlPanel::getIdealWidth() const {
+        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        return padding * 4 + slider_width + small_slider_width * 2;
+    }
+
     void RightControlPanel::resized() {
         auto bound = getLocalBounds();
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
 
         bound.removeFromBottom(padding); {
-            const auto height = bound.getHeight() - padding;
-            const auto half_height = (height - 2 * padding) / 2;
             bound.removeFromLeft(padding);
-            auto t_bound = bound.removeFromLeft(height);
+            auto t_bound = bound.removeFromLeft(slider_width);
             t_bound.removeFromTop(padding);
-            const auto extra_padding = (t_bound.getHeight() - 2 * half_height) / 4;
+            const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
             t_bound.removeFromTop(extra_padding);
             t_bound.removeFromBottom(extra_padding);
-            range_slider_.setBounds(t_bound.removeFromTop(half_height));
-            hold_slider_.setBounds(t_bound.removeFromBottom(half_height));
+            range_slider_.setBounds(t_bound.removeFromTop(slider_height));
+            hold_slider_.setBounds(t_bound.removeFromBottom(slider_height));
         }
         const auto label_height = juce::roundToInt(base_.getFontSize() * 1.5f); {
             bound.removeFromLeft(padding);
-            auto t_bound = bound.removeFromLeft(bound.getHeight() - label_height);
+            auto t_bound = bound.removeFromLeft(small_slider_width);
             gain_label_.setBounds(t_bound.removeFromTop(label_height));
             gain_slider_.setBounds(t_bound);
         } {
             bound.removeFromLeft(padding);
-            auto t_bound = bound.removeFromLeft(bound.getHeight() - label_height);
+            auto t_bound = bound.removeFromLeft(small_slider_width);
             wet_label_.setBounds(t_bound.removeFromTop(label_height));
             wet_slider_.setBounds(t_bound);
         }

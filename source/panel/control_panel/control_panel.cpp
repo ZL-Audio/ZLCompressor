@@ -11,16 +11,23 @@
 
 namespace zlpanel {
     ControlPanel::ControlPanel(PluginProcessor &p, zlgui::UIBase &base)
-        : mid_control_panel_(p, base), right_control_panel_(p, base) {
+        : base_(base),
+          mid_control_panel_(p, base_), right_control_panel_(p, base_) {
         addAndMakeVisible(mid_control_panel_);
         addAndMakeVisible(right_control_panel_);
+
+        setOpaque(true);
+    }
+
+    void ControlPanel::paint(juce::Graphics &g) {
+        g.setColour(base_.getBackgroundColor());
+        g.fillRect(getLocalBounds());
     }
 
     void ControlPanel::resized() {
         auto bound = getLocalBounds();
-        const auto height = bound.getHeight();
-        mid_control_panel_.setBounds(bound.removeFromLeft(6 * height));
-        right_control_panel_.setBounds(bound);
+        mid_control_panel_.setBounds(bound.removeFromLeft(mid_control_panel_.getIdealWidth()));
+        right_control_panel_.setBounds(bound.removeFromRight(right_control_panel_.getIdealWidth()));
     }
 
     void ControlPanel::repaintCallBack(const double time_stamp) {
