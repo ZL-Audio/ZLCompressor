@@ -25,12 +25,12 @@ namespace zldsp::gain {
             gain_.setCurrentAndTarget(FloatType(1));
         }
 
-        void setGainLinear(FloatType newGain) noexcept {
-            gain_.setTarget(newGain);
+        void setGainLinear(FloatType new_gain) noexcept {
+            gain_.setTarget(new_gain);
         }
 
-        void setGainDecibels(FloatType newGainDecibels) noexcept {
-            setGainLinear(chore::decibelsToGain<FloatType>(newGainDecibels));
+        void setGainDecibels(FloatType new_gain_decibels) noexcept {
+            setGainLinear(chore::decibelsToGain<FloatType>(new_gain_decibels));
         }
 
         FloatType getTargetGainLinear() const noexcept { return gain_.getTarget(); }
