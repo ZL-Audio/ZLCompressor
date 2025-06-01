@@ -22,6 +22,7 @@ class PluginProcessor : public juce::AudioProcessor {
 public:
     zlstate::DummyProcessor dummy_processor_;
     juce::AudioProcessorValueTreeState parameters_;
+    juce::AudioProcessorValueTreeState na_parameters_;
     juce::AudioProcessorValueTreeState state_;
     zlstate::Property property_;
 
@@ -82,8 +83,8 @@ private:
     zlp::CompressAttach compress_attach_;
     juce::AudioBuffer<float> float_buffer_;
     juce::AudioBuffer<double> double_buffer_;
-    std::array<float *, 2> main_pointers_, float_side_pointers_;
-    std::array<double *, 2> double_side_pointers_;
+    std::array<float *, 2> main_pointers_{}, float_side_pointers_{};
+    std::array<double *, 2> double_side_pointers_{};
 
     enum ChannelLayout {
         kMain1Aux0, kMain1Aux1, kMain1Aux2,

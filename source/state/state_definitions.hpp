@@ -129,9 +129,24 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
+    class PAnalyzerTimeLength : public ChoiceParameters<PAnalyzerTimeLength> {
+    public:
+        auto static constexpr kID = "analyzer_time_length";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "6 s", "9 s", "12 s", "18 s"
+        };
+        static constexpr std::array kLength = {6.f, 9.f, 12.f, 18.f};
+        int static constexpr kDefaultI = 0;
+
+        static float getTimeLengthFromIndex(const float x) {
+            return kLength[static_cast<size_t>(std::round(x))];
+        }
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getNAParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
-        layout.add(PEQMaxDB::get(), PAnalyzerMinDB::get());
+        layout.add(PEQMaxDB::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get());
         return layout;
     }
 

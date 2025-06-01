@@ -37,72 +37,41 @@ namespace zlpanel {
         g.fillPath(path);
     }
 
-    BottomControlPanel::Buttons::Buttons(PluginProcessor &p, zlgui::UIBase &base)
-        : base_(base),
-          ext_side_button_("", base_, ""),
-          ext_side_attachment_(ext_side_button_.getButton(), p.parameters_, zlp::PExtSide::kID, updater_),
-          ext_side_drawable_(juce::Drawable::createFromImageData(
-              BinaryData::externalside_svg, BinaryData::externalside_svgSize)),
-          side_out_button_("", base_, ""),
-          side_out_attachment_(side_out_button_.getButton(), p.parameters_, zlp::PSideOut::kID, updater_),
-          side_out_drawable_(juce::Drawable::createFromImageData(
-              BinaryData::fadsolo_svg, BinaryData::fadsolo_svgSize)) {
-        ext_side_button_.getLAF().setDrawable(ext_side_drawable_.get());
-        side_out_button_.getLAF().setDrawable(side_out_drawable_.get());
-
-        for (auto &b: {&ext_side_button_, &side_out_button_}) {
-            b->getLAF().enableShadow(false);
-            b->getLAF().setShrinkScale(.0f);
-            b->getLAF().setScale(1.5f);
-            b->setBufferedToImage(true);
-            addAndMakeVisible(b);
-        }
-
-        setBufferedToImage(true);
-    }
-
-    void BottomControlPanel::Buttons::repaintCallBack() {
-        updater_.updateComponents();
-    }
-
-    void BottomControlPanel::Buttons::resized() {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
-
-        auto bound = getLocalBounds();
-        bound.removeFromLeft(padding); {
-            auto t_bound = bound.removeFromLeft(slider_width);
-            ext_side_button_.setBounds(t_bound.removeFromLeft(t_bound.getHeight()));
-            t_bound.removeFromRight(padding);
-            side_out_button_.setBounds(t_bound.removeFromLeft(t_bound.getHeight()));
-        }
-    }
-
     BottomControlPanel::BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base)
         : p_ref_(p), base_(base),
           background_(base_),
-          buttons_(p, base_),
+          analyzer_time_length_box_("", zlstate::PAnalyzerTimeLength::kChoices, base_),
+          analyzer_time_length_attachment_(analyzer_time_length_box_.getBox(), p.na_parameters_,
+                                           zlstate::PAnalyzerTimeLength::kID, updater_),
           label_laf_(base_),
           style_box_("", zlp::PCompStyle::kChoices, base_),
           style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
-        addChildComponent(buttons_);
         addAndMakeVisible(background_);
 
+        analyzer_time_length_box_.getLAF().setFontScale(1.f);
+        analyzer_time_length_box_.getLAF().setLabelJustification(juce::Justification::centredBottom);
+        analyzer_time_length_box_.setAlpha(.5f);
+        analyzer_time_length_box_.setBufferedToImage(true);
+        addAndMakeVisible(analyzer_time_length_box_);
+
+        label_laf_.setFontScale(1.5f);
         threshold_label_.setText("Threshold", juce::dontSendNotification);
         ratio_label_.setText("Ratio", juce::dontSendNotification);
         attack_label_.setText("Attack", juce::dontSendNotification);
         release_label_.setText("Release", juce::dontSendNotification);
-
-        label_laf_.setFontScale(1.5f);
-        for (auto &l : {&threshold_label_, &ratio_label_, &attack_label_, &release_label_}) {
+        for (auto &l: {&threshold_label_, &ratio_label_, &attack_label_, &release_label_}) {
             l->setLookAndFeel(&label_laf_);
             l->setJustificationType(juce::Justification::centred);
             l->setInterceptsMouseClicks(false, false);
+            l->setBufferedToImage(true);
             addAndMakeVisible(l);
         }
 
+        style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
+
+        setBufferedToImage(true);
     }
 
     int BottomControlPanel::getIdealWidth() const {
@@ -114,7 +83,6 @@ namespace zlpanel {
 
     void BottomControlPanel::repaintCallBack(const double time_stamp) {
         if (time_stamp - previous_time_stamp > 0.1) {
-            buttons_.repaintCallBack();
             updater_.updateComponents();
             previous_time_stamp = time_stamp;
         }
@@ -127,8 +95,12 @@ namespace zlpanel {
         auto bound = getLocalBounds();
         background_.setBounds(bound);
 
-        bound.removeFromLeft(padding);
-        buttons_.setBounds(bound.removeFromLeft(slider_width));
+        bound.removeFromLeft(padding); {
+            auto box_bound = bound.removeFromLeft(slider_width / 2);
+            box_bound.removeFromTop(box_bound.getHeight() / 3);
+            analyzer_time_length_box_.setBounds(box_bound);
+            bound.removeFromLeft(slider_width - slider_width / 2);
+        }
 
         bound.removeFromLeft(padding);
         threshold_label_.setBounds(bound.removeFromLeft(slider_width));

@@ -15,9 +15,12 @@
 #include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class PeakPanel final : public juce::Component {
+    class PeakPanel final : public juce::Component,
+                            private juce::AudioProcessorValueTreeState::Listener {
     public:
         explicit PeakPanel(PluginProcessor &processor);
+
+        ~PeakPanel() override;
 
         void paint(juce::Graphics &g) override;
 
@@ -27,21 +30,24 @@ namespace zlpanel {
 
         void setTimeLength(const float x) {
             mag_analyzer_ref_.setTimeLength(x);
-            num_per_second_.store(static_cast<double>(zlp::CompressorController::kAnalyzerPointNum - 1) / static_cast<double>(x));
+            num_per_second_.store(
+                static_cast<double>(zlp::CompressorController::kAnalyzerPointNum - 1) / static_cast<double>(x));
+            to_reset_path_.exchange(true, std::memory_order::release);
         }
 
     private:
+        PluginProcessor &p_ref_;
         zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressorController::kAnalyzerPointNum> &mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
-        std::array<float, zlp::CompressorController::kAnalyzerPointNum> xs_, in_ys_, out_ys_, reduction_ys_;
+        std::array<float, zlp::CompressorController::kAnalyzerPointNum> xs_{}, in_ys_{}, out_ys_{}, reduction_ys_{};
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         juce::SpinLock path_lock_;
 
+        std::atomic<bool> to_reset_path_{true};
         double start_time_{0.0};
         double current_count_{0.0};
-
         std::atomic<double> num_per_second_{50.0};
 
         bool is_first_point_{true};
@@ -49,5 +55,7 @@ namespace zlpanel {
         int cons_error_count_{0};
 
         void updatePaths(juce::Rectangle<float> bound);
+
+        void parameterChanged(const juce::String &parameter_id, float new_value) override;
     };
 } // zlpanel

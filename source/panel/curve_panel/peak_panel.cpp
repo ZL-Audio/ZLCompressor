@@ -11,14 +11,21 @@
 
 namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor &processor)
-        : mag_analyzer_ref_(processor.getController().getMagAnalyzer()) {
+        : p_ref_(processor), mag_analyzer_ref_(processor.getController().getMagAnalyzer()) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::CompressorController::kAnalyzerPointNum) * 3 + 1;
         for (auto &path: {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
         mag_analyzer_ref_.setMagType(zldsp::analyzer::MagType::kPeak);
         mag_analyzer_ref_.setToReset();
-        setTimeLength(6.f);
+
+        p_ref_.na_parameters_.addParameterListener(zlstate::PAnalyzerTimeLength::kID, this);
+        parameterChanged(zlstate::PAnalyzerTimeLength::kID,
+                         p_ref_.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)->load());
+    }
+
+    PeakPanel::~PeakPanel() {
+        p_ref_.na_parameters_.removeParameterListener(zlstate::PAnalyzerTimeLength::kID, this);
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
@@ -50,22 +57,24 @@ namespace zlpanel {
 
     void PeakPanel::run(const double next_time_stamp) {
         const auto current_bound = atomic_bound_.load();
+        if (to_reset_path_.exchange(false, std::memory_order::acquire)) {
+            is_first_point_ = true;
+        }
         if (is_first_point_) {
             if (mag_analyzer_ref_.run(1) > 0) {
                 is_first_point_ = false;
                 current_count_ = 0.;
                 start_time_ = next_time_stamp;
                 mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
-                    current_bound.getWidth(), current_bound.getHeight(), 0.f,
-                    -72.f, 0.f);
+                                                      current_bound.getWidth(), current_bound.getHeight(), 0.f,
+                                                      -72.f, 0.f);
                 updatePaths(current_bound);
-                // mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
-                //                        atomic_bound_.load(), 0.f, 0.f);
             }
         } else {
             const auto target_count = (next_time_stamp - start_time_) * num_per_second_.load();
             const auto target_delta = target_count - current_count_;
-            const auto actual_delta = static_cast<double>(mag_analyzer_ref_.run(static_cast<int>(std::floor(target_delta))));
+            const auto actual_delta = static_cast<double>(mag_analyzer_ref_.run(
+                static_cast<int>(std::floor(target_delta))));
             current_count_ += static_cast<double>(actual_delta);
             const auto current_error = std::abs(target_delta - actual_delta);
             if (current_error < smooth_error_) {
@@ -85,11 +94,10 @@ namespace zlpanel {
             if (cons_error_count_ < 5) {
                 const auto shift = target_count - current_count_;
                 mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
-                    current_bound.getWidth(), current_bound.getHeight(), static_cast<float>(shift),
-                    -72.f, 0.f);
+                                                      current_bound.getWidth(), current_bound.getHeight(),
+                                                      static_cast<float>(shift),
+                                                      -72.f, 0.f);
                 updatePaths(current_bound);
-                // mag_analyzer_ref_.template createPath<true, false>(next_in_path_, next_out_path_, next_reduction_path_,
-                //                                              atomic_bound_.load(), static_cast<float>(shift), 0.f);
             }
         } {
             const juce::GenericScopedLock guard{path_lock_};
@@ -115,4 +123,10 @@ namespace zlpanel {
         }
         next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
     }
-} // zlpanel
+
+    void PeakPanel::parameterChanged(const juce::String &parameter_id, float new_value) {
+        if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
+            setTimeLength(zlstate::PAnalyzerTimeLength::getTimeLengthFromIndex(new_value));
+        }
+    }
+}

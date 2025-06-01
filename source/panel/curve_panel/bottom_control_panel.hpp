@@ -42,36 +42,16 @@ namespace zlpanel {
             bool show_buttons_{false};
         };
 
-        class Buttons final : public juce::Component {
-        public:
-            explicit Buttons(PluginProcessor &p, zlgui::UIBase &base);
-
-            void repaintCallBack();
-
-            void resized() override;
-
-        private:
-            zlgui::UIBase &base_;
-            zlgui::attachment::ComponentUpdater updater_;
-
-            zlgui::CompactButton ext_side_button_;
-            zlgui::attachment::ButtonAttachment<true> ext_side_attachment_;
-            const std::unique_ptr<juce::Drawable> ext_side_drawable_;
-
-            zlgui::CompactButton side_out_button_;
-            zlgui::attachment::ButtonAttachment<true> side_out_attachment_;
-            const std::unique_ptr<juce::Drawable> side_out_drawable_;
-        };
-
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         Background background_;
-        Buttons buttons_;
+
+        zlgui::combobox::CompactCombobox analyzer_time_length_box_;
+        zlgui::attachment::ComboBoxAttachment<true> analyzer_time_length_attachment_;
 
         zlgui::label::NameLookAndFeel label_laf_;
-
         juce::Label threshold_label_, ratio_label_, attack_label_, release_label_;
 
         zlgui::combobox::CompactCombobox style_box_;
