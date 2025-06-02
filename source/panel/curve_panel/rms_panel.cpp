@@ -11,7 +11,8 @@
 
 namespace zlpanel {
     RMSPanel::RMSPanel(PluginProcessor &processor)
-        : avg_analyzer_ref_(processor.getController().getMagAvgAnalyzer()) {
+        : avg_analyzer_ref_(processor.getController().getMagAvgAnalyzer()),
+          min_db_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         avg_analyzer_ref_.setToReset();
         setBufferedToImage(true);
     }
@@ -32,24 +33,25 @@ namespace zlpanel {
 
     void RMSPanel::run(double next_time_stamp) {
         juce::ignoreUnused(next_time_stamp);
-        const auto current_bound = atomic_bound_.load();
+        const auto current_min_db = zlstate::PAnalyzerMinDB::getMinDBFromIndex(
+            min_db_ref_.load(std::memory_order::relaxed));
+        const auto end_idx = static_cast<size_t>(-current_min_db);
+        const auto current_bound = atomic_bound_.load(std::memory_order::relaxed);
         avg_analyzer_ref_.run();
-        avg_analyzer_ref_.createPath({in_xs_, out_xs}, ys_, 72,
-            current_bound.getWidth(), current_bound.getHeight());
-        // avg_analyzer_ref_.createPath({next_in_path_, next_out_path_}, {true, false},
-        //                        currentBound, 72);
+        avg_analyzer_ref_.createPath({in_xs_, out_xs}, ys_, end_idx,
+                                     current_bound.getWidth(), current_bound.getHeight());
         next_in_path_.clear();
         next_out_path_.clear();
         next_in_path_.startNewSubPath(0.f, 0.f);
         next_in_path_.lineTo(in_xs_[0], ys_[0]);
         next_out_path_.startNewSubPath(out_xs[0], ys_[0]);
-        for (size_t i = 0; i < 72; ++i) {
+        for (size_t i = 0; i < end_idx; ++i) {
             next_in_path_.lineTo(in_xs_[i], ys_[i]);
             next_out_path_.lineTo(out_xs[i], ys_[i]);
         }
         next_in_path_.lineTo(0.f, current_bound.getHeight());
-        next_in_path_.closeSubPath();
-        { // update the paths with lock
+        next_in_path_.closeSubPath(); {
+            // update the paths with lock
             const juce::GenericScopedLock guard{path_lock_};
             in_path_ = next_in_path_;
             out_path_ = next_out_path_;
@@ -58,7 +60,7 @@ namespace zlpanel {
 
     void RMSPanel::resized() {
         const auto bound = getLocalBounds().toFloat();
-        atomic_bound_.store(bound.withWidth(bound.getWidth() - 20.f));
+        atomic_bound_.store(bound.withWidth(bound.getWidth() - 20.f), std::memory_order::relaxed);
     }
 
     void RMSPanel::mouseDoubleClick(const juce::MouseEvent &event) {

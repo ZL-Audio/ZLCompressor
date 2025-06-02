@@ -35,7 +35,9 @@ namespace zlpanel {
         static constexpr std::array kComputerIDs{
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID
         };
-        std::atomic<float> &threshold_ref_, &ratio_ref_, &knee_ref_, &curve_ref_;
+        static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID};
+
+        std::atomic<float> &threshold_ref_, &ratio_ref_, &knee_ref_, &curve_ref_, &min_db_ref_;
 
         zldsp::compressor::KneeComputer<float> computer_{};
         AtomicBound<float> atomic_bound_;
@@ -44,7 +46,7 @@ namespace zlpanel {
         juce::Path comp_path_, next_comp_path_;
         juce::SpinLock path_lock_;
 
-        std::atomic<float> min_db_{-72.f};
+
 
         void parameterChanged(const juce::String &parameterID, float newValue) override;
     };

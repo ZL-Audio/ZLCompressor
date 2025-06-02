@@ -123,10 +123,14 @@ namespace zlstate {
         auto static constexpr kID = "analyzer_min_db";
         auto static constexpr kName = "";
         inline auto static const kChoices = juce::StringArray{
-            "-9 dB", "-18 dB", "-36 dB", "-72 dB"
+            "-9", "-18", "-36", "-54", "-72"
         };
-        static constexpr std::array dBs = {-9.f, -18.f, -36.f, -72.f};
-        int static constexpr kDefaultI = 1;
+        static constexpr std::array kDBs = {-9.f, -18.f, -36.f, -54.f, -72.f};
+        int static constexpr kDefaultI = 3;
+
+        static float getMinDBFromIndex(const float x) {
+            return kDBs[static_cast<size_t>(std::round(x))];
+        }
     };
 
     class PAnalyzerTimeLength : public ChoiceParameters<PAnalyzerTimeLength> {
@@ -134,7 +138,7 @@ namespace zlstate {
         auto static constexpr kID = "analyzer_time_length";
         auto static constexpr kName = "";
         inline auto static const kChoices = juce::StringArray{
-            "6 s", "9 s", "12 s", "18 s"
+            "6 s  ", "9 s  ", "12 s  ", "18 s  "
         };
         static constexpr std::array kLength = {6.f, 9.f, 12.f, 18.f};
         int static constexpr kDefaultI = 0;

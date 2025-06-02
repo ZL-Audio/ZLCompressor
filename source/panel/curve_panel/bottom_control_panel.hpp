@@ -19,6 +19,8 @@ namespace zlpanel {
     public:
         explicit BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
+        void paint(juce::Graphics &g) override;
+
         int getIdealWidth() const;
 
         void resized() override;
@@ -26,30 +28,17 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
-        class Background final : public juce::Component {
-        public:
-            explicit Background(zlgui::UIBase &base);
-
-            void paint(juce::Graphics &g) override;
-
-            void setShowButtons(const bool f) {
-                show_buttons_ = f;
-            }
-
-        private:
-            zlgui::UIBase &base_;
-
-            bool show_buttons_{false};
-        };
-
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 
-        Background background_;
+        juce::Path background_path_;
 
-        zlgui::combobox::CompactCombobox analyzer_time_length_box_;
-        zlgui::attachment::ComboBoxAttachment<true> analyzer_time_length_attachment_;
+        zlgui::combobox::CompactCombobox time_length_box_;
+        zlgui::attachment::ComboBoxAttachment<false> time_length_attachment_;
+
+        zlgui::combobox::CompactCombobox min_db_box_;
+        zlgui::attachment::ComboBoxAttachment<false> min_db_attachment_;
 
         zlgui::label::NameLookAndFeel label_laf_;
         juce::Label threshold_label_, ratio_label_, attack_label_, release_label_;

@@ -16,7 +16,6 @@
 namespace zlgui::combobox {
     class CompactComboboxLookAndFeel : public juce::LookAndFeel_V4 {
     public:
-        // rounded menu box
         explicit CompactComboboxLookAndFeel(UIBase &base) : base_(base) {
             setColour(juce::PopupMenu::backgroundColourId, base_.getBackgroundInactiveColor());
         }
@@ -86,12 +85,8 @@ namespace zlgui::combobox {
             } else {
                 g.setColour(base_.getTextInactiveColor());
             }
-            if (base_.getFontSize() > 0) {
-                g.setFont(base_.getFontSize() * font_scale_);
-            } else {
-                g.setFont(static_cast<float>(area.getHeight()) * 0.35f);
-            }
-            g.drawText(text, area, juce::Justification::centred);
+            g.setFont(base_.getFontSize() * font_scale_);
+            g.drawText(text, area, item_justification_);
         }
 
         int getMenuWindowFlags() override {
@@ -99,7 +94,7 @@ namespace zlgui::combobox {
         }
 
         int getPopupMenuBorderSize() override {
-            return juce::roundToInt(base_.getFontSize() * 0.125f);
+            return 0;
         }
 
         inline void setFontScale(const float x) { font_scale_ = x; }
@@ -130,9 +125,12 @@ namespace zlgui::combobox {
 
         void setLabelJustification(const juce::Justification j) { label_justification_ = j; }
 
+        void setItemJustification(const juce::Justification j) {item_justification_ = j;}
+
     private:
         float font_scale_{1.5f}, box_alpha_{0.f};
         juce::Justification label_justification_{juce::Justification::centred};
+        juce::Justification item_justification_{juce::Justification::centred};
         juce::PopupMenu::Options option_{};
 
         UIBase &base_;

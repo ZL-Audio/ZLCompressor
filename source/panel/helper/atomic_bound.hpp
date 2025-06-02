@@ -12,20 +12,21 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace zlpanel {
-    template <typename FloatType>
+    template<typename FloatType>
     class AtomicBound {
     public:
         AtomicBound() = default;
 
-        void store(const juce::Rectangle<FloatType> &bound) {
-            x_.store(bound.getX());
-            y_.store(bound.getY());
-            width_.store(bound.getWidth());
-            height_.store(bound.getHeight());
+        void store(const juce::Rectangle<FloatType> &bound,
+                   const std::memory_order order = std::memory_order::seq_cst) {
+            x_.store(bound.getX(), order);
+            y_.store(bound.getY(), order);
+            width_.store(bound.getWidth(), order);
+            height_.store(bound.getHeight(), order);
         }
 
-        juce::Rectangle<FloatType> load() const {
-            return {x_.load(), y_.load(), width_.load(), height_.load()};
+        juce::Rectangle<FloatType> load(const std::memory_order order = std::memory_order::seq_cst) const {
+            return {x_.load(order), y_.load(order), width_.load(order), height_.load(order)};
         }
 
         FloatType getX() const { return x_.load(); }
@@ -40,7 +41,7 @@ namespace zlpanel {
         std::atomic<FloatType> x_{}, y_{}, width_{}, height_{};
     };
 
-    template <typename FloatType>
+    template<typename FloatType>
     class AtomicPoint {
     public:
         AtomicPoint() = default;

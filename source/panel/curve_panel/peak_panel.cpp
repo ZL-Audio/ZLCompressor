@@ -19,13 +19,16 @@ namespace zlpanel {
         mag_analyzer_ref_.setMagType(zldsp::analyzer::MagType::kPeak);
         mag_analyzer_ref_.setToReset();
 
-        p_ref_.na_parameters_.addParameterListener(zlstate::PAnalyzerTimeLength::kID, this);
-        parameterChanged(zlstate::PAnalyzerTimeLength::kID,
-                         p_ref_.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)->load());
+        for (auto &ID: kNAIDs) {
+            p_ref_.na_parameters_.addParameterListener(ID, this);
+            parameterChanged(ID, p_ref_.na_parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
+        }
     }
 
     PeakPanel::~PeakPanel() {
-        p_ref_.na_parameters_.removeParameterListener(zlstate::PAnalyzerTimeLength::kID, this);
+        for (auto &ID: kNAIDs) {
+            p_ref_.na_parameters_.removeParameterListener(ID, this);
+        }
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
@@ -67,7 +70,7 @@ namespace zlpanel {
                 start_time_ = next_time_stamp;
                 mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
                                                       current_bound.getWidth(), current_bound.getHeight(), 0.f,
-                                                      -72.f, 0.f);
+                                                      analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
                 updatePaths(current_bound);
             }
         } else {
@@ -96,7 +99,7 @@ namespace zlpanel {
                 mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
                                                       current_bound.getWidth(), current_bound.getHeight(),
                                                       static_cast<float>(shift),
-                                                      -72.f, 0.f);
+                                                      analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
                 updatePaths(current_bound);
             }
         } {
@@ -124,8 +127,10 @@ namespace zlpanel {
         next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
     }
 
-    void PeakPanel::parameterChanged(const juce::String &parameter_id, float new_value) {
-        if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
+    void PeakPanel::parameterChanged(const juce::String &parameter_id, const float new_value) {
+        if (parameter_id == zlstate::PAnalyzerMinDB::kID) {
+            analyzer_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
+        } else if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
             setTimeLength(zlstate::PAnalyzerTimeLength::getTimeLengthFromIndex(new_value));
         }
     }

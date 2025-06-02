@@ -15,17 +15,24 @@ namespace zlpanel {
           threshold_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PThreshold::kID)),
           ratio_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PRatio::kID)),
           knee_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PKneeW::kID)),
-          curve_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PCurve::kID)) {
+          curve_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PCurve::kID)),
+          min_db_ref_(*p_ref_.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         next_comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         for (auto &ID: kComputerIDs) {
             p_ref_.parameters_.addParameterListener(ID, this);
+        }
+        for (auto &ID: kNAIDs) {
+            p_ref_.na_parameters_.addParameterListener(ID, this);
         }
     }
 
     ComputerPanel::~ComputerPanel() {
         for (auto &ID: kComputerIDs) {
             p_ref_.parameters_.removeParameterListener(ID, this);
+        }
+        for (auto &ID: kNAIDs) {
+            p_ref_.na_parameters_.removeParameterListener(ID, this);
         }
     }
 
@@ -40,13 +47,14 @@ namespace zlpanel {
     }
 
     void ComputerPanel::run() {
-        if (!to_update_.exchange(false)) { return; }
-        computer_.setThreshold(threshold_ref_.load());
-        computer_.setRatio(ratio_ref_.load());
-        computer_.setKneeW(knee_ref_.load());
-        computer_.setCurve(zlp::PCurve::formatV(curve_ref_.load()));
+        if (!to_update_.exchange(false, std::memory_order::acquire)) { return; }
+        computer_.setThreshold(threshold_ref_.load(std::memory_order::relaxed));
+        computer_.setRatio(ratio_ref_.load(std::memory_order::relaxed));
+        computer_.setKneeW(knee_ref_.load(std::memory_order::relaxed));
+        computer_.setCurve(zlp::PCurve::formatV(curve_ref_.load(std::memory_order::relaxed)));
 
-        const auto current_min_db = min_db_.load();
+        const auto current_min_db = zlstate::PAnalyzerMinDB::getMinDBFromIndex(
+            min_db_ref_.load(std::memory_order::relaxed));
         computer_.prepareBuffer();
         const auto bound = atomic_bound_.load();
         auto db_in = current_min_db;
@@ -73,10 +81,10 @@ namespace zlpanel {
 
     void ComputerPanel::resized() {
         atomic_bound_.store(getLocalBounds().toFloat());
-        to_update_.store(true);
+        to_update_.store(true, std::memory_order::release);
     }
 
     void ComputerPanel::parameterChanged(const juce::String &, float) {
-        to_update_.store(true);
+        to_update_.store(true, std::memory_order::release);
     }
 } // zlpanel

@@ -37,6 +37,8 @@ namespace zlpanel {
 
     private:
         PluginProcessor &p_ref_;
+        static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID, zlstate::PAnalyzerTimeLength::kID};
+
         zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressorController::kAnalyzerPointNum> &mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
@@ -53,6 +55,8 @@ namespace zlpanel {
         bool is_first_point_{true};
         double smooth_error_{0.f};
         int cons_error_count_{0};
+
+        std::atomic<float> analyzer_min_db_{-72.f};
 
         void updatePaths(juce::Rectangle<float> bound);
 

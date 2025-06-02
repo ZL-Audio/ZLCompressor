@@ -30,25 +30,29 @@ namespace zlgui::attachment {
             // add parameter listener
             if (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ID_, this);
-                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                parameterChanged(parameter_ID_,
+                                 apvts_.getRawParameterValue(parameter_ID_)->load(std::memory_order::relaxed));
+                updater_ref_.addAttachment(*this);
+            } else {
+                parameterChanged(parameter_ID_,
+                                 apvts_.getRawParameterValue(parameter_ID_)->load(std::memory_order::relaxed));
+                updateComponent();
             }
             // add combobox listener
             box_.addListener(this);
-            // add to updater
-            updater_ref_.addAttachment(*this);
         }
 
         ~ComboBoxAttachment() override {
-            updater_ref_.removeAttachment(*this);
-            apvts_.removeParameterListener(parameter_ID_, this);
+            if (UpdateFromAPVTS) {
+                updater_ref_.removeAttachment(*this);
+                apvts_.removeParameterListener(parameter_ID_, this);
+            }
         }
 
         void updateComponent() override {
-            if (UpdateFromAPVTS) {
-                const auto current_index = atomic_index_.load(std::memory_order::relaxed);
-                if (current_index != box_.getSelectedItemIndex()) {
-                    box_.setSelectedItemIndex(current_index, notification_type_);
-                }
+            const auto current_index = atomic_index_.load(std::memory_order::relaxed);
+            if (current_index != box_.getSelectedItemIndex()) {
+                box_.setSelectedItemIndex(current_index, notification_type_);
             }
         }
 

@@ -40,17 +40,19 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
         {
-            const auto bound = getLocalBounds().toFloat();
-            rms_panel_.setBounds(bound.withWidth(75.f).toNearestInt());
-            peak_panel_.setBounds(bound.toNearestInt());
+            auto bound = getLocalBounds();
+            bound.removeFromLeft(slider_width / 3);
+            rms_panel_.setBounds(bound.withWidth(75));
+            peak_panel_.setBounds(bound);
             const auto r = std::min(bound.getWidth(), bound.getHeight());
-            separate_panel_.setBounds(bound.withSize(r, r).toNearestInt());
-            computer_panel_.setBounds(bound.withSize(r * 1.5f, r).toNearestInt());
+            separate_panel_.setBounds(bound.withSize(r, r));
+            computer_panel_.setBounds(bound.withSize(r, r));
         } {
             auto bound = getLocalBounds();
             bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
-            bottom_control_panel_.setBounds(bound.removeFromLeft(bottom_control_panel_.getIdealWidth()));
+            bottom_control_panel_.setBounds(bound);
         }
     }
 
