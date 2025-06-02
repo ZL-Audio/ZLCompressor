@@ -98,6 +98,8 @@ void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_
     };
     float_buffer_.setSize(4, samples_per_block);
     float_buffer_.clear();
+    main_pointers_[0] = float_buffer_.getWritePointer(0);
+    main_pointers_[1] = float_buffer_.getWritePointer(1);
     float_side_pointers_[0] = float_buffer_.getWritePointer(2);
     float_side_pointers_[1] = float_buffer_.getWritePointer(3);
     double_buffer_.setSize(2, samples_per_block);
@@ -160,7 +162,6 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
             main_pointers_[0] = buffer.getWritePointer(0);
-            main_pointers_[1] = float_buffer_.getWritePointer(1);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
             zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
@@ -172,7 +173,6 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
         }
         case ChannelLayout::kMain1Aux1: {
             main_pointers_[0] = buffer.getWritePointer(0);
-            main_pointers_[1] = float_buffer_.getWritePointer(1);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
             if (c_use_ext_side) {
@@ -189,7 +189,6 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
         }
         case ChannelLayout::kMain1Aux2: {
             main_pointers_[0] = buffer.getWritePointer(0);
-            main_pointers_[1] = float_buffer_.getWritePointer(1);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
             if (c_use_ext_side) {
@@ -257,6 +256,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
     const auto c_use_ext_side = use_ext_side_.load(std::memory_order::relaxed);
     const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
+
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
             zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
