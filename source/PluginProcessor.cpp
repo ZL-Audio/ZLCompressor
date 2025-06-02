@@ -21,7 +21,7 @@ PluginProcessor::PluginProcessor()
       parameters_(*this, nullptr,
                   juce::Identifier("ZLCompressorParameters"),
                   zlp::getParameterLayout()),
-      na_parameters_(*this, nullptr,
+      na_parameters_(dummy_processor_, nullptr,
                      juce::Identifier("ZLCompressorNAParameters"),
                      zlstate::getNAParameterLayout()),
       state_(dummy_processor_, nullptr,
@@ -364,24 +364,23 @@ bool PluginProcessor::hasEditor() const {
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {
-    // return new juce::GenericAudioProcessorEditor(*this);
     return new PluginEditor(*this);
 }
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock &dest_data) {
-    auto temp_tree = juce::ValueTree("ZLEqualizerParaState");
+    auto temp_tree = juce::ValueTree("ZLCompressorParaState");
     temp_tree.appendChild(parameters_.copyState(), nullptr);
-    // temp_tree.appendChild(parameters_NA_.copyState(), nullptr);
+    temp_tree.appendChild(na_parameters_.copyState(), nullptr);
     const std::unique_ptr<juce::XmlElement> xml(temp_tree.createXml());
     copyXmlToBinary(*xml, dest_data);
 }
 
 void PluginProcessor::setStateInformation(const void *data, int size_in_bytes) {
     std::unique_ptr<juce::XmlElement> xml_state(getXmlFromBinary(data, size_in_bytes));
-    if (xml_state != nullptr && xml_state->hasTagName("ZLEqualizerParaState")) {
+    if (xml_state != nullptr && xml_state->hasTagName("ZLCompressorParaState")) {
         const auto temp_tree = juce::ValueTree::fromXml(*xml_state);
         parameters_.replaceState(temp_tree.getChildWithName(parameters_.state.getType()));
-        // parameters_NA_.replaceState(temp_tree.getChildWithName(parameters_NA_.state.getType()));
+        na_parameters_.replaceState(temp_tree.getChildWithName(na_parameters_.state.getType()));
     }
 }
 
