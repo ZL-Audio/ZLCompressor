@@ -158,10 +158,21 @@ namespace zlstate {
         }
     };
 
+    class PSideControlDisplay : public ChoiceParameters<PSideControlDisplay> {
+    public:
+        auto static constexpr kID = "side_control_display";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "ON"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getNAParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PEQMaxDB::get(),
-                   PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get());
+                   PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get(),
+                   PSideControlDisplay::get());
         return layout;
     }
 

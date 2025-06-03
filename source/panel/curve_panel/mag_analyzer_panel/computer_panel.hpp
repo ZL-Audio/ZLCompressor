@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "../../PluginProcessor.hpp"
-#include "../../gui/gui.hpp"
-#include "../helper/helper.hpp"
+#include "../../../PluginProcessor.hpp"
+#include "../../../gui/gui.hpp"
+#include "../../helper/helper.hpp"
 
 namespace zlpanel {
     class ComputerPanel final : public juce::Component,

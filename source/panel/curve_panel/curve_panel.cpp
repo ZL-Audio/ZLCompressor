@@ -12,15 +12,10 @@
 namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
         : Thread("curve_panel"), base_(base),
-          peak_panel_(p), rms_panel_(p),
-          computer_panel_(p, base_),
+          mag_analyzer_panel_(p, base_),
           bottom_control_panel_(p, base_) {
-        addAndMakeVisible(peak_panel_);
-        addAndMakeVisible(separate_panel_);
-        addAndMakeVisible(rms_panel_);
-        addAndMakeVisible(computer_panel_);
+        addAndMakeVisible(mag_analyzer_panel_);
         addAndMakeVisible(bottom_control_panel_);
-        computer_panel_.setInterceptsMouseClicks(false, false);
         startThread(juce::Thread::Priority::low);
     }
 
@@ -44,11 +39,7 @@ namespace zlpanel {
         {
             auto bound = getLocalBounds();
             bound.removeFromLeft(slider_width / 3);
-            rms_panel_.setBounds(bound.withWidth(75));
-            peak_panel_.setBounds(bound);
-            const auto r = std::min(bound.getWidth(), bound.getHeight());
-            separate_panel_.setBounds(bound.withSize(r, r));
-            computer_panel_.setBounds(bound.withSize(r, r));
+            mag_analyzer_panel_.setBounds(bound);
         } {
             auto bound = getLocalBounds();
             bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
@@ -61,28 +52,12 @@ namespace zlpanel {
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
-            const auto time_stamp = next_stamp_.load();
-            peak_panel_.run(time_stamp);
-            computer_panel_.run();
-            if (to_run_rms_.exchange(false)) {
-                rms_panel_.run(time_stamp);
-            }
+            mag_analyzer_panel_.run();
         }
     }
 
     void CurvePanel::repaintCallBack(const double time_stamp) {
         bottom_control_panel_.repaintCallBack(time_stamp);
-        if (repaint_count_ >= 0) {
-            repaint_count_ = 0;
-            next_stamp_.store(time_stamp);
-            peak_panel_.repaint();
-            if (time_stamp - rms_previous_stamp_ > .1) {
-                rms_panel_.repaint();
-                rms_previous_stamp_ = time_stamp;
-                to_run_rms_.store(true);
-            }
-        } else {
-            repaint_count_ += 1;
-        }
+        mag_analyzer_panel_.repaintCallBack(time_stamp);
     }
 } // zlpanel

@@ -9,38 +9,35 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#include "../../PluginProcessor.hpp"
-#include "../../gui/gui.hpp"
-#include "mag_analyzer_panel/mag_analyzer_panel.hpp"
-#include "bottom_control_panel.hpp"
+#include "computer_panel.hpp"
+#include "peak_panel.hpp"
+#include "rms_panel.hpp"
+#include "separate_panel.hpp"
 
 namespace zlpanel {
-    class CurvePanel final : public juce::Component,
-                             private juce::Thread {
+    class MagAnalyzerPanel final : public juce::Component {
     public:
-        explicit CurvePanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base);
 
-        ~CurvePanel() override;
+        ~MagAnalyzerPanel() override;
 
         void paint(juce::Graphics &g) override;
-
-        void paintOverChildren(juce::Graphics &g) override;
 
         void resized() override;
 
         void repaintCallBack(double time_stamp);
 
+        void run();
+
     private:
         zlgui::UIBase &base_;
-        MagAnalyzerPanel mag_analyzer_panel_;
-        BottomControlPanel bottom_control_panel_;
+        PeakPanel peak_panel_;
+        RMSPanel rms_panel_;
+        ComputerPanel computer_panel_;
+        SeparatePanel separate_panel_;
         std::atomic<double> next_stamp_{0.};
         double rms_previous_stamp_{0.};
         std::atomic<bool> to_run_rms_{false};
         int repaint_count_{3};
-
-        void run() override;
     };
 } // zlpanel

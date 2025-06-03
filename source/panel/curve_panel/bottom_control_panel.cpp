@@ -119,7 +119,8 @@ namespace zlpanel {
             release_label_.setBounds(bound.removeFromLeft(slider_width));
 
             bound.removeFromRight(padding / 2); {
-                auto box_bound = bound.removeFromRight(slider_width / 3);
+                auto box_bound = bound.removeFromRight(
+                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 min_db_box_.setBounds(box_bound);
             }
