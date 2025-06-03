@@ -9,7 +9,7 @@
 
 #include "compact_button.hpp"
 
-namespace zlgui {
+namespace zlgui::button {
     CompactButton::CompactButton(const juce::String &labelText, UIBase &base, const juce::String &tooltip_text)
         : base_(base), laf_(base_) {
         button_.setClickingTogglesState(true);

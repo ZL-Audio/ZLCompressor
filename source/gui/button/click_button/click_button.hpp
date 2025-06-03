@@ -13,7 +13,7 @@
 
 #include "../../interface_definitions.hpp"
 
-namespace zlgui {
+namespace zlgui::button {
     class ClickButton final : public juce::Component {
     public:
         explicit ClickButton(UIBase &base,

@@ -39,10 +39,10 @@ namespace zlpanel {
 
     void MagAnalyzerPanel::run() {
         juce::ScopedNoDenormals no_denormals;
-        const auto time_stamp = next_stamp_.load();
+        const auto time_stamp = next_stamp_.load(std::memory_order::relaxed);
         peak_panel_.run(time_stamp);
         computer_panel_.run();
-        if (to_run_rms_.exchange(false)) {
+        if (to_run_rms_.exchange(false, std::memory_order::relaxed)) {
             rms_panel_.run(time_stamp);
         }
     }
@@ -50,12 +50,12 @@ namespace zlpanel {
     void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {
         if (repaint_count_ >= 0) {
             repaint_count_ = 0;
-            next_stamp_.store(time_stamp);
+            next_stamp_.store(time_stamp, std::memory_order::relaxed);
             peak_panel_.repaint();
             if (time_stamp - rms_previous_stamp_ > .1) {
                 rms_panel_.repaint();
                 rms_previous_stamp_ = time_stamp;
-                to_run_rms_.store(true);
+                to_run_rms_.store(true, std::memory_order::relaxed);
             }
         } else {
             repaint_count_ += 1;

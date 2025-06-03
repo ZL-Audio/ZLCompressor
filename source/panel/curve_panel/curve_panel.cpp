@@ -13,9 +13,11 @@ namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
         : Thread("curve_panel"), base_(base),
           mag_analyzer_panel_(p, base_),
-          bottom_control_panel_(p, base_) {
+          bottom_control_panel_(p, base_),
+          left_control_panel_(p, base_) {
         addAndMakeVisible(mag_analyzer_panel_);
         addAndMakeVisible(bottom_control_panel_);
+        addAndMakeVisible(left_control_panel_);
         startThread(juce::Thread::Priority::low);
     }
 
@@ -35,8 +37,7 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
-        {
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale); {
             auto bound = getLocalBounds();
             bound.removeFromLeft(slider_width / 3);
             mag_analyzer_panel_.setBounds(bound);
@@ -44,6 +45,11 @@ namespace zlpanel {
             auto bound = getLocalBounds();
             bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
             bottom_control_panel_.setBounds(bound);
+        }
+        {
+            auto bound = getLocalBounds();
+            bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
+            left_control_panel_.setBounds(bound.removeFromLeft(slider_width / 3));
         }
     }
 
@@ -57,7 +63,8 @@ namespace zlpanel {
     }
 
     void CurvePanel::repaintCallBack(const double time_stamp) {
-        bottom_control_panel_.repaintCallBack(time_stamp);
         mag_analyzer_panel_.repaintCallBack(time_stamp);
+        bottom_control_panel_.repaintCallBack(time_stamp);
+        left_control_panel_.repaintCallBack(time_stamp);
     }
 } // zlpanel

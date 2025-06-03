@@ -9,36 +9,27 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
+#include <atomic>
+#include "BinaryData.h"
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
-#include "mag_analyzer_panel/mag_analyzer_panel.hpp"
-#include "left_control_panel.hpp"
-#include "bottom_control_panel.hpp"
+#include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class CurvePanel final : public juce::Component,
-                             private juce::Thread {
+    class LeftControlPanel final : public juce::Component {
     public:
-        explicit CurvePanel(PluginProcessor &p, zlgui::UIBase &base);
 
-        ~CurvePanel() override;
-
-        void paint(juce::Graphics &g) override;
-
-        void paintOverChildren(juce::Graphics &g) override;
+        explicit LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
         void resized() override;
 
         void repaintCallBack(double time_stamp);
 
     private:
-        zlgui::UIBase &base_;
-        MagAnalyzerPanel mag_analyzer_panel_;
-        BottomControlPanel bottom_control_panel_;
-        LeftControlPanel left_control_panel_;
+        zlgui::attachment::ComponentUpdater updater_;
 
-        void run() override;
+        zlgui::button::CompactButton side_control_display_button_;
+        zlgui::attachment::ButtonAttachment<false> side_control_display_attachment_;
+        const std::unique_ptr<juce::Drawable> side_control_display_drawable_;
     };
 } // zlpanel
