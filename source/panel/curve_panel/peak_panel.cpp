@@ -128,7 +128,9 @@ namespace zlpanel {
     }
 
     void PeakPanel::parameterChanged(const juce::String &parameter_id, const float new_value) {
-        if (parameter_id == zlstate::PAnalyzerMinDB::kID) {
+        if (parameter_id == zlstate::PAnalyzerMagType::kID) {
+            mag_analyzer_ref_.setMagType(static_cast<zldsp::analyzer::MagType>(std::round(new_value)));
+        } else if (parameter_id == zlstate::PAnalyzerMinDB::kID) {
             analyzer_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
         } else if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
             setTimeLength(zlstate::PAnalyzerTimeLength::getTimeLengthFromIndex(new_value));

@@ -37,6 +37,9 @@ namespace zlpanel {
         zlgui::combobox::CompactCombobox time_length_box_;
         zlgui::attachment::ComboBoxAttachment<false> time_length_attachment_;
 
+        zlgui::combobox::CompactCombobox mag_type_box_;
+        zlgui::attachment::ComboBoxAttachment<false> mag_type_attachment_;
+
         zlgui::combobox::CompactCombobox min_db_box_;
         zlgui::attachment::ComboBoxAttachment<false> min_db_attachment_;
 

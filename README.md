@@ -67,7 +67,7 @@ JUCE template from [pamplejuce](https://github.com/sudara/pamplejuce)
 
 [kfr](https://github.com/kfrlib/kfr) by [KFR](https://github.com/kfrlib)
 
-[Material Symbols / Material Icons](https://github.com/google/material-design-icons) by [Google](https://github.com/google)
+[Material Symbols](https://github.com/google/material-design-icons) by [Google](https://github.com/google)
 
 ## Reference
 

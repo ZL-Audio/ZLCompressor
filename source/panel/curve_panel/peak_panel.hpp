@@ -37,7 +37,11 @@ namespace zlpanel {
 
     private:
         PluginProcessor &p_ref_;
-        static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID, zlstate::PAnalyzerTimeLength::kID};
+        static constexpr std::array kNAIDs{
+            zlstate::PAnalyzerMagType::kID,
+            zlstate::PAnalyzerMinDB::kID,
+            zlstate::PAnalyzerTimeLength::kID
+        };
 
         zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressorController::kAnalyzerPointNum> &mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;

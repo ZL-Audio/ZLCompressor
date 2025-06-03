@@ -15,6 +15,9 @@ namespace zlpanel {
           time_length_box_("", zlstate::PAnalyzerTimeLength::kChoices, base_),
           time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
                                   zlstate::PAnalyzerTimeLength::kID, updater_),
+          mag_type_box_("", zlstate::PAnalyzerMagType::kChoices, base_),
+          mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
+                               zlstate::PAnalyzerMagType::kID, updater_),
           min_db_box_("", zlstate::PAnalyzerMinDB::kChoices, base_),
           min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
                              zlstate::PAnalyzerMinDB::kID, updater_),
@@ -23,19 +26,25 @@ namespace zlpanel {
           style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
-        time_length_box_.getLAF().setFontScale(1.f);
         time_length_box_.getLAF().setLabelJustification(juce::Justification::centredRight);
         time_length_box_.getLAF().setItemJustification(juce::Justification::centredRight);
-        time_length_box_.setAlpha(.5f);
-        time_length_box_.setBufferedToImage(true);
-        addAndMakeVisible(time_length_box_);
 
-        min_db_box_.getLAF().setFontScale(1.f);
+        mag_type_box_.getLAF().setLabelJustification(juce::Justification::centredBottom);
+        mag_type_box_.getLAF().setItemJustification(juce::Justification::centred);
+
         min_db_box_.getLAF().setLabelJustification(juce::Justification::bottomRight);
         min_db_box_.getLAF().setItemJustification(juce::Justification::centredRight);
-        min_db_box_.setAlpha(.5f);
-        min_db_box_.setBufferedToImage(true);
-        addAndMakeVisible(min_db_box_);
+
+        const auto popup_option = juce::PopupMenu::Options().withPreferredPopupDirection(
+            juce::PopupMenu::Options::PopupDirection::upwards);
+
+        for (auto &box: {&time_length_box_, &mag_type_box_, &min_db_box_}) {
+            box->getLAF().setFontScale(1.f);
+            box->getLAF().setOption(popup_option);
+            box->setAlpha(.5f);
+            box->setBufferedToImage(true);
+            addAndMakeVisible(box);
+        }
 
         label_laf_.setFontScale(1.5f);
         threshold_label_.setText("Threshold", juce::dontSendNotification);
@@ -86,9 +95,7 @@ namespace zlpanel {
             background_path_.lineTo(bound.getX() + sum_padding * 6.f, bound.getY());
             background_path_.closeSubPath();
         } {
-            auto bound = getLocalBounds();
-
-            {
+            auto bound = getLocalBounds(); {
                 auto box_bound = bound.removeFromLeft(slider_width / 3);
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 time_length_box_.setBounds(box_bound);
@@ -111,10 +118,17 @@ namespace zlpanel {
             bound.removeFromLeft(padding);
             release_label_.setBounds(bound.removeFromLeft(slider_width));
 
-            bound.removeFromRight(padding); {
+            bound.removeFromRight(padding / 2); {
                 auto box_bound = bound.removeFromRight(slider_width / 3);
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 min_db_box_.setBounds(box_bound);
+            }
+
+            bound.removeFromRight(padding / 2); {
+                auto box_bound = bound.removeFromRight(
+                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.4));
+                box_bound.removeFromTop(box_bound.getHeight() / 3);
+                mag_type_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);
             }
         }

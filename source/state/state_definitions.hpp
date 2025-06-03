@@ -118,6 +118,16 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
+    class PAnalyzerMagType : public ChoiceParameters<PAnalyzerMagType> {
+    public:
+        auto static constexpr kID = "analyzer_mag_type";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "Peak", "RMS"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     class PAnalyzerMinDB : public ChoiceParameters<PAnalyzerMinDB> {
     public:
         auto static constexpr kID = "analyzer_min_db";
@@ -150,7 +160,8 @@ namespace zlstate {
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout getNAParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
-        layout.add(PEQMaxDB::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get());
+        layout.add(PEQMaxDB::get(),
+                   PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get());
         return layout;
     }
 
