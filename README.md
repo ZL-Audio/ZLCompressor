@@ -67,6 +67,8 @@ JUCE template from [pamplejuce](https://github.com/sudara/pamplejuce)
 
 [kfr](https://github.com/kfrlib/kfr) by [KFR](https://github.com/kfrlib)
 
+[Material Symbols / Material Icons](https://github.com/google/material-design-icons) by [Google](https://github.com/google)
+
 ## Reference
 
 Dimitrios Giannoulis, Michael Massberg, and Joshua D. Reiss. *Digital dynamic range compressor design—A tutorial and analysis*. Journal of the Audio Engineering Society. (2012).
