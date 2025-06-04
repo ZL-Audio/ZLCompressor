@@ -30,24 +30,26 @@ namespace zlgui::attachment {
             if (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ID_, this);
                 parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                updater_ref_.addAttachment(*this);
+            } else {
+                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                updateComponent();
             }
             // add combobox listener
             button_.addListener(this);
-            // add to updater
-            updater_ref_.addAttachment(*this);
         }
 
         ~ButtonAttachment() override {
-            updater_ref_.removeAttachment(*this);
-            apvts_.removeParameterListener(parameter_ID_, this);
+            if (UpdateFromAPVTS) {
+                updater_ref_.removeAttachment(*this);
+                apvts_.removeParameterListener(parameter_ID_, this);
+            }
         }
 
         void updateComponent() override {
-            if (UpdateFromAPVTS) {
-                const auto current_flag = atomic_flag_.load(std::memory_order::relaxed);
-                if (current_flag != button_.getToggleState()) {
-                    button_.setToggleState(current_flag, notification_type_);
-                }
+            const auto current_flag = atomic_flag_.load(std::memory_order::relaxed);
+            if (current_flag != button_.getToggleState()) {
+                button_.setToggleState(current_flag, notification_type_);
             }
         }
 

@@ -63,22 +63,25 @@ namespace zlgui::attachment {
             if (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ID_, this);
                 parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                updater_ref_.addAttachment(*this);
+            } else {
+                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                updateComponent();
             }
-            // add to updater
-            updater_ref_.addAttachment(*this);
+
         }
 
         ~SliderAttachment() override {
-            updater_ref_.removeAttachment(*this);
-            apvts_.removeParameterListener(parameter_ID_, this);
+            if (UpdateFromAPVTS) {
+                updater_ref_.removeAttachment(*this);
+                apvts_.removeParameterListener(parameter_ID_, this);
+            }
         }
 
         void updateComponent() override {
-            if (UpdateFromAPVTS) {
-                const auto current_value = atomic_value_.load(std::memory_order::relaxed);
-                if (std::abs(current_value - slider_.getValue()) > 1e-6f) {
-                    slider_.setValue(current_value, notification_type_);
-                }
+            const auto current_value = atomic_value_.load(std::memory_order::relaxed);
+            if (std::abs(current_value - slider_.getValue()) > 1e-6f) {
+                slider_.setValue(current_value, notification_type_);
             }
         }
 
