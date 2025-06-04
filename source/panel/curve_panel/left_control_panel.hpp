@@ -26,6 +26,7 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
+        zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::button::CompactButton side_control_display_button_;

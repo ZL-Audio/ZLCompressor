@@ -89,7 +89,7 @@ namespace zlgui::slider {
 
             text_.setText(getDisplayValue(slider_), juce::dontSendNotification);
             text_.setJustificationType(juce::Justification::centred);
-            text_look_and_feel_.setFontScale(kFontHuge);
+            text_look_and_feel_.setFontScale(font_scale_);
             text_.setLookAndFeel(&text_look_and_feel_);
             text_.setInterceptsMouseClicks(false, false);
             text_.addListener(this);
@@ -101,7 +101,7 @@ namespace zlgui::slider {
                 label_.setText(label_text, juce::dontSendNotification);
                 label_.setJustificationType(juce::Justification::centred);
                 label_.setLookAndFeel(&name_look_and_feel_);
-                name_look_and_feel_.setFontScale(kFontHuge);
+                name_look_and_feel_.setFontScale(font_scale_);
                 label_.setInterceptsMouseClicks(false, false);
                 addAndMakeVisible(label_);
             }
@@ -197,6 +197,12 @@ namespace zlgui::slider {
             text_.repaint();
         }
 
+        void setFontScale(const float scale) {
+            font_scale_ = scale;
+            text_look_and_feel_.setFontScale(font_scale_);
+            name_look_and_feel_.setFontScale(font_scale_);
+        }
+
     private:
         UIBase &base_;
         Background background_;
@@ -206,6 +212,8 @@ namespace zlgui::slider {
 
         label::NameLookAndFeel name_look_and_feel_, text_look_and_feel_;
         juce::Label label_, text_;
+
+        float font_scale_{1.5f};
 
         static juce::String getDisplayValue(juce::Slider &s) {
             auto value = s.getValue();
@@ -240,7 +248,7 @@ namespace zlgui::slider {
             editor.setJustification(juce::Justification::centred);
             editor.setColour(juce::TextEditor::outlineColourId, base_.getTextColor());
             editor.setColour(juce::TextEditor::highlightedTextColourId, base_.getTextColor());
-            editor.applyFontToAllText(juce::FontOptions{base_.getFontSize() * kFontHuge});
+            editor.applyFontToAllText(juce::FontOptions{base_.getFontSize() * font_scale_});
             editor.applyColourToAllText(base_.getTextColor(), true);
         }
 
@@ -254,11 +262,12 @@ namespace zlgui::slider {
             const auto actual_value = ctext.getDoubleValue() * k;
 
             slider_.setValue(actual_value, juce::sendNotificationAsync);
-
-            text_look_and_feel_.setAlpha(0.f);
-            name_look_and_feel_.setAlpha(1.f);
-            text_.repaint();
-            label_.repaint();
+            if (UseName) {
+                text_look_and_feel_.setAlpha(0.f);
+                name_look_and_feel_.setAlpha(1.f);
+                text_.repaint();
+                label_.repaint();
+            }
         }
 
         void sliderValueChanged(juce::Slider *) override {

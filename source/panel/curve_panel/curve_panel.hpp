@@ -16,6 +16,7 @@
 #include "mag_analyzer_panel/mag_analyzer_panel.hpp"
 #include "left_control_panel.hpp"
 #include "bottom_control_panel.hpp"
+#include "side_control_panel.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -38,6 +39,7 @@ namespace zlpanel {
         MagAnalyzerPanel mag_analyzer_panel_;
         BottomControlPanel bottom_control_panel_;
         LeftControlPanel left_control_panel_;
+        SideControlPanel side_control_panel_;
 
         void run() override;
     };

@@ -14,10 +14,13 @@ namespace zlpanel {
         : Thread("curve_panel"), base_(base),
           mag_analyzer_panel_(p, base_),
           bottom_control_panel_(p, base_),
-          left_control_panel_(p, base_) {
+          left_control_panel_(p, base_),
+    side_control_panel_(p, base_) {
         addAndMakeVisible(mag_analyzer_panel_);
         addAndMakeVisible(bottom_control_panel_);
         addAndMakeVisible(left_control_panel_);
+
+        addChildComponent(side_control_panel_);
         startThread(juce::Thread::Priority::low);
     }
 
@@ -37,19 +40,26 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale); {
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
             auto bound = getLocalBounds();
-            bound.removeFromLeft(slider_width / 3);
+            bound.removeFromLeft(button_height);
             mag_analyzer_panel_.setBounds(bound);
         } {
             auto bound = getLocalBounds();
             bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
             bottom_control_panel_.setBounds(bound);
-        }
-        {
+        } {
             auto bound = getLocalBounds();
             bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
-            left_control_panel_.setBounds(bound.removeFromLeft(slider_width / 3));
+            left_control_panel_.setBounds(bound.removeFromLeft(button_height));
+        } {
+            auto bound = getLocalBounds();
+            bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bound.removeFromLeft(button_height);
+            const auto p = bound.getBottomLeft();
+            const auto width = side_control_panel_.getIdealWidth();
+            const auto height = side_control_panel_.getIdealHeight();
+            side_control_panel_.setBounds(p.getX(), p.getY() - height, width, height);
         }
     }
 
@@ -66,5 +76,6 @@ namespace zlpanel {
         mag_analyzer_panel_.repaintCallBack(time_stamp);
         bottom_control_panel_.repaintCallBack(time_stamp);
         left_control_panel_.repaintCallBack(time_stamp);
+        side_control_panel_.repaintCallBack(time_stamp);
     }
 } // zlpanel

@@ -54,23 +54,29 @@ namespace zlgui::button {
             if (normal_ != nullptr) {
                 normal_img_ = normal_->createCopy();
                 over_img_ = normal_->createCopy();
-                normal_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(.5f));
-                over_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
+                normal_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(alpha_));
+                over_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(over_alpha_));
             }
             if (normal_on_ != nullptr) {
                 normal_on_img_ = normal_on_->createCopy();
                 over_on_img_ = normal_on_img_->createCopy();
-                normal_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(.5f));
-                over_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
+                normal_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(alpha_));
+                over_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(over_alpha_));
             }
             button_.setImages(normal_img_.get(), over_img_.get(), nullptr, nullptr,
-                             normal_on_img_.get(), over_on_img_.get(), nullptr, nullptr);
+                              normal_on_img_.get(), over_on_img_.get(), nullptr, nullptr);
+        }
+
+        void setImageAlpha(const float alpha, const float over_alpha) {
+            alpha_ = alpha;
+            over_alpha_ = over_alpha;
         }
 
     private:
         zlgui::UIBase &base_;
         juce::DrawableButton button_{"", juce::DrawableButton::ImageFitted};
         juce::Drawable *normal_ = nullptr, *normal_on_ = nullptr;
+        float alpha_{.5f}, over_alpha_{1.f};
 
         std::unique_ptr<juce::Drawable> normal_img_, normal_on_img_, over_img_, over_on_img_;
     };

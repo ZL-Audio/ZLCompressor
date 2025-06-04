@@ -319,6 +319,50 @@ namespace zlp {
         auto static constexpr kDefaultV = 0.f;
     };
 
+    class PSideStereoMode : public ChoiceParameters<PSideStereoMode> {
+    public:
+        auto static constexpr kID = "side_stereo_mode";
+        auto static constexpr kName = "Side Stereo Mode";
+        inline auto static const kChoices = juce::StringArray{
+            "Mid Side", "Left Right"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
+    class PSideStereoSwap : public ChoiceParameters<PSideStereoSwap> {
+    public:
+        auto static constexpr kID = "side_stereo_swap";
+        auto static constexpr kName = "Side Stereo Swap";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "ON"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
+    class PSideStereoLink : public FloatParameters<PSideStereoLink> {
+    public:
+        auto static constexpr kID = "side_stereo_link";
+        auto static constexpr kName = "Side Stereo Link";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        auto static constexpr kDefaultV = 90.f;
+    };
+
+    class PSideStereoWet1 : public FloatParameters<PSideStereoWet1> {
+    public:
+        auto static constexpr kID = "side_stereo_wet1";
+        auto static constexpr kName = "Side Stereo Wet 1";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        auto static constexpr kDefaultV = 100.f;
+    };
+
+    class PSideStereoWet2 : public FloatParameters<PSideStereoWet2> {
+    public:
+        auto static constexpr kID = "side_stereo_wet2";
+        auto static constexpr kName = "Side Stereo Wet 2";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        auto static constexpr kDefaultV = 100.f;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
@@ -326,6 +370,8 @@ namespace zlp {
                    PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
                    PHold::get(), PRange::get(), PWet::get(), POutGain::get(),
                    PExtSide::get(), PSideOut::get(), PSideGain::get(),
+                   PSideStereoMode::get(), PSideStereoSwap::get(),
+                   PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
                    POversample::get());
         return layout;
     }

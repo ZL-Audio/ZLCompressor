@@ -11,14 +11,15 @@
 
 namespace zlpanel {
     LeftControlPanel::LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base)
-        : side_control_display_button_("", base, ""),
+        : base_(base),
+          side_control_display_button_("", base, ""),
           side_control_display_attachment_(side_control_display_button_.getButton(), p.na_parameters_,
                                            zlstate::PSideControlDisplay::kID, updater_),
           side_control_display_drawable_(
               juce::Drawable::createFromImageData(BinaryData::link_svg, BinaryData::link_svgSize)) {
         side_control_display_button_.setDrawable(side_control_display_drawable_.get());
 
-        for (auto &b : {&side_control_display_button_}) {
+        for (auto &b: {&side_control_display_button_}) {
             b->getLAF().enableShadow(false);
             b->getLAF().setShrinkScale(.0f);
             b->getLAF().setScale(1.25f);
@@ -29,8 +30,10 @@ namespace zlpanel {
 
     void LeftControlPanel::resized() {
         auto bound = getLocalBounds();
-        const auto height = bound.getHeight() / 5;
-        side_control_display_button_.setBounds(bound.removeFromBottom(height));
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto height = (bound.getHeight() - 5 * button_height) / 5;
+        bound.removeFromBottom(height / 2);
+        side_control_display_button_.setBounds(bound.removeFromBottom(button_height));
     }
 
     void LeftControlPanel::repaintCallBack(double time_stamp) {

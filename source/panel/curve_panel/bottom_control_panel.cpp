@@ -86,7 +86,8 @@ namespace zlpanel {
 
     void BottomControlPanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale); {
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
             const auto bound = getLocalBounds().toFloat();
             const auto sum_padding = static_cast<float>(padding + slider_width);
             background_path_.startNewSubPath(bound.getX() + sum_padding, bound.getY());
@@ -96,10 +97,10 @@ namespace zlpanel {
             background_path_.closeSubPath();
         } {
             auto bound = getLocalBounds(); {
-                auto box_bound = bound.removeFromLeft(slider_width / 3);
+                auto box_bound = bound.removeFromLeft(button_height);
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 time_length_box_.setBounds(box_bound);
-                bound.removeFromLeft(slider_width - slider_width / 3);
+                bound.removeFromLeft(slider_width - button_height);
                 bound.removeFromLeft(padding);
             }
 
