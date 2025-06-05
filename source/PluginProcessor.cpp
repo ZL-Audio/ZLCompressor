@@ -29,7 +29,9 @@ PluginProcessor::PluginProcessor()
              zlstate::getStateParameterLayout()),
       property_(state_),
       compressor_controller_(*this),
-      compress_attach_(*this, parameters_, compressor_controller_) {
+      compress_attach_(*this, parameters_, compressor_controller_),
+      ext_side_(*parameters_.getRawParameterValue(zlp::PExtSide::kID)),
+      side_out_(*parameters_.getRawParameterValue(zlp::PSideOut::kID)) {
 }
 
 PluginProcessor::~PluginProcessor() = default;
@@ -157,8 +159,10 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
-    const auto c_use_ext_side = use_ext_side_.load(std::memory_order::relaxed);
+    const auto c_ext_side = ext_side_.load(std::memory_order::relaxed) > .5f;
+    const auto c_side_out = side_out_.load(std::memory_order::relaxed) > .5f;
     const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
+
     switch (channel_layout_) {
         case ChannelLayout::kMain1Aux0: {
             main_pointers_[0] = buffer.getWritePointer(0);
@@ -169,13 +173,17 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+
+            if (c_side_out) {
+                zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain1Aux1: {
             main_pointers_[0] = buffer.getWritePointer(0);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 zldsp::vector::copy(double_side_pointers_[0], buffer.getReadPointer(1), buffer_size);
                 zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
             } else {
@@ -185,13 +193,17 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+
+            if (c_side_out) {
+                zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain1Aux2: {
             main_pointers_[0] = buffer.getWritePointer(0);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 zldsp::vector::copy(double_side_pointers_[0], buffer.getReadPointer(1), buffer_size);
                 zldsp::vector::copy(double_side_pointers_[1], buffer.getReadPointer(2), buffer_size);
             } else {
@@ -201,6 +213,13 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+
+            if (c_side_out) {
+                auto v0 = kfr::make_univector(double_side_pointers_[0], buffer_size);
+                auto v1 = kfr::make_univector(double_side_pointers_[1], buffer_size);
+                v0 = 0.5 * (v0 + v1);
+                zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain2Aux0: {
@@ -212,13 +231,17 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+
+            if (c_side_out) {
+                zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain2Aux1: {
             main_pointers_[0] = buffer.getWritePointer(0);
             main_pointers_[1] = buffer.getWritePointer(1);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 zldsp::vector::copy(double_side_pointers_[0], buffer.getWritePointer(2), buffer_size);
                 zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
             } else {
@@ -228,13 +251,17 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+
+            if (c_side_out) {
+                zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain2Aux2: {
             main_pointers_[0] = buffer.getWritePointer(0);
             main_pointers_[1] = buffer.getWritePointer(1);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 zldsp::vector::copy(double_side_pointers_[0], buffer.getWritePointer(2), buffer_size);
                 zldsp::vector::copy(double_side_pointers_[1], buffer.getWritePointer(3), buffer_size);
             } else {
@@ -244,6 +271,10 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+
+            if (c_side_out) {
+                zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
+            }
             break;
         }
         case ChannelLayout::kInvalid: {
@@ -254,7 +285,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
-    const auto c_use_ext_side = use_ext_side_.load(std::memory_order::relaxed);
+    const auto c_ext_side = ext_side_.load(std::memory_order::relaxed) > .5f;
+    const auto c_side_out = side_out_.load(std::memory_order::relaxed) > .5f;
     const auto buffer_size = static_cast<size_t>(buffer.getNumSamples());
 
     switch (channel_layout_) {
@@ -268,27 +300,37 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+
+            if (!c_side_out) {
+                zldsp::vector::copy(double_side_pointers_[0], main_pointers_[0], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain1Aux1: {
             zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
-            double_side_pointers_[0] = c_use_ext_side ? buffer.getWritePointer(1) : buffer.getWritePointer(0);
+            double_side_pointers_[0] = c_ext_side ? buffer.getWritePointer(1) : buffer.getWritePointer(0);
             zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
             // process side eq
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+
+            if (c_side_out) {
+                if (c_ext_side) {
+                    zldsp::vector::copy(buffer.getWritePointer(0), double_side_pointers_[0], buffer_size);
+                }
+            } else {
+                zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain1Aux2: {
             zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 double_side_pointers_[0] = buffer.getWritePointer(1);
                 double_side_pointers_[1] = buffer.getWritePointer(2);
             } else {
@@ -299,7 +341,17 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+
+            if (c_side_out) {
+                if (c_ext_side) {
+                    auto v = kfr::make_univector(buffer.getWritePointer(0), buffer_size);
+                    auto v0 =  kfr::make_univector(double_side_pointers_[0], buffer_size);
+                    auto v1 =  kfr::make_univector(double_side_pointers_[1], buffer_size);
+                    v = 0.5 * (v0 + v1);
+                }
+            } else {
+                zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain2Aux0: {
@@ -312,15 +364,18 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
+
+            if (!c_side_out) {
+                zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+                zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain2Aux1: {
             zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
             zldsp::vector::copy(main_pointers_[1], buffer.getWritePointer(1), buffer_size);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 double_side_pointers_[0] = buffer.getWritePointer(2);
                 zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
             } else {
@@ -331,15 +386,23 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
+
+            if (c_side_out) {
+                if (c_ext_side) {
+                    zldsp::vector::copy(buffer.getWritePointer(0), double_side_pointers_[0], buffer_size);
+                    zldsp::vector::copy(buffer.getWritePointer(1), double_side_pointers_[0], buffer_size);
+                }
+            } else {
+                zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+                zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kMain2Aux2: {
             zldsp::vector::copy(main_pointers_[0], buffer.getWritePointer(0), buffer_size);
             zldsp::vector::copy(main_pointers_[1], buffer.getWritePointer(1), buffer_size);
 
-            if (c_use_ext_side) {
+            if (c_ext_side) {
                 double_side_pointers_[0] = buffer.getWritePointer(2);
                 double_side_pointers_[1] = buffer.getWritePointer(3);
             } else {
@@ -350,8 +413,16 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
-            zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
+
+            if (c_side_out) {
+                if (c_ext_side) {
+                    zldsp::vector::copy(buffer.getWritePointer(0), double_side_pointers_[0], buffer_size);
+                    zldsp::vector::copy(buffer.getWritePointer(1), double_side_pointers_[1], buffer_size);
+                }
+            } else {
+                zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
+                zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
+            }
             break;
         }
         case ChannelLayout::kInvalid: {

@@ -70,10 +70,6 @@ public:
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    void setUseExternalSide(const bool use_ext_side) {
-        use_ext_side_.store(use_ext_side, std::memory_order::relaxed);
-    }
-
     inline zlp::CompressorController &getController() {
         return compressor_controller_;
     }
@@ -92,7 +88,7 @@ private:
         kInvalid
     };
 
-    std::atomic<bool> use_ext_side_{false};
+    std::atomic<float> &ext_side_, &side_out_;
     ChannelLayout channel_layout_{kInvalid};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
