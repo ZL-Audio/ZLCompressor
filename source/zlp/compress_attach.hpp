@@ -34,6 +34,9 @@ namespace zlp {
             PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID,
             PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID,
             PHold::kID, PRange::kID, POutGain::kID, PWet::kID,
+            PSideStereoMode::kID, PSideStereoSwap::kID,
+            PSideStereoLink::kID,
+            PSideStereoWet1::kID, PSideStereoWet2::kID,
             POversample::kID
         };
 
@@ -42,6 +45,9 @@ namespace zlp {
             PThreshold::kDefaultV, PRatio::kDefaultV, PKneeW::kDefaultV, PCurve::kDefaultV,
             PAttack::kDefaultV, PRelease::kDefaultV, PPump::kDefaultV, PSmooth::kDefaultV,
             PHold::kDefaultV, PRange::kDefaultV, POutGain::kDefaultV, PWet::kDefaultV,
+            static_cast<float>(PSideStereoMode::kDefaultI), static_cast<float>(PSideStereoSwap::kDefaultI),
+            PSideStereoLink::kDefaultV,
+            PSideStereoWet1::kDefaultV, PSideStereoWet2::kDefaultV,
             static_cast<float>(POversample::kDefaultI)
         };
 

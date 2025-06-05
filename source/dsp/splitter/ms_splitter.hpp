@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../vector/kfr_import.hpp"
+
 namespace zldsp::splitter {
     /**
      * a splitter that splits the stereo audio signal input mid signal and side signal
@@ -23,24 +25,28 @@ namespace zldsp::splitter {
          * switch left/right buffer to mid/side buffer
          */
         static constexpr void split(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
-            for (size_t i = 0; i < num_samples; ++i) {
-                const auto l = l_buffer[i];
-                const auto r = r_buffer[i];
-                l_buffer[i] = (l + r) * FloatType(0.5);
-                r_buffer[i] = l_buffer[i] - r_buffer[i];
-            }
+            auto l_vector = kfr::make_univector(l_buffer, num_samples);
+            auto r_vector = kfr::make_univector(r_buffer, num_samples);
+
+            l_vector = kSqrt2Over2 * (l_vector + r_vector);
+            r_vector = l_vector - kSqrt2 * r_vector;
         }
 
         /**
          * switch mis/side buffer to left/right buffer
          */
         static constexpr void combine(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
-            for (size_t i = 0; i < num_samples; ++i) {
-                const auto l = l_buffer[i];
-                const auto r = r_buffer[i];
-                l_buffer[i] = l + r;
-                r_buffer[i] = l - r;
-            }
+            auto l_vector = kfr::make_univector(l_buffer, num_samples);
+            auto r_vector = kfr::make_univector(r_buffer, num_samples);
+
+            l_vector = kSqrt2Over2 * (l_vector + r_vector);
+            r_vector = l_vector - kSqrt2 * r_vector;
         }
+
+    private:
+        static constexpr FloatType kSqrt2Over2 = static_cast<FloatType>(
+            0.7071067811865475244008443621048490392848359376884740365883398690);
+        static constexpr FloatType kSqrt2 = static_cast<FloatType>(
+            1.414213562373095048801688724209698078569671875376948073176679738);
     };
 }

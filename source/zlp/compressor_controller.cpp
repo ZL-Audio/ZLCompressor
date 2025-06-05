@@ -52,7 +52,6 @@ namespace zlp {
         }
     }
 
-
     void CompressorController::prepareBuffer() {
         c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
         c_spec_analyzer_on_ = spec_analyzer_on_.load(std::memory_order::relaxed);
@@ -112,7 +111,7 @@ namespace zlp {
             }
         }
         // load stereo link
-        c_stereo_link_ = 1.f - std::clamp(stereo_link_.load(std::memory_order::relaxed), 0.f, .5f);
+        c_stereo_link_ = stereo_link_.load(std::memory_order::relaxed);
         // load hold values
         if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
             const auto oversample_mul = 1 << c_oversample_idx_;
@@ -150,7 +149,7 @@ namespace zlp {
         }
 
         // stereo split the main/side buffer
-        if (c_stereo_mode_ == 1) {
+        if (c_stereo_mode_ == 0) {
             zldsp::splitter::MSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
             zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
@@ -175,6 +174,11 @@ namespace zlp {
             // delay the pre buffer
             oversample_delay_.process(pre_pointers_, num_samples);
         }
+        // stereo combine the main buffer
+        if (c_stereo_mode_ == 0) {
+            zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
+        }
+
         // copy to post buffer
         if (c_mag_analyzer_on_) {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
@@ -236,7 +240,7 @@ namespace zlp {
         // apply gain on the main buffer
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        if (side_swap_.load()) {
+        if (stereo_swap_.load(std::memory_order::relaxed)) {
             main_v0 = main_v0 * side_v1;
             main_v1 = main_v1 * side_v0;
         } else {

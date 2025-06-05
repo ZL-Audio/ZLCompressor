@@ -62,6 +62,16 @@ namespace zlp {
             controller_ref_.setOutputGain(new_value);
         } else if (parameter_ID == PWet::kID) {
             controller_ref_.setWet(new_value);
+        } else if (parameter_ID == PSideStereoMode::kID) {
+            controller_ref_.setStereoModeIsMidSide(new_value > .5f);
+        } else if (parameter_ID == PSideStereoSwap::kID) {
+            controller_ref_.setStereoSwap(new_value > .5f);
+        } else if (parameter_ID == PSideStereoLink::kID) {
+            controller_ref_.setStereoLink(new_value);
+        } else if (parameter_ID == PSideStereoWet1::kID) {
+            controller_ref_.setWet1(new_value);
+        } else if (parameter_ID == PSideStereoWet2::kID) {
+            controller_ref_.setWet2(new_value);
         } else if (parameter_ID == POversample::kID) {
             controller_ref_.setOversampleIdx(static_cast<int>(new_value));
         }

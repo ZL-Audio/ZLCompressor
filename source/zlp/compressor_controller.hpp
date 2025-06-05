@@ -68,12 +68,34 @@ namespace zlp {
             to_update_wet_.store(true, std::memory_order::release);
         }
 
+        void setWet1(const float percent) {
+            wet1_.store(percent * 0.01f, std::memory_order::relaxed);
+            to_update_wet_.store(true, std::memory_order::release);
+        }
+
+        void setWet2(const float percent) {
+            wet2_.store(percent * 0.01f, std::memory_order::relaxed);
+            to_update_wet_.store(true, std::memory_order::release);
+        }
+
         void setMagAnalyzerOn(const bool f) {
             mag_analyzer_on_.store(f, std::memory_order::relaxed);
         }
 
         void setSpecAnalyzerOn(const bool f) {
             spec_analyzer_on_.store(f, std::memory_order::relaxed);
+        }
+
+        void setStereoModeIsMidSide(const bool f) {
+            stereo_mode_.store(static_cast<int>(f), std::memory_order::relaxed);
+        }
+
+        void setStereoSwap(const bool f) {
+            stereo_swap_.store(f, std::memory_order::relaxed);
+        }
+
+        void setStereoLink(const float percent) {
+            stereo_link_.store(1.f - percent * 0.005f, std::memory_order::relaxed);
         }
 
     private:
@@ -92,10 +114,10 @@ namespace zlp {
         std::atomic<int> stereo_mode_{0};
         int c_stereo_mode_{0};
 
-        std::atomic<float> stereo_link_{0.};
+        std::atomic<float> stereo_link_{1.};
         float c_stereo_link_{1.};
 
-        std::atomic<bool> side_swap_{false};
+        std::atomic<bool> stereo_swap_{false};
 
         std::atomic<zldsp::compressor::Style> comp_style_{zldsp::compressor::Style::kClean};
         zldsp::compressor::Style c_comp_style_{zldsp::compressor::Style::kClean};
