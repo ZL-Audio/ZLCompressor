@@ -31,7 +31,10 @@ namespace zlpanel {
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 
-        juce::Path background_path_;
+        std::atomic<float> &side_control_show_ref_, &side_eq_show_ref_;
+        bool show_path1_{false};
+
+        juce::Path background_path0_, background_path1_;
 
         zlgui::combobox::CompactCombobox time_length_box_;
         zlgui::attachment::ComboBoxAttachment<false> time_length_attachment_;
@@ -48,7 +51,6 @@ namespace zlpanel {
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
 
-        [[maybe_unused]] bool show_buttons_{false};
         double previous_time_stamp{0.0};
     };
 } // zlpanel

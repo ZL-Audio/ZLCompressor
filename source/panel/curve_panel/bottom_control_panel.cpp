@@ -12,6 +12,8 @@
 namespace zlpanel {
     BottomControlPanel::BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base)
         : p_ref_(p), base_(base),
+          side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
+          side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
           time_length_box_("", zlstate::PAnalyzerTimeLength::kChoices, base_),
           time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
                                   zlstate::PAnalyzerTimeLength::kID, updater_),
@@ -67,7 +69,7 @@ namespace zlpanel {
 
     void BottomControlPanel::paint(juce::Graphics &g) {
         g.setColour(base_.getBackgroundColor());
-        g.fillPath(background_path_);
+        g.fillPath(show_path1_ ? background_path1_ : background_path0_);
     }
 
     int BottomControlPanel::getIdealWidth() const {
@@ -80,6 +82,12 @@ namespace zlpanel {
     void BottomControlPanel::repaintCallBack(const double time_stamp) {
         if (time_stamp - previous_time_stamp > 0.1) {
             updater_.updateComponents();
+            const auto f1 = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
+            const auto f2 = side_eq_show_ref_.load(std::memory_order::relaxed) > .5f;
+            if (const auto f = f1 || f2; f != show_path1_) {
+                show_path1_ = f;
+                repaint();
+            }
             previous_time_stamp = time_stamp;
         }
     }
@@ -90,11 +98,17 @@ namespace zlpanel {
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
             const auto bound = getLocalBounds().toFloat();
             const auto sum_padding = static_cast<float>(padding + slider_width);
-            background_path_.startNewSubPath(bound.getX() + sum_padding, bound.getY());
-            background_path_.lineTo(bound.getX() + sum_padding - bound.getHeight(), bound.getBottom());
-            background_path_.lineTo(bound.getX() + sum_padding * 6.f + bound.getHeight(), bound.getBottom());
-            background_path_.lineTo(bound.getX() + sum_padding * 6.f, bound.getY());
-            background_path_.closeSubPath();
+            background_path0_.startNewSubPath(bound.getX() + sum_padding, bound.getY());
+            background_path0_.lineTo(bound.getX() + sum_padding - bound.getHeight(), bound.getBottom());
+            background_path0_.lineTo(bound.getX() + sum_padding * 6.f + bound.getHeight(), bound.getBottom());
+            background_path0_.lineTo(bound.getX() + sum_padding * 6.f, bound.getY());
+            background_path0_.closeSubPath();
+
+            background_path1_.startNewSubPath(bound.getTopLeft());
+            background_path1_.lineTo(bound.getBottomLeft());
+            background_path1_.lineTo(bound.getX() + sum_padding * 6.f + bound.getHeight(), bound.getBottom());
+            background_path1_.lineTo(bound.getX() + sum_padding * 6.f, bound.getY());
+            background_path1_.closeSubPath();
         } {
             auto bound = getLocalBounds(); {
                 auto box_bound = bound.removeFromLeft(button_height);
