@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../attachment/component_updater.hpp"
+#include "component_updater.hpp"
 
 namespace zlgui::attachment {
     template<bool UpdateFromAPVTS = true>

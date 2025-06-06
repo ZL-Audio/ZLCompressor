@@ -9,5 +9,4 @@
 
 #pragma once
 
-#include "pre_post_fft_analyzer.hpp"
 #include "multiple_fft_analyzer.hpp"

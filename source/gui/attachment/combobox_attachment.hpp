@@ -9,37 +9,40 @@
 
 #pragma once
 
-#include "../attachment/component_updater.hpp"
+#include "component_updater.hpp"
 
 namespace zlgui::attachment {
     template<bool UpdateFromAPVTS = true>
-    class ButtonAttachment final : public ComponentAttachment,
-                                   private juce::AudioProcessorValueTreeState::Listener,
-                                   private juce::Button::Listener {
+    class ComboBoxAttachment final : public ComponentAttachment,
+                                     private juce::AudioProcessorValueTreeState::Listener,
+                                     private juce::ComboBox::Listener {
     public:
-        ButtonAttachment(juce::Button &button,
-                         juce::AudioProcessorValueTreeState &apvts,
-                         const juce::String &parameter_ID,
-                         ComponentUpdater &updater,
-                         const juce::NotificationType notification_type = juce::NotificationType::sendNotificationSync)
-            : button_(button), notification_type_(notification_type),
+        ComboBoxAttachment(juce::ComboBox &box,
+                           juce::AudioProcessorValueTreeState &apvts,
+                           const juce::String &parameter_ID,
+                           ComponentUpdater &updater,
+                           const juce::NotificationType notification_type =
+                                   juce::NotificationType::sendNotificationSync)
+            : box_(box), notification_type_(notification_type),
               apvts_(apvts), parameter_ID_(parameter_ID),
               parameter_ref_(*apvts_.getParameter(parameter_ID_)),
               updater_ref_(updater) {
             // add parameter listener
             if (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ID_, this);
-                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                parameterChanged(parameter_ID_,
+                                 apvts_.getRawParameterValue(parameter_ID_)->load(std::memory_order::relaxed));
                 updater_ref_.addAttachment(*this);
             } else {
-                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+                parameterChanged(parameter_ID_,
+                                 apvts_.getRawParameterValue(parameter_ID_)->load(std::memory_order::relaxed));
                 updateComponent();
             }
             // add combobox listener
-            button_.addListener(this);
+            box_.addListener(this);
         }
 
-        ~ButtonAttachment() override {
+        ~ComboBoxAttachment() override {
             if (UpdateFromAPVTS) {
                 updater_ref_.removeAttachment(*this);
                 apvts_.removeParameterListener(parameter_ID_, this);
@@ -47,33 +50,31 @@ namespace zlgui::attachment {
         }
 
         void updateComponent() override {
-            const auto current_flag = atomic_flag_.load(std::memory_order::relaxed);
-            if (current_flag != button_.getToggleState()) {
-                button_.setToggleState(current_flag, notification_type_);
+            const auto current_index = atomic_index_.load(std::memory_order::relaxed);
+            if (current_index != box_.getSelectedItemIndex()) {
+                box_.setSelectedItemIndex(current_index, notification_type_);
             }
         }
 
     private:
-        juce::Button &button_;
+        juce::ComboBox &box_;
         juce::NotificationType notification_type_{juce::NotificationType::sendNotificationSync};
         juce::AudioProcessorValueTreeState &apvts_;
         juce::String parameter_ID_;
         juce::RangedAudioParameter &parameter_ref_;
         ComponentUpdater &updater_ref_;
-        std::atomic<bool> atomic_flag_{false};
+        std::atomic<int> atomic_index_{0};
 
         void parameterChanged(const juce::String &, const float new_value) override {
-            atomic_flag_.store(new_value > .5f, std::memory_order::relaxed);
+            atomic_index_.store(static_cast<int>(new_value), std::memory_order::relaxed);
             updater_ref_.getFlag().store(true, std::memory_order::release);
         }
 
-        void buttonStateChanged(juce::Button *) override {
+        void comboBoxChanged(juce::ComboBox *) override {
             parameter_ref_.beginChangeGesture();
-            parameter_ref_.setValueNotifyingHost(static_cast<float>(button_.getToggleState()));
+            parameter_ref_.setValueNotifyingHost(
+                parameter_ref_.convertTo0to1(static_cast<float>(box_.getSelectedItemIndex())));
             parameter_ref_.endChangeGesture();
-        }
-
-        void buttonClicked(juce::Button *) override {
         }
     };
 }
