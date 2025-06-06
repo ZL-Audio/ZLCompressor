@@ -90,8 +90,7 @@ namespace zldsp::analyzer {
                     updateMags<CurrentMagType>(buffers, start_idx, remain_num);
                     current_pos_ = current_pos_ + static_cast<double>(remain_num) - max_pos_;
                     if (abstract_fifo_.getNumFree() > 0) {
-                        zldsp::container::AbstractFIFO::Range range{};
-                        abstract_fifo_.prepareToWrite(1, range);
+                        const auto range = abstract_fifo_.prepareToWrite(1);
                         const auto write_idx = range.block_size1 > 0 ? range.start_index1 : range.start_index2;
                         switch (CurrentMagType) {
                             case MagType::kPeak: {
@@ -111,7 +110,7 @@ namespace zldsp::analyzer {
                                 break;
                             }
                         }
-                        abstract_fifo_.finishedWrite(1);
+                        abstract_fifo_.finishWrite(1);
 
                         std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
                     }

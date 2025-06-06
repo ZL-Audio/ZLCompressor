@@ -34,8 +34,7 @@ namespace zldsp::analyzer {
             }
 
             const int num_ready = this->abstract_fifo_.getNumReady();
-            zldsp::container::AbstractFIFO::Range range{};
-            this->abstract_fifo_.prepareToRead(num_ready, range);
+            const auto range = this->abstract_fifo_.prepareToRead(num_ready);
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &mag_fifo{this->mag_fifos_[i]};
                 auto &cumulative_count{cumulative_counts_[i]};
@@ -46,7 +45,7 @@ namespace zldsp::analyzer {
                     updateHist(cumulative_count, mag_fifo[static_cast<size_t>(idx)]);
                 }
             }
-            this->abstract_fifo_.finishedRead(num_ready);
+            this->abstract_fifo_.finishRead(num_ready);
 
             std::array<float, MagNum> maximum_counts{};
             for (size_t i = 0; i < MagNum; ++i) {

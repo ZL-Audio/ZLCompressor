@@ -33,9 +33,8 @@ namespace zldsp::analyzer {
                     std::fill(this->circular_mags_[i].begin(), this->circular_mags_[i].end(), -240.f);
                 }
                 // clear FIFOs
-                zldsp::container::AbstractFIFO::Range range{};
-                this->abstract_fifo_.prepareToRead(fifo_num_ready, range);
-                this->abstract_fifo_.finishedRead(fifo_num_ready);
+                this->abstract_fifo_.prepareToRead(fifo_num_ready);
+                this->abstract_fifo_.finishRead(fifo_num_ready);
                 return 0;
             }
             const int num_ready = fifo_num_ready >= static_cast<int>(PointNum / 2)
@@ -51,8 +50,7 @@ namespace zldsp::analyzer {
                             circular_peak.end());
             }
             // read from FIFOs
-            zldsp::container::AbstractFIFO::Range range{};
-            this->abstract_fifo_.prepareToRead(num_ready, range);
+            const auto range = this->abstract_fifo_.prepareToRead(num_ready);
             for (size_t i = 0; i < MagNum; ++i) {
                 auto &circular_peak{this->circular_mags_[i]};
                 auto &peak_fifo{this->mag_fifos_[i]};
@@ -69,7 +67,7 @@ namespace zldsp::analyzer {
                               &circular_peak[j]);
                 }
             }
-            this->abstract_fifo_.finishedRead(num_ready);
+            this->abstract_fifo_.finishRead(num_ready);
 
             return num_ready;
         }

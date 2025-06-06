@@ -9,7 +9,9 @@
 
 #pragma once
 
-#include "zlp_definitions.hpp"
-#include "compressor_controller.hpp"
-#include "compress_attach.hpp"
-#include "equalizer_controller.hpp"
+#include "../dsp/filter/filter.hpp"
+
+namespace zlp {
+    class EqualizerController {
+    };
+}

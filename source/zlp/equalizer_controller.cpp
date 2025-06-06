@@ -7,9 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include "zlp_definitions.hpp"
-#include "compressor_controller.hpp"
-#include "compress_attach.hpp"
 #include "equalizer_controller.hpp"
+
+namespace zlp {
+}
