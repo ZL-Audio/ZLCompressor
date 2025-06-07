@@ -344,7 +344,7 @@ namespace zlp {
         auto static constexpr kID = "side_stereo_link";
         auto static constexpr kName = "Side Stereo Link";
         inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
-        auto static constexpr kDefaultV = 90.f;
+        auto static constexpr kDefaultV = 0.f;
     };
 
     class PSideStereoWet1 : public FloatParameters<PSideStereoWet1> {

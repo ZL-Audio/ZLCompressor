@@ -30,6 +30,8 @@ PluginProcessor::PluginProcessor()
       property_(state_),
       compressor_controller_(*this),
       compress_attach_(*this, parameters_, compressor_controller_),
+      equalizer_controller_(),
+      equalizer_attach_(*this, parameters_, equalizer_controller_),
       ext_side_(*parameters_.getRawParameterValue(zlp::PExtSide::kID)),
       side_out_(*parameters_.getRawParameterValue(zlp::PSideOut::kID)) {
 }
@@ -109,6 +111,7 @@ void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_
     double_side_pointers_[1] = double_buffer_.getWritePointer(1);
     double_buffer_.clear();
     compressor_controller_.prepare(spec);
+    equalizer_controller_.prepare(spec);
     // determine current channel layout
     const auto *main_bus = getBus(true, 0);
     const auto *aux_bus = getBus(true, 1);
@@ -169,7 +172,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             zldsp::vector::copy(main_pointers_[1], main_pointers_[0], buffer_size);
 
             zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -189,7 +192,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             } else {
                 zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -209,7 +212,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             } else {
                 zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -227,7 +230,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             main_pointers_[1] = buffer.getWritePointer(1);
 
             zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -247,7 +250,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             } else {
                 zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -267,7 +270,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             } else {
                 zldsp::vector::copy<double, float>(double_side_pointers_, main_pointers_, buffer_size);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -296,7 +299,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
 
             double_side_pointers_[0] = buffer.getWritePointer(0);
             zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -312,7 +315,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
 
             double_side_pointers_[0] = c_ext_side ? buffer.getWritePointer(1) : buffer.getWritePointer(0);
             zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -337,7 +340,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
                 double_side_pointers_[0] = buffer.getWritePointer(0);
                 zldsp::vector::copy(double_side_pointers_[1], double_side_pointers_[0], buffer_size);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -345,8 +348,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             if (c_side_out) {
                 if (c_ext_side) {
                     auto v = kfr::make_univector(buffer.getWritePointer(0), buffer_size);
-                    auto v0 =  kfr::make_univector(double_side_pointers_[0], buffer_size);
-                    auto v1 =  kfr::make_univector(double_side_pointers_[1], buffer_size);
+                    auto v0 = kfr::make_univector(double_side_pointers_[0], buffer_size);
+                    auto v1 = kfr::make_univector(double_side_pointers_[1], buffer_size);
                     v = 0.5 * (v0 + v1);
                 }
             } else {
@@ -360,7 +363,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
 
             double_side_pointers_[0] = buffer.getWritePointer(0);
             double_side_pointers_[1] = buffer.getWritePointer(1);
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -382,7 +385,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
                 double_side_pointers_[0] = buffer.getWritePointer(0);
                 double_side_pointers_[1] = buffer.getWritePointer(1);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
@@ -409,7 +412,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
                 double_side_pointers_[0] = buffer.getWritePointer(0);
                 double_side_pointers_[1] = buffer.getWritePointer(1);
             }
-            // process side eq
+            equalizer_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
             compressor_controller_.process(main_pointers_, float_side_pointers_, buffer_size);

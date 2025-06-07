@@ -77,6 +77,8 @@ public:
 private:
     zlp::CompressorController compressor_controller_;
     zlp::CompressAttach compress_attach_;
+    zlp::EqualizerController equalizer_controller_;
+    zlp::EqualizerAttach equalizer_attach_;
     juce::AudioBuffer<float> float_buffer_;
     juce::AudioBuffer<double> double_buffer_;
     std::array<float *, 2> main_pointers_{}, float_side_pointers_{};

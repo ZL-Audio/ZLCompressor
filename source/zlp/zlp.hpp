@@ -13,3 +13,4 @@
 #include "compressor_controller.hpp"
 #include "compress_attach.hpp"
 #include "equalizer_controller.hpp"
+#include "equalizer_attach.hpp"

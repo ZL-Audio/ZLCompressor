@@ -16,21 +16,48 @@ namespace zlp {
 
     void EqualizerController::prepare(const juce::dsp::ProcessSpec &spec) {
         for (auto &filter: filters_) {
-            filter.prepare(spec.sampleRate, static_cast<size_t>(spec.numChannels));
+            filter.prepare(spec.sampleRate, 2);
         }
         gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.01);
     }
 
     void EqualizerController::prepareBuffer() {
-        for (auto &filter: filters_) {
-            filter.prepareBuffer();
+        if (to_update_gain_.exchange(false, std::memory_order::acquire)) {
+            const auto c_gain_db = gain_db_.load(std::memory_order::relaxed);
+            gain_.setGainDecibels(c_gain_db);
+            c_gain_equal_zero_ = std::abs(c_gain_db) < 1e-3;
+        }
+        if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
+            // cache new filter status
+            for (size_t i = 0; i < kBandNum; ++i) {
+                const auto new_filter_status = filter_status_[i].load(std::memory_order::relaxed);
+                if (new_filter_status != c_filter_status_[i]) {
+                    if (c_filter_status_[i] == FilterStatus::kOff) {
+                        filters_[i].reset();
+                    }
+                    c_filter_status_[i] = new_filter_status;
+                }
+            }
+            // cache new on indices
+            on_indices_.clear();
+            for (size_t i = 0; i < kBandNum; ++i) {
+                if (c_filter_status_[i] != kOff) {
+                    on_indices_.emplace_back(i);
+                }
+            }
+        }
+        for (const auto &i: on_indices_) {
+            filters_[i].prepareBuffer();
         }
     }
 
     void EqualizerController::process(std::array<double *, 2> pointers, const size_t num_samples) {
-        gain_.process(pointers, num_samples);
+        prepareBuffer();
+        if (!c_gain_equal_zero_) {
+            gain_.process(pointers, num_samples);
+        }
         for (const auto &i: on_indices_) {
-            switch (filter_status_[i].load(std::memory_order::relaxed)) {
+            switch (c_filter_status_[i]) {
                 case kOff: {
                     break;
                 }

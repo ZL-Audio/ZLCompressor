@@ -31,13 +31,28 @@ namespace zlp {
 
         void process(std::array<double *, 2> pointers, size_t num_samples);
 
+        void setFilterStatus(const size_t filter_idx, const FilterStatus filter_status) {
+            filter_status_[filter_idx].store(filter_status, std::memory_order::relaxed);
+            to_update_filter_status_.store(true, std::memory_order::release);
+        }
+
+        void setGain(const float db) {
+            gain_db_.store(static_cast<double>(db), std::memory_order::relaxed);
+            to_update_gain_.store(true, std::memory_order::release);
+        }
+
     private:
+        std::atomic<bool> to_update_gain_{true};
+        std::atomic<double> gain_db_{0.f};
         zldsp::gain::Gain<double> gain_{};
+        bool c_gain_equal_zero_{true};
 
         std::array<zldsp::filter::IIR<double, 16>, kBandNum> filters_{};
         zldsp::analyzer::MultipleFFTAnalyzer<double, 2, 100> fft_analyzer_;
 
+        std::atomic<bool> to_update_filter_status_{true};
         std::array<std::atomic<FilterStatus>, kBandNum> filter_status_;
+        std::array<FilterStatus, kBandNum> c_filter_status_{};
         std::vector<size_t> on_indices_{};
 
         void prepareBuffer();
