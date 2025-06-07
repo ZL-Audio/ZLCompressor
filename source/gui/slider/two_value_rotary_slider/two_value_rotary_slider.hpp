@@ -235,6 +235,15 @@ namespace zlgui::slider {
             }
         }
 
+        void visibilityChanged() override {
+            if (isVisible()) {
+                sliderValueChanged(&slider1_);
+                if (UseSecondSlider) {
+                    sliderValueChanged(&slider2_);
+                }
+            }
+        }
+
         void paint(juce::Graphics &g) override {
             juce::ignoreUnused(g);
         }
@@ -390,13 +399,8 @@ namespace zlgui::slider {
             updateDragDistance();
         }
 
-        void updateDisplay() {
-            display_.setSlider1Value(
-                static_cast<float>(slider1_.getNormalisableRange().convertTo0to1(slider1_.getValue())));
-            if (UseSecondSlider) {
-                display_.setSlider2Value(
-                    static_cast<float>(slider2_.getNormalisableRange().convertTo0to1(slider2_.getValue())));
-            }
+        void setPrecision(const int x) {
+            precision = x;
         }
 
     private:
@@ -416,26 +420,34 @@ namespace zlgui::slider {
         int drag_distance_{10};
         bool is_shift_pressed_{false};
 
-        static juce::String getDisplayValue(juce::Slider &s) {
-            auto value = s.getNormalisableRange().snapToLegalValue(s.getValue());
-            juce::String label_to_display = juce::String(value).substring(0, 4);
-            if (value < 10000 && label_to_display.contains(".")) {
-                label_to_display = juce::String(value).substring(0, 5);
+        int precision{2};
+
+        juce::String getDisplayValue(const juce::Slider &s) const {
+            bool append_k {false};
+            auto value = s.getValue();
+            if (value > 10000.0) {
+                value = value / 1000.0;
+                append_k = true;
             }
-            if (value >= 10000) {
-                value = value / 1000;
-                label_to_display = juce::String(value).substring(0, 4) + "K";
-            }
-            // remove trailing zeros
-            while (label_to_display.contains(".")) {
-                const auto last_s = label_to_display.getLastCharacter();
-                if (last_s == '.' || last_s == '0') {
-                    label_to_display = label_to_display.dropLastCharacters(1);
-                } else {
-                    break;
+
+            const auto t_precision = value > 100.0 ? std::max(precision - 1, 0) : precision;
+
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(t_precision) << value;
+            std::string str = ss.str();
+
+            // erase trailing zeros and redundant decimal point
+            if (str.find('.') != std::string::npos) {
+                str = str.substr(0, str.find_last_not_of('0') + 1);
+                if (str.back() == '.') {
+                    str.pop_back();
                 }
             }
-            return label_to_display;
+            if (append_k) {
+                return juce::String(str + "K");
+            } else {
+                return juce::String(str);
+            }
         }
 
         void labelTextChanged(juce::Label *label_that_has_changed) override {

@@ -68,7 +68,6 @@ namespace zlgui::attachment {
                 parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
                 updateComponent();
             }
-
         }
 
         ~SliderAttachment() override {

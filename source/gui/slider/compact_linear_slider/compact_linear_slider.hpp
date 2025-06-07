@@ -116,6 +116,12 @@ namespace zlgui::slider {
 
         ~CompactLinearSlider() override = default;
 
+        void visibilityChanged() override {
+            if (isVisible()) {
+                sliderValueChanged(&slider_);
+            }
+        }
+
         void resized() override {
             const auto bound = getLocalBounds();
             if (UseBackground) { background_.setBounds(bound); }
@@ -203,6 +209,10 @@ namespace zlgui::slider {
             name_look_and_feel_.setFontScale(font_scale_);
         }
 
+        void setPrecision(const int x) {
+           precision = x;
+        }
+
     private:
         UIBase &base_;
         Background background_;
@@ -215,26 +225,33 @@ namespace zlgui::slider {
 
         float font_scale_{1.5f};
 
-        static juce::String getDisplayValue(juce::Slider &s) {
+        int precision{2};
+
+        juce::String getDisplayValue(const juce::Slider &s) const {
+            bool append_k {false};
             auto value = s.getValue();
-            juce::String label_to_display = juce::String(s.getTextFromValue(value)).substring(0, 4);
-            if (value < 10000 && label_to_display.contains(".")) {
-                label_to_display = juce::String(value).substring(0, 5);
+            if (value > 10000.0) {
+                value = value / 1000.0;
+                append_k = true;
             }
-            if (value > 10000) {
-                value = value / 1000;
-                label_to_display = juce::String(value).substring(0, 4) + "K";
-            }
-            // remove trailing zeros
-            while (label_to_display.contains(".")) {
-                const auto last_s = label_to_display.getLastCharacter();
-                if (last_s == '.' || last_s == '0') {
-                    label_to_display = label_to_display.dropLastCharacters(1);
-                } else {
-                    break;
+            const auto t_precision = value > 100.0 ? std::max(precision - 1, 0) : precision;
+
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(t_precision) << value;
+            std::string str = ss.str();
+
+            // erase trailing zeros and redundant decimal point
+            if (str.find('.') != std::string::npos) {
+                str = str.substr(0, str.find_last_not_of('0') + 1);
+                if (str.back() == '.') {
+                    str.pop_back();
                 }
             }
-            return label_to_display;
+            if (append_k) {
+                return juce::String(str + "K");
+            } else {
+                return juce::String(str);
+            }
         }
 
         void labelTextChanged(juce::Label *) override {

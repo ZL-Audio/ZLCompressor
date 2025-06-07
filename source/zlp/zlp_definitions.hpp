@@ -56,6 +56,37 @@ namespace zlp {
     }
 
     template<typename FloatType>
+    inline juce::NormalisableRange<FloatType> getSymmetricLogMidRangeShift(
+        const FloatType x_min, const FloatType x_max, const FloatType x_mid,
+        const FloatType x_interval, const FloatType shift) {
+        const auto range = getLogMidRangeShift<FloatType>(x_min, x_max, x_mid, x_interval, shift);
+        return {
+            -(x_max + shift), x_max + shift,
+            [=](FloatType, FloatType, const FloatType v) {
+                if (v > FloatType(0.5)) {
+                    return range.convertFrom0to1(v * FloatType(2) - FloatType(1));
+                } else {
+                    return -range.convertFrom0to1(FloatType(1) - v * FloatType(2));
+                }
+            },
+            [=](FloatType, FloatType, const FloatType v) {
+                if (v > FloatType(0)) {
+                    return range.convertTo0to1(v) * FloatType(0.5) + FloatType(0.5);
+                } else {
+                    return FloatType(0.5) - range.convertTo0to1(-v) * FloatType(0.5);
+                }
+            },
+            [=](FloatType, FloatType, const FloatType v) {
+                if (v > FloatType(0)) {
+                    return range.snapToLegalValue(v);
+                } else {
+                    return -range.snapToLegalValue(-v);
+                }
+            }
+        };
+    }
+
+    template<typename FloatType>
     inline juce::NormalisableRange<FloatType> getLinearMidRange(
         const FloatType x_min, const FloatType x_max, const FloatType x_mid, const FloatType x_interval) {
         return {
@@ -315,7 +346,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "side gain";
         auto static constexpr kName = "Side Gain";
-        inline auto static const kRange = getLogMidRangeShift(2.f, 32.f, 12.f, 0.01f, -2.f);
+        inline auto static const kRange = getSymmetricLogMidRangeShift(2.f, 17.f, 12.f, 0.01f, -2.f);
         auto static constexpr kDefaultV = 0.f;
     };
 
