@@ -98,8 +98,18 @@ namespace zlp {
             stereo_link_.store(1.f - percent * 0.005f, std::memory_order::relaxed);
         }
 
+        void setIsON(const bool is_on) {
+            is_on_.store(is_on, std::memory_order::relaxed);
+        }
+
+        void setIsDelta(const bool is_delta) {
+            is_delta_.store(is_delta, std::memory_order::relaxed);
+        }
+
     private:
         juce::AudioProcessor &processor_ref_;
+        std::atomic<bool> is_on_{true}, is_delta_{false};
+
         std::atomic<bool> mag_analyzer_on_{true}, spec_analyzer_on_{false};
         bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
 

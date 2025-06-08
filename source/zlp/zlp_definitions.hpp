@@ -394,6 +394,26 @@ namespace zlp {
         auto static constexpr kDefaultV = 100.f;
     };
 
+    class PCompON : public ChoiceParameters<PCompON> {
+    public:
+        auto static constexpr kID = "comp_on";
+        auto static constexpr kName = "Compressor ON";
+        inline auto static const kChoices = juce::StringArray{
+            "Bypass", "ON"
+        };
+        int static constexpr kDefaultI = 1;
+    };
+
+    class PCompDelta : public ChoiceParameters<PCompDelta> {
+    public:
+        auto static constexpr kID = "comp_delta";
+        auto static constexpr kName = "Compressor Delta";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "ON"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
@@ -403,7 +423,8 @@ namespace zlp {
                    PExtSide::get(), PSideOut::get(), PSideGain::get(),
                    PSideStereoMode::get(), PSideStereoSwap::get(),
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
-                   POversample::get());
+                   POversample::get(),
+                   PCompON::get(), PCompDelta::get());
         return layout;
     }
 

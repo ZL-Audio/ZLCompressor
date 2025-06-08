@@ -14,10 +14,12 @@ namespace zlpanel {
         : base_(base),
           curve_panel_(processor, base_),
           control_panel_(processor, base_),
+          top_panel_(processor, base_),
           refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
         juce::ignoreUnused(base_);
         addAndMakeVisible(curve_panel_);
         addAndMakeVisible(control_panel_);
+        addAndMakeVisible(top_panel_);
     }
 
     void MainPanel::resized() {
@@ -37,6 +39,9 @@ namespace zlpanel {
         const auto controlBound = bound.removeFromBottom(juce::roundToInt(font_size * 7.348f));
         control_panel_.setBounds(controlBound);
 
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        top_panel_.setBounds(bound.removeFromTop(button_height));
+
         curve_panel_.setBounds(bound);
     }
 
@@ -44,6 +49,7 @@ namespace zlpanel {
         if (refresh_handler_.tick(time_stamp)) {
             curve_panel_.repaintCallBack(time_stamp);
             control_panel_.repaintCallBack(time_stamp);
+            top_panel_.repaintCallBack(time_stamp);
         }
     }
 } // zlpanel

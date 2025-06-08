@@ -9,31 +9,21 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#include "../PluginProcessor.hpp"
-#include "../gui/gui.hpp"
-#include "../state/state_definitions.hpp"
-#include "helper/refresh_handler.hpp"
-#include "curve_panel/curve_panel.hpp"
-#include "control_panel/control_panel.hpp"
-#include "top_panel/top_panel.hpp"
+#include "top_control_panel.hpp"
 
 namespace zlpanel {
-    class MainPanel final : public juce::Component {
+    class TopPanel final : public juce::Component {
     public:
-        explicit MainPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit TopPanel(PluginProcessor &p, zlgui::UIBase &base);
+
+        void paint(juce::Graphics &g) override;
 
         void resized() override;
 
-        void repaintCallBack(const double time_stamp);
+        void repaintCallBack(double time_stamp);
 
     private:
         zlgui::UIBase &base_;
-        CurvePanel curve_panel_;
-        ControlPanel control_panel_;
-        TopPanel top_panel_;
-
-        RefreshHandler refresh_handler_;
+        TopControlPanel top_control_panel_;
     };
-} // zlpanel
+}

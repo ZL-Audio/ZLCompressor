@@ -190,6 +190,15 @@ namespace zlp {
             mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
             mag_avg_analyzer_.process({pre_pointers_, main_pointers}, num_samples);
         }
+
+        if (is_delta_.load(std::memory_order::relaxed)) {
+            for (size_t chan = 0; chan < 2; ++chan) {
+                auto pre_vector = kfr::make_univector(pre_pointers_[chan], num_samples);
+                auto post_vector = kfr::make_univector(post_pointers_[chan], num_samples);
+                auto main_vector = kfr::make_univector(main_pointers[chan], num_samples);
+                main_vector = pre_vector - post_vector;
+            }
+        }
     }
 
     void CompressorController::processBuffer(float *main_buffer0, float *main_buffer1,
@@ -240,12 +249,14 @@ namespace zlp {
         // apply gain on the main buffer
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        if (stereo_swap_.load(std::memory_order::relaxed)) {
-            main_v0 = main_v0 * side_v1;
-            main_v1 = main_v1 * side_v0;
-        } else {
-            main_v0 = main_v0 * side_v0;
-            main_v1 = main_v1 * side_v1;
+        if (is_on_.load(std::memory_order::relaxed)) {
+            if (stereo_swap_.load(std::memory_order::relaxed)) {
+                main_v0 = main_v0 * side_v1;
+                main_v1 = main_v1 * side_v0;
+            } else {
+                main_v0 = main_v0 * side_v0;
+                main_v1 = main_v1 * side_v1;
+            }
         }
     }
 
