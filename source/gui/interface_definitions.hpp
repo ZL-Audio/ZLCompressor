@@ -112,8 +112,6 @@ namespace zlgui {
     static constexpr float kFontHuge2 = 3.0f;
     static constexpr float kFontHuge3 = 4.5f;
 
-    static constexpr int kRefreshFreqHz = 60;
-
     struct FillRoundedShadowRectangleArgs {
         float blur_radius = 0.5f;
         bool curve_top_left = true, curve_top_right = true, curve_bottom_left = true, curve_bottom_right = true;

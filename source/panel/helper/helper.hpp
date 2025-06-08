@@ -12,3 +12,4 @@
 #include "path_minimizer.hpp"
 #include "atomic_bound.hpp"
 #include "panel_constants.hpp"
+#include "refresh_handler.hpp"

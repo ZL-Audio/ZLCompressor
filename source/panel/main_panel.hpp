@@ -13,6 +13,8 @@
 
 #include "../PluginProcessor.hpp"
 #include "../gui/gui.hpp"
+#include "../state/state_definitions.hpp"
+#include "helper/refresh_handler.hpp"
 #include "curve_panel/curve_panel.hpp"
 #include "control_panel/control_panel.hpp"
 
@@ -29,5 +31,6 @@ namespace zlpanel {
         zlgui::UIBase &base_;
         CurvePanel curve_panel_;
         ControlPanel control_panel_;
+        RefreshHandler refresh_handler_;
     };
 } // zlpanel

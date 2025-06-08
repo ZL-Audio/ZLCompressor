@@ -48,17 +48,12 @@ namespace zlpanel {
     }
 
     void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {
-        if (repaint_count_ >= 0) {
-            repaint_count_ = 0;
-            next_stamp_.store(time_stamp, std::memory_order::relaxed);
-            peak_panel_.repaint();
-            if (time_stamp - rms_previous_stamp_ > .1) {
-                rms_panel_.repaint();
-                rms_previous_stamp_ = time_stamp;
-                to_run_rms_.store(true, std::memory_order::relaxed);
-            }
-        } else {
-            repaint_count_ += 1;
+        next_stamp_.store(time_stamp, std::memory_order::relaxed);
+        peak_panel_.repaint();
+        if (time_stamp - rms_previous_stamp_ > .1) {
+            rms_panel_.repaint();
+            rms_previous_stamp_ = time_stamp;
+            to_run_rms_.store(true, std::memory_order::relaxed);
         }
     }
 } // zlpanel

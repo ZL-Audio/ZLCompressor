@@ -266,7 +266,7 @@ namespace zlgui {
         rotary_style_id_ = static_cast<size_t>(state.getRawParameterValue(zlstate::PRotaryStyle::kID)->load());
         rotary_drag_sensitivity_ = state.getRawParameterValue(zlstate::PRotaryDragSensitivity::kID)->load();
         is_slider_double_click_open_editor_.store(loadPara(zlstate::PSliderDoubleClickFunc::kID) > .5f);
-        refresh_rate_id_.store(static_cast<size_t>(state.getRawParameterValue(zlstate::PRefreshSpeed::kID)->load()));
+        refresh_rate_id_.store(static_cast<size_t>(state.getRawParameterValue(zlstate::PTargetRefreshSpeed::kID)->load()));
         fft_extra_tilt_.store(loadPara(zlstate::PFFTExtraTilt::kID));
         fft_extra_speed_.store(loadPara(zlstate::PFFTExtraSpeed::kID));
         single_curve_thickness_.store(loadPara(zlstate::PSingleCurveThickness::kID));
@@ -308,7 +308,7 @@ namespace zlgui {
         savePara(zlstate::PRotaryDragSensitivity::kID,
                  zlstate::PRotaryDragSensitivity::convertTo01(rotary_drag_sensitivity_));
         savePara(zlstate::PSliderDoubleClickFunc::kID, static_cast<float>(is_slider_double_click_open_editor_.load()));
-        savePara(zlstate::PRefreshSpeed::kID, zlstate::PRefreshSpeed::convertTo01(static_cast<int>(refresh_rate_id_.load())));
+        savePara(zlstate::PTargetRefreshSpeed::kID, zlstate::PTargetRefreshSpeed::convertTo01(static_cast<int>(refresh_rate_id_.load())));
         savePara(zlstate::PFFTExtraTilt::kID, zlstate::PFFTExtraTilt::convertTo01(fft_extra_tilt_.load()));
         savePara(zlstate::PFFTExtraSpeed::kID, zlstate::PFFTExtraSpeed::convertTo01(fft_extra_speed_.load()));
         savePara(zlstate::PSingleCurveThickness::kID,

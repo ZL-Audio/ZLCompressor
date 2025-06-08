@@ -38,6 +38,5 @@ namespace zlpanel {
         std::atomic<double> next_stamp_{0.};
         double rms_previous_stamp_{0.};
         std::atomic<bool> to_run_rms_{false};
-        int repaint_count_{3};
     };
 } // zlpanel

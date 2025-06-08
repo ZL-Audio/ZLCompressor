@@ -287,18 +287,18 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
-    class PRefreshSpeed : public ChoiceParameters<PRefreshSpeed> {
+    class PTargetRefreshSpeed : public ChoiceParameters<PTargetRefreshSpeed> {
     public:
-        auto static constexpr kID = "refresh_speed_id";
+        auto static constexpr kID = "target_refresh_speed_id";
         auto static constexpr kName = "";
         inline auto static const kChoices = juce::StringArray{
-            "Native", "Fast", "Medium", "Slow", "Very Slow"
+            "120Hz", "90Hz", "60Hz", "30Hz", "15Hz"
         };
-        static constexpr std::array<int, 5> interval{1, 2, 3, 5, 8};
+        static constexpr std::array<double, 5> kRates{120.0, 90.0, 60.0, 30.0, 15.0};
 #if defined(JUCE_MAC)
-        int static constexpr kDefaultI = 0;
+        int static constexpr kDefaultI = 2;
 #else
-        int static constexpr kDefaultI = 1;
+        int static constexpr kDefaultI = 3;
 #endif
     };
 
@@ -400,7 +400,7 @@ namespace zlstate {
                    PDragSensitivity::get(), PDragFineSensitivity::get(),
                    PRotaryStyle::get(), PRotaryDragSensitivity::get(),
                    PSliderDoubleClickFunc::get(),
-                   PRefreshSpeed::get(),
+                   PTargetRefreshSpeed::get(),
                    PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
                    PSingleCurveThickness::get(), PSumCurveThickness::get());
         addOneColour(layout, "text", 255 - 8, 255 - 9, 255 - 11, true, 1.f);
