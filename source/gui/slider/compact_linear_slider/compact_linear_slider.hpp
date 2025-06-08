@@ -210,7 +210,12 @@ namespace zlgui::slider {
         }
 
         void setPrecision(const int x) {
-           precision = x;
+            precision = x;
+        }
+
+        void setJustification(const juce::Justification justification) {
+            label_.setJustificationType(justification);
+            text_.setJustificationType(justification);
         }
 
     private:
@@ -228,7 +233,7 @@ namespace zlgui::slider {
         int precision{2};
 
         juce::String getDisplayValue(const juce::Slider &s) const {
-            bool append_k {false};
+            bool append_k{false};
             auto value = s.getValue();
             if (value > 10000.0) {
                 value = value / 1000.0;

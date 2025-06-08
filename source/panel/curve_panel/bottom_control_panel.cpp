@@ -14,17 +14,17 @@ namespace zlpanel {
         : p_ref_(p), base_(base),
           side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
           side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
-          time_length_box_("", zlstate::PAnalyzerTimeLength::kChoices, base_),
+          time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base_),
           time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
                                   zlstate::PAnalyzerTimeLength::kID, updater_),
-          mag_type_box_("", zlstate::PAnalyzerMagType::kChoices, base_),
+          mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base_),
           mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
                                zlstate::PAnalyzerMagType::kID, updater_),
-          min_db_box_("", zlstate::PAnalyzerMinDB::kChoices, base_),
+          min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base_),
           min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
                              zlstate::PAnalyzerMinDB::kID, updater_),
           label_laf_(base_),
-          style_box_("", zlp::PCompStyle::kChoices, base_),
+          style_box_(zlp::PCompStyle::kChoices, base_),
           style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 

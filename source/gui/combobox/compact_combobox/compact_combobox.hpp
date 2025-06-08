@@ -15,7 +15,7 @@ namespace zlgui::combobox {
     class CompactCombobox final : public juce::Component,
                                   public juce::SettableTooltipClient {
     public:
-        CompactCombobox(const juce::String &label_text, const juce::StringArray &choices, UIBase &base,
+        CompactCombobox(const juce::StringArray &choices, UIBase &base,
                         const juce::String &tooltip_text = "",
                         const std::vector<juce::String> &item_labels = {});
 

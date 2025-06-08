@@ -10,12 +10,11 @@
 #include "compact_combobox.hpp"
 
 namespace zlgui::combobox {
-    CompactCombobox::CompactCombobox(const juce::String &label_text, const juce::StringArray &choices,
+    CompactCombobox::CompactCombobox(const juce::StringArray &choices,
                                      UIBase &base, const juce::String &tooltip_text,
                                      const std::vector<juce::String> &item_labels)
         : base_(base),
           box_laf_(base) {
-        juce::ignoreUnused(label_text);
         if (item_labels.size() < static_cast<size_t>(choices.size())) {
             combo_box_.addItemList(choices, 1);
         } else {

@@ -44,10 +44,6 @@ namespace zlp {
             comp_style_.store(style, std::memory_order::relaxed);
         }
 
-        void setOversampleIdx(const int idx) {
-            oversample_idx_.store(idx, std::memory_order::relaxed);
-        }
-
         void setHoldLength(const float millisecond) {
             hold_length_.store(millisecond * 1e-3f, std::memory_order::relaxed);
             to_update_hold_.store(true, std::memory_order::release);
@@ -106,39 +102,44 @@ namespace zlp {
             is_delta_.store(is_delta, std::memory_order::relaxed);
         }
 
+        void setOversampleIdx(const int idx) {
+            oversample_idx_.store(idx, std::memory_order::relaxed);
+        }
+
+        void setLookahead(const float x) {
+            lookahead_delay_length_.store(x * 0.001f, std::memory_order::relaxed);
+            to_update_lookahead_.store(true, std::memory_order::release);
+        }
+
     private:
         juce::AudioProcessor &processor_ref_;
-        std::atomic<bool> is_on_{true}, is_delta_{false};
-
-        std::atomic<bool> mag_analyzer_on_{true}, spec_analyzer_on_{false};
-        bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
-
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
         std::array<kfr::univector<float>, 2> pre_buffer_, post_buffer_;
         std::array<float *, 2> pre_pointers_{}, post_pointers_{};
-
+        // on and delta
+        std::atomic<bool> is_on_{true}, is_delta_{false};
+        // magnitude analyzer
+        std::atomic<bool> mag_analyzer_on_{true}, spec_analyzer_on_{false};
+        bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
         zldsp::analyzer::MagReductionAnalyzer<float, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
-
+        // stereo control
         std::atomic<int> stereo_mode_{0};
         int c_stereo_mode_{0};
-
         std::atomic<float> stereo_link_{1.};
         float c_stereo_link_{1.};
-
         std::atomic<bool> stereo_swap_{false};
-
+        // compressor style
         std::atomic<zldsp::compressor::Style> comp_style_{zldsp::compressor::Style::kClean};
         zldsp::compressor::Style c_comp_style_{zldsp::compressor::Style::kClean};
-
+        // wet
         std::atomic<bool> to_update_wet_{true};
         std::atomic<float> wet_{1.0}, wet1_{1.0}, wet2_{1.0};
         float c_wet1_{1.0}, c_wet2_{1.0};
-
+        // oversample
         std::atomic<int> oversample_idx_{0};
         int c_oversample_idx_{-1};
         size_t c_oversample_stage_idx_{0};
-        std::atomic<int> oversample_latency_{0};
         juce::AudioBuffer<float> oversampled_side_buffer_{};
         std::array<juce::dsp::Oversampling<float>, 3> oversample_stages_main_{
             juce::dsp::Oversampling<float>(2, 1,
@@ -156,7 +157,14 @@ namespace zlp {
             juce::dsp::Oversampling<float>(2, 3,
                                            juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
         };
-
+        zldsp::delay::IntegerDelay<float> oversample_delay_{};
+        // lookahead
+        std::atomic<float> lookahead_delay_length_{0.f};
+        std::atomic<bool> to_update_lookahead_{false};
+        bool is_lookahead_nonzero{false};
+        zldsp::delay::IntegerDelay<float> lookahead_delay_{};
+        // pdc
+        std::atomic<int> pdc_{0};
         // computer, trackers and followers
         std::array<zldsp::compressor::KneeComputer<float, true>, 2> computer_{};
         std::array<zldsp::compressor::RMSTracker<float>, 2> tracker_{};
@@ -191,8 +199,6 @@ namespace zlp {
         std::atomic<bool> to_update_output_gain_{true};
         std::atomic<float> output_gain_db_{0.f};
         zldsp::gain::Gain<float> output_gain_{};
-
-        zldsp::delay::IntegerDelay<float> oversample_delay_{};
 
         void prepareBuffer();
 

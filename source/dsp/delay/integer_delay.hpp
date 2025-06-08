@@ -95,6 +95,10 @@ namespace zldsp::delay {
             setDelay(static_cast<FloatType>(delay_samples) / static_cast<FloatType>(sample_rate_));
         }
 
+        int getDelayInSamples() const {
+            return static_cast<int>(std::round(delay_seconds_ * sample_rate_));
+        }
+
     private:
         double sample_rate_{48000.0};
         FloatType delay_seconds_{0};

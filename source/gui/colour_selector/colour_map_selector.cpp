@@ -12,7 +12,7 @@
 namespace zlgui::colour_selector {
     ColourMapSelector::ColourMapSelector(zlgui::UIBase &base, const float box_width)
         : base_(base),
-          map_box_("", zlstate::PColourMapIdx::kChoices, base_),
+          map_box_(zlstate::PColourMapIdx::kChoices, base_),
           map_box_width_p_(box_width) {
         addAndMakeVisible(map_box_);
         map_box_.getBox().addListener(this);

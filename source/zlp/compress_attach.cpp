@@ -74,6 +74,8 @@ namespace zlp {
             controller_ref_.setWet2(new_value);
         } else if (parameter_ID == POversample::kID) {
             controller_ref_.setOversampleIdx(static_cast<int>(new_value));
+        } else if (parameter_ID == PLookAhead::kID) {
+            controller_ref_.setLookahead(new_value);
         } else if (parameter_ID == PCompON::kID) {
             controller_ref_.setIsON(new_value > .5f);
         } else if (parameter_ID == PCompDelta::kID) {

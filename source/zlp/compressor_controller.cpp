@@ -46,6 +46,11 @@ namespace zlp {
                                   oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(
                                       spec.sampleRate));
         oversample_delay_.setDelayInSamples(0);
+        c_oversample_idx_ = -1;
+        // init lookahead delay
+        lookahead_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2, 0.02f);
+        lookahead_delay_.setDelayInSamples(0);
+        to_update_lookahead_.store(true, std::memory_order::release);
         // init hold buffers
         for (auto &h: hold_buffer_) {
             h.setCapacity(static_cast<size_t>(8.0 * spec.sampleRate));
@@ -53,20 +58,20 @@ namespace zlp {
     }
 
     void CompressorController::prepareBuffer() {
+        bool to_update_pdc = false;
         c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
         c_spec_analyzer_on_ = spec_analyzer_on_.load(std::memory_order::relaxed);
         // load oversampling idx, set up trackers/followers and update latency
         const auto new_oversample_idx = oversample_idx_.load(std::memory_order::relaxed);
         if (new_oversample_idx != c_oversample_idx_) {
+            to_update_pdc = true;
             c_oversample_idx_ = new_oversample_idx;
             if (c_oversample_idx_ > 0) {
                 c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
                 const auto oversample_latency = static_cast<int>(std::round(
                     oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples()));
-                oversample_latency_.store(oversample_latency);
                 oversample_delay_.setDelayInSamples(oversample_latency);
             } else {
-                oversample_latency_.store(0);
                 oversample_delay_.setDelay(0);
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
@@ -83,10 +88,12 @@ namespace zlp {
                 h.setCapacity(static_cast<size_t>(oversample_sr));
             }
             to_update_hold_.store(true);
-            // update the latency
-            triggerAsyncUpdate();
         }
-
+        if (to_update_lookahead_.exchange(false, std::memory_order::acquire)) {
+            to_update_pdc = true;
+            lookahead_delay_.setDelay(lookahead_delay_length_.load(std::memory_order::relaxed));
+            is_lookahead_nonzero = (lookahead_delay_.getDelayInSamples() != 0);
+        }
         // load stereo mode
         c_stereo_mode_ = stereo_mode_.load(std::memory_order::relaxed);
         // load compressor style, if they are different, reset the internal state
@@ -138,12 +145,20 @@ namespace zlp {
             output_gain_.setGainDecibels(
                 output_gain_db_.load(std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed));
         }
+        if (to_update_pdc) {
+            pdc_.store(lookahead_delay_.getDelayInSamples() + oversample_delay_.getDelayInSamples());
+            triggerAsyncUpdate();
+        }
     }
 
     void CompressorController::process(std::array<float *, 2> main_pointers,
                                        std::array<float *, 2> side_pointers,
                                        const size_t num_samples) {
         prepareBuffer();
+        if (is_lookahead_nonzero) {
+            lookahead_delay_.process(main_pointers, num_samples);
+        }
+
         if (c_mag_analyzer_on_) {
             zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
         }
@@ -276,6 +291,6 @@ namespace zlp {
     }
 
     void CompressorController::handleAsyncUpdate() {
-        processor_ref_.setLatencySamples(oversample_latency_.load());
+        processor_ref_.setLatencySamples(pdc_.load(std::memory_order::relaxed));
     }
 } // zlDSP

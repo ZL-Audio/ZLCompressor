@@ -318,16 +318,6 @@ namespace zlp {
         auto static constexpr kDefaultV = 100.f;
     };
 
-    class POversample : public ChoiceParameters<POversample> {
-    public:
-        auto static constexpr kID = "oversample";
-        auto static constexpr kName = "Oversample";
-        inline auto static const kChoices = juce::StringArray{
-            "OFF", "2x", "4x", "8x"
-        };
-        int static constexpr kDefaultI = 0;
-    };
-
     class PExtSide : public BoolParameters<PExtSide> {
     public:
         auto static constexpr kID = "external_side";
@@ -414,6 +404,24 @@ namespace zlp {
         int static constexpr kDefaultI = 0;
     };
 
+    class POversample : public ChoiceParameters<POversample> {
+    public:
+        auto static constexpr kID = "oversample";
+        auto static constexpr kName = "Oversample";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "2x", "4x", "8x"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
+    class PLookAhead : public FloatParameters<PLookAhead> {
+    public:
+        auto static constexpr kID = "lookahead";
+        auto static constexpr kName = "Lookahead";
+        inline auto static const kRange = getLogMidRangeShift(2.f, 22.f, 7.f, 0.01f, -2.f);
+        auto static constexpr kDefaultV = 0.f;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
@@ -423,8 +431,8 @@ namespace zlp {
                    PExtSide::get(), PSideOut::get(), PSideGain::get(),
                    PSideStereoMode::get(), PSideStereoSwap::get(),
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
-                   POversample::get(),
-                   PCompON::get(), PCompDelta::get());
+                   PCompON::get(), PCompDelta::get(),
+                   POversample::get(), PLookAhead::get());
         return layout;
     }
 

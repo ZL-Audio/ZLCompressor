@@ -31,6 +31,8 @@ namespace zlpanel {
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 
+        zlgui::label::NameLookAndFeel label_laf_;
+
         double previous_time_stamp{0.0};
 
         const std::unique_ptr<juce::Drawable> on_drawable_;
@@ -40,5 +42,19 @@ namespace zlpanel {
         const std::unique_ptr<juce::Drawable> delta_drawable_;
         zlgui::button::CompactButton delta_button_;
         zlgui::attachment::ButtonAttachment<true> delta_attachment_;
+
+        double old_lookahead_value_{0.0};
+        juce::Label lookahead_label_;
+        zlgui::slider::CompactLinearSlider<false, false, false> lookahead_slider_;
+        zlgui::attachment::SliderAttachment<true> lookahead_attachment_;
+
+        int old_oversample_id_{0};
+        juce::Label oversample_label_;
+        zlgui::combobox::CompactCombobox oversample_box_;
+        zlgui::attachment::ComboBoxAttachment<true> oversample_attachment_;
+
+        void setLookaheadAlpha(const float alpha);
+
+        void setOversampleAlpha(const float alpha);
     };
 }

@@ -13,7 +13,7 @@ namespace zlgui::combobox {
     ClickCombobox::ClickCombobox(const juce::String &label_text, const juce::StringArray &choices,
                                  UIBase &base,
                                  const juce::String &tooltip_text)
-        : compact_box_("", choices, base),
+        : compact_box_(choices, base),
           label_("", juce::DrawableButton::ButtonStyle::ImageFitted),
           label_laf_(base, label_text) {
         addAndMakeVisible(compact_box_);
