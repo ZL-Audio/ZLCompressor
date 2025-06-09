@@ -9,23 +9,26 @@
 
 #pragma once
 
-#include "logo_panel.hpp"
-#include "top_control_panel.hpp"
+#include "../../PluginProcessor.hpp"
+#include "../../gui/gui.hpp"
+#include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class TopPanel final : public juce::Component {
-    public:
-        explicit TopPanel(PluginProcessor &p, zlgui::UIBase &base);
 
-        void paint(juce::Graphics &g) override;
+class LogoPanel : public juce::Component {
+public:
+    explicit LogoPanel(PluginProcessor &p, zlgui::UIBase &base);
 
-        void resized() override;
+    void paint(juce::Graphics &g) override;
 
-        void repaintCallBack(double time_stamp);
+    void mouseEnter(const juce::MouseEvent &event) override;
 
-    private:
-        zlgui::UIBase &base_;
-        LogoPanel logo_panel_;
-        TopControlPanel top_control_panel_;
-    };
+    void mouseExit(const juce::MouseEvent &event) override;
+
+private:
+    zlgui::UIBase &base_;
+    std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
+    juce::Justification justification_{juce::Justification::topLeft};
+};
+
 }

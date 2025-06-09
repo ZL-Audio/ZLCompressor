@@ -7,6 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
+#include "BinaryData.h"
 #include "top_control_panel.hpp"
 
 namespace zlpanel {
@@ -59,10 +60,6 @@ namespace zlpanel {
 
         setOversampleAlpha(.5f);
         setLookaheadAlpha(.5f);
-    }
-
-    void TopControlPanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor());
     }
 
     int TopControlPanel::getIdealWidth() const {

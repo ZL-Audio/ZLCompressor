@@ -10,8 +10,6 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_dsp/juce_dsp.h>
-#include <BinaryData.h>
 
 namespace zlstate {
     inline static constexpr int kVersionHint = 1;
@@ -197,7 +195,7 @@ namespace zlstate {
         auto static constexpr kName = "";
         inline static constexpr float minV = 600.f;
         inline static constexpr float maxV = 6000.f;
-        inline static constexpr float kDefaultV = 704.f;
+        inline static constexpr float kDefaultV = 600.f;
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);
     };
 
@@ -207,7 +205,7 @@ namespace zlstate {
         auto static constexpr kName = "";
         inline static constexpr float minV = 282.f;
         inline static constexpr float maxV = 6000.f;
-        inline static constexpr float kDefaultV = 440.f;
+        inline static constexpr float kDefaultV = 320.f;
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);
     };
 

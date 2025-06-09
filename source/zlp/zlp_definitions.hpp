@@ -422,6 +422,40 @@ namespace zlp {
         auto static constexpr kDefaultV = 0.f;
     };
 
+    class PFilterStatus : public ChoiceParameters<PFilterStatus> {
+    public:
+        auto static constexpr kID = "filter_status";
+        auto static constexpr kName = "Filter Status";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "Bypass", "ON"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
+    class PFreq : public FloatParameters<PFreq> {
+    public:
+        auto static constexpr kID = "freq";
+        auto static constexpr kName = "Freq";
+        inline auto static const kRange = getLogMidRange(10.f, 20000.f, 1000.f, 0.1f);
+        auto static constexpr kDefaultV = 1000.f;
+    };
+
+    class PGain : public FloatParameters<PGain> {
+    public:
+        auto static constexpr kID = "gain";
+        auto static constexpr kName = "Gain";
+        inline auto static const kRange = juce::NormalisableRange<float>(-30, 30, .01f);
+        auto static constexpr kDefaultV = 0.f;
+    };
+
+    class PQ : public FloatParameters<PQ> {
+    public:
+        auto static constexpr kID = "Q";
+        auto static constexpr kName = "Q";
+        inline auto static const kRange = getLogMidRange(0.025f, 25.f, 0.707f, 0.001f);
+        auto static constexpr kDefaultV = 0.707f;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(),
@@ -433,6 +467,11 @@ namespace zlp {
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
                    PCompON::get(), PCompDelta::get(),
                    POversample::get(), PLookAhead::get());
+        for (size_t i = 0; i < kBandNUM; ++i) {
+            const auto suffix = std::to_string(i);
+            layout.add(PFilterStatus::get(suffix),
+                       PFreq::get(suffix), PGain::get(suffix), PQ::get(suffix));
+        }
         return layout;
     }
 

@@ -12,7 +12,9 @@
 namespace zlpanel {
     TopPanel::TopPanel(PluginProcessor &p, zlgui::UIBase &base)
         : base_(base),
+          logo_panel_(p, base_),
           top_control_panel_(p, base_) {
+        addAndMakeVisible(logo_panel_);
         addAndMakeVisible(top_control_panel_);
 
         setBufferedToImage(true);
@@ -25,6 +27,8 @@ namespace zlpanel {
     void TopPanel::resized() {
         auto bound = getLocalBounds();
         top_control_panel_.setBounds(bound.removeFromRight(top_control_panel_.getIdealWidth()));
+
+        logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 3));
     }
 
     void TopPanel::repaintCallBack(const double time_stamp) {

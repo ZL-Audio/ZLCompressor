@@ -18,8 +18,6 @@ namespace zlpanel {
     public:
         explicit TopControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
-        void paint(juce::Graphics &g) override;
-
         int getIdealWidth() const;
 
         void resized() override;
