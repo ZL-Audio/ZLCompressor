@@ -58,6 +58,8 @@ namespace zlp {
     }
 
     void CompressorController::prepareBuffer() {
+        c_is_on_ = is_on_.load(std::memory_order::relaxed);
+        c_is_delta_ = is_delta_.load(std::memory_order::relaxed);
         bool to_update_pdc = false;
         c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
         c_spec_analyzer_on_ = spec_analyzer_on_.load(std::memory_order::relaxed);
@@ -110,6 +112,7 @@ namespace zlp {
         }
         // load stereo mode
         c_stereo_mode_ = stereo_mode_.load(std::memory_order::relaxed);
+        c_stereo_swap_ = stereo_swap_.load(std::memory_order::relaxed);
         // load compressor style, if they are different, reset the internal state
         const auto new_comp_style = comp_style_.load(std::memory_order::relaxed);
         if (c_comp_style_ != new_comp_style) {
@@ -181,7 +184,7 @@ namespace zlp {
             zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
 
-        if (c_mag_analyzer_on_) {
+        if (c_mag_analyzer_on_ || c_is_delta_) {
             zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
         }
 
@@ -219,28 +222,28 @@ namespace zlp {
             default: ;
         }
         // copy to post buffer
-        if (c_mag_analyzer_on_) {
+        if (c_mag_analyzer_on_ || c_is_delta_) {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
         }
         // makeup gain
         output_gain_.process(main_pointers, num_samples);
-
+        // mag analyzer
         if (c_mag_analyzer_on_) {
             mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
             mag_avg_analyzer_.process({pre_pointers_, main_pointers}, num_samples);
         }
-        // stereo combine the main buffer
-        if (c_stereo_mode_ == 0) {
-            zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
-        }
-
-        if (is_delta_.load(std::memory_order::relaxed)) {
+        // delta
+        if (c_is_delta_) {
             for (size_t chan = 0; chan < 2; ++chan) {
                 auto pre_vector = kfr::make_univector(pre_pointers_[chan], num_samples);
                 auto post_vector = kfr::make_univector(post_pointers_[chan], num_samples);
                 auto main_vector = kfr::make_univector(main_pointers[chan], num_samples);
                 main_vector = pre_vector - post_vector;
             }
+        }
+        // stereo combine the main buffer
+        if (c_stereo_mode_ == 0) {
+            zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
         }
     }
 
@@ -252,7 +255,6 @@ namespace zlp {
         tracker_[0].prepareBuffer();
         tracker_[1].prepareBuffer();
         if (follower_[0].prepareBuffer()) { follower_[1].copyFrom(follower_[0]); }
-
         // process compress style
         switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
@@ -292,8 +294,9 @@ namespace zlp {
         // apply gain on the main buffer
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        if (is_on_.load(std::memory_order::relaxed)) {
-            if (stereo_swap_.load(std::memory_order::relaxed)) {
+        // bypass and stereo swap
+        if (c_is_on_) {
+            if (c_stereo_swap_) {
                 main_v0 = main_v0 * side_v1;
                 main_v1 = main_v1 * side_v0;
             } else {

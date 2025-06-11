@@ -137,6 +137,7 @@ namespace zlp {
         std::atomic<bool> to_update_{true};
         // on and delta
         std::atomic<bool> is_on_{true}, is_delta_{false};
+        bool c_is_on_{true}, c_is_delta_{false};
         // magnitude analyzer
         std::atomic<bool> mag_analyzer_on_{true}, spec_analyzer_on_{false};
         bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
@@ -148,6 +149,7 @@ namespace zlp {
         std::atomic<float> stereo_link_{1.};
         float c_stereo_link_{1.};
         std::atomic<bool> stereo_swap_{false};
+        bool c_stereo_swap_{false};
         // compressor style
         std::atomic<zldsp::compressor::Style> comp_style_{zldsp::compressor::Style::kClean};
         zldsp::compressor::Style c_comp_style_{zldsp::compressor::Style::kClean};
