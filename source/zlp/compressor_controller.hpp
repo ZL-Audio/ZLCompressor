@@ -14,6 +14,7 @@
 #include "../dsp/splitter/splitter.hpp"
 #include "../dsp/delay/delay.hpp"
 #include "../dsp/mag_analyzer/mag_analyzer.hpp"
+#include "../dsp/over_sample/over_sample.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -139,24 +140,12 @@ namespace zlp {
         // oversample
         std::atomic<int> oversample_idx_{0};
         int c_oversample_idx_{-1};
-        size_t c_oversample_stage_idx_{0};
         juce::AudioBuffer<float> oversampled_side_buffer_{};
-        std::array<juce::dsp::Oversampling<float>, 3> oversample_stages_main_{
-            juce::dsp::Oversampling<float>(2, 1,
-                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
-            juce::dsp::Oversampling<float>(2, 2,
-                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
-            juce::dsp::Oversampling<float>(2, 3,
-                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
-        };
-        std::array<juce::dsp::Oversampling<float>, 3> oversample_stages_side_{
-            juce::dsp::Oversampling<float>(2, 1,
-                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
-            juce::dsp::Oversampling<float>(2, 2,
-                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
-            juce::dsp::Oversampling<float>(2, 3,
-                                           juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple, true, true),
-        };
+
+        zldsp::oversample::OverSampler<float, 1> over_sampler2_;
+        zldsp::oversample::OverSampler<float, 2> over_sampler4_;
+        zldsp::oversample::OverSampler<float, 3> over_sampler8_;
+
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
         // lookahead
         std::atomic<float> lookahead_delay_length_{0.f};
@@ -202,15 +191,15 @@ namespace zlp {
 
         void prepareBuffer();
 
-        void processBuffer(float *main_buffer0, float *main_buffer1,
-                           float *side_buffer0, float *side_buffer1,
+        void processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
+                           float * __restrict side_buffer0, float * __restrict side_buffer1,
                            size_t num_samples);
 
-        void processSideBufferClean(float *buffer0, float *buffer1, size_t num_samples);
+        void processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
-        void processSideBufferClassic(float *buffer0, float *buffer1, size_t num_samples);
+        void processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
-        void processSideBufferOptical(float *buffer0, float *buffer1, size_t num_samples);
+        void processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void handleAsyncUpdate() override;
     };

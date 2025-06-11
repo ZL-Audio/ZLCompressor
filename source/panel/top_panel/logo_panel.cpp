@@ -45,11 +45,11 @@ namespace zlpanel {
         temp_logo->drawAt(g, bound.getX() + brand_width + padding, bound.getY(), 1.0f);
     }
 
-    void LogoPanel::mouseEnter(const juce::MouseEvent &event) {
+    void LogoPanel::mouseEnter(const juce::MouseEvent &) {
         setAlpha(1.f);
     }
 
-    void LogoPanel::mouseExit(const juce::MouseEvent &event) {
+    void LogoPanel::mouseExit(const juce::MouseEvent &) {
         setAlpha(.5f);
     }
 }

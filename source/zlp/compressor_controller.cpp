@@ -36,15 +36,14 @@ namespace zlp {
         }
         oversampled_side_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize) * 8);
         // init oversamplers
-        for (auto &os: oversample_stages_main_) {
-            os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
-        }
-        for (auto &os: oversample_stages_side_) {
-            os.initProcessing(static_cast<size_t>(spec.maximumBlockSize));
-        }
+
+        over_sampler2_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
+        over_sampler4_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
+        over_sampler8_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
+
         oversample_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2,
-                                  oversample_stages_main_[2].getLatencyInSamples() / static_cast<float>(
-                                      spec.sampleRate));
+                                  static_cast<float>(over_sampler8_.getLatency()) / static_cast<float>(spec.
+                                      sampleRate));
         oversample_delay_.setDelayInSamples(0);
         c_oversample_idx_ = -1;
         // init lookahead delay
@@ -66,13 +65,27 @@ namespace zlp {
         if (new_oversample_idx != c_oversample_idx_) {
             to_update_pdc = true;
             c_oversample_idx_ = new_oversample_idx;
-            if (c_oversample_idx_ > 0) {
-                c_oversample_stage_idx_ = static_cast<size_t>(c_oversample_idx_ - 1);
-                const auto oversample_latency = static_cast<int>(std::round(
-                    oversample_stages_main_[c_oversample_stage_idx_].getLatencyInSamples()));
-                oversample_delay_.setDelayInSamples(oversample_latency);
-            } else {
-                oversample_delay_.setDelay(0);
+            switch (c_oversample_idx_) {
+                case 0: {
+                    oversample_delay_.setDelayInSamples(0);
+                    break;
+                }
+                case 1: {
+                    over_sampler2_.reset();
+                    oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler2_.getLatency()));
+                    break;
+                }
+                case 2: {
+                    over_sampler4_.reset();
+                    oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler4_.getLatency()));
+                    break;
+                }
+                case 3: {
+                    over_sampler8_.reset();
+                    oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler8_.getLatency()));
+                    break;
+                }
+                default: ;
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
@@ -169,26 +182,39 @@ namespace zlp {
             zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
         // upsample side buffer
-        if (c_oversample_idx_ == 0) {
-            processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples);
-        } else {
-            juce::dsp::AudioBlock<float> main_block(main_pointers.data(), 2, num_samples);
-            // upsample the main buffer
-            auto &main_oversampler = oversample_stages_main_[c_oversample_stage_idx_];
-            auto os_main_block = main_oversampler.processSamplesUp(main_block);
-            // upsample the side buffer
-            juce::dsp::AudioBlock<float> side_block(side_pointers.data(), 2, num_samples);
-            auto &side_oversampler = oversample_stages_side_[c_oversample_stage_idx_];
-            auto os_side_block = side_oversampler.processSamplesUp(side_block);
-            // process the oversampled buffers
-            processBuffer(os_main_block.getChannelPointer(0), os_main_block.getChannelPointer(1),
-                          os_side_block.getChannelPointer(0), os_side_block.getChannelPointer(1),
-                          os_main_block.getNumSamples());
-            // downsample the main buffer
-            main_oversampler.processSamplesDown(main_block);
-            // delay the pre buffer
-            oversample_delay_.process(pre_pointers_, num_samples);
+        std::array<float *, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
+        switch (c_oversample_idx_) {
+            case 0: {
+                processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples);
+                break;
+            }
+            case 1: {
+                over_sampler2_.upsample(pointers, num_samples);
+                auto &os_pointers = over_sampler2_.getOSPointer();
+                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 1);
+                over_sampler2_.downsample(pointers, num_samples);
+                oversample_delay_.process(pre_pointers_, num_samples);
+                break;
+            }
+            case 2: {
+                over_sampler4_.upsample(pointers, num_samples);
+                auto &os_pointers = over_sampler4_.getOSPointer();
+                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 2);
+                over_sampler4_.downsample(pointers, num_samples);
+                oversample_delay_.process(pre_pointers_, num_samples);
+                break;
+            }
+            case 3: {
+                over_sampler8_.upsample(pointers, num_samples);
+                auto &os_pointers = over_sampler8_.getOSPointer();
+                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 3);
+                over_sampler8_.downsample(pointers, num_samples);
+                oversample_delay_.process(pre_pointers_, num_samples);
+                break;
+            }
+            default: ;
         }
+
         // stereo combine the main buffer
         if (c_stereo_mode_ == 0) {
             zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
@@ -216,8 +242,8 @@ namespace zlp {
         }
     }
 
-    void CompressorController::processBuffer(float *main_buffer0, float *main_buffer1,
-                                             float *side_buffer0, float *side_buffer1,
+    void CompressorController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
+                                             float * __restrict side_buffer0, float * __restrict side_buffer1,
                                              const size_t num_samples) {
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
@@ -275,17 +301,20 @@ namespace zlp {
         }
     }
 
-    void CompressorController::processSideBufferClean(float *buffer0, float *buffer1, const size_t num_samples) {
+    void CompressorController::processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1,
+                                                      const size_t num_samples) {
         clean_comps_[0].process(buffer0, num_samples);
         clean_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::processSideBufferClassic(float *buffer0, float *buffer1, const size_t num_samples) {
+    void CompressorController::processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1,
+                                                        const size_t num_samples) {
         classic_comps_[0].process(buffer0, num_samples);
         classic_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::processSideBufferOptical(float *buffer0, float *buffer1, const size_t num_samples) {
+    void CompressorController::processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1,
+                                                        const size_t num_samples) {
         optical_comps_[0].process(buffer0, num_samples);
         optical_comps_[1].process(buffer1, num_samples);
     }
