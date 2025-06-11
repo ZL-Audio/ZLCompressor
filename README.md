@@ -10,7 +10,7 @@
 
 ZL Compressor is a compressor plugin.
 
-<!-- <img src="Docs/screenshot.png" width=94%> -->
+<img src="https://drive.google.com/uc?export=view&id=1b7aTDklTdt73kORaXwW5fJycM6T9k83U" style="width:750px; max-width: 100%; height: auto" />
  
 <!-- ## Usage
 
