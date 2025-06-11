@@ -43,73 +43,89 @@ namespace zlp {
 
         void setCompStyle(const zldsp::compressor::Style style) {
             comp_style_.store(style, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setHoldLength(const float millisecond) {
             hold_length_.store(millisecond * 1e-3f, std::memory_order::relaxed);
             to_update_hold_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setRange(const float db) {
             range_.store(db, std::memory_order::relaxed);
             to_update_range_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setOutputGain(const float db) {
             output_gain_db_.store(db, std::memory_order::relaxed);
             to_update_output_gain_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setWet(const float percent) {
             wet_.store(percent * 0.01f, std::memory_order::relaxed);
             to_update_wet_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setWet1(const float percent) {
             wet1_.store(percent * 0.01f, std::memory_order::relaxed);
             to_update_wet_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setWet2(const float percent) {
             wet2_.store(percent * 0.01f, std::memory_order::relaxed);
             to_update_wet_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setMagAnalyzerOn(const bool f) {
             mag_analyzer_on_.store(f, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setSpecAnalyzerOn(const bool f) {
             spec_analyzer_on_.store(f, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setStereoModeIsMidSide(const bool f) {
             stereo_mode_.store(static_cast<int>(f), std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setStereoSwap(const bool f) {
             stereo_swap_.store(f, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setStereoLink(const float percent) {
             stereo_link_.store(1.f - percent * 0.005f, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setIsON(const bool is_on) {
             is_on_.store(is_on, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setIsDelta(const bool is_delta) {
             is_delta_.store(is_delta, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setOversampleIdx(const int idx) {
             oversample_idx_.store(idx, std::memory_order::relaxed);
+            to_update_.store(true, std::memory_order::release);
         }
 
         void setLookahead(const float x) {
             lookahead_delay_length_.store(x * 0.001f, std::memory_order::relaxed);
             to_update_lookahead_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
         }
 
     private:
@@ -117,6 +133,8 @@ namespace zlp {
         juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
         std::array<kfr::univector<float>, 2> pre_buffer_, post_buffer_;
         std::array<float *, 2> pre_pointers_{}, post_pointers_{};
+        // global parameter update flag
+        std::atomic<bool> to_update_{true};
         // on and delta
         std::atomic<bool> is_on_{true}, is_delta_{false};
         // magnitude analyzer

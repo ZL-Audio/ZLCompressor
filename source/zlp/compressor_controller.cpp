@@ -54,6 +54,7 @@ namespace zlp {
         for (auto &h: hold_buffer_) {
             h.setCapacity(static_cast<size_t>(8.0 * spec.sampleRate));
         }
+        to_update_.store(true, std::memory_order::release);
     }
 
     void CompressorController::prepareBuffer() {
@@ -167,7 +168,9 @@ namespace zlp {
     void CompressorController::process(std::array<float *, 2> main_pointers,
                                        std::array<float *, 2> side_pointers,
                                        const size_t num_samples) {
-        prepareBuffer();
+        if (to_update_.exchange(false, std::memory_order::acquire)) {
+            prepareBuffer();
+        }
         if (is_lookahead_nonzero) {
             lookahead_delay_.process(main_pointers, num_samples);
         }
