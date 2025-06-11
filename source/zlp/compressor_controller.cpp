@@ -175,15 +175,16 @@ namespace zlp {
             lookahead_delay_.process(main_pointers, num_samples);
         }
 
-        if (c_mag_analyzer_on_) {
-            zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
-        }
-
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 0) {
             zldsp::splitter::MSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
             zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
+
+        if (c_mag_analyzer_on_) {
+            zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
+        }
+
         // upsample side buffer
         std::array<float *, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
         switch (c_oversample_idx_) {
@@ -217,12 +218,6 @@ namespace zlp {
             }
             default: ;
         }
-
-        // stereo combine the main buffer
-        if (c_stereo_mode_ == 0) {
-            zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
-        }
-
         // copy to post buffer
         if (c_mag_analyzer_on_) {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
@@ -233,6 +228,10 @@ namespace zlp {
         if (c_mag_analyzer_on_) {
             mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
             mag_avg_analyzer_.process({pre_pointers_, main_pointers}, num_samples);
+        }
+        // stereo combine the main buffer
+        if (c_stereo_mode_ == 0) {
+            zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
         }
 
         if (is_delta_.load(std::memory_order::relaxed)) {

@@ -19,28 +19,58 @@ namespace zldsp::splitter {
     template<typename FloatType>
     class MSSplitter {
     public:
+        enum GainMode {
+            kPre, kAvg, kPost
+        };
+
         MSSplitter() = default;
 
         /**
          * switch left/right buffer to mid/side buffer
          */
+        template<GainMode Mode = GainMode::kPre>
         static constexpr void split(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
             auto l_vector = kfr::make_univector(l_buffer, num_samples);
             auto r_vector = kfr::make_univector(r_buffer, num_samples);
 
-            l_vector = kSqrt2Over2 * (l_vector + r_vector);
-            r_vector = l_vector - kSqrt2 * r_vector;
+            switch (Mode) {
+                case kPre: {
+                    l_vector = FloatType(0.5) * (l_vector + r_vector);
+                    r_vector = l_vector - r_vector;
+                }
+                case kAvg: {
+                    l_vector = kSqrt2Over2 * (l_vector + r_vector);
+                    r_vector = l_vector - kSqrt2 * r_vector;
+                }
+                case kPost: {
+                    l_vector = l_vector + r_vector;
+                    r_vector = l_vector - FloatType(2) * r_vector;
+                }
+            }
         }
 
         /**
          * switch mis/side buffer to left/right buffer
          */
+        template<GainMode Mode = GainMode::kPre>
         static constexpr void combine(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
             auto l_vector = kfr::make_univector(l_buffer, num_samples);
             auto r_vector = kfr::make_univector(r_buffer, num_samples);
 
-            l_vector = kSqrt2Over2 * (l_vector + r_vector);
-            r_vector = l_vector - kSqrt2 * r_vector;
+            switch (Mode) {
+                case kPre: {
+                    l_vector = l_vector + r_vector;
+                    r_vector = l_vector - FloatType(2) * r_vector;
+                }
+                case kAvg: {
+                    l_vector = kSqrt2Over2 * (l_vector + r_vector);
+                    r_vector = l_vector - kSqrt2 * r_vector;
+                }
+                case kPost: {
+                    l_vector = FloatType(0.5) * (l_vector + r_vector);
+                    r_vector = l_vector - r_vector;
+                }
+            }
         }
 
     private:
