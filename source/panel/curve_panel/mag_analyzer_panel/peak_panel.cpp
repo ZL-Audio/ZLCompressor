@@ -32,8 +32,8 @@ namespace zlpanel {
     }
 
     void PeakPanel::paint(juce::Graphics &g) {
-        const juce::GenericScopedTryLock guard{path_lock_};
-        if (!guard.isLocked()) {
+        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        if (!lock.owns_lock()) {
             return;
         }
         g.setColour(juce::Colours::white.withAlpha(.25f));
@@ -103,7 +103,7 @@ namespace zlpanel {
                 updatePaths(current_bound);
             }
         } {
-            const juce::GenericScopedLock guard{path_lock_};
+            std::lock_guard<std::mutex> lock{mutex_};
             in_path_ = next_in_path_;
             out_path_ = next_out_path_;
             reduction_path_ = next_reduction_path_;

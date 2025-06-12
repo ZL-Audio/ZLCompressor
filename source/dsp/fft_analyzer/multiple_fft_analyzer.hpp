@@ -20,7 +20,7 @@ namespace zldsp::analyzer {
      * @tparam PointNum the number of output points
      */
     template<typename FloatType, size_t FFTNum, size_t PointNum>
-    class MultipleFFTAnalyzer final : MultipleFFTBase<FloatType, FFTNum, PointNum> {
+    class MultipleFFTAnalyzer final : public MultipleFFTBase<FloatType, FFTNum, PointNum> {
     public:
         explicit MultipleFFTAnalyzer(const size_t fft_order = 12)
             : MultipleFFTBase<FloatType, FFTNum, PointNum>(fft_order){

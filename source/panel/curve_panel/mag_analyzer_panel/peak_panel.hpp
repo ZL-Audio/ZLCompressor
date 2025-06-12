@@ -49,7 +49,7 @@ namespace zlpanel {
         std::array<float, zlp::CompressorController::kAnalyzerPointNum> xs_{}, in_ys_{}, out_ys_{}, reduction_ys_{};
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
-        juce::SpinLock path_lock_;
+        std::mutex mutex_;
 
         std::atomic<bool> to_reset_path_{true};
         double start_time_{0.0};

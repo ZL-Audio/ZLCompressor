@@ -44,6 +44,14 @@ namespace zlp {
             return filters_[idx];
         }
 
+        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100>& getFFTAnalyzer() {
+            return fft_analyzer_;
+        }
+
+        void setFFTAnalyzerON(const bool f) {
+            fft_analyzer_on_.store(f, std::memory_order::relaxed);
+        }
+
     private:
         std::atomic<bool> to_update_gain_{true};
         std::atomic<double> gain_db_{0.f};
@@ -51,12 +59,14 @@ namespace zlp {
         bool c_gain_equal_zero_{true};
 
         std::array<zldsp::filter::IIR<double, 16>, kBandNum> filters_{};
-        zldsp::analyzer::MultipleFFTAnalyzer<double, 2, 100> fft_analyzer_;
-
         std::atomic<bool> to_update_filter_status_{true};
         std::array<std::atomic<FilterStatus>, kBandNum> filter_status_;
         std::array<FilterStatus, kBandNum> c_filter_status_{};
         std::vector<size_t> on_indices_{};
+
+        std::atomic<bool> fft_analyzer_on_{false};
+        bool c_fft_analyzer_on_{false};
+        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100> fft_analyzer_;
 
         void prepareBuffer();
     };

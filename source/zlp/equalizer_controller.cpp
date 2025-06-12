@@ -49,6 +49,7 @@ namespace zlp {
         for (const auto &i: on_indices_) {
             filters_[i].prepareBuffer();
         }
+        c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
     }
 
     void EqualizerController::process(std::array<double *, 2> pointers, const size_t num_samples) {
@@ -70,6 +71,9 @@ namespace zlp {
                     break;
                 }
             }
+        }
+        if (c_fft_analyzer_on_) {
+            fft_analyzer_.process({pointers}, num_samples);
         }
     }
 }

@@ -36,6 +36,6 @@ namespace zlpanel {
         std::array<float, zlp::CompressorController::kAvgAnalyzerPointNum> in_xs_{}, out_xs{}, ys_{};
         juce::Path in_path_, out_path_;
         juce::Path next_in_path_, next_out_path_;
-        juce::SpinLock path_lock_;
+        std::mutex mutex_;
     };
 } // zlpanel
