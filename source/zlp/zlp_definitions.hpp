@@ -14,7 +14,7 @@
 namespace zlp {
     inline static constexpr int kVersionHint = 1;
 
-    inline static constexpr size_t kBandNUM = 8;
+    inline static constexpr size_t kBandNum = 8;
 
     template<typename FloatType>
     inline juce::NormalisableRange<FloatType> getLogMidRange(
@@ -432,6 +432,43 @@ namespace zlp {
         int static constexpr kDefaultI = 0;
     };
 
+    class PFilterType : public ChoiceParameters<PFilterType> {
+    public:
+        auto static constexpr kID = "filter_type";
+        auto static constexpr kName = "Filter Type";
+        inline auto static const kChoices = juce::StringArray{
+            "Peak", "Low Shelf", "Low Pass",
+            "High Shelf", "High Pass", "Notch",
+            "Band Pass", "Tilt Shelf"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
+    class POrder : public ChoiceParameters<POrder> {
+    public:
+        auto static constexpr kID = "order";
+        auto static constexpr kName = "Order";
+        inline auto static const kChoices = juce::StringArray{
+            "6 dB/oct", "12 dB/oct", "24 dB/oct",
+            "36 dB/oct", "48 dB/oct", "72 dB/oct", "96 dB/oct"
+        };
+        int static constexpr kDefaultI = 1;
+        static constexpr std::array<size_t, 7> kOrderArray{1, 2, 4, 6, 8, 12, 16};
+
+        static size_t convertToIdx(const size_t order) {
+            switch (order) {
+                case 1: return 0;
+                case 2: return 1;
+                case 4: return 2;
+                case 6: return 3;
+                case 8: return 4;
+                case 12: return 5;
+                case 16: return 6;
+                default: return 0;
+            }
+        }
+    };
+
     class PFreq : public FloatParameters<PFreq> {
     public:
         auto static constexpr kID = "freq";
@@ -467,9 +504,9 @@ namespace zlp {
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
                    PCompON::get(), PCompDelta::get(),
                    POversample::get(), PLookAhead::get());
-        for (size_t i = 0; i < kBandNUM; ++i) {
+        for (size_t i = 0; i < kBandNum; ++i) {
             const auto suffix = std::to_string(i);
-            layout.add(PFilterStatus::get(suffix),
+            layout.add(PFilterStatus::get(suffix), PFilterType::get(suffix), POrder::get(suffix),
                        PFreq::get(suffix), PGain::get(suffix), PQ::get(suffix));
         }
         return layout;

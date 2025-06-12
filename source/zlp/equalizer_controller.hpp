@@ -12,6 +12,7 @@
 #include "../dsp/filter/filter.hpp"
 #include "../dsp/fft_analyzer/fft_analyzer.hpp"
 #include "../dsp/gain/origin_gain.hpp"
+#include "zlp_definitions.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -19,8 +20,6 @@
 namespace zlp {
     class EqualizerController {
     public:
-        static constexpr size_t kBandNum = 8;
-
         enum FilterStatus {
             kOff, kBypass, kOn
         };
@@ -39,6 +38,10 @@ namespace zlp {
         void setGain(const float db) {
             gain_db_.store(static_cast<double>(db), std::memory_order::relaxed);
             to_update_gain_.store(true, std::memory_order::release);
+        }
+
+        zldsp::filter::IIR<double, 16> &getFilter(const size_t idx) {
+            return filters_[idx];
         }
 
     private:

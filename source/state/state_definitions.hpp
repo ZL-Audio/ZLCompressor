@@ -184,11 +184,6 @@ namespace zlstate {
         return layout;
     }
 
-    inline std::string appendSuffix(const std::string &s, const size_t i) {
-        const auto suffix = i < 10 ? "0" + std::to_string(i) : std::to_string(i);
-        return s + suffix;
-    }
-
     class PWindowW : public FloatParameters<PWindowW> {
     public:
         auto static constexpr kID = "window_w";

@@ -34,6 +34,18 @@ namespace zlp {
             PSideGain::kDefaultV
         };
 
+        constexpr static std::array kBandIDs{
+            PFilterStatus::kID, PFilterType::kID, POrder::kID,
+            PFreq::kID, PGain::kID, PQ::kID
+        };
+
+        constexpr static std::array kBandDefaultVs{
+            static_cast<float>(PFilterStatus::kDefaultI),
+            static_cast<float>(PFilterType::kDefaultI),
+            static_cast<float>(POrder::kDefaultI),
+            PFreq::kDefaultV, PGain::kDefaultV, PQ::kDefaultV
+        };
+
         void parameterChanged(const juce::String &parameter_ID, float new_value) override;
     };
 }
