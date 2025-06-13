@@ -158,7 +158,7 @@ namespace zlpanel {
     }
 
     void SideControlPanel::repaintCallBack(const double time_stamp) {
-        if (time_stamp - previous_time_stamp > 0.1) {
+        if (time_stamp - previous_time_stamp_ > 0.1) {
             const auto stereo_mode_flag = stereo_mode_ref_.load(std::memory_order::relaxed) > .5f;
             const auto stereo_swap_flag = stereo_swap_ref_.load(std::memory_order::relaxed) > .5f;
             if (stereo_mode_flag != stereo_mode_flag_ || stereo_swap_flag != stereo_swap_flag_) {
@@ -171,7 +171,7 @@ namespace zlpanel {
                 setVisible(should_be_visible);
             }
             updater_.updateComponents();
-            previous_time_stamp = time_stamp;
+            previous_time_stamp_ = time_stamp;
         }
     }
 

@@ -27,7 +27,7 @@ namespace zlpanel {
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(base_.getTextColor().withAlpha(.5f));
+        g.setColour(base_.getTextColor().withAlpha(.375f));
         g.fillPath(out_path_);
     }
 

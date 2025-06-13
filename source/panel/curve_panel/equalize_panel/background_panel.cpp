@@ -18,20 +18,47 @@ namespace zlpanel {
     BackgroundPanel::~BackgroundPanel() {
     }
 
-
     void BackgroundPanel::paint(juce::Graphics &g) {
         if (is_mouse_on_) {
-            g.fillAll(base_.getBackgroundColor().withAlpha(.75f));
+            g.fillAll(base_.getBackgroundColor().withAlpha(.875f));
+            g.setFont(base_.getFontSize());
+            g.setColour(base_.getTextColor().withAlpha(.375f));
+            for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
+                g.drawText(kBackgroundFreqsNames[i], text_bounds_[i], juce::Justification::bottomRight);
+            }
+            g.setColour(base_.getTextColor().withAlpha(.0625f));
+            g.fillRectList(rect_list_);
         } else {
             const auto bound = getLocalBounds().toFloat();
             const juce::ColourGradient gradient1{
                 base_.getBackgroundColor().withAlpha(0.f),
-                bound.getX() + bound.getWidth() * .5f, bound.getY(),
-                base_.getBackgroundColor().withAlpha(.75f),
-                bound.getX() + bound.getWidth() * .5f, bound.getBottom(), false
+                bound.getX(), bound.getY(),
+                base_.getBackgroundColor().withAlpha(.875f),
+                bound.getX(), bound.getBottom(), false
             };
             g.setGradientFill(gradient1);
             g.fillRect(getLocalBounds());
+
+        }
+    }
+
+    void BackgroundPanel::resized() {
+        rect_list_.clear();
+        auto bound = getLocalBounds().toFloat();
+        const auto thickness = base_.getFontSize() * 0.1f;
+        for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
+            const auto x = kBackgroundFreqs[i] * bound.getWidth() + bound.getX();
+            rect_list_.add({x - thickness * .5f, bound.getY(), thickness, bound.getHeight()});
+            text_bounds_[i] = juce::Rectangle<float>(x - base_.getFontSize() * 3 - base_.getFontSize() * 0.125f,
+                                                   bound.getBottom() - base_.getFontSize() * 2,
+                                                   base_.getFontSize() * 3, base_.getFontSize() * 2);
+        }
+
+        bound = bound.withSizeKeepingCentre(bound.getWidth(), bound.getHeight() - 2 * base_.getFontSize());
+
+        for (auto &d: kBackgroundDBs) {
+            const auto y = d * bound.getHeight() + bound.getY();
+            rect_list_.add({bound.getX(), y - thickness * .5f, bound.getWidth(), thickness});
         }
     }
 

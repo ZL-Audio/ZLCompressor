@@ -32,8 +32,8 @@ namespace zlpanel {
         BackgroundPanel background_panel_;
         FFTAnalyzerPanel fft_analyzer_panel_;
 
-        void mouseEnter(const juce::MouseEvent &event) override;
+        double previous_time_stamp_{0.0};
 
-        void mouseExit(const juce::MouseEvent &event) override;
+        void mouseEnter(const juce::MouseEvent &event) override;
     };
 } // zlpanel

@@ -20,7 +20,6 @@ namespace zlpanel {
         fft_analyzer_panel_.setInterceptsMouseClicks(false, false);
 
         setInterceptsMouseClicks(true, true);
-        addMouseListener(this, false);
     }
 
     EqualizePanel::~EqualizePanel() {
@@ -39,17 +38,15 @@ namespace zlpanel {
 
     void EqualizePanel::repaintCallBack(double time_stamp) {
         juce::ignoreUnused(time_stamp);
+        if (time_stamp - previous_time_stamp_ > 0.1) {
+            background_panel_.setMouseOver(isMouseOver(true));
+            previous_time_stamp_ = time_stamp;
+        }
         background_panel_.repaintCallBack();
         repaint();
     }
 
-    void EqualizePanel::mouseEnter(const juce::MouseEvent &event) {
-        juce::ignoreUnused(event);
+    void EqualizePanel::mouseEnter(const juce::MouseEvent &) {
         background_panel_.setMouseOver(true);
-    }
-
-    void EqualizePanel::mouseExit(const juce::MouseEvent &event) {
-        juce::ignoreUnused(event);
-        background_panel_.setMouseOver(false);
     }
 } // zlpanel
