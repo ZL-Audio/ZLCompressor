@@ -18,7 +18,6 @@
 namespace zlpanel {
     class LeftControlPanel final : public juce::Component {
     public:
-
         explicit LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
         void resized() override;
@@ -29,8 +28,12 @@ namespace zlpanel {
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 
-        zlgui::button::CompactButton side_control_display_button_;
-        zlgui::attachment::ButtonAttachment<false> side_control_display_attachment_;
-        const std::unique_ptr<juce::Drawable> side_control_display_drawable_;
+        const std::unique_ptr<juce::Drawable> side_control_show_drawable_;
+        zlgui::button::CompactButton side_control_show_button_;
+        zlgui::attachment::ButtonAttachment<false> side_control_show_attachment_;
+
+        const std::unique_ptr<juce::Drawable> equalize_show_drawable_;
+        zlgui::button::CompactButton equalize_show_button_;
+        zlgui::attachment::ButtonAttachment<false> equalize_show_attachment_;
     };
 } // zlpanel

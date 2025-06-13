@@ -10,7 +10,7 @@
 #include "mag_analyzer_panel.hpp"
 
 namespace zlpanel {
-        MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base)
+    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base)
         : base_(base),
           peak_panel_(p), rms_panel_(p),
           computer_panel_(p, base_) {
@@ -37,13 +37,22 @@ namespace zlpanel {
         computer_panel_.setBounds(bound.withSize(r, r));
     }
 
-    void MagAnalyzerPanel::run() {
+    void MagAnalyzerPanel::run(const juce::Thread &thread) {
         juce::ScopedNoDenormals no_denormals;
         const auto time_stamp = next_stamp_.load(std::memory_order::relaxed);
         peak_panel_.run(time_stamp);
+        if (thread.threadShouldExit()) {
+            return;
+        }
         computer_panel_.run();
+        if (thread.threadShouldExit()) {
+            return;
+        }
         if (to_run_rms_.exchange(false, std::memory_order::relaxed)) {
             rms_panel_.run(time_stamp);
+        }
+        if (thread.threadShouldExit()) {
+            return;
         }
     }
 

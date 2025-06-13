@@ -28,13 +28,6 @@ namespace zlpanel {
 
         void resized() override;
 
-        void setTimeLength(const float x) {
-            mag_analyzer_ref_.setTimeLength(x);
-            num_per_second_.store(
-                static_cast<double>(zlp::CompressorController::kAnalyzerPointNum - 1) / static_cast<double>(x));
-            to_reset_path_.exchange(true, std::memory_order::release);
-        }
-
     private:
         PluginProcessor &p_ref_;
         static constexpr std::array kNAIDs{
@@ -43,10 +36,10 @@ namespace zlpanel {
             zlstate::PAnalyzerTimeLength::kID
         };
 
-        zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressorController::kAnalyzerPointNum> &mag_analyzer_ref_;
+        zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressController::kAnalyzerPointNum> &mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
-        std::array<float, zlp::CompressorController::kAnalyzerPointNum> xs_{}, in_ys_{}, out_ys_{}, reduction_ys_{};
+        std::array<float, zlp::CompressController::kAnalyzerPointNum> xs_{}, in_ys_{}, out_ys_{}, reduction_ys_{};
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         std::mutex mutex_;
@@ -65,5 +58,12 @@ namespace zlpanel {
         void updatePaths(juce::Rectangle<float> bound);
 
         void parameterChanged(const juce::String &parameter_id, float new_value) override;
+
+        void setTimeLength(const float x) {
+            mag_analyzer_ref_.setTimeLength(x);
+            num_per_second_.store(
+                static_cast<double>(zlp::CompressController::kAnalyzerPointNum - 1) / static_cast<double>(x));
+            to_reset_path_.exchange(true, std::memory_order::release);
+        }
     };
 } // zlpanel

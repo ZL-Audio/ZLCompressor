@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "compressor_controller.hpp"
+#include "compress_controller.hpp"
 
 namespace zlp {
     inline static constexpr int kVersionHint = 1;

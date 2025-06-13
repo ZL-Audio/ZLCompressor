@@ -7,21 +7,22 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "equalizer_controller.hpp"
+#include "equalize_controller.hpp"
 
 namespace zlp {
-    EqualizerController::EqualizerController() {
+    EqualizeController::EqualizeController() {
         on_indices_.reserve(kBandNum);
     }
 
-    void EqualizerController::prepare(const juce::dsp::ProcessSpec &spec) {
+    void EqualizeController::prepare(const juce::dsp::ProcessSpec &spec) {
+        fft_analyzer_.prepare(spec.sampleRate);
         for (auto &filter: filters_) {
             filter.prepare(spec.sampleRate, 2);
         }
         gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.01);
     }
 
-    void EqualizerController::prepareBuffer() {
+    void EqualizeController::prepareBuffer() {
         if (to_update_gain_.exchange(false, std::memory_order::acquire)) {
             const auto c_gain_db = gain_db_.load(std::memory_order::relaxed);
             gain_.setGainDecibels(c_gain_db);
@@ -52,7 +53,7 @@ namespace zlp {
         c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
     }
 
-    void EqualizerController::process(std::array<double *, 2> pointers, const size_t num_samples) {
+    void EqualizeController::process(std::array<double *, 2> pointers, const size_t num_samples) {
         prepareBuffer();
         if (!c_gain_equal_zero_) {
             gain_.process(pointers, num_samples);

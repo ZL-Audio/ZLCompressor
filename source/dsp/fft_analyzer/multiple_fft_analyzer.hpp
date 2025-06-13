@@ -23,7 +23,7 @@ namespace zldsp::analyzer {
     class MultipleFFTAnalyzer final : public MultipleFFTBase<FloatType, FFTNum, PointNum> {
     public:
         explicit MultipleFFTAnalyzer(const size_t fft_order = 12)
-            : MultipleFFTBase<FloatType, FFTNum, PointNum>(fft_order){
+            : MultipleFFTBase<FloatType, FFTNum, PointNum>(fft_order) {
         }
 
         ~MultipleFFTAnalyzer() = default;
@@ -49,7 +49,9 @@ namespace zldsp::analyzer {
         void createPathYs(std::array<std::span<float>, FFTNum> ys, const float height, const float min_db = -72.f) {
             std::vector<size_t> is_on_vector{};
             for (size_t i = 0; i < FFTNum; ++i) {
-                if (this->is_on_[i].load(std::memory_order::relaxed)) is_on_vector.push_back(i);
+                if (this->is_on_[i].load(std::memory_order::relaxed)) {
+                    is_on_vector.push_back(i);
+                }
             }
             const auto scale = height / min_db;
             for (const auto &i: is_on_vector) {

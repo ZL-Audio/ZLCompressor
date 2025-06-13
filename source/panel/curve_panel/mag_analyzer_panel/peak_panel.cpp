@@ -11,8 +11,8 @@
 
 namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor &processor)
-        : p_ref_(processor), mag_analyzer_ref_(processor.getController().getMagAnalyzer()) {
-        constexpr auto preallocateSpace = static_cast<int>(zlp::CompressorController::kAnalyzerPointNum) * 3 + 1;
+        : p_ref_(processor), mag_analyzer_ref_(processor.getCompressController().getMagAnalyzer()) {
+        constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
         for (auto &path: {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
@@ -52,7 +52,7 @@ namespace zlpanel {
 
     void PeakPanel::resized() {
         auto bound = getLocalBounds().toFloat();
-        constexpr auto pad_p = 1.f / static_cast<float>(zlp::CompressorController::kAnalyzerPointNum - 1);
+        constexpr auto pad_p = 1.f / static_cast<float>(zlp::CompressController::kAnalyzerPointNum - 1);
         const auto pad = std::max(bound.getWidth() * pad_p, 1.f);
         bound = bound.withWidth(bound.getWidth() + pad);
         atomic_bound_.store(bound);
@@ -110,7 +110,7 @@ namespace zlpanel {
         }
     }
 
-    void PeakPanel::updatePaths(juce::Rectangle<float> bound) {
+    void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
         next_in_path_.clear();
         next_out_path_.clear();
         next_reduction_path_.clear();

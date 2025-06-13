@@ -70,15 +70,19 @@ public:
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    inline zlp::CompressorController &getController() {
-        return compressor_controller_;
+    zlp::CompressController &getCompressController() {
+        return compress_controller_;
+    }
+
+    zlp::EqualizeController &getEqualizeController() {
+        return equalize_controller_;
     }
 
 private:
-    zlp::CompressorController compressor_controller_;
+    zlp::CompressController compress_controller_;
     zlp::CompressAttach compress_attach_;
-    zlp::EqualizerController equalizer_controller_;
-    zlp::EqualizerAttach equalizer_attach_;
+    zlp::EqualizeController equalize_controller_;
+    zlp::EqualizeAttach equalize_attach_;
     juce::AudioBuffer<float> float_buffer_;
     juce::AudioBuffer<double> double_buffer_;
     std::array<float *, 2> main_pointers_{}, float_side_pointers_{};

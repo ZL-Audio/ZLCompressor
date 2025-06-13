@@ -20,12 +20,12 @@
 #include <juce_dsp/juce_dsp.h>
 
 namespace zlp {
-    class CompressorController final : private juce::AsyncUpdater {
+    class CompressController final : private juce::AsyncUpdater {
     public:
         static constexpr size_t kAnalyzerPointNum = 251;
         static constexpr size_t kAvgAnalyzerPointNum = 120;
 
-        explicit CompressorController(juce::AudioProcessor &processor);
+        explicit CompressController(juce::AudioProcessor &processor);
 
         void prepare(const juce::dsp::ProcessSpec &spec);
 

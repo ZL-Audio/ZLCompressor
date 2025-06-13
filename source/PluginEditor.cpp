@@ -47,7 +47,7 @@ PluginEditor::~PluginEditor() {
         p_ref_.state_.removeParameterListener(id, this);
     }
     stopTimer();
-    p_ref_.getController().setMagAnalyzerOn(false);
+    p_ref_.getCompressController().setMagAnalyzerOn(false);
 }
 
 void PluginEditor::paint(juce::Graphics &g) {
@@ -92,7 +92,7 @@ void PluginEditor::timerCallback() {
 void PluginEditor::updateIsShowing() {
     if (isShowing() != base_.getIsEditorShowing()) {
         base_.setIsEditorShowing(isShowing());
-        p_ref_.getController().setMagAnalyzerOn(base_.getIsEditorShowing());
+        p_ref_.getCompressController().setMagAnalyzerOn(base_.getIsEditorShowing());
         if (base_.getIsEditorShowing()) {
             vblank_ = std::make_unique<juce::VBlankAttachment>(
                 &main_panel_, [this](const double x) { main_panel_.repaintCallBack(x); });

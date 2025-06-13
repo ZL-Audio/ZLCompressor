@@ -9,34 +9,35 @@
 
 #pragma once
 
-#include "computer_panel.hpp"
-#include "peak_panel.hpp"
-#include "rms_panel.hpp"
-#include "separate_panel.hpp"
+#include <juce_gui_basics/juce_gui_basics.h>
+
+#include "../../../PluginProcessor.hpp"
+#include "../../../gui/gui.hpp"
+#include "../../helper/helper.hpp"
 
 namespace zlpanel {
-    class MagAnalyzerPanel final : public juce::Component {
+    class FFTAnalyzerPanel final : public juce::Component {
     public:
-        explicit MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit FFTAnalyzerPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
-        ~MagAnalyzerPanel() override;
+        ~FFTAnalyzerPanel() override;
 
         void paint(juce::Graphics &g) override;
 
+        void run();
+
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
-
-        void run(const juce::Thread &thread);
-
     private:
+        PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
-        PeakPanel peak_panel_;
-        RMSPanel rms_panel_;
-        ComputerPanel computer_panel_;
-        SeparatePanel separate_panel_;
-        std::atomic<double> next_stamp_{0.};
-        double rms_previous_stamp_{0.};
-        std::atomic<bool> to_run_rms_{false};
+
+        AtomicBound<float> atomic_bound_;
+        float width_{-.1f};
+
+        std::array<float, zlp::EqualizeController::kAnalyzerPointNum> xs_{}, ys_{};
+        juce::Path out_path_;
+        juce::Path next_out_path_;
+        std::mutex mutex_;
     };
 } // zlpanel

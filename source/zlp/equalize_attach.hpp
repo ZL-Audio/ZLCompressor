@@ -10,21 +10,21 @@
 #pragma once
 
 #include "zlp_definitions.hpp"
-#include "equalizer_controller.hpp"
+#include "equalize_controller.hpp"
 
 namespace zlp {
-    class EqualizerAttach final : private juce::AudioProcessorValueTreeState::Listener {
+    class EqualizeAttach final : private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit EqualizerAttach(juce::AudioProcessor &processor,
+        explicit EqualizeAttach(juce::AudioProcessor &processor,
                                  juce::AudioProcessorValueTreeState &parameters,
-                                 EqualizerController &controller);
+                                 EqualizeController &controller);
 
-        ~EqualizerAttach() override;
+        ~EqualizeAttach() override;
 
     private:
         juce::AudioProcessor &processor_ref_;
         juce::AudioProcessorValueTreeState &parameters_ref_;
-        EqualizerController &controller_ref_;
+        EqualizeController &controller_ref_;
 
         constexpr static std::array kIDs{
             PSideGain::kID

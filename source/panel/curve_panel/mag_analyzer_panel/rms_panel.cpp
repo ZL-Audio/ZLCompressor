@@ -11,7 +11,7 @@
 
 namespace zlpanel {
     RMSPanel::RMSPanel(PluginProcessor &processor)
-        : avg_analyzer_ref_(processor.getController().getMagAvgAnalyzer()),
+        : avg_analyzer_ref_(processor.getCompressController().getMagAvgAnalyzer()),
           min_db_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         avg_analyzer_ref_.setToReset();
         setBufferedToImage(true);

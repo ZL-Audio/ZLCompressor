@@ -18,13 +18,14 @@
 #include <juce_dsp/juce_dsp.h>
 
 namespace zlp {
-    class EqualizerController {
+    class EqualizeController {
     public:
+        static constexpr size_t kAnalyzerPointNum = 100;
         enum FilterStatus {
             kOff, kBypass, kOn
         };
 
-        explicit EqualizerController();
+        explicit EqualizeController();
 
         void prepare(const juce::dsp::ProcessSpec &spec);
 
@@ -50,6 +51,11 @@ namespace zlp {
 
         void setFFTAnalyzerON(const bool f) {
             fft_analyzer_on_.store(f, std::memory_order::relaxed);
+            fft_analyzer_.setON({f});
+        }
+
+        [[nodiscard]] bool getFFTAnalyzerON() const {
+            return fft_analyzer_on_.load(std::memory_order::relaxed);
         }
 
     private:
@@ -66,7 +72,7 @@ namespace zlp {
 
         std::atomic<bool> fft_analyzer_on_{false};
         bool c_fft_analyzer_on_{false};
-        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100> fft_analyzer_;
+        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, kAnalyzerPointNum> fft_analyzer_;
 
         void prepareBuffer();
     };

@@ -10,7 +10,7 @@
 #pragma once
 
 #include "zlp_definitions.hpp"
-#include "compressor_controller.hpp"
+#include "compress_controller.hpp"
 #include "compress_attach.hpp"
-#include "equalizer_controller.hpp"
-#include "equalizer_attach.hpp"
+#include "equalize_controller.hpp"
+#include "equalize_attach.hpp"

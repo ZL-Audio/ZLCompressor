@@ -9,34 +9,30 @@
 
 #pragma once
 
-#include "computer_panel.hpp"
-#include "peak_panel.hpp"
-#include "rms_panel.hpp"
-#include "separate_panel.hpp"
+#include <juce_gui_basics/juce_gui_basics.h>
+
+#include "../../../PluginProcessor.hpp"
+#include "../../helper/helper.hpp"
+#include "../../../gui/gui.hpp"
+#include "fft_analyzer_panel.hpp"
 
 namespace zlpanel {
-    class MagAnalyzerPanel final : public juce::Component {
+    class EqualizePanel final : public juce::Component {
     public:
-        explicit MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base);
 
-        ~MagAnalyzerPanel() override;
+        ~EqualizePanel() override;
 
         void paint(juce::Graphics &g) override;
+
+        void run(juce::Thread &thread);
 
         void resized() override;
 
         void repaintCallBack(double time_stamp);
 
-        void run(const juce::Thread &thread);
-
     private:
         zlgui::UIBase &base_;
-        PeakPanel peak_panel_;
-        RMSPanel rms_panel_;
-        ComputerPanel computer_panel_;
-        SeparatePanel separate_panel_;
-        std::atomic<double> next_stamp_{0.};
-        double rms_previous_stamp_{0.};
-        std::atomic<bool> to_run_rms_{false};
+        FFTAnalyzerPanel fft_analyzer_panel_;
     };
 } // zlpanel

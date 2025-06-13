@@ -11,15 +11,19 @@
 
 namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
-        : Thread("curve_panel"), base_(base),
-          mag_analyzer_panel_(p, base_),
-          bottom_control_panel_(p, base_),
-          left_control_panel_(p, base_),
-    side_control_panel_(p, base_) {
+        : Thread("curve_panel"), p_ref_(p), base_(base),
+          mag_analyzer_panel_(p, base),
+          equalize_panel_(p, base),
+          bottom_control_panel_(p, base),
+          left_control_panel_(p, base),
+          side_control_panel_(p, base),
+          equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
+          side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)) {
         addAndMakeVisible(mag_analyzer_panel_);
         addAndMakeVisible(bottom_control_panel_);
         addAndMakeVisible(left_control_panel_);
 
+        addChildComponent(equalize_panel_);
         addChildComponent(side_control_panel_);
         startThread(juce::Thread::Priority::low);
     }
@@ -40,7 +44,8 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale); {
             auto bound = getLocalBounds();
             bound.removeFromLeft(button_height);
             mag_analyzer_panel_.setBounds(bound);
@@ -60,6 +65,15 @@ namespace zlpanel {
             const auto width = side_control_panel_.getIdealWidth();
             const auto height = side_control_panel_.getIdealHeight();
             side_control_panel_.setBounds(p.getX(), p.getY() - height, width, height);
+
+            equalize_left_bound_ = {p.getX(), p.getY() - height, slider_width * 4, height};
+            equalize_right_bound_ = {p.getX(), p.getY()- height, width + slider_width * 4, height};
+
+            if (side_control_panel_.isVisible()) {
+                equalize_panel_.setBounds(equalize_right_bound_);
+            } else {
+                equalize_panel_.setBounds(equalize_left_bound_);
+            }
         }
     }
 
@@ -68,11 +82,28 @@ namespace zlpanel {
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
-            mag_analyzer_panel_.run();
+            mag_analyzer_panel_.run(*this);
+            equalize_panel_.run(*this);
         }
     }
 
     void CurvePanel::repaintCallBack(const double time_stamp) {
+        if (time_stamp - previous_time_stamp > 0.1) {
+            const auto side_control_show = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
+            const auto equalize_show = equalize_show_ref_.load(std::memory_order::relaxed) > .5f;
+            if (side_control_panel_.isVisible() != side_control_show || equalize_panel_.isVisible() != equalize_show) {
+                equalize_panel_.setBounds(side_control_show ? equalize_right_bound_ : equalize_left_bound_);
+                side_control_panel_.setVisible(side_control_show);
+            }
+            if (p_ref_.getEqualizeController().getFFTAnalyzerON() != equalize_show) {
+                p_ref_.getEqualizeController().setFFTAnalyzerON(equalize_show);
+            }
+            if (equalize_panel_.isVisible() != equalize_show) {
+                equalize_panel_.setVisible(equalize_show);
+            }
+            previous_time_stamp = time_stamp;
+        }
+
         mag_analyzer_panel_.repaintCallBack(time_stamp);
         bottom_control_panel_.repaintCallBack(time_stamp);
         left_control_panel_.repaintCallBack(time_stamp);

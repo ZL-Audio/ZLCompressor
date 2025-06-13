@@ -7,14 +7,14 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "compressor_controller.hpp"
+#include "compress_controller.hpp"
 
 namespace zlp {
-    CompressorController::CompressorController(juce::AudioProcessor &processor)
+    CompressController::CompressController(juce::AudioProcessor &processor)
         : processor_ref_(processor) {
     }
 
-    void CompressorController::prepare(const juce::dsp::ProcessSpec &spec) {
+    void CompressController::prepare(const juce::dsp::ProcessSpec &spec) {
         main_spec_ = spec;
         mag_analyzer_.prepare(spec.sampleRate);
         mag_avg_analyzer_.prepare(spec.sampleRate);
@@ -57,7 +57,7 @@ namespace zlp {
         to_update_.store(true, std::memory_order::release);
     }
 
-    void CompressorController::prepareBuffer() {
+    void CompressController::prepareBuffer() {
         c_is_on_ = is_on_.load(std::memory_order::relaxed);
         c_is_delta_ = is_delta_.load(std::memory_order::relaxed);
         bool to_update_pdc = false;
@@ -168,7 +168,7 @@ namespace zlp {
         }
     }
 
-    void CompressorController::process(std::array<float *, 2> main_pointers,
+    void CompressController::process(std::array<float *, 2> main_pointers,
                                        std::array<float *, 2> side_pointers,
                                        const size_t num_samples) {
         if (to_update_.exchange(false, std::memory_order::acquire)) {
@@ -247,7 +247,7 @@ namespace zlp {
         }
     }
 
-    void CompressorController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
+    void CompressController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
                                              float * __restrict side_buffer0, float * __restrict side_buffer1,
                                              const size_t num_samples) {
         // prepare computer, trackers and followers
@@ -306,25 +306,25 @@ namespace zlp {
         }
     }
 
-    void CompressorController::processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1,
                                                       const size_t num_samples) {
         clean_comps_[0].process(buffer0, num_samples);
         clean_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1,
                                                         const size_t num_samples) {
         classic_comps_[0].process(buffer0, num_samples);
         classic_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1,
                                                         const size_t num_samples) {
         optical_comps_[0].process(buffer0, num_samples);
         optical_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressorController::handleAsyncUpdate() {
+    void CompressController::handleAsyncUpdate() {
         processor_ref_.setLatencySamples(pdc_.load(std::memory_order::relaxed));
     }
 } // zlDSP

@@ -7,12 +7,12 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "equalizer_attach.hpp"
+#include "equalize_attach.hpp"
 
 namespace zlp {
-    EqualizerAttach::EqualizerAttach(juce::AudioProcessor &processor,
+    EqualizeAttach::EqualizeAttach(juce::AudioProcessor &processor,
                                      juce::AudioProcessorValueTreeState &parameters,
-                                     EqualizerController &controller)
+                                     EqualizeController &controller)
         : processor_ref_(processor),
           parameters_ref_(parameters),
           controller_ref_(controller) {
@@ -31,7 +31,7 @@ namespace zlp {
         }
     }
 
-    EqualizerAttach::~EqualizerAttach() {
+    EqualizeAttach::~EqualizeAttach() {
         for (auto &ID: kIDs) {
             parameters_ref_.removeParameterListener(ID, this);
         }
@@ -44,12 +44,12 @@ namespace zlp {
         }
     }
 
-    void EqualizerAttach::parameterChanged(const juce::String &parameter_ID, const float new_value) {
+    void EqualizeAttach::parameterChanged(const juce::String &parameter_ID, const float new_value) {
         const auto idx = static_cast<size_t>(parameter_ID.getTrailingIntValue());
         if (parameter_ID == PSideGain::kID) {
             controller_ref_.setGain(new_value);
         } else if (parameter_ID.startsWith(PFilterStatus::kID)) {
-            controller_ref_.setFilterStatus(idx, static_cast<EqualizerController::FilterStatus>(new_value));
+            controller_ref_.setFilterStatus(idx, static_cast<EqualizeController::FilterStatus>(new_value));
         } else if (parameter_ID.startsWith(PFreq::kID)) {
             controller_ref_.getFilter(idx).setFreq(static_cast<double>(new_value));
         } else if (parameter_ID.startsWith(PGain::kID)) {

@@ -14,6 +14,7 @@
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "mag_analyzer_panel/mag_analyzer_panel.hpp"
+#include "equalizer_panel/equalize_panel.hpp"
 #include "left_control_panel.hpp"
 #include "bottom_control_panel.hpp"
 #include "side_control_panel.hpp"
@@ -35,11 +36,19 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
+        PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         MagAnalyzerPanel mag_analyzer_panel_;
+        EqualizePanel equalize_panel_;
         BottomControlPanel bottom_control_panel_;
         LeftControlPanel left_control_panel_;
         SideControlPanel side_control_panel_;
+
+        juce::Rectangle<int> equalize_left_bound_, equalize_right_bound_;
+
+        double previous_time_stamp{0.0};
+
+        std::atomic<float> &equalize_show_ref_, &side_control_show_ref_;
 
         void run() override;
     };
