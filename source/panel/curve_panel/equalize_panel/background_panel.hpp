@@ -14,25 +14,22 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../helper/helper.hpp"
 #include "../../../gui/gui.hpp"
-#include "fft_analyzer_panel.hpp"
 
 namespace zlpanel {
-    class EqualizePanel final : public juce::Component {
+    class BackgroundPanel final : public juce::Component {
     public:
-        explicit EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit BackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
-        ~EqualizePanel() override;
+        ~BackgroundPanel() override;
 
         void paint(juce::Graphics &g) override;
 
-        void run(juce::Thread &thread);
+        void setMouseOver(bool is_mouse_on);
 
-        void resized() override;
-
-        void repaintCallBack(double time_stamp);
+        void repaintCallBack();
 
     private:
         zlgui::UIBase &base_;
-        FFTAnalyzerPanel fft_analyzer_panel_;
+        bool old_is_mouse_on_{false}, is_mouse_on_{false};
     };
 } // zlpanel

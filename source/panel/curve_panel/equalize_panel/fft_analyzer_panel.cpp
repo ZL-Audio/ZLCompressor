@@ -22,17 +22,13 @@ namespace zlpanel {
     FFTAnalyzerPanel::~FFTAnalyzerPanel() {
     }
 
-
     void FFTAnalyzerPanel::paint(juce::Graphics &g) {
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(base_.getTextColor());
-        g.strokePath(out_path_,
-                     juce::PathStrokeType(1.5f,
-                                          juce::PathStrokeType::curved,
-                                          juce::PathStrokeType::rounded));
+        g.setColour(base_.getTextColor().withAlpha(.5f));
+        g.fillPath(out_path_);
     }
 
     void FFTAnalyzerPanel::resized() {
@@ -52,12 +48,16 @@ namespace zlpanel {
         analyzer.createPathYs({std::span{ys_}}, bound.getHeight());
 
         next_out_path_.clear();
-        next_out_path_.startNewSubPath(xs_[0], ys_[0]);
-        for (size_t i = 1; i < xs_.size(); ++i) {
-            next_out_path_.lineTo(xs_[i], ys_[i]);
+        next_out_path_.startNewSubPath(bound.getBottomLeft());
+        for (size_t i = 0; i < xs_.size(); ++i) {
+            if (std::isfinite(xs_[0]) && std::isfinite(ys_[i])) {
+                next_out_path_.lineTo(xs_[i], ys_[i]);
+            }
         }
+        next_out_path_.lineTo(bound.getBottomRight());
+        next_out_path_.closeSubPath();
 
         std::lock_guard<std::mutex> lock{mutex_};
-        out_path_ = next_out_path_;
+        out_path_.swapWithPath(next_out_path_);
     }
 } // zlpanel

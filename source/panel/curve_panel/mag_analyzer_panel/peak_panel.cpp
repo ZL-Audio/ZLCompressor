@@ -104,9 +104,9 @@ namespace zlpanel {
             }
         } {
             std::lock_guard<std::mutex> lock{mutex_};
-            in_path_ = next_in_path_;
-            out_path_ = next_out_path_;
-            reduction_path_ = next_reduction_path_;
+            in_path_.swapWithPath(next_in_path_);
+            out_path_.swapWithPath(next_out_path_);
+            reduction_path_.swapWithPath(next_reduction_path_);
         }
     }
 

@@ -59,7 +59,7 @@ namespace zlpanel {
     void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {
         next_stamp_.store(time_stamp, std::memory_order::relaxed);
         peak_panel_.repaint();
-        if (time_stamp - rms_previous_stamp_ > .1) {
+        if (time_stamp - rms_previous_stamp_ > .1 && rms_panel_.isVisible()) {
             rms_panel_.repaint();
             rms_previous_stamp_ = time_stamp;
             to_run_rms_.store(true, std::memory_order::relaxed);

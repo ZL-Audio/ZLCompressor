@@ -11,15 +11,19 @@
 
 namespace zlpanel {
     EqualizePanel::EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : base_{base}, fft_analyzer_panel_(processor, base) {
+        : base_{base},
+          background_panel_(processor, base_),
+          fft_analyzer_panel_(processor, base) {
+        addAndMakeVisible(background_panel_);
+        background_panel_.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(fft_analyzer_panel_);
+        fft_analyzer_panel_.setInterceptsMouseClicks(false, false);
+
+        setInterceptsMouseClicks(true, true);
+        addMouseListener(this, false);
     }
 
     EqualizePanel::~EqualizePanel() {
-    }
-
-    void EqualizePanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor());
     }
 
     void EqualizePanel::run(juce::Thread &thread) {
@@ -29,11 +33,23 @@ namespace zlpanel {
 
     void EqualizePanel::resized() {
         const auto bound = getLocalBounds();
+        background_panel_.setBounds(bound);
         fft_analyzer_panel_.setBounds(bound);
     }
 
     void EqualizePanel::repaintCallBack(double time_stamp) {
         juce::ignoreUnused(time_stamp);
+        background_panel_.repaintCallBack();
         repaint();
+    }
+
+    void EqualizePanel::mouseEnter(const juce::MouseEvent &event) {
+        juce::ignoreUnused(event);
+        background_panel_.setMouseOver(true);
+    }
+
+    void EqualizePanel::mouseExit(const juce::MouseEvent &event) {
+        juce::ignoreUnused(event);
+        background_panel_.setMouseOver(false);
     }
 } // zlpanel

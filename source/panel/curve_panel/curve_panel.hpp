@@ -14,7 +14,7 @@
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "mag_analyzer_panel/mag_analyzer_panel.hpp"
-#include "equalizer_panel/equalize_panel.hpp"
+#include "equalize_panel/equalize_panel.hpp"
 #include "left_control_panel.hpp"
 #include "bottom_control_panel.hpp"
 #include "side_control_panel.hpp"
@@ -44,7 +44,7 @@ namespace zlpanel {
         LeftControlPanel left_control_panel_;
         SideControlPanel side_control_panel_;
 
-        juce::Rectangle<int> equalize_left_bound_, equalize_right_bound_;
+        juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
 
         double previous_time_stamp{0.0};
 
