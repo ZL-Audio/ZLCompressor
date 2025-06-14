@@ -89,13 +89,15 @@ namespace zldsp::oversample {
         void upsample(std::span<FloatType *> buffer, const size_t num_samples) {
             const auto symmetric_size = up_delay_lines_[0].size() >> 1;
             const auto symmetric_shift = up_delay_lines_[0].size() - 1;
+            const auto memmove_size = (up_delay_lines_[0].size() - 1) * sizeof(FloatType);
             for (size_t chan = 0; chan < buffer.size(); ++chan) {
                 auto &delay_line{up_delay_lines_[chan]};
                 auto chan_data{buffer[chan]};
                 auto os_data{os_buffers_[chan].data()};
                 for (size_t i = 0; i < num_samples; ++i) {
                     os_data[i << 1] = delay_line[up_coeff_center_pos_] * up_coeff_center_;
-                    std::rotate(delay_line.begin(), delay_line.begin() + 1, delay_line.end());
+                    std::memmove(delay_line.data(), delay_line.data() + 1, memmove_size);
+                    // std::rotate(delay_line.begin(), delay_line.begin() + 1, delay_line.end());
                     delay_line[delay_line.size() - 1] = chan_data[i];
                     if (UseSIMD) {
                         os_data[(i << 1) + 1] = kfr::dotproduct(up_coeff_, delay_line);
@@ -120,6 +122,7 @@ namespace zldsp::oversample {
         void downsample(std::span<FloatType *> buffer, const size_t num_samples) {
             const auto symmetric_size = down_delay_lines_[0].size() >> 1;
             const auto symmetric_shift = down_delay_lines_[0].size() - 1;
+            const auto memmove_size = (down_delay_lines_[0].size() - 1) * sizeof(FloatType);
             size_t center_pos{0};
             for (size_t chan = 0; chan < buffer.size(); ++chan) {
                 auto &delay_line{down_delay_lines_[chan]};
@@ -137,7 +140,8 @@ namespace zldsp::oversample {
                         }
                     }
                     chan_data[i] = output;
-                    std::rotate(delay_line.begin(), delay_line.begin() + 1, delay_line.end());
+                    std::memmove(delay_line.data(), delay_line.data() + 1, memmove_size);
+                    // std::rotate(delay_line.begin(), delay_line.begin() + 1, delay_line.end());
                     delay_line.back() = os_data[(i << 1) + 1];
                     center_delay_line[center_pos] = os_data[(i << 1)];
                     center_pos = center_pos == 0 ? center_delay_line.size() - 1 : center_pos - 1;
