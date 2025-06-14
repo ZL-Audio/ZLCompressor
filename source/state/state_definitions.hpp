@@ -401,9 +401,9 @@ namespace zlstate {
         addOneColour(layout, "shadow", 0, 0, 0, true, 1.f);
         addOneColour(layout, "glow", 70, 66, 62, true, 1.f);
 
-        addOneColour(layout, "pre", 255 - 8, 255 - 9, 255 - 11, true, 0.1f);
-        addOneColour(layout, "post", 255 - 8, 255 - 9, 255 - 11, true, 0.1f);
-        addOneColour(layout, "reduction", 252, 18, 197, true, 0.1f);
+        addOneColour(layout, "pre", 255 - 8, 255 - 9, 255 - 11, true, 0.25f);
+        addOneColour(layout, "post", 255 - 8, 255 - 9, 255 - 11, true, 1.f);
+        addOneColour(layout, "reduction", 252, 18, 197, true, 1.f);
         addOneColour(layout, "computer", 255, 165, 0, true, 1.f);
 
         layout.add(PColourMap1Idx::get(), PColourMap2Idx::get());

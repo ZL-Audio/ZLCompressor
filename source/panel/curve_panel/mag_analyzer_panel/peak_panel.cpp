@@ -10,8 +10,9 @@
 #include "peak_panel.hpp"
 
 namespace zlpanel {
-    PeakPanel::PeakPanel(PluginProcessor &processor)
-        : p_ref_(processor), mag_analyzer_ref_(processor.getCompressController().getMagAnalyzer()) {
+    PeakPanel::PeakPanel(PluginProcessor &processor, zlgui::UIBase &base)
+        : p_ref_(processor), base_(base),
+          mag_analyzer_ref_(processor.getCompressController().getMagAnalyzer()) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
         for (auto &path: {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
@@ -36,16 +37,16 @@ namespace zlpanel {
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(juce::Colours::white.withAlpha(.25f));
+        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPreColour));
         g.fillPath(in_path_);
-        g.setColour(juce::Colours::white.withAlpha(.9f));
+        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPostColour));
         g.strokePath(out_path_,
-                     juce::PathStrokeType(1.5f,
+                     juce::PathStrokeType(base_.getFontSize() * .2f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
-        g.setColour(juce::Colours::mediumvioletred);
+        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
         g.strokePath(reduction_path_,
-                     juce::PathStrokeType(2.5f,
+                     juce::PathStrokeType(base_.getFontSize() * .2f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }

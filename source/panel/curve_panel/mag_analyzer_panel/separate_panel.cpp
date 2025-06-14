@@ -10,7 +10,8 @@
 #include "separate_panel.hpp"
 
 namespace zlpanel {
-    SeparatePanel::SeparatePanel() {
+    SeparatePanel::SeparatePanel(zlgui::UIBase &base)
+        : base_(base) {
         setBufferedToImage(true);
     }
 
@@ -27,8 +28,8 @@ namespace zlpanel {
         gradient_.clearColours();
 
         gradient_.addColour(0.0,
-                           juce::Colours::black.withAlpha(1.f));
+                           base_.getBackgroundColor().withAlpha(1.f));
         gradient_.addColour(1.0,
-                           juce::Colours::black.withAlpha(0.f));
+                           base_.getBackgroundColor().withAlpha(0.f));
     }
 } // zlpanel

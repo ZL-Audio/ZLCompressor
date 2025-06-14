@@ -43,7 +43,9 @@ namespace zlpanel {
         }
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour));
         g.strokePath(comp_path_,
-                     juce::PathStrokeType(2.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+                     juce::PathStrokeType(base_.getFontSize() * .25f,
+                                          juce::PathStrokeType::curved,
+                                          juce::PathStrokeType::rounded));
     }
 
     void ComputerPanel::run() {

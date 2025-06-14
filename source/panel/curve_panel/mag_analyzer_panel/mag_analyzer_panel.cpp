@@ -12,8 +12,8 @@
 namespace zlpanel {
     MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base)
         : base_(base),
-          peak_panel_(p), rms_panel_(p),
-          computer_panel_(p, base_) {
+          peak_panel_(p, base), rms_panel_(p, base),
+          computer_panel_(p, base), separate_panel_(base) {
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);

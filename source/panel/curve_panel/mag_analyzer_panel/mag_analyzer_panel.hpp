@@ -33,6 +33,10 @@ namespace zlpanel {
             rms_panel_.setVisible(f);
         }
 
+        void setComputerPanelVisible(const bool f) {
+            computer_panel_.setVisible(f);
+        }
+
     private:
         zlgui::UIBase &base_;
         PeakPanel peak_panel_;

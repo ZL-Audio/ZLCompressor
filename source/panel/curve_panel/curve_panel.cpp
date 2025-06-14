@@ -104,6 +104,7 @@ namespace zlpanel {
             }
             if (equalize_panel_.isVisible() != equalize_show) {
                 equalize_panel_.setVisible(equalize_show);
+                mag_analyzer_panel_.setComputerPanelVisible(!equalize_show);
             }
             previous_time_stamp = time_stamp;
             mag_analyzer_panel_.setRMSPanelVisible(!side_control_show && !equalize_show);

@@ -12,13 +12,14 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../PluginProcessor.hpp"
+#include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
 
 namespace zlpanel {
     class PeakPanel final : public juce::Component,
                             private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit PeakPanel(PluginProcessor &processor);
+        explicit PeakPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
         ~PeakPanel() override;
 
@@ -30,6 +31,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
         static constexpr std::array kNAIDs{
             zlstate::PAnalyzerMagType::kID,
             zlstate::PAnalyzerMinDB::kID,

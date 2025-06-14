@@ -10,8 +10,9 @@
 #include "rms_panel.hpp"
 
 namespace zlpanel {
-    RMSPanel::RMSPanel(PluginProcessor &processor)
-        : avg_analyzer_ref_(processor.getCompressController().getMagAvgAnalyzer()),
+    RMSPanel::RMSPanel(PluginProcessor &processor, zlgui::UIBase &base)
+        : base_(base),
+          avg_analyzer_ref_(processor.getCompressController().getMagAvgAnalyzer()),
           min_db_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         avg_analyzer_ref_.setToReset();
         setBufferedToImage(true);
@@ -22,11 +23,11 @@ namespace zlpanel {
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(juce::Colours::white.withAlpha(.25f));
+        g.setColour(base_.getTextColor().withAlpha(.25f));
         g.fillPath(in_path_);
-        g.setColour(juce::Colours::white.withAlpha(.9f));
+        g.setColour(base_.getTextColor().withAlpha(.9f));
         g.strokePath(out_path_,
-                     juce::PathStrokeType(1.5f,
+                     juce::PathStrokeType(base_.getFontSize() * .2f,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }

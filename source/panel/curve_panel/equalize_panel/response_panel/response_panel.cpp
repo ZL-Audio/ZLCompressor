@@ -7,23 +7,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#include "../../../gui/gui.hpp"
+#include "response_panel.hpp"
 
 namespace zlpanel {
-    class SeparatePanel : public juce::Component {
-    public:
-        explicit SeparatePanel(zlgui::UIBase &base);
-
-        void paint(juce::Graphics &g) override;
-
-        void resized() override;
-
-    private:
-        zlgui::UIBase &base_;
-        juce::ColourGradient gradient_;
-    };
 } // zlpanel

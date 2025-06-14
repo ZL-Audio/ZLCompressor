@@ -11,19 +11,11 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "../../../gui/gui.hpp"
+#include "../../../../PluginProcessor.hpp"
+#include "../../../../gui/gui.hpp"
+#include "../../../helper/helper.hpp"
 
 namespace zlpanel {
-    class SeparatePanel : public juce::Component {
-    public:
-        explicit SeparatePanel(zlgui::UIBase &base);
-
-        void paint(juce::Graphics &g) override;
-
-        void resized() override;
-
-    private:
-        zlgui::UIBase &base_;
-        juce::ColourGradient gradient_;
+    class SumPanel {
     };
 } // zlpanel
