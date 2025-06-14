@@ -13,6 +13,11 @@
 #include "sum_panel.hpp"
 
 namespace zlpanel {
-    class ResponsePanel {
+    class ResponsePanel final : public juce::Component {
+    public:
+        ResponsePanel();
+
+    private:
+        std::array<zldsp::filter::Ideal<double, 16>, zlp::kBandNum> base_filters_;
     };
 } // zlpanel
