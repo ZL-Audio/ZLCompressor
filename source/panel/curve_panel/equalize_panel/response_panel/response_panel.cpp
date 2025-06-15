@@ -10,7 +10,8 @@
 #include "response_panel.hpp"
 
 namespace zlpanel {
-    ResponsePanel::ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base) {
+    ResponsePanel::ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base)
+        : sum_panel_(processor, base) {
         for (auto &f: filters_) {
             f.prepare(48000.0);
         }
@@ -19,6 +20,7 @@ namespace zlpanel {
             dummy_component_.addChildComponent(single_panels_[band].get());
         }
         addAndMakeVisible(dummy_component_);
+        addAndMakeVisible(sum_panel_);
     }
 
     ResponsePanel::~ResponsePanel() {
@@ -34,15 +36,17 @@ namespace zlpanel {
         for (auto &panel: single_panels_) {
             panel->setBounds(bound);
         }
+        sum_panel_.setBounds(bound);
     }
 
-    void ResponsePanel::run() {
+    void ResponsePanel::run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
+                            bool to_update_sum) {
         const auto new_bound = bound_.load();
-        bool force_update = false;
+        bool to_update_single = false;
         if (std::abs(new_bound.getWidth() - c_bound_.getWidth()) > 1e-3f
             || std::abs(new_bound.getHeight() - c_bound_.getHeight()) > 1e-3f) {
             c_bound_ = new_bound;
-            force_update = true;
+            to_update_single = true;
 
             float x0 = c_bound_.getX();
             const float delta_x = c_bound_.getWidth() / static_cast<float>(xs_.size() - 1);
@@ -51,11 +55,15 @@ namespace zlpanel {
                 x0 += delta_x;
             }
         }
-        bool to_recalculate_sum_{force_update};
+        to_update_sum = to_update_sum || to_update_single;
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             const auto f = single_panels_[band]->run(std::span(xs_), std::span(yss_[band]),
-                                                     c_bound_, force_update);
-            to_recalculate_sum_ = to_recalculate_sum_ || f;
+                                                     c_bound_, to_update_single);
+            to_update_sum = to_update_sum || f;
+        }
+
+        if (to_update_sum) {
+            sum_panel_.run(xs_, yss_, filter_status, c_bound_);
         }
     }
 

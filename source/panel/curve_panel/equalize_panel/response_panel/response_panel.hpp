@@ -22,9 +22,14 @@ namespace zlpanel {
 
         void resized() override;
 
-        void run();
+        void run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
+                 bool to_update_sum);
 
         void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
+
+        juce::Point<float> getBandButtonPos(const size_t band) const {
+            return single_panels_[band]->getButtonPos();
+        }
 
         // void repaintCallBack();
 
@@ -32,6 +37,8 @@ namespace zlpanel {
         std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
         juce::Component dummy_component_;
         std::array<std::unique_ptr<SinglePanel>, zlp::kBandNum> single_panels_;
+        SumPanel sum_panel_;
+
         std::array<float, kWsFloat.size()> xs_{};
         std::array<std::array<float, kWsFloat.size()>, 8> yss_{};
 

@@ -51,12 +51,11 @@ namespace zlpanel {
             next_out_path_.lineTo(out_xs[i], ys_[i]);
         }
         next_in_path_.lineTo(0.f, current_bound.getHeight());
-        next_in_path_.closeSubPath(); {
-            // update the paths with lock
-            std::lock_guard<std::mutex> lock{mutex_};
-            in_path_ = next_in_path_;
-            out_path_ = next_out_path_;
-        }
+        next_in_path_.closeSubPath();
+
+        std::lock_guard<std::mutex> lock{mutex_};
+        in_path_ = next_in_path_;
+        out_path_ = next_out_path_;
     }
 
     void RMSPanel::resized() {

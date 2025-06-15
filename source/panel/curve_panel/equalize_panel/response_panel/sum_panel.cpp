@@ -10,4 +10,58 @@
 #include "sum_panel.hpp"
 
 namespace zlpanel {
+    SumPanel::SumPanel(PluginProcessor &processor, zlgui::UIBase &base)
+        : p_ref_(processor), base_{base} {
+        path_.preallocateSpace(kWsFloat.size() * 3 + 12);
+        next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
+    }
+
+    SumPanel::~SumPanel() {
+    }
+
+    void SumPanel::paint(juce::Graphics &g) {
+        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        if (!lock.owns_lock()) {
+            return;
+        }
+        g.setColour(base_.getColorMap2(0));
+        g.strokePath(path_, juce::PathStrokeType(base_.getFontSize() * .2f,
+                                                 juce::PathStrokeType::curved,
+                                                 juce::PathStrokeType::rounded));
+    }
+
+    bool SumPanel::run(std::array<float, kWsFloat.size()> &xs,
+                       std::array<std::array<float, kWsFloat.size()>, 8> &yss,
+                       std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
+                       const juce::Rectangle<float> &bound) {
+        bool is_first = true;
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            if (filter_status[band] == zlp::EqualizeController::FilterStatus::kOn) {
+                auto ys_vector = kfr::make_univector<float>(yss[band].data(), yss[band].size());
+                if (is_first) {
+                    ys = ys_vector;
+                    is_first = false;
+                } else {
+                    ys = ys + ys_vector;
+                }
+            }
+        }
+
+        if (is_first) {
+            std::fill(ys.begin(), ys.end(), bound.getCentreY());
+        }
+
+        next_path_.clear();
+        PathMinimizer minimizer(next_path_);
+        minimizer.startNewSubPath(xs[0], ys[0]);
+        for (size_t i = 1; i < std::min(xs.size(), ys.size()); ++i) {
+            minimizer.lineTo(xs[i], ys[i]);
+        }
+        minimizer.finish();
+
+        std::lock_guard<std::mutex> lock{mutex_};
+        path_.swapWithPath(next_path_);
+
+        return true;
+    }
 } // zlpanel

@@ -39,8 +39,8 @@ namespace zlpanel {
         double previous_time_stamp_{0.0};
 
         std::array<std::atomic<zlp::EqualizeController::FilterStatus>, zlp::kBandNum> filter_status_{};
-        std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status_{};
         std::atomic<bool> to_update_filter_status_{false};
+        std::atomic<bool> to_update_visibility_{false};
 
         void mouseEnter(const juce::MouseEvent &event) override;
 

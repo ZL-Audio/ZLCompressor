@@ -14,8 +14,29 @@
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
+#include "static_freq_array.hpp"
 
 namespace zlpanel {
-    class SumPanel {
+    class SumPanel final : public juce::Component {
+    public:
+        explicit SumPanel(PluginProcessor &processor, zlgui::UIBase &base);
+
+        ~SumPanel() override;
+
+        void paint(juce::Graphics &g) override;
+
+        bool run(std::array<float, kWsFloat.size()> &xs,
+                 std::array<std::array<float, kWsFloat.size()>, 8> &yss,
+                 std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
+                 const juce::Rectangle<float> &bound);
+
+    private:
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
+
+        kfr::univector<float, kWsFloat.size()> ys{};
+
+        juce::Path path_, next_path_;
+        std::mutex mutex_;
     };
 } // zlpanel

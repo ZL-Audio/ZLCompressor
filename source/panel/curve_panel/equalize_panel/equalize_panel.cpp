@@ -15,6 +15,8 @@ namespace zlpanel {
           background_panel_(processor, base),
           fft_analyzer_panel_(processor, base),
           response_panel_(processor, base) {
+        juce::ignoreUnused(base_);
+
         addAndMakeVisible(background_panel_);
         background_panel_.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(fft_analyzer_panel_);
@@ -40,8 +42,23 @@ namespace zlpanel {
 
     void EqualizePanel::run(juce::Thread &thread) {
         juce::ignoreUnused(thread);
+        std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
+        bool to_update_sum{false};
+        if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
+            for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
+            }
+            to_update_sum = true;
+            to_update_visibility_.store(true, std::memory_order::release);
+        }
         fft_analyzer_panel_.run();
-        response_panel_.run();
+        if (thread.threadShouldExit()) {
+            return;
+        }
+        response_panel_.run(c_filter_status, to_update_sum);
+        if (thread.threadShouldExit()) {
+            return;
+        }
     }
 
     void EqualizePanel::resized() {
@@ -55,11 +72,12 @@ namespace zlpanel {
         juce::ignoreUnused(time_stamp);
         if (time_stamp - previous_time_stamp_ > 0.1) {
             background_panel_.setMouseOver(isMouseOver(true));
-            if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
+            if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
+                std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
                 for (size_t band = 0; band < zlp::kBandNum; ++band) {
-                    c_filter_status_[band] = filter_status_[band].load(std::memory_order::relaxed);
+                    c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
                 }
-                response_panel_.setBandStatus(c_filter_status_);
+                response_panel_.setBandStatus(c_filter_status);
             }
             previous_time_stamp_ = time_stamp;
         }
