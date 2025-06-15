@@ -24,18 +24,18 @@ namespace zlgui::attachment {
                            const juce::NotificationType notification_type =
                                    juce::NotificationType::sendNotificationSync)
             : box_(box), notification_type_(notification_type),
-              apvts_(apvts), parameter_ID_(parameter_ID),
-              parameter_ref_(*apvts_.getParameter(parameter_ID_)),
+              apvts_(apvts), parameter_ref_(*apvts_.getParameter(parameter_ID)),
               updater_ref_(updater) {
             // add parameter listener
-            if (UpdateFromAPVTS) {
-                apvts_.addParameterListener(parameter_ID_, this);
-                parameterChanged(parameter_ID_,
-                                 apvts_.getRawParameterValue(parameter_ID_)->load(std::memory_order::relaxed));
+            if constexpr (UpdateFromAPVTS) {
+                apvts_.addParameterListener(parameter_ref_.getParameterID(), this);
+            }
+            parameterChanged(parameter_ref_.getParameterID(),
+                                 apvts_.getRawParameterValue(
+                                     parameter_ref_.getParameterID())->load(std::memory_order::relaxed));
+            if constexpr (UpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
             } else {
-                parameterChanged(parameter_ID_,
-                                 apvts_.getRawParameterValue(parameter_ID_)->load(std::memory_order::relaxed));
                 updateComponent();
             }
             // add combobox listener
@@ -43,10 +43,11 @@ namespace zlgui::attachment {
         }
 
         ~ComboBoxAttachment() override {
-            if (UpdateFromAPVTS) {
+            if constexpr (UpdateFromAPVTS) {
                 updater_ref_.removeAttachment(*this);
-                apvts_.removeParameterListener(parameter_ID_, this);
+                apvts_.removeParameterListener(parameter_ref_.getParameterID(), this);
             }
+            box_.removeListener(this);
         }
 
         void updateComponent() override {
@@ -60,7 +61,6 @@ namespace zlgui::attachment {
         juce::ComboBox &box_;
         juce::NotificationType notification_type_{juce::NotificationType::sendNotificationSync};
         juce::AudioProcessorValueTreeState &apvts_;
-        juce::String parameter_ID_;
         juce::RangedAudioParameter &parameter_ref_;
         ComponentUpdater &updater_ref_;
         std::atomic<int> atomic_index_{0};

@@ -23,6 +23,8 @@ namespace zlpanel {
             p_ref_.parameters_.addParameterListener(para_ID, this);
             parameterChanged(para_ID, p_ref_.parameters_.getRawParameterValue(para_ID)->load());
         }
+
+        setInterceptsMouseClicks(false, false);
     }
 
     SinglePanel::~SinglePanel() {

@@ -21,6 +21,8 @@ namespace zlpanel {
         }
         addAndMakeVisible(dummy_component_);
         addAndMakeVisible(sum_panel_);
+
+        setInterceptsMouseClicks(false, false);
     }
 
     ResponsePanel::~ResponsePanel() {

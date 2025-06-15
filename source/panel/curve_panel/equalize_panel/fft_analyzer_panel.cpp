@@ -17,6 +17,8 @@ namespace zlpanel {
         for (auto &path: {&out_path_, &next_out_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
+
+        setInterceptsMouseClicks(false, false);
     }
 
     FFTAnalyzerPanel::~FFTAnalyzerPanel() {

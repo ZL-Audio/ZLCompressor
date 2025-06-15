@@ -25,6 +25,8 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
+        constexpr static int kButtonNum = 5;
+
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 

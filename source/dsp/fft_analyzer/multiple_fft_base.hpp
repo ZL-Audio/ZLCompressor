@@ -335,7 +335,9 @@ namespace zldsp::analyzer {
             abstract_fifo_.setCapacity(static_cast<int>(temp_size));
             for (size_t i = 0; i < FFTNum; ++i) {
                 sample_fifos_[i].resize(temp_size);
+                std::fill(sample_fifos_[i].begin(), sample_fifos_[i].end(), 0.f);
                 circular_buffers_[i].resize(temp_size);
+                std::fill(circular_buffers_[i].begin(), circular_buffers_[i].end(), 0.f);
             }
         }
 

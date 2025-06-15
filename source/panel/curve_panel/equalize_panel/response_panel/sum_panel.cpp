@@ -12,8 +12,11 @@
 namespace zlpanel {
     SumPanel::SumPanel(PluginProcessor &processor, zlgui::UIBase &base)
         : p_ref_(processor), base_{base} {
+        juce::ignoreUnused(p_ref_);
         path_.preallocateSpace(kWsFloat.size() * 3 + 12);
         next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
+
+        setInterceptsMouseClicks(false, false);
     }
 
     SumPanel::~SumPanel() {

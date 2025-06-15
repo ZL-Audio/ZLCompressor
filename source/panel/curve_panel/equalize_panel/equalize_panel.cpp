@@ -18,11 +18,8 @@ namespace zlpanel {
         juce::ignoreUnused(base_);
 
         addAndMakeVisible(background_panel_);
-        background_panel_.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(fft_analyzer_panel_);
-        fft_analyzer_panel_.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(response_panel_);
-        response_panel_.setInterceptsMouseClicks(false, false);
 
         setInterceptsMouseClicks(true, true);
 

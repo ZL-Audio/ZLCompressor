@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "component_updater.hpp"
 
 namespace zlgui::attachment {
@@ -23,8 +25,7 @@ namespace zlgui::attachment {
                          ComponentUpdater &updater,
                          const juce::NotificationType notification_type = juce::NotificationType::sendNotificationSync)
             : slider_(slider), notification_type_(notification_type),
-              apvts_(apvts), parameter_ID_(parameter_ID),
-              parameter_ref_(*apvts_.getParameter(parameter_ID_)),
+              apvts_(apvts), parameter_ref_(*apvts_.getParameter(parameter_ID)),
               updater_ref_(updater) {
             // setup slider values
             slider_.valueFromTextFunction = [this](const juce::String &text) {
@@ -60,20 +61,24 @@ namespace zlgui::attachment {
             // add slider listener
             slider_.addListener(this);
             // add parameter listener
-            if (UpdateFromAPVTS) {
-                apvts_.addParameterListener(parameter_ID_, this);
-                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
+            if constexpr (UpdateFromAPVTS) {
+                apvts_.addParameterListener(parameter_ref_.getParameterID(), this);
+            }
+            parameterChanged(parameter_ref_.getParameterID(),
+                                 apvts_.getRawParameterValue(
+                                     parameter_ref_.getParameterID())->load(std::memory_order::relaxed));
+            if constexpr (UpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
             } else {
-                parameterChanged(parameter_ID_, apvts_.getRawParameterValue(parameter_ID_)->load());
                 updateComponent();
             }
+            slider_.removeListener(this);
         }
 
         ~SliderAttachment() override {
-            if (UpdateFromAPVTS) {
+            if constexpr (UpdateFromAPVTS) {
                 updater_ref_.removeAttachment(*this);
-                apvts_.removeParameterListener(parameter_ID_, this);
+                apvts_.removeParameterListener(parameter_ref_.getParameterID(), this);
             }
         }
 
@@ -88,7 +93,6 @@ namespace zlgui::attachment {
         juce::Slider &slider_;
         juce::NotificationType notification_type_{juce::NotificationType::sendNotificationSync};
         juce::AudioProcessorValueTreeState &apvts_;
-        juce::String parameter_ID_;
         juce::RangedAudioParameter &parameter_ref_;
         ComponentUpdater &updater_ref_;
         std::atomic<float> atomic_value_{0.f};

@@ -37,9 +37,10 @@ namespace zlpanel {
     void LeftControlPanel::resized() {
         auto bound = getLocalBounds();
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        const auto height = (bound.getHeight() - 5 * button_height) / 5;
+        const auto height = (bound.getHeight() - kButtonNum * button_height) / kButtonNum;
         bound.removeFromBottom(height / 2);
         side_control_show_button_.setBounds(bound.removeFromBottom(button_height));
+        bound.removeFromBottom(height);
         equalize_show_button_.setBounds(bound.removeFromBottom(button_height));
     }
 

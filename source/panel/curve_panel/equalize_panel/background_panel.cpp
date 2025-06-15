@@ -13,6 +13,8 @@ namespace zlpanel {
     BackgroundPanel::BackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
         : base_(base) {
         setBufferedToImage(true);
+
+        setInterceptsMouseClicks(true, true);
     }
 
     BackgroundPanel::~BackgroundPanel() {
