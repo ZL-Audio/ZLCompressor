@@ -15,7 +15,7 @@ namespace zlpanel {
     // t1, t2 = np.log(10 / 48000), np.log(22000 / 48000)
     // t = np.linspace(t1, t2, 200)
     // np.pi * 2 * np.exp(t)
-    static constexpr std::array ws = {
+    static constexpr std::array kWsDouble = {
         1.30899694e-03, 1.36061334e-03, 1.41426508e-03, 1.47003242e-03,
         1.52799878e-03, 1.58825086e-03, 1.65087881e-03, 1.71597631e-03,
         1.78364073e-03, 1.85397330e-03, 1.92707923e-03, 2.00306786e-03,
@@ -67,4 +67,15 @@ namespace zlpanel {
         2.19679057e+00, 2.28341447e+00, 2.37345413e+00, 2.46704423e+00,
         2.56432479e+00, 2.66544131e+00, 2.77054506e+00, 2.87979327e+00
     };
+
+    template<typename FloatType, std::size_t N>
+    constexpr std::array<FloatType, N> convert(const std::array<double, N> &arr) {
+        std::array<FloatType, N> float_arr{};
+        for (std::size_t i = 0; i < N; ++i) {
+            float_arr[i] = static_cast<FloatType>(arr[i]);
+        }
+        return float_arr;
+    }
+
+    static constexpr std::array kWsFloat = convert<float, kWsDouble.size()>(kWsDouble);
 }

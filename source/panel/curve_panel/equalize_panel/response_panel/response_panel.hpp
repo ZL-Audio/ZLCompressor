@@ -11,13 +11,31 @@
 
 #include "single_panel.hpp"
 #include "sum_panel.hpp"
+#include "static_freq_array.hpp"
 
 namespace zlpanel {
     class ResponsePanel final : public juce::Component {
     public:
-        ResponsePanel();
+        explicit ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base);
+
+        ~ResponsePanel() override;
+
+        void resized() override;
+
+        void run();
+
+        void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
+
+        // void repaintCallBack();
 
     private:
-        std::array<zldsp::filter::Ideal<double, 16>, zlp::kBandNum> base_filters_;
+        std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
+        juce::Component dummy_component_;
+        std::array<std::unique_ptr<SinglePanel>, zlp::kBandNum> single_panels_;
+        std::array<float, kWsFloat.size()> xs_{};
+        std::array<std::array<float, kWsFloat.size()>, 8> yss_{};
+
+        AtomicBound<float> bound_;
+        juce::Rectangle<float> c_bound_;
     };
 } // zlpanel

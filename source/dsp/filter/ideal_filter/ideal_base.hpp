@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <span>
 #include <array>
 #include <complex>
 
@@ -18,7 +19,7 @@ namespace zldsp::filter {
     public:
         static void updateMagnitude(
             const std::array<double, 6> &coeff,
-            const std::vector<SampleType> &ws, std::vector<SampleType> &gains) {
+            const std::span<const SampleType> ws, std::span<SampleType> gains) {
             for (size_t idx = 0; idx < ws.size(); ++idx) {
                 gains[idx] *= getMagnitude(coeff, ws[idx]);
             }
@@ -26,7 +27,7 @@ namespace zldsp::filter {
 
         static void updateResponse(
             const std::array<double, 6> &coeff,
-            const std::vector<std::complex<SampleType> > &wis, std::vector<std::complex<SampleType> > &response) {
+            const std::span<const std::complex<SampleType> > wis, std::span<std::complex<SampleType> > response) {
             for (size_t idx = 0; idx < wis.size(); ++idx) {
                 response[idx] *= getResponse(coeff, wis[idx]);
             }
@@ -38,7 +39,7 @@ namespace zldsp::filter {
             const auto denominator = coeff[1] * coeff[1] * w_2 + t1 * t1;
             const auto t2 = coeff[5] - coeff[3] * w_2;
             const auto numerator = coeff[4] * coeff[4] * w_2 + t2 * t2;
-            return std::sqrt(numerator / denominator);
+            return static_cast<SampleType>(std::sqrt(numerator / denominator));
         }
 
         static std::complex<SampleType> getResponse(const std::array<double, 6> &coeff,

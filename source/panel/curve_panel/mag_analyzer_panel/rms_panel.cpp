@@ -37,7 +37,7 @@ namespace zlpanel {
         const auto current_min_db = zlstate::PAnalyzerMinDB::getMinDBFromIndex(
             min_db_ref_.load(std::memory_order::relaxed));
         const auto end_idx = static_cast<size_t>(-current_min_db);
-        const auto current_bound = atomic_bound_.load(std::memory_order::relaxed);
+        const auto current_bound = atomic_bound_.load();
         avg_analyzer_ref_.run();
         avg_analyzer_ref_.createPath({in_xs_, out_xs}, ys_, end_idx,
                                      current_bound.getWidth(), current_bound.getHeight());
@@ -61,7 +61,7 @@ namespace zlpanel {
 
     void RMSPanel::resized() {
         const auto bound = getLocalBounds().toFloat();
-        atomic_bound_.store(bound.withWidth(bound.getWidth() - 20.f), std::memory_order::relaxed);
+        atomic_bound_.store(bound.withWidth(bound.getWidth() - 20.f));
     }
 
     void RMSPanel::mouseDoubleClick(const juce::MouseEvent &event) {

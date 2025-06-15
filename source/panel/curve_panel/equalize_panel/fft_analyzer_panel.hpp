@@ -36,8 +36,7 @@ namespace zlpanel {
         float width_{-.1f};
 
         std::array<float, zlp::EqualizeController::kAnalyzerPointNum> xs_{}, ys_{};
-        juce::Path out_path_;
-        juce::Path next_out_path_;
+        juce::Path out_path_, next_out_path_;
         std::mutex mutex_;
     };
 } // zlpanel

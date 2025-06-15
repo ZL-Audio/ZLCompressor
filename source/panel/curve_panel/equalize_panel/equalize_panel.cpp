@@ -11,35 +11,56 @@
 
 namespace zlpanel {
     EqualizePanel::EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : base_{base},
-          background_panel_(processor, base_),
-          fft_analyzer_panel_(processor, base) {
+        : p_ref_(processor), base_{base},
+          background_panel_(processor, base),
+          fft_analyzer_panel_(processor, base),
+          response_panel_(processor, base) {
         addAndMakeVisible(background_panel_);
         background_panel_.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(fft_analyzer_panel_);
         fft_analyzer_panel_.setInterceptsMouseClicks(false, false);
+        addAndMakeVisible(response_panel_);
+        response_panel_.setInterceptsMouseClicks(false, false);
 
         setInterceptsMouseClicks(true, true);
+
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            auto para_ID = zlp::PFilterStatus::kID + std::to_string(band);
+            p_ref_.parameters_.addParameterListener(para_ID, this);
+            parameterChanged(para_ID, p_ref_.parameters_.getRawParameterValue(para_ID)->load());
+        }
     }
 
     EqualizePanel::~EqualizePanel() {
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            auto para_ID = zlp::PFilterStatus::kID + std::to_string(band);
+            p_ref_.parameters_.removeParameterListener(para_ID, this);
+        }
     }
 
     void EqualizePanel::run(juce::Thread &thread) {
         juce::ignoreUnused(thread);
         fft_analyzer_panel_.run();
+        response_panel_.run();
     }
 
     void EqualizePanel::resized() {
         const auto bound = getLocalBounds();
         background_panel_.setBounds(bound);
         fft_analyzer_panel_.setBounds(bound);
+        response_panel_.setBounds(bound);
     }
 
     void EqualizePanel::repaintCallBack(double time_stamp) {
         juce::ignoreUnused(time_stamp);
         if (time_stamp - previous_time_stamp_ > 0.1) {
             background_panel_.setMouseOver(isMouseOver(true));
+            if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
+                for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                    c_filter_status_[band] = filter_status_[band].load(std::memory_order::relaxed);
+                }
+                response_panel_.setBandStatus(c_filter_status_);
+            }
             previous_time_stamp_ = time_stamp;
         }
         background_panel_.repaintCallBack();
@@ -48,5 +69,12 @@ namespace zlpanel {
 
     void EqualizePanel::mouseEnter(const juce::MouseEvent &) {
         background_panel_.setMouseOver(true);
+    }
+
+    void EqualizePanel::parameterChanged(const juce::String &parameter_ID, float new_value) {
+        const auto band = static_cast<size_t>(parameter_ID.getTrailingIntValue());
+        filter_status_[band].store(static_cast<zlp::EqualizeController::FilterStatus>(
+            std::round(new_value)), std::memory_order::relaxed);
+        to_update_filter_status_.store(true, std::memory_order::release);
     }
 } // zlpanel

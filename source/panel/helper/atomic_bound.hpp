@@ -18,14 +18,14 @@ namespace zlpanel {
         AtomicBound() = default;
 
         void store(const juce::Rectangle<FloatType> &bound,
-                   const std::memory_order order = std::memory_order::seq_cst) {
+                   const std::memory_order order = std::memory_order::relaxed) {
             x_.store(bound.getX(), order);
             y_.store(bound.getY(), order);
             width_.store(bound.getWidth(), order);
             height_.store(bound.getHeight(), order);
         }
 
-        juce::Rectangle<FloatType> load(const std::memory_order order = std::memory_order::seq_cst) const {
+        juce::Rectangle<FloatType> load(const std::memory_order order = std::memory_order::relaxed) const {
             return {x_.load(order), y_.load(order), width_.load(order), height_.load(order)};
         }
 
@@ -46,13 +46,13 @@ namespace zlpanel {
     public:
         AtomicPoint() = default;
 
-        void store(const juce::Point<FloatType> &p) {
-            x_.store(p.getX());
-            y_.store(p.getY());
+        void store(const juce::Point<FloatType> &p, const std::memory_order order = std::memory_order::relaxed) {
+            x_.store(p.getX(), order);
+            y_.store(p.getY(), order);
         }
 
-        juce::Point<FloatType> load() const {
-            return {x_.load(), y_.load()};
+        juce::Point<FloatType> load(const std::memory_order order = std::memory_order::relaxed) const {
+            return {x_.load(order), y_.load(order)};
         }
 
         FloatType getX() const { return x_.load(); }

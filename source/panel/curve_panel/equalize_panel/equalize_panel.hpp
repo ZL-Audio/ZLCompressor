@@ -13,9 +13,11 @@
 
 #include "background_panel.hpp"
 #include "fft_analyzer_panel.hpp"
+#include "response_panel/response_panel.hpp"
 
 namespace zlpanel {
-    class EqualizePanel final : public juce::Component {
+    class EqualizePanel final : public juce::Component,
+    private juce::AudioProcessorValueTreeState::Listener {
     public:
         explicit EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base);
 
@@ -28,12 +30,20 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
+        PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         BackgroundPanel background_panel_;
         FFTAnalyzerPanel fft_analyzer_panel_;
+        ResponsePanel response_panel_;
 
         double previous_time_stamp_{0.0};
 
+        std::array<std::atomic<zlp::EqualizeController::FilterStatus>, zlp::kBandNum> filter_status_{};
+        std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status_{};
+        std::atomic<bool> to_update_filter_status_{false};
+
         void mouseEnter(const juce::MouseEvent &event) override;
+
+        void parameterChanged(const juce::String &parameter_ID, float new_value) override;
     };
 } // zlpanel

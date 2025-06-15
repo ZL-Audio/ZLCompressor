@@ -32,15 +32,16 @@ namespace zlpanel {
     }
 
     void FFTAnalyzerPanel::resized() {
-        auto bound = getLocalBounds().toFloat();
-        atomic_bound_.store(bound, std::memory_order::relaxed);
+        const auto bound = getLocalBounds().toFloat();
+        atomic_bound_.store(bound);
     }
 
     void FFTAnalyzerPanel::run() {
         auto &analyzer{p_ref_.getEqualizeController().getFFTAnalyzer()};
         analyzer.run();
 
-        const auto bound = atomic_bound_.load(std::memory_order::relaxed);
+        const auto bound = atomic_bound_.load();
+        // re-calculate xs if width changes
         if (std::abs(bound.getWidth() - width_) > 1e-3f) {
             width_ = bound.getWidth();
             analyzer.createPathXs(xs_, width_);
