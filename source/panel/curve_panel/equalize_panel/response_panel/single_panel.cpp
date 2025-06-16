@@ -53,6 +53,7 @@ namespace zlpanel {
             return false;
         }
         const auto center_freq = filter_.getFreq();
+        const auto center_gain = filter_.getGain();
         const auto filter_type = filter_.getFilterType();
         filter_.updateParas();
         filter_.updateMagnitude(kWsFloat, ys);
@@ -80,9 +81,12 @@ namespace zlpanel {
             case zldsp::filter::FilterType::kPeak:
             case zldsp::filter::FilterType::kBandShelf:
             case zldsp::filter::FilterType::kLowShelf:
-            case zldsp::filter::FilterType::kHighShelf:
-            case zldsp::filter::FilterType::kTiltShelf: {
+            case zldsp::filter::FilterType::kHighShelf: {
                 button_y = button_curve_y;
+                break;
+            }
+            case zldsp::filter::FilterType::kTiltShelf: {
+                button_y = center_gain * scale * .5f + bias;
                 break;
             }
             case zldsp::filter::FilterType::kLowPass:
