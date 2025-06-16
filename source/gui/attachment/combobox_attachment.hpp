@@ -26,6 +26,8 @@ namespace zlgui::attachment {
             : box_(box), notification_type_(notification_type),
               apvts_(apvts), parameter_ref_(*apvts_.getParameter(parameter_ID)),
               updater_ref_(updater) {
+            // add combobox listener
+            box_.addListener(this);
             // add parameter listener
             if constexpr (UpdateFromAPVTS) {
                 apvts_.addParameterListener(parameter_ref_.getParameterID(), this);
@@ -38,8 +40,6 @@ namespace zlgui::attachment {
             } else {
                 updateComponent();
             }
-            // add combobox listener
-            box_.addListener(this);
         }
 
         ~ComboBoxAttachment() override {

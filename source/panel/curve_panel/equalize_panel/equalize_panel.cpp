@@ -40,11 +40,11 @@ namespace zlpanel {
     void EqualizePanel::run(juce::Thread &thread) {
         juce::ignoreUnused(thread);
         std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
+        }
         bool to_update_sum{false};
         if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
-            for (size_t band = 0; band < zlp::kBandNum; ++band) {
-                c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
-            }
             to_update_sum = true;
             to_update_visibility_.store(true, std::memory_order::release);
         }

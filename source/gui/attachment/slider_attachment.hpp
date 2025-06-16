@@ -72,7 +72,6 @@ namespace zlgui::attachment {
             } else {
                 updateComponent();
             }
-            slider_.removeListener(this);
         }
 
         ~SliderAttachment() override {
@@ -80,6 +79,7 @@ namespace zlgui::attachment {
                 updater_ref_.removeAttachment(*this);
                 apvts_.removeParameterListener(parameter_ref_.getParameterID(), this);
             }
+            slider_.removeListener(this);
         }
 
         void updateComponent() override {

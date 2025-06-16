@@ -136,23 +136,22 @@ namespace zldsp::analyzer {
             } {
                 const int num_ready = abstract_fifo_.getNumReady();
                 const auto range = abstract_fifo_.prepareToRead(num_ready);
-                const size_t num_replace = circular_buffers_[0].size() - static_cast<size_t>(num_ready);
+                const auto num_replace = static_cast<int>(circular_buffers_[0].size()) - num_ready;
                 for (const auto &i: is_on_vector) {
                     auto &circular_buffer{circular_buffers_[i]};
                     auto &sample_fifo{sample_fifos_[i]};
-                    size_t j = 0;
-                    for (; j < num_replace; ++j) {
-                        circular_buffer[j] = circular_buffer[j + static_cast<size_t>(num_ready)];
+                    std::memmove(circular_buffer.data(),
+                                 circular_buffer.data() + static_cast<std::ptrdiff_t>(num_ready),
+                                 sizeof(float) * static_cast<size_t>(num_replace));
+                    if (range.block_size1 > 0) {
+                        std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index1),
+                                  sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index1 + range.block_size1),
+                                  circular_buffer.begin() + static_cast<std::ptrdiff_t>(num_replace));
                     }
-                    int shift = 0;
-                    for (; j < num_replace + static_cast<size_t>(range.block_size1); ++j) {
-                        circular_buffer[j] = sample_fifo[static_cast<size_t>(shift + range.start_index1)];
-                        shift += 1;
-                    }
-                    shift = 0;
-                    for (; j < num_replace + static_cast<size_t>(range.block_size1 + range.block_size2); ++j) {
-                        circular_buffer[j] = sample_fifo[static_cast<size_t>(shift + range.start_index2)];
-                        shift += 1;
+                    if (range.block_size2 > 0) {
+                        std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index2),
+                                  sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index2 + range.block_size2),
+                                  circular_buffer.begin() + static_cast<std::ptrdiff_t>(num_replace + range.block_size1));
                     }
                 }
                 abstract_fifo_.finishRead(num_ready);
