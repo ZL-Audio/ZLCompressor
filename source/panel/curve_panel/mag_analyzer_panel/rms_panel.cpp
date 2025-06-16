@@ -32,13 +32,13 @@ namespace zlpanel {
                                           juce::PathStrokeType::rounded));
     }
 
-    void RMSPanel::run(double next_time_stamp) {
-        juce::ignoreUnused(next_time_stamp);
+    void RMSPanel::run(const bool update_path) {
         const auto current_min_db = zlstate::PAnalyzerMinDB::getMinDBFromIndex(
             min_db_ref_.load(std::memory_order::relaxed));
         const auto end_idx = static_cast<size_t>(-current_min_db);
         const auto current_bound = atomic_bound_.load();
         avg_analyzer_ref_.run();
+        if (!update_path) { return; }
         avg_analyzer_ref_.createPath({in_xs_, out_xs}, ys_, end_idx,
                                      current_bound.getWidth(), current_bound.getHeight());
         next_in_path_.clear();

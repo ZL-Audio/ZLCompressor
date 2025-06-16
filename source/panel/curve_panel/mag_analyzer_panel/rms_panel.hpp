@@ -22,7 +22,7 @@ namespace zlpanel {
 
         void paint(juce::Graphics &g) override;
 
-        void run(double next_time_stamp);
+        void run(bool update_path);
 
         void resized() override;
 

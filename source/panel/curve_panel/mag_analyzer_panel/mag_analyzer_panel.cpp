@@ -49,7 +49,9 @@ namespace zlpanel {
             return;
         }
         if (to_run_rms_.exchange(false, std::memory_order::relaxed)) {
-            rms_panel_.run(time_stamp);
+            rms_panel_.run(true);
+        } else {
+            rms_panel_.run(false);
         }
         if (thread.threadShouldExit()) {
             return;
