@@ -11,7 +11,7 @@
 
 namespace zlpanel {
     MainPanel::MainPanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : base_(base),
+        : p_ref_(processor), base_(base),
           curve_panel_(processor, base_),
           control_panel_(processor, base_),
           top_panel_(processor, base_),
@@ -50,6 +50,12 @@ namespace zlpanel {
             curve_panel_.repaintCallBack(time_stamp);
             control_panel_.repaintCallBack(time_stamp);
             top_panel_.repaintCallBack(time_stamp);
+            const auto c_refresh_rate = refresh_handler_.getActualRefreshRate();
+            if (std::abs(c_refresh_rate - refresh_rate_) > 1e-3) {
+                refresh_rate_ = c_refresh_rate;
+                p_ref_.getEqualizeController().getFFTAnalyzer().setRefreshRate(
+                    static_cast<float>(refresh_rate_));
+            }
         }
     }
 } // zlpanel

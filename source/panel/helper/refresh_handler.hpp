@@ -24,12 +24,19 @@ namespace zlpanel {
                 time_stamp_ = time_stamp;
                 return true;
             } else {
-                diff_sum_ += (time_stamp - time_stamp_);
+                const auto c_diff = time_stamp - time_stamp_;
+
+                if (std::abs(std::abs(avg_diff_ / c_diff) - 1.0) > 0.25) {
+                    diff_sum_ = 0.0;
+                    diff_count_ = 0.0;
+                }
+
+                diff_sum_ += c_diff;
                 diff_count_ += 1.0;
                 time_stamp_ = time_stamp;
 
-                const auto avg_diff = std::max(diff_sum_ / diff_count_, 1e-6);
-                const auto space = target_refresh_interval_ / avg_diff;
+                avg_diff_ = std::max(diff_sum_ / diff_count_, 1e-6);
+                const auto space = target_refresh_interval_ / avg_diff_;
 
                 const auto final_space = std::max(static_cast<size_t>(std::round(space)),
                                                   static_cast<size_t>(1));
@@ -38,11 +45,16 @@ namespace zlpanel {
             }
         }
 
+        [[nodiscard]] double getActualRefreshRate() const {
+            return diff_sum_ > 0 ? diff_count_ / diff_sum_ : 1.0 / target_refresh_interval_;
+        }
+
     private:
         double target_refresh_interval_{1.0};
         double time_stamp_{-1.0};
 
         double diff_sum_{0.0}, diff_count_{0.0};
+        double avg_diff_{0.0};
 
         size_t call_count_{0};
     };

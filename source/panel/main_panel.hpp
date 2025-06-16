@@ -29,11 +29,13 @@ namespace zlpanel {
         void repaintCallBack(const double time_stamp);
 
     private:
+        PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         CurvePanel curve_panel_;
         ControlPanel control_panel_;
         TopPanel top_panel_;
 
         RefreshHandler refresh_handler_;
+        double refresh_rate_{-1.0};
     };
 } // zlpanel
