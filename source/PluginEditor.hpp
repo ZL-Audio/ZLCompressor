@@ -52,6 +52,8 @@ private:
 
     std::unique_ptr<juce::VBlankAttachment> vblank_;
 
+    std::atomic<float> &equalize_show_ref_;
+
     void timerCallback() override;
 
     void parameterChanged(const juce::String &parameter_id, float new_value) override;

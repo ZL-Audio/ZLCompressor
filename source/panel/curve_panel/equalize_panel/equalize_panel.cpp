@@ -35,6 +35,7 @@ namespace zlpanel {
             auto para_ID = zlp::PFilterStatus::kID + std::to_string(band);
             p_ref_.parameters_.removeParameterListener(para_ID, this);
         }
+        p_ref_.getEqualizeController().setFFTAnalyzerON(false);
     }
 
     void EqualizePanel::run(juce::Thread &thread) {
@@ -84,6 +85,10 @@ namespace zlpanel {
 
     void EqualizePanel::mouseEnter(const juce::MouseEvent &) {
         background_panel_.setMouseOver(true);
+    }
+
+    void EqualizePanel::visibilityChanged() {
+        p_ref_.getEqualizeController().setFFTAnalyzerON(isVisible());
     }
 
     void EqualizePanel::parameterChanged(const juce::String &parameter_ID, float new_value) {

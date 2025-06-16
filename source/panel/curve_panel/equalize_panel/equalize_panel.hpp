@@ -44,6 +44,8 @@ namespace zlpanel {
 
         void mouseEnter(const juce::MouseEvent &event) override;
 
+        void visibilityChanged() override;
+
         void parameterChanged(const juce::String &parameter_ID, float new_value) override;
     };
 } // zlpanel

@@ -14,7 +14,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
       p_ref_(p),
       property_(p.property_),
       base_(p.state_),
-      main_panel_(p, base_) {
+      main_panel_(p, base_),
+      equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)) {
     for (auto &ID: kIDs) {
         p_ref_.state_.addParameterListener(ID, this);
     }
@@ -93,6 +94,8 @@ void PluginEditor::updateIsShowing() {
     if (isShowing() != base_.getIsEditorShowing()) {
         base_.setIsEditorShowing(isShowing());
         p_ref_.getCompressController().setMagAnalyzerOn(base_.getIsEditorShowing());
+        p_ref_.getEqualizeController().setFFTAnalyzerON(
+            base_.getIsEditorShowing() && equalize_show_ref_.load(std::memory_order::relaxed) > .5f);
         if (base_.getIsEditorShowing()) {
             vblank_ = std::make_unique<juce::VBlankAttachment>(
                 &main_panel_, [this](const double x) { main_panel_.repaintCallBack(x); });
