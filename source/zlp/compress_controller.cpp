@@ -226,7 +226,11 @@ namespace zlp {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
         }
         // makeup gain
-        output_gain_.process(main_pointers, num_samples);
+        if (c_is_on_) {
+            output_gain_.template process<false>(main_pointers, num_samples);
+        } else {
+            output_gain_.template process<true>(main_pointers, num_samples);
+        }
         // mag analyzer
         if (c_mag_analyzer_on_) {
             mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);

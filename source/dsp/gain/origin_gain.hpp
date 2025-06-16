@@ -56,7 +56,7 @@ namespace zldsp::gain {
         template<bool IsBypassed = false>
         void process(std::span<FloatType *> buffer, const size_t num_samples) {
             if (!gain_.isSmoothing()) {
-                if (IsBypassed) return;
+                if constexpr (IsBypassed) return;
                 for (size_t chan = 0; chan < buffer.size(); ++chan) {
                     zldsp::vector::multiply(buffer[chan], gain_.getCurrent(), num_samples);
                 }
@@ -64,7 +64,7 @@ namespace zldsp::gain {
                 for (size_t idx = 0; idx < num_samples; ++idx) {
                     gain_vs_[idx] = gain_.getNext();
                 }
-                if (IsBypassed) return;
+                if constexpr (IsBypassed) return;
                 for (size_t chan = 0; chan < buffer.size(); ++chan) {
                     zldsp::vector::multiply(buffer[chan], gain_vs_.data(), num_samples);
                 }
