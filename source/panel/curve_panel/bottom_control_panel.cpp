@@ -98,12 +98,15 @@ namespace zlpanel {
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
             const auto bound = getLocalBounds().toFloat();
             const auto sum_padding = static_cast<float>(padding + slider_width);
+            
+            background_path0_.clear();
             background_path0_.startNewSubPath(bound.getX() + sum_padding, bound.getY());
             background_path0_.lineTo(bound.getX() + sum_padding - bound.getHeight(), bound.getBottom());
             background_path0_.lineTo(bound.getX() + sum_padding * 6.f + bound.getHeight(), bound.getBottom());
             background_path0_.lineTo(bound.getX() + sum_padding * 6.f, bound.getY());
             background_path0_.closeSubPath();
 
+            background_path1_.clear();
             background_path1_.startNewSubPath(bound.getTopLeft());
             background_path1_.lineTo(bound.getBottomLeft());
             background_path1_.lineTo(bound.getX() + sum_padding * 6.f + bound.getHeight(), bound.getBottom());
