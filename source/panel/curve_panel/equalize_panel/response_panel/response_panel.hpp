@@ -31,6 +31,10 @@ namespace zlpanel {
             return single_panels_[band]->getButtonPos();
         }
 
+        void setMouseOver(const bool f) {
+            dummy_component_.setVisible(f);
+        }
+
     private:
         std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
         juce::Component dummy_component_;

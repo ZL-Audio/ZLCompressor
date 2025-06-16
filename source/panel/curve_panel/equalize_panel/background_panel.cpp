@@ -10,41 +10,24 @@
 #include "background_panel.hpp"
 
 namespace zlpanel {
-    BackgroundPanel::BackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
+    BackgroundPanel::Background1::Background1(zlgui::UIBase &base)
         : base_(base) {
+        setInterceptsMouseClicks(false, false);
         setBufferedToImage(true);
-
-        setInterceptsMouseClicks(true, true);
     }
 
-    BackgroundPanel::~BackgroundPanel() {
-    }
-
-    void BackgroundPanel::paint(juce::Graphics &g) {
-        if (is_mouse_on_) {
-            g.fillAll(base_.getBackgroundColor().withAlpha(.875f));
-            g.setFont(base_.getFontSize());
-            g.setColour(base_.getTextColor().withAlpha(.375f));
-            for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
-                g.drawText(kBackgroundFreqsNames[i], text_bounds_[i], juce::Justification::bottomRight);
-            }
-            g.setColour(base_.getTextColor().withAlpha(.0625f));
-            g.fillRectList(rect_list_);
-        } else {
-            const auto bound = getLocalBounds().toFloat();
-            const juce::ColourGradient gradient1{
-                base_.getBackgroundColor().withAlpha(0.f),
-                bound.getX(), bound.getY(),
-                base_.getBackgroundColor().withAlpha(.875f),
-                bound.getX(), bound.getBottom(), false
-            };
-            g.setGradientFill(gradient1);
-            g.fillRect(getLocalBounds());
-
+    void BackgroundPanel::Background1::paint(juce::Graphics &g) {
+        g.fillAll(base_.getBackgroundColor().withAlpha(.875f));
+        g.setFont(base_.getFontSize());
+        g.setColour(base_.getTextColor().withAlpha(.375f));
+        for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
+            g.drawText(kBackgroundFreqsNames[i], text_bounds_[i], juce::Justification::bottomRight);
         }
+        g.setColour(base_.getTextColor().withAlpha(.0625f));
+        g.fillRectList(rect_list_);
     }
 
-    void BackgroundPanel::resized() {
+    void BackgroundPanel::Background1::resized() {
         rect_list_.clear();
         auto bound = getLocalBounds().toFloat();
         const auto thickness = base_.getFontSize() * 0.1f;
@@ -64,14 +47,38 @@ namespace zlpanel {
         }
     }
 
-    void BackgroundPanel::setMouseOver(const bool is_mouse_on) {
-        is_mouse_on_ = is_mouse_on;
+    BackgroundPanel::Background2::Background2(zlgui::UIBase &base)
+        : base_(base) {
+        setInterceptsMouseClicks(false, false);
+        setBufferedToImage(true);
     }
 
-    void BackgroundPanel::repaintCallBack() {
-        if (old_is_mouse_on_ != is_mouse_on_) {
-            old_is_mouse_on_ = is_mouse_on_;
-            repaint();
-        }
+    void BackgroundPanel::Background2::paint(juce::Graphics &g) {
+        const auto bound = getLocalBounds().toFloat();
+        const juce::ColourGradient gradient1{
+            base_.getBackgroundColor().withAlpha(0.f),
+            bound.getX(), bound.getY(),
+            base_.getBackgroundColor().withAlpha(.875f),
+            bound.getX(), bound.getBottom(), false
+        };
+        g.setGradientFill(gradient1);
+        g.fillRect(getLocalBounds());
+    }
+
+    BackgroundPanel::BackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
+        : background1_(base), background2_(base) {
+        setInterceptsMouseClicks(false, false);
+        addChildComponent(background1_);
+        addAndMakeVisible(background2_);
+    }
+
+    void BackgroundPanel::resized() {
+        background1_.setBounds(getLocalBounds());
+        background2_.setBounds(getLocalBounds());
+    }
+
+    void BackgroundPanel::setMouseOver(const bool is_mouse_on) {
+        background1_.setVisible(is_mouse_on);
+        background2_.setVisible(!is_mouse_on);
     }
 } // zlpanel

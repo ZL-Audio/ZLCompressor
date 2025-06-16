@@ -19,7 +19,7 @@ namespace zlpanel {
             single_panels_[band] = std::make_unique<SinglePanel>(processor, base, band, filters_[band]);
             dummy_component_.addChildComponent(single_panels_[band].get());
         }
-        addAndMakeVisible(dummy_component_);
+        addChildComponent(dummy_component_);
         addAndMakeVisible(sum_panel_);
 
         setInterceptsMouseClicks(false, false);

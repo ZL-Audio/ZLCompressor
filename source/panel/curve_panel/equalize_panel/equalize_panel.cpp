@@ -21,9 +21,9 @@ namespace zlpanel {
         addAndMakeVisible(background_panel_);
         addAndMakeVisible(fft_analyzer_panel_);
         addAndMakeVisible(response_panel_);
-        addAndMakeVisible(button_panel_);
+        addChildComponent(button_panel_);
 
-        setInterceptsMouseClicks(false, true);
+        setInterceptsMouseClicks(true, true);
 
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             auto para_ID = zlp::PFilterStatus::kID + std::to_string(band);
@@ -82,8 +82,13 @@ namespace zlpanel {
             }
             previous_time_stamp_ = time_stamp;
             button_panel_.repaintCallBack();
-            background_panel_.setMouseOver(isMouseOverOrDragging(true));
-            background_panel_.repaintCallBack();
+            const auto mouse_over = isMouseOverOrDragging(true);
+            if (mouse_over != mouse_over_) {
+                mouse_over_ = mouse_over;
+                response_panel_.setMouseOver(mouse_over);
+                background_panel_.setMouseOver(isMouseOverOrDragging(true));
+                button_panel_.setVisible(mouse_over);
+            }
         }
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             const auto button_pos = response_panel_.getBandButtonPos(band);

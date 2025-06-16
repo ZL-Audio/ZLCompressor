@@ -20,15 +20,9 @@ namespace zlpanel {
     public:
         explicit BackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
-        ~BackgroundPanel() override;
-
-        void paint(juce::Graphics &g) override;
-
         void resized() override;
 
         void setMouseOver(bool is_mouse_on);
-
-        void repaintCallBack();
 
     private:
         /** stl does not support constexpr log/pow,
@@ -46,10 +40,32 @@ namespace zlpanel {
             0.f, 1.f / 6.f, 2.f / 6.f, 0.5, 4.f / 6.f, 5.f / 6.f
         };
 
-        zlgui::UIBase &base_;
-        bool old_is_mouse_on_{false}, is_mouse_on_{false};
+        class Background1 final : public juce::Component {
+        public:
+            explicit Background1(zlgui::UIBase &base);
 
-        juce::RectangleList<float> rect_list_;
-        std::array<juce::Rectangle<float>, 10> text_bounds_;
+            void paint(juce::Graphics &g) override;
+
+            void resized() override;
+
+        private:
+            zlgui::UIBase &base_;
+
+            juce::RectangleList<float> rect_list_;
+            std::array<juce::Rectangle<float>, 10> text_bounds_;
+        };
+
+        class Background2 final : public juce::Component {
+        public:
+            explicit Background2(zlgui::UIBase &base);
+
+            void paint(juce::Graphics &g) override;
+
+        private:
+            zlgui::UIBase &base_;
+        };
+
+        Background1 background1_;
+        Background2 background2_;
     };
 } // zlpanel
