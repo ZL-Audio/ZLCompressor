@@ -44,6 +44,7 @@ namespace zlpanel {
         lookahead_slider_.setFontScale(1.25f);
         lookahead_slider_.setJustification(juce::Justification::centred);
         lookahead_slider_.setBufferedToImage(true);
+        lookahead_slider_.getSlider().setSliderSnapsToMousePosition(false);
         addAndMakeVisible(lookahead_slider_);
         lookahead_label_.setLookAndFeel(&label_laf_);
         lookahead_label_.setJustificationType(juce::Justification::centredRight);

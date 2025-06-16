@@ -14,6 +14,7 @@
 #include "background_panel.hpp"
 #include "fft_analyzer_panel.hpp"
 #include "response_panel/response_panel.hpp"
+#include "button_panel/button_panel.hpp"
 
 namespace zlpanel {
     class EqualizePanel final : public juce::Component,
@@ -32,9 +33,12 @@ namespace zlpanel {
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
+        size_t selected_band_idx_{zlp::kBandNum};
+
         BackgroundPanel background_panel_;
         FFTAnalyzerPanel fft_analyzer_panel_;
         ResponsePanel response_panel_;
+        ButtonPanel button_panel_;
 
         double previous_time_stamp_{0.0};
 

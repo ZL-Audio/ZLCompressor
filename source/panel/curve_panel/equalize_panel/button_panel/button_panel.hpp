@@ -9,10 +9,34 @@
 
 #pragma once
 
+#include "dragger_panel.hpp"
+
 namespace zlpanel {
+    class ButtonPanel final : public juce::Component {
+    public:
+        explicit ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
+                             size_t &selected_band_idx);
 
-class ButtonPanel {
+        ~ButtonPanel() override = default;
 
-};
+        void resized() override;
 
+        void repaintCallBack();
+
+        DraggerPanel &getDraggerPanel(const size_t band) {
+            return *dragger_panels_[band];
+        }
+
+        zlgui::dragger::Dragger &getDragger(const size_t band) {
+            return dragger_panels_[band]->getDragger();
+        }
+
+        void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
+
+    private:
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
+
+        std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
+    };
 } // zlpanel

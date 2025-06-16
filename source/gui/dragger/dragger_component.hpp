@@ -83,6 +83,8 @@ namespace zlgui::dragger {
                                  const juce::Point<float> nextC) {
                     return juce::Point<float>(currentC.x, nextC.y);
                 };
+            } else {
+                check_center_ = nullptr;
             }
         }
 

@@ -14,14 +14,16 @@ namespace zlpanel {
         : p_ref_(processor), base_{base},
           background_panel_(processor, base),
           fft_analyzer_panel_(processor, base),
-          response_panel_(processor, base) {
+          response_panel_(processor, base),
+          button_panel_(processor, base, selected_band_idx_) {
         juce::ignoreUnused(base_);
 
         addAndMakeVisible(background_panel_);
         addAndMakeVisible(fft_analyzer_panel_);
         addAndMakeVisible(response_panel_);
+        addAndMakeVisible(button_panel_);
 
-        setInterceptsMouseClicks(true, true);
+        setInterceptsMouseClicks(false, true);
 
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             auto para_ID = zlp::PFilterStatus::kID + std::to_string(band);
@@ -64,22 +66,29 @@ namespace zlpanel {
         background_panel_.setBounds(bound);
         fft_analyzer_panel_.setBounds(bound);
         response_panel_.setBounds(bound);
+        button_panel_.setBounds(bound);
     }
 
     void EqualizePanel::repaintCallBack(double time_stamp) {
         juce::ignoreUnused(time_stamp);
         if (time_stamp - previous_time_stamp_ > 0.1) {
-            background_panel_.setMouseOver(isMouseOver(true));
             if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
                 std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
                 for (size_t band = 0; band < zlp::kBandNum; ++band) {
                     c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
                 }
                 response_panel_.setBandStatus(c_filter_status);
+                button_panel_.setBandStatus(c_filter_status);
             }
             previous_time_stamp_ = time_stamp;
+            button_panel_.repaintCallBack();
+            background_panel_.setMouseOver(isMouseOverOrDragging(true));
+            background_panel_.repaintCallBack();
         }
-        background_panel_.repaintCallBack();
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            const auto button_pos = response_panel_.getBandButtonPos(band);
+            button_panel_.getDragger(band).updateButton(button_pos);
+        }
         repaint();
     }
 
@@ -94,7 +103,7 @@ namespace zlpanel {
     void EqualizePanel::parameterChanged(const juce::String &parameter_ID, float new_value) {
         const auto band = static_cast<size_t>(parameter_ID.getTrailingIntValue());
         filter_status_[band].store(static_cast<zlp::EqualizeController::FilterStatus>(
-            std::round(new_value)), std::memory_order::relaxed);
+                                       std::round(new_value)), std::memory_order::relaxed);
         to_update_filter_status_.store(true, std::memory_order::release);
     }
 } // zlpanel

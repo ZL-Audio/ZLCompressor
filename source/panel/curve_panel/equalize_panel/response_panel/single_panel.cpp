@@ -52,7 +52,7 @@ namespace zlpanel {
         if (!filter_.getUpdateFlag().exchange(false, std::memory_order::acquire) && !force) {
             return false;
         }
-        const auto center_w = filter_.getFreq() / 24000.f * static_cast<float>(std::numbers::pi);
+        const auto center_freq = filter_.getFreq();
         const auto filter_type = filter_.getFilterType();
         filter_.updateParas();
         filter_.updateMagnitude(kWsFloat, ys);
@@ -70,7 +70,8 @@ namespace zlpanel {
         }
         minimizer.finish();
 
-        const auto button_curve_x = bound.getWidth() * std::log(center_w / 10.f) / std::log(2200.f);
+        const auto center_w = center_freq / 24000.f * static_cast<float>(std::numbers::pi);
+        const auto button_curve_x = bound.getWidth() * std::log(center_freq / 10.f) / std::log(2200.f);
         const auto button_curve_y = filter_.getDB(center_w) * scale + bias;
 
         const auto button_x = button_curve_x;

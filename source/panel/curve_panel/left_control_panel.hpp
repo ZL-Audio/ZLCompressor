@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <atomic>
 #include "BinaryData.h"
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"

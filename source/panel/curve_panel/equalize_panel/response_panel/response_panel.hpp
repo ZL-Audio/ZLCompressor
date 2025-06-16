@@ -31,8 +31,6 @@ namespace zlpanel {
             return single_panels_[band]->getButtonPos();
         }
 
-        // void repaintCallBack();
-
     private:
         std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
         juce::Component dummy_component_;
