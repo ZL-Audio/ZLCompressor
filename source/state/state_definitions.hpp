@@ -149,7 +149,7 @@ namespace zlstate {
             "6 s ", "9 s ", "12 s ", "18 s "
         };
         static constexpr std::array kLength = {6.f, 9.f, 12.f, 18.f};
-        int static constexpr kDefaultI = 0;
+        int static constexpr kDefaultI = 1;
 
         static float getTimeLengthFromIndex(const float x) {
             return kLength[static_cast<size_t>(std::round(x))];
@@ -200,7 +200,7 @@ namespace zlstate {
         auto static constexpr kName = "";
         inline static constexpr float minV = 282.f;
         inline static constexpr float maxV = 6000.f;
-        inline static constexpr float kDefaultV = 320.f;
+        inline static constexpr float kDefaultV = 371.f;
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);
     };
 
@@ -288,11 +288,7 @@ namespace zlstate {
             "120Hz", "90Hz", "60Hz", "30Hz", "15Hz"
         };
         static constexpr std::array<double, 5> kRates{120.0, 90.0, 60.0, 30.0, 15.0};
-#if defined(JUCE_MAC)
-        int static constexpr kDefaultI = 2;
-#else
         int static constexpr kDefaultI = 3;
-#endif
     };
 
     class PFFTExtraTilt : public FloatParameters<PFFTExtraTilt> {
