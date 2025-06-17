@@ -12,7 +12,7 @@
 namespace zlpanel {
     ButtonPanel::ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
                              size_t &selected_band_idx)
-        : p_ref_(processor), base_(base),
+        : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           popup_panel_(processor, base) {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band] = std::make_unique<DraggerPanel>(
@@ -48,5 +48,68 @@ namespace zlpanel {
                 dragger_panels_[band]->getDragger().getButton().repaint();
             }
         }
+    }
+
+    void ButtonPanel::mouseDown(const juce::MouseEvent &) {
+        selected_band_idx_ = zlp::kBandNum;
+    }
+
+    void ButtonPanel::mouseDoubleClick(const juce::MouseEvent &event) {
+        // find an off band
+        size_t band_idx = zlp::kBandNum;
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            if (p_ref_.parameters_.getRawParameterValue(
+                zlp::PFilterStatus::kID + std::to_string(band))->load(std::memory_order::relaxed) < .1f) {
+                band_idx = band;
+                break;
+            }
+        }
+        if (band_idx == zlp::kBandNum) {
+            return;
+        }
+
+        auto bound = getLocalBounds().toFloat();
+        bound.reduce(0.f, base_.getFontSize());
+
+        const auto point = event.getPosition().toFloat();
+        const auto x = point.getX(), y = point.getY();
+
+        const auto freq = std::exp(x / bound.getWidth() * std::log(2200.f)) * 10.f;
+        const auto gain = -(y - bound.getCentreY()) / bound.getHeight() * 2.f * 30.f;
+
+        std::vector<float> init_values;
+        init_values.reserve(init_IDs.size());
+
+        if (freq < 20.f) {
+            init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kHighPass));
+            init_values.emplace_back(zlp::PGain::convertTo01(0.f));
+        } else if (freq < 50.f) {
+            init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kLowShelf));
+            init_values.emplace_back(zlp::PGain::convertTo01(2 * gain));
+        } else if (freq < 5000.f) {
+            init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kPeak));
+            init_values.emplace_back(zlp::PGain::convertTo01(gain));
+        } else if (freq < 15000.f) {
+            init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kHighShelf));
+            init_values.emplace_back(zlp::PGain::convertTo01(2 * gain));
+        } else {
+            init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kLowPass));
+            init_values.emplace_back(zlp::PGain::convertTo01(0.f));
+        }
+        init_values.emplace_back(zlp::PFreq::convertTo01(freq));
+        init_values.emplace_back(zlp::PQ::convertTo01(zlp::PQ::kDefaultV));
+        init_values.emplace_back(zlp::POrder::convertTo01(zlp::POrder::kDefaultI));
+        init_values.emplace_back(zlp::PFilterStatus::convertTo01(zlp::EqualizeController::FilterStatus::kOn));
+
+        const auto suffix = std::to_string(band_idx);
+
+        for (size_t i = 0; i < init_values.size(); ++i) {
+            auto *para = p_ref_.parameters_.getParameter(init_IDs[i] + suffix);
+            para->beginChangeGesture();
+            para->setValueNotifyingHost(init_values[i]);
+            para->endChangeGesture();
+        }
+
+        dragger_panels_[band_idx]->getDragger().getButton().setToggleState(true, juce::sendNotificationSync);
     }
 } // zlpanel

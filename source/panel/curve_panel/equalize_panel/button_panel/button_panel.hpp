@@ -38,11 +38,20 @@ namespace zlpanel {
 
         void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
 
+        void mouseDown(const juce::MouseEvent &event) override;
+
+        void mouseDoubleClick(const juce::MouseEvent &event) override;
+
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
+        size_t &selected_band_idx_;
 
         PopupPanel popup_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
+
+        static constexpr std::array init_IDs {
+            zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID, zlp::PFilterStatus::kID
+        };
     };
 } // zlpanel

@@ -45,7 +45,7 @@ namespace zlpanel {
                     ys = ys_vector;
                     is_first = false;
                 } else {
-                    ys = ys + ys_vector;
+                    ys = ys + ys_vector - bound.getCentreY();
                 }
             }
         }
