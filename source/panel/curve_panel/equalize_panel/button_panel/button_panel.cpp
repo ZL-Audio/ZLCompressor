@@ -13,17 +13,21 @@ namespace zlpanel {
     ButtonPanel::ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
                              size_t &selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
+          q_slider_(base),
           popup_panel_(processor, base, selected_band_idx) {
+        addChildComponent(q_slider_);
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band] = std::make_unique<DraggerPanel>(
                 p_ref_, base_, band, selected_band_idx);
             addChildComponent(*dragger_panels_[band]);
+            dragger_panels_[band]->addMouseListener(this, true);
         }
         addChildComponent(popup_panel_);
     }
 
     void ButtonPanel::resized() {
         const auto bound = getLocalBounds();
+        q_slider_.setBounds(bound);
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band]->setBounds(bound);
         }
@@ -34,6 +38,7 @@ namespace zlpanel {
     }
 
     void ButtonPanel::repaintCallBackSlow() {
+        updater_.updateComponents();
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band]->repaintCallBackSlow();
         }
@@ -47,6 +52,13 @@ namespace zlpanel {
                     false, juce::sendNotificationSync);
             }
             previous_band_idx_ = selected_band_idx_;
+            q_attachment_.reset();
+            if (selected_band_idx_ != zlp::kBandNum) {
+                q_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true>>(
+                    q_slider_,
+                    p_ref_.parameters_, zlp::PQ::kID + std::to_string(selected_band_idx_),
+                    updater_);
+            }
             popup_panel_.updateBand();
         }
     }
@@ -61,11 +73,13 @@ namespace zlpanel {
         }
     }
 
-    void ButtonPanel::mouseDown(const juce::MouseEvent &) {
+    void ButtonPanel::mouseDown(const juce::MouseEvent &event) {
+        if (event.originalComponent != this) { return; }
         selected_band_idx_ = zlp::kBandNum;
     }
 
     void ButtonPanel::mouseDoubleClick(const juce::MouseEvent &event) {
+        if (event.originalComponent != this) { return; }
         // find an off band
         size_t band_idx = zlp::kBandNum;
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
@@ -122,5 +136,18 @@ namespace zlpanel {
         }
 
         dragger_panels_[band_idx]->getDragger().getButton().setToggleState(true, juce::sendNotificationSync);
+    }
+
+    void ButtonPanel::mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) {
+        const juce::MouseEvent e{
+            event.source, event.position,
+            event.mods.withoutMouseButtons(),
+            event.pressure, event.orientation, event.rotation,
+            event.tiltX, event.tiltY,
+            event.eventComponent, event.originalComponent,
+            event.eventTime, event.mouseDownPosition, event.mouseDownTime,
+            event.getNumberOfClicks(), false
+        };
+        q_slider_.mouseWheelMove(e, wheel);
     }
 } // zlpanel

@@ -44,11 +44,17 @@ namespace zlpanel {
 
         void mouseDoubleClick(const juce::MouseEvent &event) override;
 
+        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
+
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         size_t previous_band_idx_{zlp::kBandNum};
         size_t &selected_band_idx_;
+
+        zlgui::attachment::ComponentUpdater updater_;
+        zlgui::slider::SnappingSlider q_slider_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true>> q_attachment_;
 
         PopupPanel popup_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
