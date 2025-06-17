@@ -11,7 +11,7 @@
 
 namespace zlpanel {
     ResponsePanel::ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : sum_panel_(processor, base) {
+        : base_(base), sum_panel_(processor, base) {
         for (auto &f: filters_) {
             f.prepare(48000.0);
         }
@@ -31,14 +31,18 @@ namespace zlpanel {
         }
     }
 
-    void ResponsePanel::resized() {
-        const auto bound = getLocalBounds();
-        bound_.store(bound.toFloat());
-        dummy_component_.setBounds(bound);
-        for (auto &panel: single_panels_) {
-            panel->setBounds(bound);
+    void ResponsePanel::resized() { {
+            auto bound = getLocalBounds().toFloat();
+            bound = bound.withSizeKeepingCentre(bound.getWidth(), bound.getHeight() - 2.f * base_.getFontSize());
+            bound_.store(bound);
+        } {
+            const auto bound = getLocalBounds();
+            dummy_component_.setBounds(bound);
+            for (auto &panel: single_panels_) {
+                panel->setBounds(bound);
+            }
+            sum_panel_.setBounds(bound);
         }
-        sum_panel_.setBounds(bound);
     }
 
     void ResponsePanel::run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,

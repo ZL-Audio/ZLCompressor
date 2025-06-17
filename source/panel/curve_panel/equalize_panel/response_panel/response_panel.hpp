@@ -36,6 +36,7 @@ namespace zlpanel {
         }
 
     private:
+        zlgui::UIBase &base_;
         std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
         juce::Component dummy_component_;
         std::array<std::unique_ptr<SinglePanel>, zlp::kBandNum> single_panels_;

@@ -48,8 +48,6 @@ namespace zlpanel {
 
         juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
 
-        double previous_time_stamp{0.0};
-
         std::atomic<float> &equalize_show_ref_, &side_control_show_ref_;
 
         void run() override;

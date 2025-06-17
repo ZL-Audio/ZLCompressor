@@ -59,15 +59,18 @@ namespace zlpanel {
             case zldsp::filter::FilterType::kPeak:
             case zldsp::filter::FilterType::kBandShelf: {
                 dragger_.setXYEnabled(true, true);
-                dragger_.setButtonArea(bound);
+                dragger_.setButtonArea(
+                    bound.withSizeKeepingCentre(
+                        bound.getWidth(), bound.getHeight() - 2 * base_.getFontSize()));
                 break;
             }
             case zldsp::filter::FilterType::kLowShelf:
             case zldsp::filter::FilterType::kHighShelf:
             case zldsp::filter::FilterType::kTiltShelf: {
                 dragger_.setXYEnabled(true, true);
-                dragger_.setButtonArea(bound.withSizeKeepingCentre(
-                    bound.getWidth(), bound.getHeight() * .5f));
+                dragger_.setButtonArea(
+                    bound.withSizeKeepingCentre(
+                        bound.getWidth(), bound.getHeight() * .5f - base_.getFontSize()));
                 break;
             }
             case zldsp::filter::FilterType::kNotch:
