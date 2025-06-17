@@ -35,9 +35,15 @@ namespace zlpanel {
             return button_pos_.load();
         }
 
+        void setCurveThicknessScale(const float scale) {
+            curve_thickness_scale = scale;
+        }
+
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
+
+        float curve_thickness_scale{.5f};
 
         const size_t band_idx_;
         zldsp::filter::Ideal<float, 16> &filter_;

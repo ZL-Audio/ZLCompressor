@@ -35,6 +35,8 @@ namespace zlpanel {
             dummy_component_.setVisible(f);
         }
 
+        void updateBand(size_t band);
+
     private:
         zlgui::UIBase &base_;
         std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;

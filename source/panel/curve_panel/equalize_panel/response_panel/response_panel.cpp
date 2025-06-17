@@ -78,4 +78,14 @@ namespace zlpanel {
             single_panels_[band]->setVisible(status[band] != zlp::EqualizeController::kOff);
         }
     }
+
+    void ResponsePanel::updateBand(const size_t band) {
+        for (auto &panel : single_panels_) {
+            panel->setCurveThicknessScale(.5f);
+        }
+        if (band < zlp::kBandNum) {
+            single_panels_[band]->setCurveThicknessScale(1.0f);
+            single_panels_[band]->toFront(false);
+        }
+    }
 } // zlpanel

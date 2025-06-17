@@ -80,6 +80,7 @@ namespace zlpanel {
         if (previous_band_idx_ != selected_band_idx_) {
             previous_band_idx_ = selected_band_idx_;
             button_panel_.updateBand();
+            response_panel_.updateBand(selected_band_idx_);
         }
         if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
             std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
