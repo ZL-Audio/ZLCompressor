@@ -70,7 +70,7 @@ namespace zlgui::button {
         }
 
         void setImageAlpha(const float alpha, const float over_alpha,
-                           const float on_alpha = 1.f, const float on_over_alpha = .5f) {
+                           const float on_alpha = 1.f, const float on_over_alpha = 1.f) {
             alpha_ = alpha;
             over_alpha_ = over_alpha;
             on_alpha_ = on_alpha;

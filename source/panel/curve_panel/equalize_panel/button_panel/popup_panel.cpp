@@ -11,9 +11,8 @@
 #include "popup_panel.hpp"
 
 namespace zlpanel {
-    PopupPanel::PopupPanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : p_ref_(processor),
-          base_(base),
+    PopupPanel::PopupPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx)
+        : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
                                                                BinaryData::mode_off_on_svgSize)),
           bypass_button_(base, bypass_drawable_.get(), bypass_drawable_.get()),
@@ -32,6 +31,7 @@ namespace zlpanel {
             }
             para->endChangeGesture();
         };
+        bypass_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
         bypass_button_.setBufferedToImage(true);
         addAndMakeVisible(bypass_button_);
 
@@ -40,6 +40,8 @@ namespace zlpanel {
             para->beginChangeGesture();
             para->setValueNotifyingHost(0.f);
             para->endChangeGesture();
+
+            selected_band_idx_ = zlp::kBandNum;
         };
         close_button_.setBufferedToImage(true);
         addAndMakeVisible(close_button_);
@@ -55,6 +57,9 @@ namespace zlpanel {
 
     void PopupPanel::paint(juce::Graphics &g) {
         g.setColour(base_.getTextColor().withAlpha(.25f));
+        g.fillRoundedRectangle(getLocalBounds().toFloat(),
+                               base_.getFontSize() * .5f);
+        g.setColour(base_.getBackgroundColor().withAlpha(.25f));
         g.fillRoundedRectangle(getLocalBounds().toFloat(),
                                base_.getFontSize() * .5f);
     }
@@ -92,28 +97,28 @@ namespace zlpanel {
         }
     }
 
-    void PopupPanel::setBand(const size_t band) {
-        if (band_ == band) return;
-        band_ = band;
+    void PopupPanel::updateBand() {
+        if (band_ == selected_band_idx_) return;
+        band_ = selected_band_idx_;
 
-        if (band == zlp::kBandNum) {
+        if (selected_band_idx_ == zlp::kBandNum) {
             setVisible(false);
             return;
         }
 
         setVisible(true);
 
-        bypass_ref_ = p_ref_.parameters_.getRawParameterValue(zlp::PFilterStatus::kID + std::to_string(band));
+        bypass_ref_ = p_ref_.parameters_.getRawParameterValue(zlp::PFilterStatus::kID + std::to_string(band_));
 
         ftype_attachment_.reset();
         ftype_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true> >(
             ftype_box_.getBox(), p_ref_.parameters_,
-            zlp::PFilterType::kID + std::to_string(band), updater_);
+            zlp::PFilterType::kID + std::to_string(band_), updater_);
 
         slope_attachment_.reset();
         slope_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true> >(
             slope_box_.getBox(), p_ref_.parameters_,
-            zlp::POrder::kID + std::to_string(band), updater_);
+            zlp::POrder::kID + std::to_string(band_), updater_);
     }
 
     void PopupPanel::repaintCallBackSlow() {

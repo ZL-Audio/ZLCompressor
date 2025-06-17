@@ -13,7 +13,7 @@ namespace zlpanel {
     ButtonPanel::ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
                              size_t &selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-          popup_panel_(processor, base) {
+          popup_panel_(processor, base, selected_band_idx) {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band] = std::make_unique<DraggerPanel>(
                 p_ref_, base_, band, selected_band_idx);
@@ -40,6 +40,17 @@ namespace zlpanel {
         popup_panel_.repaintCallBackSlow();
     }
 
+    void ButtonPanel::updateBand() {
+        if (previous_band_idx_ != selected_band_idx_) {
+            if (previous_band_idx_ != zlp::kBandNum) {
+                dragger_panels_[previous_band_idx_]->getDragger().getButton().setToggleState(
+                    false, juce::sendNotificationSync);
+            }
+            previous_band_idx_ = selected_band_idx_;
+            popup_panel_.updateBand();
+        }
+    }
+
     void ButtonPanel::setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status) {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             const auto f = status[band] != zlp::EqualizeController::FilterStatus::kOff;
@@ -59,7 +70,7 @@ namespace zlpanel {
         size_t band_idx = zlp::kBandNum;
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             if (p_ref_.parameters_.getRawParameterValue(
-                zlp::PFilterStatus::kID + std::to_string(band))->load(std::memory_order::relaxed) < .1f) {
+                    zlp::PFilterStatus::kID + std::to_string(band))->load(std::memory_order::relaxed) < .1f) {
                 band_idx = band;
                 break;
             }

@@ -36,6 +36,8 @@ namespace zlpanel {
             return popup_panel_;
         }
 
+        void updateBand();
+
         void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
 
         void mouseDown(const juce::MouseEvent &event) override;
@@ -45,6 +47,7 @@ namespace zlpanel {
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
+        size_t previous_band_idx_{zlp::kBandNum};
         size_t &selected_band_idx_;
 
         PopupPanel popup_panel_;

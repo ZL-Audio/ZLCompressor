@@ -16,7 +16,7 @@
 namespace zlpanel {
     class PopupPanel final : public juce::Component {
     public:
-        explicit PopupPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit PopupPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx);
 
         void paint(juce::Graphics &g) override;
 
@@ -26,7 +26,7 @@ namespace zlpanel {
 
         int getIdealWidth() const;
 
-        void setBand(size_t band);
+        void updateBand();
 
         void repaintCallBackSlow();
 
@@ -34,6 +34,7 @@ namespace zlpanel {
         [[maybe_unused]] PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
+        size_t &selected_band_idx_;
         size_t band_{zlp::kBandNum};
         std::atomic<float> *bypass_ref_{nullptr};
 
