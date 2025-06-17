@@ -67,9 +67,20 @@ namespace zlpanel {
         fft_analyzer_panel_.setBounds(bound);
         response_panel_.setBounds(bound);
         button_panel_.setBounds(bound);
+
+        const auto popup_height = static_cast<float>(button_panel_.getPopupPanel().getIdealHeight());
+        const auto popup_width = static_cast<float>(button_panel_.getPopupPanel().getIdealWidth());
+        popup_top_center_ = {popup_width * .5f, 0.f};
+        popup_bottom_center_ = {popup_width * .5f, popup_height};
+        previous_popup_target_pos_ = {-100.f, -100.f};
+        shift_x_max = static_cast<float>(bound.getWidth()) - popup_width;
     }
 
     void EqualizePanel::repaintCallBackSlow() {
+        if (previous_band_idx_ != selected_band_idx_) {
+            previous_band_idx_ = selected_band_idx_;
+            button_panel_.getPopupPanel().setBand(selected_band_idx_);
+        }
         if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
             std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
@@ -89,10 +100,34 @@ namespace zlpanel {
     }
 
     void EqualizePanel::repaintCallBack(double) {
-        for (size_t band = 0; band < zlp::kBandNum; ++band) {
-            const auto button_pos = response_panel_.getBandButtonPos(band);
-            button_panel_.getDragger(band).updateButton(button_pos);
+        if (button_panel_.isVisible()) {
+            juce::Point<float> popup_target_pos{-100.f, -100.f};
+            for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                const auto button_pos = response_panel_.getBandButtonPos(band);
+                button_panel_.getDragger(band).updateButton(button_pos);
+                if (band == selected_band_idx_) {
+                    popup_target_pos = button_pos;
+                }
+            }
+
+            if (std::abs(previous_popup_target_pos_.x - popup_target_pos.x) > 1e-3f ||
+                std::abs(previous_popup_target_pos_.y - popup_target_pos.y) > 1e-3f) {
+                previous_popup_target_pos_ = popup_target_pos;
+
+                const auto bound = getLocalBounds().toFloat();
+                const auto pos_y_scale = popup_target_pos.y / bound.getHeight();
+                const auto popup_direction_down = pos_y_scale < .25f || (pos_y_scale > .5f && pos_y_scale < .75f);
+
+                const auto shift_y = popup_direction_down
+                                         ? popup_target_pos.y - popup_top_center_.y + base_.getFontSize()
+                                         : popup_target_pos.y - popup_bottom_center_.y - base_.getFontSize();
+
+                const float shift_x = std::clamp(popup_target_pos.x - popup_top_center_.x, 0.f, shift_x_max);
+
+                button_panel_.getPopupPanel().setTransform(juce::AffineTransform::translation(shift_x, shift_y));
+            }
         }
+
         repaint();
     }
 

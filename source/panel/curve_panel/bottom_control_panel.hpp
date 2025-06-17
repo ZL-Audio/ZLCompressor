@@ -50,7 +50,5 @@ namespace zlpanel {
 
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
-
-        double previous_time_stamp{0.0};
     };
 } // zlpanel

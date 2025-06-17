@@ -47,7 +47,9 @@ namespace zlgui::button {
         }
 
         void visibilityChanged() override {
-            updateImages();
+            if (isVisible()) {
+                updateImages();
+            }
         }
 
         void updateImages() {
@@ -59,24 +61,27 @@ namespace zlgui::button {
             }
             if (normal_on_ != nullptr) {
                 normal_on_img_ = normal_on_->createCopy();
-                over_on_img_ = normal_on_img_->createCopy();
-                normal_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(alpha_));
-                over_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(over_alpha_));
+                over_on_img_ = normal_on_->createCopy();
+                normal_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(on_alpha_));
+                over_on_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor().withAlpha(on_over_alpha_));
             }
             button_.setImages(normal_img_.get(), over_img_.get(), nullptr, nullptr,
                               normal_on_img_.get(), over_on_img_.get(), nullptr, nullptr);
         }
 
-        void setImageAlpha(const float alpha, const float over_alpha) {
+        void setImageAlpha(const float alpha, const float over_alpha,
+                           const float on_alpha = 1.f, const float on_over_alpha = .5f) {
             alpha_ = alpha;
             over_alpha_ = over_alpha;
+            on_alpha_ = on_alpha;
+            on_over_alpha_ = on_over_alpha;
         }
 
     private:
         zlgui::UIBase &base_;
         juce::DrawableButton button_{"", juce::DrawableButton::ImageFitted};
         juce::Drawable *normal_ = nullptr, *normal_on_ = nullptr;
-        float alpha_{.5f}, over_alpha_{1.f};
+        float alpha_{.5f}, over_alpha_{1.f}, on_alpha_{1.f}, on_over_alpha_{1.f};
 
         std::unique_ptr<juce::Drawable> normal_img_, normal_on_img_, over_img_, over_on_img_;
     };

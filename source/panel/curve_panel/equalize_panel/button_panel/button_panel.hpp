@@ -10,6 +10,7 @@
 #pragma once
 
 #include "dragger_panel.hpp"
+#include "popup_panel.hpp"
 
 namespace zlpanel {
     class ButtonPanel final : public juce::Component {
@@ -31,12 +32,17 @@ namespace zlpanel {
             return dragger_panels_[band]->getDragger();
         }
 
+        PopupPanel &getPopupPanel() {
+            return popup_panel_;
+        }
+
         void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
 
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
 
+        PopupPanel popup_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
     };
 } // zlpanel

@@ -99,33 +99,33 @@ namespace zlgui::combobox {
 
         inline void setFontScale(const float x) { font_scale_ = x; }
 
-        void setOption(const juce::PopupMenu::Options &x) { option_ = x; }
+        void setOption(const juce::PopupMenu::Options &x) {
+            option_ = x;
+        }
 
         juce::PopupMenu::Options getOptionsForComboBoxPopupMenu(juce::ComboBox &box, juce::Label &label) override {
-            if (!juce::JUCEApplicationBase::isStandaloneApp()) {
-                return option_.withParentComponent(box.getTopLevelComponent()->getChildComponent(0))
-                        .withTargetComponent(&box)
-                        .withItemThatMustBeVisible(box.getSelectedId())
-                        .withInitiallySelectedItem(box.getSelectedId())
-                        .withMinimumWidth(box.getWidth())
-                        .withMaximumNumColumns(1)
-                        .withStandardItemHeight(label.getHeight());
-            } else {
-                return option_.withParentComponent(box.getTopLevelComponent())
-                        .withTargetComponent(&box)
-                        .withItemThatMustBeVisible(box.getSelectedId())
-                        .withInitiallySelectedItem(box.getSelectedId())
-                        .withMinimumWidth(box.getWidth())
-                        .withMaximumNumColumns(1)
-                        .withStandardItemHeight(label.getHeight());
+            auto option = option_;
+            if (option.getParentComponent() == nullptr) {
+                if (juce::JUCEApplicationBase::isStandaloneApp()) {
+                    option = option.withParentComponent(box.getTopLevelComponent());
+                } else {
+                    option = option.withParentComponent(box.getTopLevelComponent()->getChildComponent(0));
+                }
             }
+            if (option.getMinimumWidth() == 0) {
+                option = option.withMinimumWidth(box.getWidth());
+            }
+            return option.withTargetComponent(&box)
+                    .withItemThatMustBeVisible(box.getSelectedId())
+                    .withInitiallySelectedItem(box.getSelectedId())
+                    .withStandardItemHeight(label.getHeight());
         }
 
         void setBoxAlpha(const float x) { box_alpha_ = x; }
 
         void setLabelJustification(const juce::Justification j) { label_justification_ = j; }
 
-        void setItemJustification(const juce::Justification j) {item_justification_ = j;}
+        void setItemJustification(const juce::Justification j) { item_justification_ = j; }
 
     private:
         float font_scale_{1.5f}, box_alpha_{0.f};

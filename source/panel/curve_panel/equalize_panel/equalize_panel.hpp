@@ -35,12 +35,14 @@ namespace zlpanel {
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
-        size_t selected_band_idx_{zlp::kBandNum};
+        size_t selected_band_idx_{zlp::kBandNum}, previous_band_idx_{zlp::kBandNum};
 
         BackgroundPanel background_panel_;
         FFTAnalyzerPanel fft_analyzer_panel_;
         ResponsePanel response_panel_;
         ButtonPanel button_panel_;
+        juce::Point<float> popup_top_center_{}, popup_bottom_center_{}, previous_popup_target_pos_{};
+        float shift_x_max{};
 
         std::array<std::atomic<zlp::EqualizeController::FilterStatus>, zlp::kBandNum> filter_status_{};
         std::atomic<bool> to_update_filter_status_{false};

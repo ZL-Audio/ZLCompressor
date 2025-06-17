@@ -449,11 +449,10 @@ namespace zlp {
         auto static constexpr kID = "order";
         auto static constexpr kName = "Order";
         inline auto static const kChoices = juce::StringArray{
-            "6 dB/oct", "12 dB/oct", "24 dB/oct",
-            "36 dB/oct", "48 dB/oct", "72 dB/oct", "96 dB/oct"
+            "6 dB/oct", "12 dB/oct", "24 dB/oct", "48 dB/oct", "72 dB/oct", "96 dB/oct"
         };
         int static constexpr kDefaultI = 1;
-        static constexpr std::array<size_t, 7> kOrderArray{1, 2, 4, 6, 8, 12, 16};
+        static constexpr std::array<size_t, 7> kOrderArray{1, 2, 4, 8, 12, 16};
 
         static size_t convertToIdx(const size_t order) {
             switch (order) {
