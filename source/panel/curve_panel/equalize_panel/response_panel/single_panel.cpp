@@ -120,4 +120,11 @@ namespace zlpanel {
             filter_.setOrder(zlp::POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
         }
     }
+
+    void SinglePanel::visibilityChanged() {
+        if (!isVisible()) {
+            const auto bound = getLocalBounds();
+            button_pos_.store({0.f, -static_cast<float>(bound.getHeight() * 2)});
+        }
+    }
 } // zlpanel

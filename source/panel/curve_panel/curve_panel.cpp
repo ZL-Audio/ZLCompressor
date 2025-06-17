@@ -114,6 +114,8 @@ namespace zlpanel {
 
     void CurvePanel::repaintCallBack(const double time_stamp) {
         mag_analyzer_panel_.repaintCallBack(time_stamp);
-        equalize_panel_.repaintCallBack(time_stamp);
+        if (equalize_panel_.isVisible()) {
+            equalize_panel_.repaintCallBack(time_stamp);
+        }
     }
 } // zlpanel

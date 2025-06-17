@@ -48,8 +48,6 @@ namespace zlpanel {
         std::atomic<bool> to_update_filter_status_{false};
         std::atomic<bool> to_update_visibility_{false};
 
-        bool mouse_over_{false};
-
         void mouseEnter(const juce::MouseEvent &event) override;
 
         void visibilityChanged() override;

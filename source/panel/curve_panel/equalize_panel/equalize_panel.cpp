@@ -91,13 +91,11 @@ namespace zlpanel {
             button_panel_.setBandStatus(c_filter_status);
         }
         button_panel_.repaintCallBackSlow();
+
         const auto mouse_over = isMouseOverOrDragging(true);
-        if (mouse_over != mouse_over_) {
-            mouse_over_ = mouse_over;
-            response_panel_.setMouseOver(mouse_over);
-            background_panel_.setMouseOver(mouse_over);
-            button_panel_.setVisible(mouse_over);
-        }
+        response_panel_.setMouseOver(mouse_over);
+        background_panel_.setMouseOver(mouse_over);
+        button_panel_.setVisible(mouse_over);
     }
 
     void EqualizePanel::repaintCallBack(double) {

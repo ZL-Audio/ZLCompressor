@@ -60,5 +60,7 @@ namespace zlpanel {
         AtomicPoint<float> button_pos_;
 
         void parameterChanged(const juce::String &parameter_ID, float new_value) override;
+
+        void visibilityChanged() override;
     };
 } // zlpanel
