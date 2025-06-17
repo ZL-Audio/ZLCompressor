@@ -102,11 +102,8 @@ namespace zlpanel {
         band_ = selected_band_idx_;
 
         if (selected_band_idx_ == zlp::kBandNum) {
-            setVisible(false);
             return;
         }
-
-        setVisible(true);
 
         bypass_ref_ = p_ref_.parameters_.getRawParameterValue(zlp::PFilterStatus::kID + std::to_string(band_));
 
@@ -119,6 +116,8 @@ namespace zlpanel {
         slope_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true> >(
             slope_box_.getBox(), p_ref_.parameters_,
             zlp::POrder::kID + std::to_string(band_), updater_);
+
+        updater_.updateComponents();
     }
 
     void PopupPanel::repaintCallBackSlow() {

@@ -16,6 +16,7 @@ namespace zlpanel {
         : p_ref_(processor), base_(base), band_idx_(band_idx), filter_(filter) {
         path_.preallocateSpace(kWsFloat.size() * 3 + 12);
         next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
+        button_pos_.store({0.f, -1e6f});
 
         const std::string suffix = std::to_string(band_idx_);
         for (auto &ID: kBandIDs) {

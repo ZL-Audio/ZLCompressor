@@ -77,19 +77,6 @@ namespace zlpanel {
     }
 
     void EqualizePanel::repaintCallBackSlow() {
-        if (previous_band_idx_ != selected_band_idx_) {
-            previous_band_idx_ = selected_band_idx_;
-            button_panel_.updateBand();
-            response_panel_.updateBand(selected_band_idx_);
-        }
-        if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
-            std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
-            for (size_t band = 0; band < zlp::kBandNum; ++band) {
-                c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
-            }
-            response_panel_.setBandStatus(c_filter_status);
-            button_panel_.setBandStatus(c_filter_status);
-        }
         button_panel_.repaintCallBackSlow();
 
         const auto mouse_over = isMouseOverOrDragging(true);
@@ -99,8 +86,24 @@ namespace zlpanel {
     }
 
     void EqualizePanel::repaintCallBack(double) {
+        if (previous_band_idx_ != selected_band_idx_) {
+            previous_band_idx_ = selected_band_idx_;
+            button_panel_.updateBand();
+            button_panel_.getPopupPanel().setVisible(false);
+            response_panel_.updateBand(selected_band_idx_);
+            popup_update_wait_count_ = 2;
+        }
+        if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
+            std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
+            for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
+            }
+            response_panel_.setBandStatus(c_filter_status);
+            button_panel_.setBandStatus(c_filter_status);
+        }
+
         if (button_panel_.isVisible()) {
-            juce::Point<float> popup_target_pos{-100.f, -100.f};
+            juce::Point<float> popup_target_pos{0.f, -1e6f};
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 const auto button_pos = response_panel_.getBandButtonPos(band);
                 button_panel_.getDragger(band).updateButton(button_pos);
@@ -109,7 +112,13 @@ namespace zlpanel {
                 }
             }
 
-            if (previous_band_idx_ == selected_band_idx_) {
+            if (popup_update_wait_count_ > 0) {
+                popup_update_wait_count_ -= 1;
+                if (popup_update_wait_count_ == 0) {
+                    button_panel_.getPopupPanel().setVisible(selected_band_idx_ != zlp::kBandNum);
+                }
+            }
+            if (popup_update_wait_count_ <= 0) {
                 if (std::abs(previous_popup_target_pos_.x - popup_target_pos.x) > 1e-3f ||
                     std::abs(previous_popup_target_pos_.y - popup_target_pos.y) > 1e-3f) {
                     previous_popup_target_pos_ = popup_target_pos;
@@ -125,7 +134,7 @@ namespace zlpanel {
                     const float shift_x = std::clamp(popup_target_pos.x - popup_top_center_.x, 0.f, shift_x_max);
 
                     button_panel_.getPopupPanel().setTransform(juce::AffineTransform::translation(shift_x, shift_y));
-                    }
+                }
             }
         }
 
