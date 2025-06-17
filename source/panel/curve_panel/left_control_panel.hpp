@@ -21,8 +21,6 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
-
     private:
         constexpr static int kButtonNum = 5;
 

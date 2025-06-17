@@ -24,7 +24,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack();
+        void repaintCallBackSlow();
 
     private:
         PluginProcessor &p_ref_;

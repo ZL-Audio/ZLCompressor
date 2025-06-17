@@ -47,9 +47,15 @@ namespace zlpanel {
 
     void MainPanel::repaintCallBack(const double time_stamp) {
         if (refresh_handler_.tick(time_stamp)) {
+            if (time_stamp - previous_time_stamp_ > 0.1) {
+                previous_time_stamp_ = time_stamp;
+                control_panel_.repaintCallBackSlow();
+                top_panel_.repaintCallBackSlow();
+                curve_panel_.repaintCallBackSlow();
+            }
+
             curve_panel_.repaintCallBack(time_stamp);
-            control_panel_.repaintCallBack(time_stamp);
-            top_panel_.repaintCallBack(time_stamp);
+
             const auto c_refresh_rate = refresh_handler_.getActualRefreshRate();
             if (std::abs(c_refresh_rate - refresh_rate_) > 1e-3) {
                 refresh_rate_ = c_refresh_rate;

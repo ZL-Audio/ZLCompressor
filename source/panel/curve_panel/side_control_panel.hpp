@@ -26,7 +26,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
+        void repaintCallBackSlow();
 
     private:
         [[maybe_unused]] PluginProcessor &p_ref_;
@@ -37,7 +37,6 @@ namespace zlpanel {
         bool stereo_mode_flag_{false}, stereo_swap_flag_{false};
 
         std::atomic<float> &panel_show_ref_;
-        double previous_time_stamp_{0.0};
 
         const std::unique_ptr<juce::Drawable> stereo_mid_side_drawable_;
         const std::unique_ptr<juce::Drawable> stereo_left_right_drawable_;

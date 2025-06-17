@@ -42,7 +42,7 @@ namespace zlpanel {
         updateDraggerBound();
     }
 
-    void DraggerPanel::repaintCallBack() {
+    void DraggerPanel::repaintCallBackSlow() {
         const auto filter_type = filter_type_ref_.load(std::memory_order::relaxed);
         if (std::abs(filter_type - filter_type_) > 0.01f) {
             filter_type_ = filter_type;

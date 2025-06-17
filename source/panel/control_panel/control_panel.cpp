@@ -30,11 +30,8 @@ namespace zlpanel {
         right_control_panel_.setBounds(bound.removeFromRight(right_control_panel_.getIdealWidth()));
     }
 
-    void ControlPanel::repaintCallBack(const double time_stamp) {
-        if (time_stamp - previous_time_stamp > 0.1) {
-            mid_control_panel_.repaintCallBack();
-            right_control_panel_.repaintCallBack();
-            previous_time_stamp = time_stamp;
-        }
+    void ControlPanel::repaintCallBackSlow() {
+        mid_control_panel_.repaintCallBackSlow();
+        right_control_panel_.repaintCallBackSlow();
     }
 } // zlpanel

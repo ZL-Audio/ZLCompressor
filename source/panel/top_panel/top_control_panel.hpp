@@ -22,7 +22,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
+        void repaintCallBackSlow();
 
     private:
         [[maybe_unused]] PluginProcessor &p_ref_;
@@ -30,8 +30,6 @@ namespace zlpanel {
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::label::NameLookAndFeel label_laf_;
-
-        double previous_time_stamp{0.0};
 
         const std::unique_ptr<juce::Drawable> on_drawable_;
         zlgui::button::CompactButton on_button_;

@@ -52,7 +52,6 @@ namespace zlpanel {
           side_out_button_("", base_, ""),
           side_out_attachment_(side_out_button_.getButton(), p.parameters_,
                                zlp::PSideOut::kID, updater_) {
-
         stereo_swap_button_.setDrawable(stereo_swap_drawable_.get());
         ext_side_button_.setDrawable(ext_side_drawable_.get());
         side_out_button_.setDrawable(side_out_drawable_.get());
@@ -73,15 +72,17 @@ namespace zlpanel {
 
         updateLabels();
         label_laf_.setFontScale(1.25f);
-        for (auto &l : {&side_in1_label_, &side_in2_label_, &side_out1_label_, &side_out2_label_}) {
+        for (auto &l: {&side_in1_label_, &side_in2_label_, &side_out1_label_, &side_out2_label_}) {
             l->setJustificationType(juce::Justification::centred);
             l->setLookAndFeel(&label_laf_);
             l->setBufferedToImage(true);
             addAndMakeVisible(l);
         }
 
-        for (auto &s : {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
+        for (auto &s: {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
             s->setFontScale(1.25f);
+            s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+            s->getSlider().setSliderSnapsToMousePosition(false);
             s->setBufferedToImage(true);
             addAndMakeVisible(s);
         }
@@ -157,22 +158,19 @@ namespace zlpanel {
         }
     }
 
-    void SideControlPanel::repaintCallBack(const double time_stamp) {
-        if (time_stamp - previous_time_stamp_ > 0.1) {
-            const auto stereo_mode_flag = stereo_mode_ref_.load(std::memory_order::relaxed) > .5f;
-            const auto stereo_swap_flag = stereo_swap_ref_.load(std::memory_order::relaxed) > .5f;
-            if (stereo_mode_flag != stereo_mode_flag_ || stereo_swap_flag != stereo_swap_flag_) {
-                stereo_mode_flag_ = stereo_mode_flag;
-                stereo_swap_flag_ = stereo_swap_flag;
-                updateLabels();
-            }
-            const auto should_be_visible = panel_show_ref_.load(std::memory_order::relaxed) > .5f;
-            if (should_be_visible != isVisible()) {
-                setVisible(should_be_visible);
-            }
-            updater_.updateComponents();
-            previous_time_stamp_ = time_stamp;
+    void SideControlPanel::repaintCallBackSlow() {
+        const auto stereo_mode_flag = stereo_mode_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto stereo_swap_flag = stereo_swap_ref_.load(std::memory_order::relaxed) > .5f;
+        if (stereo_mode_flag != stereo_mode_flag_ || stereo_swap_flag != stereo_swap_flag_) {
+            stereo_mode_flag_ = stereo_mode_flag;
+            stereo_swap_flag_ = stereo_swap_flag;
+            updateLabels();
         }
+        const auto should_be_visible = panel_show_ref_.load(std::memory_order::relaxed) > .5f;
+        if (should_be_visible != isVisible()) {
+            setVisible(should_be_visible);
+        }
+        updater_.updateComponents();
     }
 
     void SideControlPanel::updateLabels() {

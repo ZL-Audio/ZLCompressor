@@ -36,6 +36,7 @@ namespace zlpanel {
         TopPanel top_panel_;
 
         RefreshHandler refresh_handler_;
+        double previous_time_stamp_{-1.0};
         double refresh_rate_{-1.0};
     };
 } // zlpanel

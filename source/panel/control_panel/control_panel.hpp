@@ -21,11 +21,10 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
+        void repaintCallBackSlow();
 
     private:
         zlgui::UIBase &base_;
-        double previous_time_stamp{0.};
         MidControlPanel mid_control_panel_;
         RightControlPanel right_control_panel_;
     };

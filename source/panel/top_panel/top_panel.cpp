@@ -31,7 +31,7 @@ namespace zlpanel {
         logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 3));
     }
 
-    void TopPanel::repaintCallBack(const double time_stamp) {
-        top_control_panel_.repaintCallBack(time_stamp);
+    void TopPanel::repaintCallBackSlow() {
+        top_control_panel_.repaintCallBackSlow();
     }
 }

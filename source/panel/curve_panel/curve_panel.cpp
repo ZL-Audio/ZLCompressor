@@ -91,29 +91,29 @@ namespace zlpanel {
         }
     }
 
-    void CurvePanel::repaintCallBack(const double time_stamp) {
-        if (time_stamp - previous_time_stamp > 0.1) {
-            const auto side_control_show = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
-            const auto equalize_show = equalize_show_ref_.load(std::memory_order::relaxed) > .5f;
-            if (side_control_panel_.isVisible() != side_control_show || equalize_panel_.isVisible() != equalize_show) {
-                equalize_panel_.setBounds(side_control_show ? equalize_small_bound_ : equalize_large_bound_);
-                side_control_panel_.setVisible(side_control_show);
-            }
-            if (p_ref_.getEqualizeController().getFFTAnalyzerON() != equalize_show) {
-                p_ref_.getEqualizeController().setFFTAnalyzerON(equalize_show);
-            }
-            if (equalize_panel_.isVisible() != equalize_show) {
-                equalize_panel_.setVisible(equalize_show);
-                mag_analyzer_panel_.setComputerPanelVisible(!equalize_show);
-            }
-            previous_time_stamp = time_stamp;
-            mag_analyzer_panel_.setRMSPanelVisible(!side_control_show && !equalize_show);
+    void CurvePanel::repaintCallBackSlow() {
+        const auto side_control_show = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto equalize_show = equalize_show_ref_.load(std::memory_order::relaxed) > .5f;
+        if (side_control_panel_.isVisible() != side_control_show || equalize_panel_.isVisible() != equalize_show) {
+            equalize_panel_.setBounds(side_control_show ? equalize_small_bound_ : equalize_large_bound_);
+            side_control_panel_.setVisible(side_control_show);
         }
+        if (p_ref_.getEqualizeController().getFFTAnalyzerON() != equalize_show) {
+            p_ref_.getEqualizeController().setFFTAnalyzerON(equalize_show);
+        }
+        if (equalize_panel_.isVisible() != equalize_show) {
+            equalize_panel_.setVisible(equalize_show);
+            mag_analyzer_panel_.setComputerPanelVisible(!equalize_show);
+        }
+        mag_analyzer_panel_.setRMSPanelVisible(!side_control_show && !equalize_show);
 
+        side_control_panel_.repaintCallBackSlow();
+        bottom_control_panel_.repaintCallBackSlow();
+        equalize_panel_.repaintCallBackSlow();
+    }
+
+    void CurvePanel::repaintCallBack(const double time_stamp) {
         mag_analyzer_panel_.repaintCallBack(time_stamp);
         equalize_panel_.repaintCallBack(time_stamp);
-        bottom_control_panel_.repaintCallBack(time_stamp);
-        left_control_panel_.repaintCallBack(time_stamp);
-        side_control_panel_.repaintCallBack(time_stamp);
     }
 } // zlpanel

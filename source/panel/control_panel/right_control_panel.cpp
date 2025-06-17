@@ -93,7 +93,7 @@ namespace zlpanel {
         }
     }
 
-    void RightControlPanel::repaintCallBack() {
+    void RightControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
     }
 } // zlpanel

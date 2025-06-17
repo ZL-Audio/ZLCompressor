@@ -69,27 +69,26 @@ namespace zlpanel {
         button_panel_.setBounds(bound);
     }
 
-    void EqualizePanel::repaintCallBack(double time_stamp) {
-        juce::ignoreUnused(time_stamp);
-        if (time_stamp - previous_time_stamp_ > 0.1) {
-            if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
-                std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
-                for (size_t band = 0; band < zlp::kBandNum; ++band) {
-                    c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
-                }
-                response_panel_.setBandStatus(c_filter_status);
-                button_panel_.setBandStatus(c_filter_status);
+    void EqualizePanel::repaintCallBackSlow() {
+        if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
+            std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
+            for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
             }
-            previous_time_stamp_ = time_stamp;
-            button_panel_.repaintCallBack();
-            const auto mouse_over = isMouseOverOrDragging(true);
-            if (mouse_over != mouse_over_) {
-                mouse_over_ = mouse_over;
-                response_panel_.setMouseOver(mouse_over);
-                background_panel_.setMouseOver(isMouseOverOrDragging(true));
-                button_panel_.setVisible(mouse_over);
-            }
+            response_panel_.setBandStatus(c_filter_status);
+            button_panel_.setBandStatus(c_filter_status);
         }
+        button_panel_.repaintCallBackSlow();
+        const auto mouse_over = isMouseOverOrDragging(true);
+        if (mouse_over != mouse_over_) {
+            mouse_over_ = mouse_over;
+            response_panel_.setMouseOver(mouse_over);
+            background_panel_.setMouseOver(mouse_over);
+            button_panel_.setVisible(mouse_over);
+        }
+    }
+
+    void EqualizePanel::repaintCallBack(double) {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             const auto button_pos = response_panel_.getBandButtonPos(band);
             button_panel_.getDragger(band).updateButton(button_pos);

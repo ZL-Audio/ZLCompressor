@@ -79,16 +79,13 @@ namespace zlpanel {
         return (padding + slider_width) * 6 + right_padding;
     }
 
-    void BottomControlPanel::repaintCallBack(const double time_stamp) {
-        if (time_stamp - previous_time_stamp > 0.1) {
-            updater_.updateComponents();
-            const auto f1 = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
-            const auto f2 = side_eq_show_ref_.load(std::memory_order::relaxed) > .5f;
-            if (const auto f = f1 || f2; f != show_path1_) {
-                show_path1_ = f;
-                repaint();
-            }
-            previous_time_stamp = time_stamp;
+    void BottomControlPanel::repaintCallBackSlow() {
+        updater_.updateComponents();
+        const auto f1 = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto f2 = side_eq_show_ref_.load(std::memory_order::relaxed) > .5f;
+        if (const auto f = f1 || f2; f != show_path1_) {
+            show_path1_ = f;
+            repaint();
         }
     }
 

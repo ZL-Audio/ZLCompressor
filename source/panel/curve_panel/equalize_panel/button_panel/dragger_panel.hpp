@@ -22,7 +22,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack();
+        void repaintCallBackSlow();
 
         zlgui::dragger::Dragger &getDragger() {
             return dragger_;

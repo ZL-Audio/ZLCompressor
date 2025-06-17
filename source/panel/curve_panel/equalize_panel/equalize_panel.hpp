@@ -28,6 +28,8 @@ namespace zlpanel {
 
         void resized() override;
 
+        void repaintCallBackSlow();
+
         void repaintCallBack(double time_stamp);
 
     private:
@@ -39,8 +41,6 @@ namespace zlpanel {
         FFTAnalyzerPanel fft_analyzer_panel_;
         ResponsePanel response_panel_;
         ButtonPanel button_panel_;
-
-        double previous_time_stamp_{0.0};
 
         std::array<std::atomic<zlp::EqualizeController::FilterStatus>, zlp::kBandNum> filter_status_{};
         std::atomic<bool> to_update_filter_status_{false};

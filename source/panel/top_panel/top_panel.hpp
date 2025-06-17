@@ -21,7 +21,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
+        void repaintCallBackSlow();
 
     private:
         zlgui::UIBase &base_;

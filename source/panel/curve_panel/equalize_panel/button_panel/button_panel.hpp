@@ -21,7 +21,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack();
+        void repaintCallBackSlow();
 
         DraggerPanel &getDraggerPanel(const size_t band) {
             return *dragger_panels_[band];

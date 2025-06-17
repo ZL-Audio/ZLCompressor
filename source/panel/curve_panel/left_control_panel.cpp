@@ -43,8 +43,4 @@ namespace zlpanel {
         bound.removeFromBottom(height);
         equalize_show_button_.setBounds(bound.removeFromBottom(button_height));
     }
-
-    void LeftControlPanel::repaintCallBack(double time_stamp) {
-        juce::ignoreUnused(time_stamp);
-    }
 } // zlpanel

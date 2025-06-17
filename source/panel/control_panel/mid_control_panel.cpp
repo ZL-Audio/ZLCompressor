@@ -111,7 +111,7 @@ namespace zlpanel {
         }
     }
 
-    void MidControlPanel::repaintCallBack() {
+    void MidControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
     }
 } // zlpanel

@@ -27,9 +27,9 @@ namespace zlpanel {
         }
     }
 
-    void ButtonPanel::repaintCallBack() {
+    void ButtonPanel::repaintCallBackSlow() {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
-            dragger_panels_[band]->repaintCallBack();
+            dragger_panels_[band]->repaintCallBackSlow();
         }
     }
 

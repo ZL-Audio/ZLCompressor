@@ -44,6 +44,7 @@ namespace zlpanel {
         lookahead_slider_.setFontScale(1.25f);
         lookahead_slider_.setJustification(juce::Justification::centred);
         lookahead_slider_.setBufferedToImage(true);
+        lookahead_slider_.getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         lookahead_slider_.getSlider().setSliderSnapsToMousePosition(false);
         addAndMakeVisible(lookahead_slider_);
         lookahead_label_.setLookAndFeel(&label_laf_);
@@ -92,25 +93,22 @@ namespace zlpanel {
         oversample_label_.setBounds(bound.removeFromRight(slider_width));
     }
 
-    void TopControlPanel::repaintCallBack(const double time_stamp) {
-        if (time_stamp - previous_time_stamp > 0.1) {
-            updater_.updateComponents();
-            const auto new_lookahead_value = lookahead_slider_.getSlider().getValue();
-            if (std::abs(new_lookahead_value - old_lookahead_value_) > 1e-4) {
-                if (new_lookahead_value < 1e-4 && old_lookahead_value_ > 1e-4) {
-                    setLookaheadAlpha(.5f);
-                }
-                if (new_lookahead_value > 1e-4 && old_lookahead_value_ < 1e-4) {
-                    setLookaheadAlpha(1.f);
-                }
-                old_lookahead_value_ = new_lookahead_value;
+    void TopControlPanel::repaintCallBackSlow() {
+        updater_.updateComponents();
+        const auto new_lookahead_value = lookahead_slider_.getSlider().getValue();
+        if (std::abs(new_lookahead_value - old_lookahead_value_) > 1e-4) {
+            if (new_lookahead_value < 1e-4 && old_lookahead_value_ > 1e-4) {
+                setLookaheadAlpha(.5f);
             }
-            const auto new_oversample_id = oversample_box_.getBox().getSelectedItemIndex();
-            if (new_oversample_id != old_oversample_id_) {
-                setOversampleAlpha(new_oversample_id > 0 ? 1.f : .5f);
-                old_oversample_id_ = new_oversample_id;
+            if (new_lookahead_value > 1e-4 && old_lookahead_value_ < 1e-4) {
+                setLookaheadAlpha(1.f);
             }
-            previous_time_stamp = time_stamp;
+            old_lookahead_value_ = new_lookahead_value;
+        }
+        const auto new_oversample_id = oversample_box_.getBox().getSelectedItemIndex();
+        if (new_oversample_id != old_oversample_id_) {
+            setOversampleAlpha(new_oversample_id > 0 ? 1.f : .5f);
+            old_oversample_id_ = new_oversample_id;
         }
     }
 
