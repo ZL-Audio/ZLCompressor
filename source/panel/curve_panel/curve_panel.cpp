@@ -13,6 +13,7 @@ namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
         : Thread("curve_panel"), p_ref_(p), base_(base),
           mag_analyzer_panel_(p, base),
+          separate_panel_(base),
           equalize_panel_(p, base),
           bottom_control_panel_(p, base),
           left_control_panel_(p, base),
@@ -20,6 +21,7 @@ namespace zlpanel {
           equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
           side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)) {
         addAndMakeVisible(mag_analyzer_panel_);
+        addChildComponent(separate_panel_);
         addAndMakeVisible(bottom_control_panel_);
         addAndMakeVisible(left_control_panel_);
 
@@ -78,6 +80,8 @@ namespace zlpanel {
             } else {
                 equalize_panel_.setBounds(equalize_large_bound_);
             }
+
+            separate_panel_.setBounds(getLocalBounds().withWidth(equalize_large_bound_.getWidth()));
         }
     }
 
@@ -103,7 +107,8 @@ namespace zlpanel {
         }
         if (equalize_panel_.isVisible() != equalize_show) {
             equalize_panel_.setVisible(equalize_show);
-            mag_analyzer_panel_.setComputerPanelVisible(!equalize_show);
+            separate_panel_.setVisible(equalize_show);
+            // mag_analyzer_panel_.setComputerPanelVisible(!equalize_show);
         }
         mag_analyzer_panel_.setRMSPanelVisible(!side_control_show && !equalize_show);
 

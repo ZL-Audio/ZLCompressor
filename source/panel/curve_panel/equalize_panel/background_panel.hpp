@@ -55,17 +55,6 @@ namespace zlpanel {
             std::array<juce::Rectangle<float>, 10> text_bounds_;
         };
 
-        class Background2 final : public juce::Component {
-        public:
-            explicit Background2(zlgui::UIBase &base);
-
-            void paint(juce::Graphics &g) override;
-
-        private:
-            zlgui::UIBase &base_;
-        };
-
         Background1 background1_;
-        Background2 background2_;
     };
 } // zlpanel

@@ -41,6 +41,7 @@ namespace zlpanel {
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         MagAnalyzerPanel mag_analyzer_panel_;
+        SeparatePanel separate_panel_;
         EqualizePanel equalize_panel_;
         BottomControlPanel bottom_control_panel_;
         LeftControlPanel left_control_panel_;

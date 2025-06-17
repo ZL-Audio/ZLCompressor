@@ -14,7 +14,7 @@
 #include "../../../gui/gui.hpp"
 
 namespace zlpanel {
-    class SeparatePanel : public juce::Component {
+    class SeparatePanel final: public juce::Component {
     public:
         explicit SeparatePanel(zlgui::UIBase &base);
 

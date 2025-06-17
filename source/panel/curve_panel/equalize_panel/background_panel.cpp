@@ -47,38 +47,17 @@ namespace zlpanel {
         }
     }
 
-    BackgroundPanel::Background2::Background2(zlgui::UIBase &base)
-        : base_(base) {
-        setInterceptsMouseClicks(false, false);
-        setBufferedToImage(true);
-    }
-
-    void BackgroundPanel::Background2::paint(juce::Graphics &g) {
-        const auto bound = getLocalBounds().toFloat();
-        const juce::ColourGradient gradient1{
-            base_.getBackgroundColor().withAlpha(0.f),
-            bound.getX(), bound.getY(),
-            base_.getBackgroundColor().withAlpha(.875f),
-            bound.getX(), bound.getBottom(), false
-        };
-        g.setGradientFill(gradient1);
-        g.fillRect(getLocalBounds());
-    }
-
     BackgroundPanel::BackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
-        : background1_(base), background2_(base) {
+        : background1_(base) {
         setInterceptsMouseClicks(false, false);
-        addChildComponent(background1_);
-        addAndMakeVisible(background2_);
+        addAndMakeVisible(background1_);
     }
 
     void BackgroundPanel::resized() {
         background1_.setBounds(getLocalBounds());
-        background2_.setBounds(getLocalBounds());
     }
 
     void BackgroundPanel::setMouseOver(const bool is_mouse_on) {
-        background1_.setVisible(is_mouse_on);
-        background2_.setVisible(!is_mouse_on);
+        setVisible(is_mouse_on);
     }
 } // zlpanel
