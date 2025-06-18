@@ -28,11 +28,12 @@ namespace zlgui::attachment {
               apvts_(apvts), parameter_ref_(*apvts_.getParameter(parameter_ID)),
               updater_ref_(updater) {
             // setup slider values
-            slider_.valueFromTextFunction = [this](const juce::String &text) {
-                return static_cast<double>(parameter_ref_.convertFrom0to1(parameter_ref_.getValueForText(text)));
+            const auto &para_ref(parameter_ref_);
+            slider_.valueFromTextFunction = [&para_ref](const juce::String &text) {
+                return static_cast<double>(para_ref.convertFrom0to1(para_ref.getValueForText(text)));
             };
-            slider_.textFromValueFunction = [this](const double value) {
-                return parameter_ref_.getText(parameter_ref_.convertTo0to1(static_cast<float>(value)), 0);
+            slider_.textFromValueFunction = [&para_ref](const double value) {
+                return para_ref.getText(para_ref.convertTo0to1(static_cast<float>(value)), 0);
             };
             slider_.setDoubleClickReturnValue(slider_.isDoubleClickReturnEnabled(),
                                               parameter_ref_.convertFrom0to1(parameter_ref_.getDefaultValue()));
