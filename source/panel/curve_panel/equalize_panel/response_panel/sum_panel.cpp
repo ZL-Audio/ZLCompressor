@@ -37,21 +37,24 @@ namespace zlpanel {
                        std::array<std::array<float, kWsFloat.size()>, 8> &yss,
                        std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
                        const juce::Rectangle<float> &bound) {
-        bool is_first = true;
+        int band_count{0};
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             if (filter_status[band] == zlp::EqualizeController::FilterStatus::kOn) {
                 auto ys_vector = kfr::make_univector<float>(yss[band].data(), yss[band].size());
-                if (is_first) {
+                if (band_count == 0) {
                     ys = ys_vector;
-                    is_first = false;
                 } else {
-                    ys = ys + ys_vector - bound.getCentreY();
+                    ys = ys + ys_vector;
                 }
+                band_count += 1;
             }
         }
 
-        if (is_first) {
+        if (band_count == 0) {
             std::fill(ys.begin(), ys.end(), bound.getCentreY());
+        } else if (band_count > 1) {
+            const auto total_shift = -bound.getCentreY() * static_cast<float>(band_count - 1);
+            ys = ys + total_shift;
         }
 
         next_path_.clear();
