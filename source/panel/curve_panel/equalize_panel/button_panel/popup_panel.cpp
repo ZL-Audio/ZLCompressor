@@ -56,10 +56,10 @@ namespace zlpanel {
     }
 
     void PopupPanel::paint(juce::Graphics &g) {
-        g.setColour(base_.getTextColor().withAlpha(.25f));
+        g.setColour(base_.getTextColor().withAlpha(.33f));
         g.fillRoundedRectangle(getLocalBounds().toFloat(),
                                base_.getFontSize() * .5f);
-        g.setColour(base_.getBackgroundColor().withAlpha(.25f));
+        g.setColour(base_.getBackgroundColor().withAlpha(.66f));
         g.fillRoundedRectangle(getLocalBounds().toFloat(),
                                base_.getFontSize() * .5f);
     }

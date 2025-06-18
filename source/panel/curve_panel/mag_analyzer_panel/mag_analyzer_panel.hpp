@@ -29,12 +29,16 @@ namespace zlpanel {
 
         void run(const juce::Thread &thread);
 
-        void setRMSPanelVisible(const bool f) {
-            rms_panel_.setVisible(f);
+        RMSPanel &getRMSPanel() noexcept {
+            return rms_panel_;
         }
 
-        void setComputerPanelVisible(const bool f) {
-            computer_panel_.setVisible(f);
+        ComputerPanel &getComputerPanel() noexcept {
+            return computer_panel_;
+        }
+
+        SeparatePanel &getSeparatePanel() noexcept {
+            return separate_panel_;
         }
 
     private:

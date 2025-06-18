@@ -21,17 +21,34 @@ namespace zlpanel {
               juce::Drawable::createFromImageData(BinaryData::equalizer_svg, BinaryData::equalizer_svgSize)),
           equalize_show_button_("", base, ""),
           equalize_show_attachment_(equalize_show_button_.getButton(), p.na_parameters_,
-                                    zlstate::PSideEQDisplay::kID, updater_) {
+                                    zlstate::PSideEQDisplay::kID, updater_),
+          computer_show_drawable_(
+              juce::Drawable::createFromImageData(BinaryData::computer_svg, BinaryData::computer_svgSize)),
+          computer_show_button_("", base, ""),
+          computer_show_attachment_(computer_show_button_.getButton(), p.na_parameters_,
+                                    zlstate::PComputerCurveDisplay::kID, updater_),
+          rms_show_drawable_(
+              juce::Drawable::createFromImageData(BinaryData::rms_analyzer_svg, BinaryData::rms_analyzer_svgSize)),
+          rms_show_button_("", base, ""),
+          rms_show_attachment_(rms_show_button_.getButton(), p.na_parameters_,
+                               zlstate::PRMSAnalyzerDisplay::kID, updater_) {
         side_control_show_button_.setDrawable(side_control_show_drawable_.get());
         equalize_show_button_.setDrawable(equalize_show_drawable_.get());
+        computer_show_button_.setDrawable(computer_show_drawable_.get());
+        rms_show_button_.setDrawable(rms_show_drawable_.get());
 
-        for (auto &b: {&side_control_show_button_, &equalize_show_button_}) {
+        for (auto &b: {
+                 &side_control_show_button_, &equalize_show_button_,
+                 &computer_show_button_, &rms_show_button_
+             }) {
             b->getLAF().enableShadow(false);
             b->getLAF().setShrinkScale(.0f);
             b->getLAF().setScale(1.25f);
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
         }
+
+        setBufferedToImage(true);
     }
 
     void LeftControlPanel::resized() {
@@ -42,5 +59,9 @@ namespace zlpanel {
         side_control_show_button_.setBounds(bound.removeFromBottom(button_height));
         bound.removeFromBottom(height);
         equalize_show_button_.setBounds(bound.removeFromBottom(button_height));
+        bound.removeFromBottom(height);
+        computer_show_button_.setBounds(bound.removeFromBottom(button_height));
+        bound.removeFromBottom(height);
+        rms_show_button_.setBounds(bound.removeFromBottom(button_height));
     }
 } // zlpanel

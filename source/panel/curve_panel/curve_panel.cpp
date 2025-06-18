@@ -19,7 +19,9 @@ namespace zlpanel {
           left_control_panel_(p, base),
           side_control_panel_(p, base),
           equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
-          side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)) {
+          side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
+          computer_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PComputerCurveDisplay::kID)),
+          rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSAnalyzerDisplay::kID)) {
         addAndMakeVisible(mag_analyzer_panel_);
         addChildComponent(separate_panel_);
         addAndMakeVisible(bottom_control_panel_);
@@ -103,6 +105,8 @@ namespace zlpanel {
     void CurvePanel::repaintCallBackSlow() {
         const auto side_control_show = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
         const auto equalize_show = equalize_show_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto computer_show = computer_show_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto rms_show = rms_show_ref_.load(std::memory_order::relaxed) > .5f;
         if (side_control_panel_.isVisible() != side_control_show || equalize_panel_.isVisible() != equalize_show) {
             equalize_panel_.setBounds(side_control_show ? equalize_small_bound_ : equalize_large_bound_);
             side_control_panel_.setVisible(side_control_show);
@@ -113,9 +117,11 @@ namespace zlpanel {
         if (equalize_panel_.isVisible() != equalize_show) {
             equalize_panel_.setVisible(equalize_show);
             separate_panel_.setVisible(equalize_show);
-            // mag_analyzer_panel_.setComputerPanelVisible(!equalize_show);
         }
-        mag_analyzer_panel_.setRMSPanelVisible(!side_control_show && !equalize_show);
+        const auto actual_rms_show = rms_show && !side_control_show && !equalize_show;
+        mag_analyzer_panel_.getRMSPanel().setVisible(actual_rms_show);
+        mag_analyzer_panel_.getSeparatePanel().setVisible(actual_rms_show || computer_show);
+        mag_analyzer_panel_.getComputerPanel().setVisible(computer_show);
 
         side_control_panel_.repaintCallBackSlow();
         bottom_control_panel_.repaintCallBackSlow();

@@ -50,6 +50,7 @@ namespace zlpanel {
         juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
 
         std::atomic<float> &equalize_show_ref_, &side_control_show_ref_;
+        std::atomic<float> &computer_show_ref_, &rms_show_ref_;
 
         void run() override;
     };

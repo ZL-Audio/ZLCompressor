@@ -176,11 +176,32 @@ namespace zlstate {
         int static constexpr kDefaultI = 0;
     };
 
+    class PComputerCurveDisplay : public ChoiceParameters<PComputerCurveDisplay> {
+    public:
+        auto static constexpr kID = "computer_curve_display";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "ON"
+        };
+        int static constexpr kDefaultI = 1;
+    };
+
+    class PRMSAnalyzerDisplay : public ChoiceParameters<PRMSAnalyzerDisplay> {
+    public:
+        auto static constexpr kID = "rms_analyzer_display";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "ON"
+        };
+        int static constexpr kDefaultI = 1;
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getNAParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PEQMaxDB::get(),
                    PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get(),
-                   PSideControlDisplay::get(), PSideEQDisplay::get());
+                   PSideControlDisplay::get(), PSideEQDisplay::get(),
+                   PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get());
         return layout;
     }
 
