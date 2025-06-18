@@ -79,7 +79,10 @@ namespace zlpanel {
         auto bound = getLocalBounds();
         auto t_bound = bound.removeFromTop(bound.getHeight() / 2);
 
-        bypass_button_.setBounds(t_bound.removeFromRight(button_height));
+        auto bypass_button_bound = t_bound.removeFromRight(button_height);
+        const auto bypass_button_padding = bypass_button_bound.getHeight() / 32;
+        bypass_button_bound.reduce(bypass_button_padding, bypass_button_padding);
+        bypass_button_.setBounds(bypass_button_bound);
         ftype_box_.setBounds(t_bound);
 
         auto close_button_bound = bound.removeFromRight(button_height);
