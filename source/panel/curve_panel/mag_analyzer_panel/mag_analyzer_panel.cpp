@@ -54,9 +54,6 @@ namespace zlpanel {
         } else {
             rms_panel_.run(false);
         }
-        if (thread.threadShouldExit()) {
-            return;
-        }
     }
 
     void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {

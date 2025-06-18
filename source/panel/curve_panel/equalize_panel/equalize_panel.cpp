@@ -56,9 +56,6 @@ namespace zlpanel {
             return;
         }
         response_panel_.run(c_filter_status, to_update_sum);
-        if (thread.threadShouldExit()) {
-            return;
-        }
     }
 
     void EqualizePanel::resized() {
