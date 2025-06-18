@@ -135,14 +135,14 @@ namespace zlpanel {
 
             bound.removeFromRight(padding / 2); {
                 auto box_bound = bound.removeFromRight(
-                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3));
+                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3f));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 min_db_box_.setBounds(box_bound);
             }
 
             bound.removeFromRight(padding / 2); {
                 auto box_bound = bound.removeFromRight(
-                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.4));
+                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.4f));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 mag_type_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);

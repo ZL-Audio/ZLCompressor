@@ -55,14 +55,18 @@ namespace zlpanel {
 
         zlgui::attachment::ComponentUpdater updater_;
         zlgui::slider::SnappingSlider q_slider_;
-        std::unique_ptr<zlgui::attachment::SliderAttachment<true>> q_attachment_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true> > q_attachment_;
+
+        zlgui::combobox::CompactCombobox eq_db_box_;
+        zlgui::attachment::ComboBoxAttachment<false> eq_db_box_attachment_;
 
         FilterParaPanel para_panel_;
         PopupPanel popup_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
 
-        static constexpr std::array init_IDs {
-            zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID, zlp::PFilterStatus::kID
+        static constexpr std::array init_IDs{
+            zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID,
+            zlp::PFilterStatus::kID
         };
     };
 } // zlpanel

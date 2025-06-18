@@ -14,10 +14,25 @@ namespace zlpanel {
                              size_t &selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           q_slider_(base),
+          eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
+          eq_db_box_attachment_(eq_db_box_.getBox(), processor.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
           para_panel_(processor, base, selected_band_idx),
           popup_panel_(processor, base, selected_band_idx) {
         addChildComponent(q_slider_);
+
+        const auto popup_option = juce::PopupMenu::Options()
+                .withParentComponent(this)
+                .withPreferredPopupDirection(juce::PopupMenu::Options::PopupDirection::downwards);
+        for (auto &box: {&eq_db_box_}) {
+            box->getLAF().setFontScale(1.f);
+            box->getLAF().setOption(popup_option);
+            box->setAlpha(.5f);
+            box->setBufferedToImage(true);
+            addAndMakeVisible(box);
+        }
+
         addChildComponent(para_panel_);
+
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band] = std::make_unique<DraggerPanel>(
                 p_ref_, base_, band, selected_band_idx);
@@ -27,20 +42,28 @@ namespace zlpanel {
         addChildComponent(popup_panel_);
     }
 
-    void ButtonPanel::resized() {
-        const auto bound = getLocalBounds();
-        q_slider_.setBounds(bound);
-        para_panel_.setBounds({
-            bound.getX(), bound.getY(),
-            para_panel_.getIdealWidth(), para_panel_.getIdealHeight()
-        });
-        for (size_t band = 0; band < zlp::kBandNum; ++band) {
-            dragger_panels_[band]->setBounds(bound);
+    void ButtonPanel::resized() { {
+            const auto bound = getLocalBounds();
+            q_slider_.setBounds(bound);
+            para_panel_.setBounds({
+                bound.getX(), bound.getY(),
+                para_panel_.getIdealWidth(), para_panel_.getIdealHeight()
+            });
+            for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                dragger_panels_[band]->setBounds(bound);
+            }
+            popup_panel_.setBounds({
+                bound.getX(), bound.getY(),
+                popup_panel_.getIdealWidth(), popup_panel_.getIdealHeight()
+            });
+        } {
+            auto bound = getLocalBounds();
+            const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+            bound = bound.removeFromTop(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bound.removeFromRight(padding);
+            bound = bound.removeFromRight(juce::roundToInt(base_.getFontSize() * 2.5f));
+            eq_db_box_.setBounds(bound);
         }
-        popup_panel_.setBounds({
-            bound.getX(), bound.getY(),
-            popup_panel_.getIdealWidth(), popup_panel_.getIdealHeight()
-        });
     }
 
     void ButtonPanel::repaintCallBackSlow() {
