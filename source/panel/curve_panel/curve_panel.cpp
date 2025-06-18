@@ -91,7 +91,9 @@ namespace zlpanel {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
             mag_analyzer_panel_.run(*this);
-            equalize_panel_.run(*this);
+            if (equalize_show_ref_.load(std::memory_order::relaxed) > .5f) {
+                equalize_panel_.run(*this);
+            }
         }
     }
 
