@@ -11,6 +11,7 @@
 
 #include "dragger_panel.hpp"
 #include "popup_panel.hpp"
+#include "filter_para_panel.hpp"
 
 namespace zlpanel {
     class ButtonPanel final : public juce::Component {
@@ -56,6 +57,7 @@ namespace zlpanel {
         zlgui::slider::SnappingSlider q_slider_;
         std::unique_ptr<zlgui::attachment::SliderAttachment<true>> q_attachment_;
 
+        FilterParaPanel para_panel_;
         PopupPanel popup_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
 

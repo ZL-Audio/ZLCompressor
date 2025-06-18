@@ -14,11 +14,9 @@
 #include "../../../helper/helper.hpp"
 
 namespace zlpanel {
-    class PopupPanel final : public juce::Component {
+    class FilterParaPanel final : public juce::Component {
     public:
-        explicit PopupPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx);
-
-        void paint(juce::Graphics &g) override;
+        explicit FilterParaPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx);
 
         void resized() override;
 
@@ -35,19 +33,17 @@ namespace zlpanel {
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
         size_t &selected_band_idx_;
-        size_t band_{zlp::kBandNum};
-        std::atomic<float> *bypass_ref_{nullptr};
 
-        const std::unique_ptr<juce::Drawable> bypass_drawable_;
-        zlgui::button::ClickButton bypass_button_;
+        zlgui::label::NameLookAndFeel label_laf_;
+        juce::Label freq_label_, gain_label_;
 
-        const std::unique_ptr<juce::Drawable> close_drawable_;
-        zlgui::button::ClickButton close_button_;
+        std::atomic<float> *ftype_ref_{nullptr};
+        float c_ftype_{-1.f};
 
-        zlgui::combobox::CompactCombobox ftype_box_;
-        std::unique_ptr<zlgui::attachment::ComboBoxAttachment<true> > ftype_attachment_;
+        zlgui::slider::CompactLinearSlider<false, false, false> freq_slider_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true>> freq_attachment_;
 
-        zlgui::combobox::CompactCombobox slope_box_;
-        std::unique_ptr<zlgui::attachment::ComboBoxAttachment<true> > slope_attachment_;
+        zlgui::slider::CompactLinearSlider<false, false, false> gain_slider_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true>> gain_attachment_;
     };
 } // zlpanel

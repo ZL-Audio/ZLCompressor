@@ -14,8 +14,10 @@ namespace zlpanel {
                              size_t &selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           q_slider_(base),
+          para_panel_(processor, base, selected_band_idx),
           popup_panel_(processor, base, selected_band_idx) {
         addChildComponent(q_slider_);
+        addChildComponent(para_panel_);
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band] = std::make_unique<DraggerPanel>(
                 p_ref_, base_, band, selected_band_idx);
@@ -28,6 +30,10 @@ namespace zlpanel {
     void ButtonPanel::resized() {
         const auto bound = getLocalBounds();
         q_slider_.setBounds(bound);
+        para_panel_.setBounds({
+            bound.getX(), bound.getY(),
+            para_panel_.getIdealWidth(), para_panel_.getIdealHeight()
+        });
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band]->setBounds(bound);
         }
@@ -42,6 +48,7 @@ namespace zlpanel {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band]->repaintCallBackSlow();
         }
+        para_panel_.repaintCallBackSlow();
         popup_panel_.repaintCallBackSlow();
     }
 
@@ -54,11 +61,12 @@ namespace zlpanel {
             previous_band_idx_ = selected_band_idx_;
             q_attachment_.reset();
             if (selected_band_idx_ != zlp::kBandNum) {
-                q_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true>>(
+                q_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true> >(
                     q_slider_,
                     p_ref_.parameters_, zlp::PQ::kID + std::to_string(selected_band_idx_),
                     updater_);
             }
+            para_panel_.updateBand();
             popup_panel_.updateBand();
         }
     }
