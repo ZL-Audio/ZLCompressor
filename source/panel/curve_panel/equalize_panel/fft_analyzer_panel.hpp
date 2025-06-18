@@ -32,6 +32,7 @@ namespace zlpanel {
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
 
+        bool skip_next_repaint_{false};
         AtomicBound<float> atomic_bound_;
         float width_{-.1f};
 

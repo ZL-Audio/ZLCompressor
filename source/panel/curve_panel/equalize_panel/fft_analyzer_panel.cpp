@@ -21,10 +21,13 @@ namespace zlpanel {
         setInterceptsMouseClicks(false, false);
     }
 
-    FFTAnalyzerPanel::~FFTAnalyzerPanel() {
-    }
+    FFTAnalyzerPanel::~FFTAnalyzerPanel() = default;
 
     void FFTAnalyzerPanel::paint(juce::Graphics &g) {
+        if (skip_next_repaint_) {
+            skip_next_repaint_ = false;
+            return;
+        }
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
@@ -36,11 +39,13 @@ namespace zlpanel {
     void FFTAnalyzerPanel::resized() {
         const auto bound = getLocalBounds().toFloat();
         atomic_bound_.store(bound);
+        skip_next_repaint_ = true;
     }
 
     void FFTAnalyzerPanel::run() {
         auto &analyzer{p_ref_.getEqualizeController().getFFTAnalyzer()};
         analyzer.run();
+        next_out_path_.clear();
 
         const auto bound = atomic_bound_.load();
         // re-calculate xs if width changes
@@ -50,7 +55,6 @@ namespace zlpanel {
         }
         analyzer.createPathYs({std::span{ys_}}, bound.getHeight());
 
-        next_out_path_.clear();
         next_out_path_.startNewSubPath(bound.getBottomLeft());
         for (size_t i = 0; i < xs_.size(); ++i) {
             if (std::isfinite(xs_[0]) && std::isfinite(ys_[i])) {

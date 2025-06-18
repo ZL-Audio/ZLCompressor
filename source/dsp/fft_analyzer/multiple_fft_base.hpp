@@ -27,7 +27,7 @@ namespace zldsp::analyzer {
     template<typename FloatType, size_t FFTNum, size_t PointNum>
     class MultipleFFTBase {
     private:
-        static constexpr float kMinFreq = 10.f, kMaxFreq = 22000.f, kMinDB = -72.f;
+        static constexpr float kMinFreq = 10.f, kMaxFreq = 22000.f, kMinDB = -256.f;
         static constexpr float kMinFreqLog2 = 3.321928094887362f;
         static constexpr float kMaxFreqLog2 = 14.425215903299383f;
 
@@ -161,7 +161,7 @@ namespace zldsp::analyzer {
                     auto temp = kfr::make_univector(fft_buffer_.data(), window_.size());
                     temp = temp * window_;
                     fft_.forwardMagnitudeOnly(fft_buffer_.data());
-                    const auto decay = actual_decay_rates_[i].load();
+                    const auto decay = actual_decay_rates_[i].load(std::memory_order::relaxed);
                     auto &smoothed_db{smoothed_dbs_[i]};
                     if (to_reset_[i].exchange(false)) {
                         std::fill(smoothed_db.begin(), smoothed_db.end(), kMinDB * 2.f);
