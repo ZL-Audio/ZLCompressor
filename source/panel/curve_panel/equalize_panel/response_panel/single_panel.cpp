@@ -49,7 +49,8 @@ namespace zlpanel {
     }
 
     bool SinglePanel::run(const std::span<float> xs, std::span<float> ys,
-                          const juce::Rectangle<float> &bound, const bool force) {
+                          const juce::Rectangle<float> &bound, const float max_db,
+                          const bool force) {
         if (!filter_.getUpdateFlag().exchange(false, std::memory_order::acquire) && !force) {
             return false;
         }
@@ -59,7 +60,7 @@ namespace zlpanel {
         filter_.updateParas();
         filter_.updateMagnitude(kWsFloat, ys);
 
-        const auto scale = -bound.getHeight() * .5f / 30.f;
+        const auto scale = -bound.getHeight() * .5f / max_db;
         const auto bias = bound.getCentreY();
         auto ys_vector = kfr::make_univector(ys);
         ys_vector = ys_vector * scale + bias;

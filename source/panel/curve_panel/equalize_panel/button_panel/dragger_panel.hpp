@@ -28,6 +28,8 @@ namespace zlpanel {
             return dragger_;
         }
 
+        void setEQMaxDB(float db);
+
     private:
         const juce::NormalisableRange<float> kFreqRange{
             10.f, 20000.f,
@@ -56,7 +58,7 @@ namespace zlpanel {
 
         zlgui::attachment::ComponentUpdater updater_;
         zlgui::dragger::Dragger dragger_;
-        zlgui::attachment::DraggerAttachment<false> dragger_attachment_;
+        std::unique_ptr<zlgui::attachment::DraggerAttachment<false>> dragger_attachment_;
 
         void updateDraggerBound();
         void lookAndFeelChanged() override;

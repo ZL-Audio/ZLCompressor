@@ -13,6 +13,7 @@ namespace zlpanel {
     ButtonPanel::ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
                              size_t &selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
+          eq_max_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
           q_slider_(base),
           eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
           eq_db_box_attachment_(eq_db_box_.getBox(), processor.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
@@ -68,6 +69,15 @@ namespace zlpanel {
 
     void ButtonPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+        const auto c_eq_max_db_id = eq_max_db_id_ref_.load(std::memory_order::relaxed);
+        if (std::abs(c_eq_max_db_id - eq_max_db_id_) > 1e-3f) {
+            eq_max_db_id_ = std::round(c_eq_max_db_id);
+
+            const auto eq_max_db = zlstate::PEQMaxDB::dBs[static_cast<size_t>(eq_max_db_id_)];
+            for (size_t band = 0; band < zlp::kBandNum; ++band) {
+                dragger_panels_[band]->setEQMaxDB(eq_max_db);
+            }
+        }
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band]->repaintCallBackSlow();
         }

@@ -29,7 +29,8 @@ namespace zlpanel {
         void paint(juce::Graphics &g) override;
 
         bool run(std::span<float> xs, std::span<float> ys,
-                 const juce::Rectangle<float> &bound, bool force = false);
+                 const juce::Rectangle<float> &bound, float max_db,
+                 bool force = false);
 
         juce::Point<float> getButtonPos() const {
             return button_pos_.load();

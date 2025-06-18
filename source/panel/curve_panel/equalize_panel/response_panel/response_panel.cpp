@@ -11,7 +11,9 @@
 
 namespace zlpanel {
     ResponsePanel::ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base)
-        : base_(base), sum_panel_(processor, base) {
+        : base_(base),
+          eq_max_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
+          sum_panel_(processor, base) {
         for (auto &f: filters_) {
             f.prepare(48000.0);
         }
@@ -49,6 +51,15 @@ namespace zlpanel {
                             bool to_update_sum) {
         const auto new_bound = bound_.load();
         bool to_update_single = false;
+
+        const auto c_eq_max_db_id = eq_max_db_id_ref_.load(std::memory_order::relaxed);
+        if (std::abs(c_eq_max_db_id - eq_max_db_id_) > 1e-3f) {
+            eq_max_db_id_ = std::round(c_eq_max_db_id);
+            to_update_single = true;
+
+            eq_max_db_ = zlstate::PEQMaxDB::dBs[static_cast<size_t>(eq_max_db_id_)];
+        }
+
         if (std::abs(new_bound.getWidth() - c_bound_.getWidth()) > 1e-3f
             || std::abs(new_bound.getHeight() - c_bound_.getHeight()) > 1e-3f) {
             c_bound_ = new_bound;
@@ -64,7 +75,7 @@ namespace zlpanel {
         to_update_sum = to_update_sum || to_update_single;
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             const auto f = single_panels_[band]->run(std::span(xs_), std::span(yss_[band]),
-                                                     c_bound_, to_update_single);
+                                                     c_bound_, eq_max_db_, to_update_single);
             to_update_sum = to_update_sum || f;
         }
 
@@ -80,7 +91,7 @@ namespace zlpanel {
     }
 
     void ResponsePanel::updateBand(const size_t band) {
-        for (auto &panel : single_panels_) {
+        for (auto &panel: single_panels_) {
             panel->setCurveThicknessScale(.5f);
         }
         if (band < zlp::kBandNum) {

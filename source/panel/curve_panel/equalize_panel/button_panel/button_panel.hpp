@@ -53,6 +53,9 @@ namespace zlpanel {
         size_t previous_band_idx_{zlp::kBandNum};
         size_t &selected_band_idx_;
 
+        std::atomic<float> &eq_max_db_id_ref_;
+        float eq_max_db_id_{-1.f};
+
         zlgui::attachment::ComponentUpdater updater_;
         zlgui::slider::SnappingSlider q_slider_;
         std::unique_ptr<zlgui::attachment::SliderAttachment<true> > q_attachment_;

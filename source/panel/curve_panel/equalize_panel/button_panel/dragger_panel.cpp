@@ -16,11 +16,7 @@ namespace zlpanel {
           band_idx_(band_idx), selected_band_idx_(selected_band_idx),
           filter_type_ref_(*p_ref_.parameters_.getRawParameterValue(
               zlp::PFilterType::kID + std::to_string(band_idx))),
-          dragger_(base),
-          dragger_attachment_(dragger_, p_ref_.parameters_,
-                              zlp::PFreq::kID + std::to_string(band_idx), kFreqRange,
-                              zlp::PGain::kID + std::to_string(band_idx), zlp::PGain::kRange,
-                              updater_) {
+          dragger_(base) {
         dragger_.getButton().setBufferedToImage(true);
         dragger_.setBroughtToFrontOnMouseClick(true);
 
@@ -48,6 +44,16 @@ namespace zlpanel {
             filter_type_ = filter_type;
             updateDraggerBound();
         }
+    }
+
+    void DraggerPanel::setEQMaxDB(const float db) {
+        dragger_attachment_.reset();
+        dragger_attachment_ = std::make_unique<zlgui::attachment::DraggerAttachment<false> >(
+            dragger_, p_ref_.parameters_,
+            zlp::PFreq::kID + std::to_string(band_idx_), kFreqRange,
+            zlp::PGain::kID + std::to_string(band_idx_), juce::NormalisableRange<float>(-db, db, .01f),
+            updater_
+        );
     }
 
     void DraggerPanel::updateDraggerBound() {
