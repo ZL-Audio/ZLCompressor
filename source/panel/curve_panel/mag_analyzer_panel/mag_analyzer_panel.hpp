@@ -22,8 +22,6 @@ namespace zlpanel {
 
         ~MagAnalyzerPanel() override;
 
-        void paint(juce::Graphics &g) override;
-
         void resized() override;
 
         void repaintCallBackSlow();

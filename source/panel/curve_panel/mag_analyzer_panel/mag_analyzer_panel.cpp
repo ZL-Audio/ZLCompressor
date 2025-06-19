@@ -27,10 +27,6 @@ namespace zlpanel {
     MagAnalyzerPanel::~MagAnalyzerPanel() {
     }
 
-    void MagAnalyzerPanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor());
-    }
-
     void MagAnalyzerPanel::resized() {
         const auto bound = getLocalBounds();
         background_panel_.setBounds(bound);
