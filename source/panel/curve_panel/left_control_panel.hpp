@@ -24,7 +24,7 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        constexpr static int kButtonNum = 5;
+        constexpr static int kButtonNum = 4;
 
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
