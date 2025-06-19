@@ -39,16 +39,22 @@ namespace zldsp::compressor {
             high_th_ = other.high_th_;
             para_mid_g0_ = other.para_mid_g0_;
             para_high_g0_ = other.para_high_g0_;
+            para_over_g0_ = other.para_over_g0_;
         }
 
         FloatType eval(FloatType x) override {
             if (x <= low_th_) {
-                return OutputDiff ? FloatType(0) : x;
-            } else if (x >= high_th_) {
-                x = std::min(x, FloatType(0));
+                if constexpr (OutputDiff) {
+                    return FloatType(0);
+                } else {
+                    return x;
+                }
+            } else if (x < high_th_) {
+                return (para_mid_g0_[0] * x + para_mid_g0_[1]) * x + para_mid_g0_[2];
+            } else if (x < FloatType(0)) {
                 return (para_high_g0_[0] * x + para_high_g0_[1]) * x + para_high_g0_[2];
             } else {
-                return (para_mid_g0_[0] * x + para_mid_g0_[1]) * x + para_mid_g0_[2];
+                return para_over_g0_[0] * x + para_over_g0_[1];
             }
         }
 
@@ -86,7 +92,7 @@ namespace zldsp::compressor {
 
             void setPara(FloatType t, FloatType r, FloatType) {
                 b = FloatType(1) / r;
-                c = t * (FloatType(1) - FloatType(1) / r);
+                c = t * (FloatType(1) - b);
             }
         };
 
@@ -95,8 +101,9 @@ namespace zldsp::compressor {
             static constexpr FloatType b{FloatType(0)};
 
             void setPara(FloatType t, FloatType r, FloatType w) {
-                a = FloatType(0.5) / (r * std::min(t + w, FloatType(-0.0001)));
-                c = FloatType(0.5) * (w - t) / r + t;
+                const auto temp = FloatType(0.5) / r;
+                a = temp / std::min(t + w, FloatType(-0.0001));
+                c = temp * (w - t) + t;
             }
         };
 
@@ -105,8 +112,9 @@ namespace zldsp::compressor {
             static constexpr FloatType b{FloatType(1)};
 
             void setPara(FloatType t, FloatType r, FloatType w) {
-                a = FloatType(0.5) * (FloatType(1) - r) / (r * std::min(t + w, FloatType(-0.0001)));
-                c = FloatType(0.5) * (FloatType(1) - r) * (w - t) / r;
+                const auto temp = FloatType(0.5) * (FloatType(1) - r) / r;
+                a = temp / std::min(t + w, FloatType(-0.0001));
+                c = temp * (w - t);
             }
         };
 
@@ -116,7 +124,8 @@ namespace zldsp::compressor {
         std::atomic<FloatType> threshold_{-18}, ratio_{2};
         std::atomic<FloatType> knee_w_{FloatType(0.25)}, curve_{0};
         FloatType low_th_{0}, high_th_{0};
-        std::array<FloatType, 3> para_mid_g0_, para_high_g0_;
+        std::array<FloatType, 3> para_mid_g0_{}, para_high_g0_{};
+        std::array<FloatType, 2> para_over_g0_{};
         std::atomic<bool> to_interpolate_{true};
 
         void interpolate() {
@@ -131,30 +140,42 @@ namespace zldsp::compressor {
                 const auto a1 = -low_th_;
                 para_mid_g0_[0] = a0;
                 const auto a0a1 = a0 * a1;
-                if (OutputDiff) {
+                if constexpr (OutputDiff) {
                     para_mid_g0_[1] = FloatType(2) * a0a1;
                 } else {
                     para_mid_g0_[1] = FloatType(2) * a0a1 + FloatType(1);
                 }
                 para_mid_g0_[2] = a0a1 * a1;
-            }
-            if (current_curve >= FloatType(0)) {
-                const auto alpha = FloatType(1) - current_curve, beta = current_curve;
-                linear_curve_.setPara(current_threshold, current_ratio, current_knee_w);
-                down_curve_.setPara(current_threshold, current_ratio, current_knee_w);
-                para_high_g0_[2] = alpha * linear_curve_.c + beta * down_curve_.c;
-                para_high_g0_[1] = alpha * linear_curve_.b + beta * down_curve_.b;
-                para_high_g0_[0] = beta * down_curve_.a;
-            } else {
-                const auto alpha = FloatType(1) + current_curve, beta = -current_curve;
-                linear_curve_.setPara(current_threshold, current_ratio, current_knee_w);
-                up_curve_.setPara(current_threshold, current_ratio, current_knee_w);
-                para_high_g0_[2] = alpha * linear_curve_.c + beta * up_curve_.c;
-                para_high_g0_[1] = alpha * linear_curve_.b + beta * up_curve_.b;
-                para_high_g0_[0] = beta * up_curve_.a;
-            }
-            if (OutputDiff) {
-                para_high_g0_[1] -= FloatType(1);
+            } {
+                if (current_curve >= FloatType(0)) {
+                    const auto alpha = FloatType(1) - current_curve, beta = current_curve;
+                    linear_curve_.setPara(current_threshold, current_ratio, current_knee_w);
+                    down_curve_.setPara(current_threshold, current_ratio, current_knee_w);
+                    para_high_g0_[2] = alpha * linear_curve_.c + beta * down_curve_.c;
+                    para_high_g0_[1] = alpha * linear_curve_.b + beta * down_curve_.b;
+                    para_high_g0_[0] = beta * down_curve_.a;
+                } else {
+                    const auto alpha = FloatType(1) + current_curve, beta = -current_curve;
+                    linear_curve_.setPara(current_threshold, current_ratio, current_knee_w);
+                    up_curve_.setPara(current_threshold, current_ratio, current_knee_w);
+                    para_high_g0_[2] = alpha * linear_curve_.c + beta * up_curve_.c;
+                    para_high_g0_[1] = alpha * linear_curve_.b + beta * up_curve_.b;
+                    para_high_g0_[0] = beta * up_curve_.a;
+                }
+                if constexpr (OutputDiff) {
+                    para_high_g0_[1] -= FloatType(1);
+                }
+            } {
+                if (high_th_ <= FloatType(0)) {
+                    para_over_g0_[0] = para_high_g0_[1];
+                    para_over_g0_[1] = para_high_g0_[2];
+                } else {
+                    para_over_g0_[0] = linear_curve_.b;
+                    para_over_g0_[1] = linear_curve_.c;
+                    if constexpr (OutputDiff) {
+                        para_over_g0_[0] -= FloatType(1);
+                    }
+                }
             }
         }
     };
