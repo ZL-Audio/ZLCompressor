@@ -64,4 +64,8 @@ namespace zlpanel {
         bound.removeFromBottom(height);
         rms_show_button_.setBounds(bound.removeFromBottom(button_height));
     }
+
+    void LeftControlPanel::repaintCallBackSlow() {
+        updater_.updateComponents();
+    }
 } // zlpanel

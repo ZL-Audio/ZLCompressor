@@ -123,6 +123,7 @@ namespace zlpanel {
         mag_analyzer_panel_.getSeparatePanel().setVisible(actual_rms_show || computer_show);
         mag_analyzer_panel_.getComputerPanel().setVisible(computer_show);
 
+        left_control_panel_.repaintCallBackSlow();
         side_control_panel_.repaintCallBackSlow();
         bottom_control_panel_.repaintCallBackSlow();
         equalize_panel_.repaintCallBackSlow();

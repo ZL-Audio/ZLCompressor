@@ -29,7 +29,6 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        [[maybe_unused]] PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         zlgui::attachment::ComponentUpdater updater_;
 

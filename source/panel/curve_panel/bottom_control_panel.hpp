@@ -37,13 +37,13 @@ namespace zlpanel {
         juce::Path background_path0_, background_path1_;
 
         zlgui::combobox::CompactCombobox time_length_box_;
-        zlgui::attachment::ComboBoxAttachment<false> time_length_attachment_;
+        zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
 
         zlgui::combobox::CompactCombobox mag_type_box_;
-        zlgui::attachment::ComboBoxAttachment<false> mag_type_attachment_;
+        zlgui::attachment::ComboBoxAttachment<true> mag_type_attachment_;
 
         zlgui::combobox::CompactCombobox min_db_box_;
-        zlgui::attachment::ComboBoxAttachment<false> min_db_attachment_;
+        zlgui::attachment::ComboBoxAttachment<true> min_db_attachment_;
 
         zlgui::label::NameLookAndFeel label_laf_;
         juce::Label threshold_label_, ratio_label_, attack_label_, release_label_;

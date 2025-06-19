@@ -12,7 +12,7 @@
 
 namespace zlpanel {
     SideControlPanel::SideControlPanel(PluginProcessor &p, zlgui::UIBase &base)
-        : p_ref_(p), base_(base),
+        : base_(base),
           stereo_mode_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoMode::kID)),
           stereo_swap_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoSwap::kID)),
           panel_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),

@@ -61,7 +61,7 @@ namespace zlpanel {
         std::unique_ptr<zlgui::attachment::SliderAttachment<true> > q_attachment_;
 
         zlgui::combobox::CompactCombobox eq_db_box_;
-        zlgui::attachment::ComboBoxAttachment<false> eq_db_box_attachment_;
+        zlgui::attachment::ComboBoxAttachment<true> eq_db_box_attachment_;
 
         FilterParaPanel para_panel_;
         PopupPanel popup_panel_;
