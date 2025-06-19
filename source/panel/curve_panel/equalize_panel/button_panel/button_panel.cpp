@@ -140,8 +140,9 @@ namespace zlpanel {
         const auto point = event.getPosition().toFloat();
         const auto x = point.getX(), y = point.getY();
 
+        const auto eq_max_db = zlstate::PEQMaxDB::kDBs[static_cast<size_t>(eq_max_db_id_)];
         const auto freq = std::exp(x / bound.getWidth() * std::log(2200.f)) * 10.f;
-        const auto gain = -(y - bound.getCentreY()) / bound.getHeight() * 2.f * 30.f;
+        const auto gain = -(y - bound.getCentreY()) / bound.getHeight() * 2.f * eq_max_db;
 
         std::vector<float> init_values;
         init_values.reserve(init_IDs.size());
