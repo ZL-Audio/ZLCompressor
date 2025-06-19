@@ -112,7 +112,7 @@ namespace zlstate {
         inline auto static const kChoices = juce::StringArray{
             "6 dB", "12 dB", "30 dB"
         };
-        static constexpr std::array dBs = {6.f, 12.f, 30.f};
+        static constexpr std::array kDBs = {6.f, 12.f, 30.f};
         int static constexpr kDefaultI = 1;
     };
 

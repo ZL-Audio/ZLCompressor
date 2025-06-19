@@ -11,7 +11,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "background_panel.hpp"
+#include "equalize_background_panel.hpp"
 #include "fft_analyzer_panel.hpp"
 #include "response_panel/response_panel.hpp"
 #include "button_panel/button_panel.hpp"
@@ -37,7 +37,7 @@ namespace zlpanel {
         zlgui::UIBase &base_;
         size_t selected_band_idx_{zlp::kBandNum}, previous_band_idx_{zlp::kBandNum};
 
-        BackgroundPanel background_panel_;
+        EqualizerBackgroundPanel background_panel_;
         FFTAnalyzerPanel fft_analyzer_panel_;
         ResponsePanel response_panel_;
         ButtonPanel button_panel_;

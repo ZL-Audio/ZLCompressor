@@ -9,16 +9,14 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
 #include "../../../PluginProcessor.hpp"
 #include "../../helper/helper.hpp"
 #include "../../../gui/gui.hpp"
 
 namespace zlpanel {
-    class BackgroundPanel final : public juce::Component {
+    class EqualizerBackgroundPanel final : public juce::Component {
     public:
-        explicit BackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit EqualizerBackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
         void resized() override;
 

@@ -126,6 +126,7 @@ namespace zlpanel {
         left_control_panel_.repaintCallBackSlow();
         side_control_panel_.repaintCallBackSlow();
         bottom_control_panel_.repaintCallBackSlow();
+        mag_analyzer_panel_.repaintCallBackSlow();
         equalize_panel_.repaintCallBackSlow();
     }
 

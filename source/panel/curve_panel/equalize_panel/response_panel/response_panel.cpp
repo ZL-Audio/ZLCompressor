@@ -57,7 +57,7 @@ namespace zlpanel {
             eq_max_db_id_ = std::round(c_eq_max_db_id);
             to_update_single = true;
 
-            eq_max_db_ = zlstate::PEQMaxDB::dBs[static_cast<size_t>(eq_max_db_id_)];
+            eq_max_db_ = zlstate::PEQMaxDB::kDBs[static_cast<size_t>(eq_max_db_id_)];
         }
 
         if (std::abs(new_bound.getWidth() - c_bound_.getWidth()) > 1e-3f

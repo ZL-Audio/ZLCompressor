@@ -73,7 +73,7 @@ namespace zlpanel {
         if (std::abs(c_eq_max_db_id - eq_max_db_id_) > 1e-3f) {
             eq_max_db_id_ = std::round(c_eq_max_db_id);
 
-            const auto eq_max_db = zlstate::PEQMaxDB::dBs[static_cast<size_t>(eq_max_db_id_)];
+            const auto eq_max_db = zlstate::PEQMaxDB::kDBs[static_cast<size_t>(eq_max_db_id_)];
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 dragger_panels_[band]->setEQMaxDB(eq_max_db);
             }

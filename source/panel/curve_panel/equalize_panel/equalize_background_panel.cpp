@@ -7,27 +7,27 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "background_panel.hpp"
+#include "equalize_background_panel.hpp"
 
 namespace zlpanel {
-    BackgroundPanel::Background1::Background1(zlgui::UIBase &base)
+    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIBase &base)
         : base_(base) {
         setInterceptsMouseClicks(false, false);
         setBufferedToImage(true);
     }
 
-    void BackgroundPanel::Background1::paint(juce::Graphics &g) {
+    void EqualizerBackgroundPanel::Background1::paint(juce::Graphics &g) {
         g.fillAll(base_.getBackgroundColor().withAlpha(.875f));
         g.setFont(base_.getFontSize());
         g.setColour(base_.getTextColor().withAlpha(.375f));
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
             g.drawText(kBackgroundFreqsNames[i], text_bounds_[i], juce::Justification::bottomRight);
         }
-        g.setColour(base_.getTextColor().withAlpha(.0625f));
+        g.setColour(base_.getTextColor().withAlpha(.1f));
         g.fillRectList(rect_list_);
     }
 
-    void BackgroundPanel::Background1::resized() {
+    void EqualizerBackgroundPanel::Background1::resized() {
         rect_list_.clear();
         auto bound = getLocalBounds().toFloat();
         const auto thickness = base_.getFontSize() * 0.1f;
@@ -47,17 +47,17 @@ namespace zlpanel {
         }
     }
 
-    BackgroundPanel::BackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
+    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
         : background1_(base) {
         setInterceptsMouseClicks(false, false);
         addAndMakeVisible(background1_);
     }
 
-    void BackgroundPanel::resized() {
+    void EqualizerBackgroundPanel::resized() {
         background1_.setBounds(getLocalBounds());
     }
 
-    void BackgroundPanel::setMouseOver(const bool is_mouse_on) {
+    void EqualizerBackgroundPanel::setMouseOver(const bool is_mouse_on) {
         setVisible(is_mouse_on);
     }
 } // zlpanel

@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "mag_background_panel.hpp"
 #include "computer_panel.hpp"
 #include "peak_panel.hpp"
 #include "rms_panel.hpp"
@@ -24,6 +25,8 @@ namespace zlpanel {
         void paint(juce::Graphics &g) override;
 
         void resized() override;
+
+        void repaintCallBackSlow();
 
         void repaintCallBack(double time_stamp);
 
@@ -43,6 +46,7 @@ namespace zlpanel {
 
     private:
         zlgui::UIBase &base_;
+        MagBackgroundPanel background_panel_;
         PeakPanel peak_panel_;
         RMSPanel rms_panel_;
         ComputerPanel computer_panel_;

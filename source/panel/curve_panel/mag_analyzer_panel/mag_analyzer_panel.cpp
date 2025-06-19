@@ -12,8 +12,10 @@
 namespace zlpanel {
     MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base)
         : base_(base),
+          background_panel_(p, base),
           peak_panel_(p, base), rms_panel_(p, base),
           computer_panel_(p, base), separate_panel_(base) {
+        addAndMakeVisible(background_panel_);
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);
@@ -31,6 +33,7 @@ namespace zlpanel {
 
     void MagAnalyzerPanel::resized() {
         const auto bound = getLocalBounds();
+        background_panel_.setBounds(bound);
         rms_panel_.setBounds(bound.withWidth(juce::roundToInt(base_.getFontSize() * kSliderScale * .75f)));
         peak_panel_.setBounds(bound);
         const auto r = std::min(bound.getWidth(), bound.getHeight());
@@ -54,6 +57,10 @@ namespace zlpanel {
         } else {
             rms_panel_.run(false);
         }
+    }
+
+    void MagAnalyzerPanel::repaintCallBackSlow() {
+        background_panel_.repaintCallBackSlow();
     }
 
     void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {
