@@ -24,21 +24,27 @@ PluginEditor::PluginEditor(PluginProcessor &p)
         BinaryData::MiSansLatinMedium_ttf, BinaryData::MiSansLatinMedium_ttfSize);
     juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(font_face);
 
+    // add the main panel
+    addAndMakeVisible(main_panel_);
+
     // set size & size listener
     setResizeLimits(static_cast<int>(zlstate::PWindowW::minV),
                     static_cast<int>(zlstate::PWindowH::minV),
                     static_cast<int>(zlstate::PWindowW::maxV),
                     static_cast<int>(zlstate::PWindowH::maxV));
     setResizable(true, p.wrapperType != PluginProcessor::wrapperType_AudioUnitv3);
+
+    this->resizableCorner = std::make_unique<zlgui::ResizeCorner>(base_, this, getConstrainer(),
+                                                                  zlgui::ResizeCorner::kScaleWithWidth, 0.025f);
+    addChildComponent(this->resizableCorner.get());
+    this->resizableCorner->setAlwaysOnTop(true);
+    this->resizableCorner->resized();
+
     last_ui_width_.referTo(p.state_.getParameterAsValue(zlstate::PWindowW::kID));
     last_ui_height_.referTo(p.state_.getParameterAsValue(zlstate::PWindowH::kID));
     setSize(last_ui_width_.getValue(), last_ui_height_.getValue());
 
-    // add the main panel
-    addAndMakeVisible(main_panel_);
-
     startTimerHz(2);
-
     updateIsShowing();
 }
 

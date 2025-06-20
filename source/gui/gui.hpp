@@ -20,3 +20,4 @@
 #include "colour_selector/colour_opacity_selector.hpp"
 #include "colour_selector/colour_map_selector.hpp"
 #include "tooltip/tooltip.hpp"
+#include "resize_corner/resize_corner.hpp"
