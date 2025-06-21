@@ -193,6 +193,11 @@ namespace zlp {
             zldsp::compressor::OpticalCompressor<float>{computer_[0], tracker_[0], follower_[0]},
             zldsp::compressor::OpticalCompressor<float>{computer_[1], tracker_[1], follower_[1]}
         };
+        // vocal compressors
+        std::array<zldsp::compressor::VocalCompressor<float>, 2> vocal_comps_ = {
+            zldsp::compressor::VocalCompressor<float>{computer_[0], tracker_[0], follower_[0]},
+            zldsp::compressor::VocalCompressor<float>{computer_[1], tracker_[1], follower_[1]}
+        };
 
         std::atomic<bool> to_update_hold_{true};
         std::atomic<float> hold_length_{0.0};
@@ -220,6 +225,8 @@ namespace zlp {
         void processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+
+        void processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void handleAsyncUpdate() override;
     };

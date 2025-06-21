@@ -27,8 +27,6 @@ namespace zldsp::compressor {
 
         virtual ~CompressorStyleBase() = default;
 
-        virtual void reset() = 0;
-
     protected:
         ComputerBase<FloatType> &computer_;
         RMSTracker<FloatType> &tracker_;

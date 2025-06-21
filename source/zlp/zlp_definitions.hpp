@@ -202,7 +202,7 @@ namespace zlp {
         auto static constexpr kID = "comp_style";
         auto static constexpr kName = "Compressor Style";
         inline auto static const kChoices = juce::StringArray{
-            "Clean", "Classic", "Optical"
+            "Clean", "Classic", "Optical", "Vocal"
         };
         int static constexpr kDefaultI = 0;
     };

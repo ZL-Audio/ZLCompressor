@@ -12,11 +12,13 @@
 #include "clean.hpp"
 #include "classic.hpp"
 #include "optical.hpp"
+#include "vocal.hpp"
 
 namespace zldsp::compressor {
     enum Style {
         kClean,
         kClassic,
-        kOptical
+        kOptical,
+        kVocal
     };
 }

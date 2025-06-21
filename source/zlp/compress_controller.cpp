@@ -126,10 +126,17 @@ namespace zlp {
                 case zldsp::compressor::Style::kClassic: {
                     classic_comps_[0].reset();
                     classic_comps_[1].reset();
+                    break;
                 }
                 case zldsp::compressor::Style::kOptical: {
                     optical_comps_[0].reset();
                     optical_comps_[1].reset();
+                    break;
+                }
+                case zldsp::compressor::Style::kVocal: {
+                    vocal_comps_[0].reset();
+                    vocal_comps_[1].reset();
+                    break;
                 }
                 default: break;
             }
@@ -169,8 +176,8 @@ namespace zlp {
     }
 
     void CompressController::process(std::array<float *, 2> main_pointers,
-                                       std::array<float *, 2> side_pointers,
-                                       const size_t num_samples) {
+                                     std::array<float *, 2> side_pointers,
+                                     const size_t num_samples) {
         if (to_update_.exchange(false, std::memory_order::acquire)) {
             prepareBuffer();
         }
@@ -252,8 +259,8 @@ namespace zlp {
     }
 
     void CompressController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
-                                             float * __restrict side_buffer0, float * __restrict side_buffer1,
-                                             const size_t num_samples) {
+                                           float * __restrict side_buffer0, float * __restrict side_buffer1,
+                                           const size_t num_samples) {
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
         tracker_[0].prepareBuffer();
@@ -271,6 +278,10 @@ namespace zlp {
             }
             case zldsp::compressor::Style::kOptical: {
                 processSideBufferOptical(side_buffer0, side_buffer1, num_samples);
+                break;
+            }
+            case zldsp::compressor::Style::kVocal: {
+                processSideBufferVocal(side_buffer0, side_buffer1, num_samples);
                 break;
             }
             default: return;
@@ -311,21 +322,27 @@ namespace zlp {
     }
 
     void CompressController::processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1,
-                                                      const size_t num_samples) {
+                                                    const size_t num_samples) {
         clean_comps_[0].process(buffer0, num_samples);
         clean_comps_[1].process(buffer1, num_samples);
     }
 
     void CompressController::processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1,
-                                                        const size_t num_samples) {
+                                                      const size_t num_samples) {
         classic_comps_[0].process(buffer0, num_samples);
         classic_comps_[1].process(buffer1, num_samples);
     }
 
     void CompressController::processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1,
-                                                        const size_t num_samples) {
+                                                      const size_t num_samples) {
         optical_comps_[0].process(buffer0, num_samples);
         optical_comps_[1].process(buffer1, num_samples);
+    }
+
+    void CompressController::processSideBufferVocal(float *buffer0, float *buffer1,
+                                                    const size_t num_samples) {
+        vocal_comps_[0].process(buffer0, num_samples);
+        vocal_comps_[1].process(buffer1, num_samples);
     }
 
     void CompressController::handleAsyncUpdate() {

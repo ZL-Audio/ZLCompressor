@@ -23,14 +23,14 @@ namespace zldsp::compressor {
             : base(computer, tracker, follower) {
         }
 
-        void reset() override {
+        void reset() {
             base::follower_.reset(FloatType(0));
         }
 
         template <bool UseRMS = false>
         void process(FloatType *buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
-            if (UseRMS) {
+            if constexpr (UseRMS) {
                 // pass through the tracker
                 for (size_t i = 0; i < num_samples; ++i) {
                     base::tracker_.processSample(vector[i]);
