@@ -65,7 +65,8 @@ namespace zlpanel {
             is_first_point_ = true;
         }
         if (is_first_point_) {
-            if (mag_analyzer_ref_.run(1) > 0) {
+            auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(1, 0);
+            if (actual_delta > 0) {
                 is_first_point_ = false;
                 current_count_ = 0.;
                 start_time_ = next_time_stamp;
@@ -75,34 +76,26 @@ namespace zlpanel {
                 updatePaths(current_bound);
             }
         } else {
-            const auto target_count = (next_time_stamp - start_time_) * num_per_second_.load();
+            const auto c_num_per_second = num_per_second_.load(std::memory_order::relaxed);
+            const auto tolerance = c_num_per_second * .125f;
+            const auto target_count = (next_time_stamp - start_time_) * c_num_per_second;
             const auto target_delta = target_count - current_count_;
-            const auto actual_delta = static_cast<double>(mag_analyzer_ref_.run(
-                static_cast<int>(std::floor(target_delta))));
+            auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(
+                static_cast<int>(std::floor(target_delta)),
+                static_cast<int>(std::round(tolerance)));
             current_count_ += static_cast<double>(actual_delta);
-            const auto current_error = std::abs(target_delta - actual_delta);
-            if (current_error < smooth_error_) {
-                smooth_error_ = current_error;
-            } else {
-                smooth_error_ = smooth_error_ * 0.95 + current_error * 0.05;
+
+            if (to_reset_shift) {
+                start_time_ = next_time_stamp;
+                current_count_ = 0.;
             }
-            if (smooth_error_ > 1.0) {
-                current_count_ += std::floor(smooth_error_);
-                if (cons_error_count_ < 5) {
-                    cons_error_count_ += 1;
-                }
-            }
-            if (actual_delta > 0) {
-                cons_error_count_ = 0;
-            }
-            if (cons_error_count_ < 5) {
-                const auto shift = target_count - current_count_;
-                mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
-                                                      current_bound.getWidth(), current_bound.getHeight(),
-                                                      static_cast<float>(shift),
-                                                      analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
-                updatePaths(current_bound);
-            }
+
+            const auto shift = to_reset_shift ? 0.0 : target_count - current_count_;
+            mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
+                                                  current_bound.getWidth(), current_bound.getHeight(),
+                                                  static_cast<float>(shift),
+                                                  analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
+            updatePaths(current_bound);
         }
         std::lock_guard<std::mutex> lock{mutex_};
         in_path_.swapWithPath(next_in_path_);

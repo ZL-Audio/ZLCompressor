@@ -52,8 +52,6 @@ namespace zlpanel {
         std::atomic<double> num_per_second_{50.0};
 
         bool is_first_point_{true};
-        double smooth_error_{0.f};
-        int cons_error_count_{0};
 
         std::atomic<float> analyzer_min_db_{-72.f};
 

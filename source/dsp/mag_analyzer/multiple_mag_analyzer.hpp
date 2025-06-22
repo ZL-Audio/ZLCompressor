@@ -25,7 +25,8 @@ namespace zldsp::analyzer {
             std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }
 
-        int run(const int num_to_read = PointNum) {
+        std::pair<int, bool> run(const int num_to_read = static_cast<int>(PointNum),
+                                 const int tolerance = 0) {
             // calculate the number of points put into circular buffers
             const int fifo_num_ready = this->abstract_fifo_.getNumReady();
             if (this->to_reset_.exchange(false, std::memory_order::acquire)) {
@@ -35,12 +36,14 @@ namespace zldsp::analyzer {
                 // clear FIFOs
                 this->abstract_fifo_.prepareToRead(fifo_num_ready);
                 this->abstract_fifo_.finishRead(fifo_num_ready);
-                return 0;
+                return {0, true};
             }
-            const int num_ready = fifo_num_ready >= static_cast<int>(PointNum / 2)
+            bool to_reset_shift = std::abs(fifo_num_ready - num_to_read) >= tolerance;
+
+            const int num_ready = to_reset_shift
                                       ? fifo_num_ready
                                       : std::min(fifo_num_ready, num_to_read);
-            if (num_ready <= 0) return 0;
+            if (num_ready <= 0) return {0, to_reset_shift};
             const auto num_ready_shift = static_cast<size_t>(num_ready);
             // shift circular buffers
             for (size_t i = 0; i < MagNum; ++i) {
@@ -69,12 +72,12 @@ namespace zldsp::analyzer {
             }
             this->abstract_fifo_.finishRead(num_ready);
 
-            return num_ready;
+            return {num_ready, to_reset_shift};
         }
 
         void createPath(std::span<float> xs, std::array<std::span<float>, MagNum> ys,
-            const float width, const float height, const float shift = 0.f,
-            const float min_db = -72.f, const float max_db = 0.f) {
+                        const float width, const float height, const float shift = 0.f,
+                        const float min_db = -72.f, const float max_db = 0.f) {
             const auto delta_x = width / static_cast<float>(PointNum - 1);
             xs[0] = -shift * delta_x;
             for (size_t idx = 1; idx < PointNum; ++idx) {
