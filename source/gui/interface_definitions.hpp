@@ -42,6 +42,15 @@ namespace zlgui {
         "computer"
     };
 
+    enum PanelSettingIdx {
+        kLUFSLearnButton,
+        kBoxNum
+    };
+
+    inline std::array kPanelSettingIdentifiers{
+        juce::Identifier("lufs_learn_button")
+    };
+
     static constexpr size_t kColorMap1Size = 10;
     static constexpr size_t kColorMap2Size = 6;
 
@@ -333,8 +342,20 @@ namespace zlgui {
 
         bool getIsEditorShowing() const { return is_editor_showing_; }
 
+        juce::ValueTree &getPanelValueTree() { return panel_value_tree_; }
+
+        juce::var getPanelProperty(const PanelSettingIdx idx) const {
+            return panel_value_tree_.getProperty(kPanelSettingIdentifiers[static_cast<size_t>(idx)]);
+        }
+
+        void setProperty(const PanelSettingIdx idx, const juce::var &v) {
+            panel_value_tree_.setProperty(kPanelSettingIdentifiers[idx], v, nullptr);
+        }
+
+
     private:
         juce::AudioProcessorValueTreeState &state;
+        juce::ValueTree panel_value_tree_{"panel_setting"};
 
         float font_size_{0.f};
         std::array<juce::Colour, kColourNum> custom_colours_;

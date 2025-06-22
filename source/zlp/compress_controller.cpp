@@ -18,6 +18,7 @@ namespace zlp {
         main_spec_ = spec;
         mag_analyzer_.prepare(spec.sampleRate);
         mag_avg_analyzer_.prepare(spec.sampleRate);
+        lufs_matcher_.prepare(spec.sampleRate, 2);
         output_gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.1);
 
         pre_buffer_[0].resize(static_cast<size_t>(spec.maximumBlockSize));
@@ -58,11 +59,21 @@ namespace zlp {
     }
 
     void CompressController::prepareBuffer() {
+        bool to_update_pdc = false;
         c_is_on_ = is_on_.load(std::memory_order::relaxed);
         c_is_delta_ = is_delta_.load(std::memory_order::relaxed);
-        bool to_update_pdc = false;
         c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
-        c_spec_analyzer_on_ = spec_analyzer_on_.load(std::memory_order::relaxed);
+
+        const auto new_lufs_matcher_on_ = lufs_matcher_on_.load(std::memory_order::relaxed);
+        if (new_lufs_matcher_on_ != c_lufs_matcher_on_) {
+            c_lufs_matcher_on_ = new_lufs_matcher_on_;
+            if (c_lufs_matcher_on_) {
+                lufs_matcher_.reset();
+            }
+        }
+
+        c_copy_pre = c_mag_analyzer_on_ || c_is_delta_;
+        c_copy_post = c_mag_analyzer_on_ || c_is_delta_;
         // load oversampling idx, set up trackers/followers and update latency
         const auto new_oversample_idx = oversample_idx_.load(std::memory_order::relaxed);
         if (new_oversample_idx != c_oversample_idx_) {
@@ -184,17 +195,19 @@ namespace zlp {
         if (is_lookahead_nonzero) {
             lookahead_delay_.process(main_pointers, num_samples);
         }
-
+        // process the pre lufs matcher
+        if (c_lufs_matcher_on_) {
+            lufs_matcher_.processPre(main_pointers, num_samples);
+        }
         // stereo split the main/side buffer
         if (c_stereo_mode_ == 0) {
             zldsp::splitter::MSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
             zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
-
-        if (c_mag_analyzer_on_ || c_is_delta_) {
+        // copy pre buffer
+        if (c_copy_pre) {
             zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
         }
-
         // upsample side buffer
         std::array<float *, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
         switch (c_oversample_idx_) {
@@ -228,8 +241,8 @@ namespace zlp {
             }
             default: ;
         }
-        // copy to post buffer
-        if (c_mag_analyzer_on_ || c_is_delta_) {
+        // copy post buffer
+        if (c_copy_post) {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
         }
         // makeup gain
@@ -255,6 +268,10 @@ namespace zlp {
         // stereo combine the main buffer
         if (c_stereo_mode_ == 0) {
             zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
+        }
+        // process the post lufs matcher
+        if (c_lufs_matcher_on_) {
+            lufs_matcher_.processPost(main_pointers, num_samples);
         }
     }
 

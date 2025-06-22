@@ -52,6 +52,7 @@ namespace zlpanel {
             addAndMakeVisible(box);
         }
 
+        setInterceptsMouseClicks(false, true);
         setBufferedToImage(true);
     }
 

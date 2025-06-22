@@ -15,8 +15,8 @@
 #include "../../gui/gui.hpp"
 #include "mag_analyzer_panel/mag_analyzer_panel.hpp"
 #include "equalize_panel/equalize_panel.hpp"
+#include "bottom_panel/bottom_control_panel.hpp"
 #include "left_control_panel.hpp"
-#include "bottom_control_panel.hpp"
 #include "side_control_panel.hpp"
 
 namespace zlpanel {

@@ -12,7 +12,7 @@
 #include <atomic>
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace zldsp::juce_helper {
+namespace zlp::juce_helper {
     /**
      * a helper class that run parameter updating on the message thread (async)
      */

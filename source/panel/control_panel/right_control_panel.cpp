@@ -48,7 +48,13 @@ namespace zlpanel {
         wet_slider_.setBufferedToImage(true);
         addAndMakeVisible(wet_slider_);
 
+        base_.getPanelValueTree().addListener(this);
+
         setOpaque(true);
+    }
+
+    RightControlPanel::~RightControlPanel() {
+        base_.getPanelValueTree().removeListener(this);
     }
 
     void RightControlPanel::paint(juce::Graphics &g) {
@@ -95,5 +101,25 @@ namespace zlpanel {
 
     void RightControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+    }
+
+    void RightControlPanel::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &) {
+        if (base_.getPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton)) {
+            gain_label_.setAlpha(.5f);
+            gain_slider_.setAlpha(.5f);
+            wet_label_.setAlpha(.5f);
+            wet_slider_.setAlpha(.5f);
+
+            gain_slider_.setInterceptsMouseClicks(false, false);
+            wet_slider_.setInterceptsMouseClicks(false, false);
+        } else {
+            gain_label_.setAlpha(1.f);
+            gain_slider_.setAlpha(1.f);
+            wet_label_.setAlpha(1.f);
+            wet_slider_.setAlpha(1.f);
+
+            gain_slider_.setInterceptsMouseClicks(true, true);
+            wet_slider_.setInterceptsMouseClicks(true, true);
+        }
     }
 } // zlpanel

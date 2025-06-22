@@ -9,9 +9,7 @@
 
 #pragma once
 
-#include "../../PluginProcessor.hpp"
-#include "../../gui/gui.hpp"
-#include "../helper/helper.hpp"
+#include "lufs_button.hpp"
 
 namespace zlpanel {
     class BottomControlPanel final : public juce::Component {
@@ -19,8 +17,6 @@ namespace zlpanel {
         explicit BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base);
 
         void paint(juce::Graphics &g) override;
-
-        int getIdealWidth() const;
 
         void resized() override;
 
@@ -50,5 +46,7 @@ namespace zlpanel {
 
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
+
+        LUFSButton lufs_button_;
     };
 } // zlpanel

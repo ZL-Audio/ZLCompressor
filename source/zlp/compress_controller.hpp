@@ -15,6 +15,7 @@
 #include "../dsp/delay/delay.hpp"
 #include "../dsp/mag_analyzer/mag_analyzer.hpp"
 #include "../dsp/over_sample/over_sample.hpp"
+#include "../dsp/loudness/lufs_matcher.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -87,9 +88,13 @@ namespace zlp {
             to_update_.store(true, std::memory_order::release);
         }
 
-        void setSpecAnalyzerOn(const bool f) {
-            spec_analyzer_on_.store(f, std::memory_order::relaxed);
+        void setLUFSMatcherOn(const bool f) {
+            lufs_matcher_on_.store(f, std::memory_order::relaxed);
             to_update_.store(true, std::memory_order::release);
+        }
+
+        float getLUFSMatcherDiff() const {
+            return lufs_matcher_.getDiff();
         }
 
         void setStereoModeIsMidSide(const bool f) {
@@ -139,10 +144,16 @@ namespace zlp {
         std::atomic<bool> is_on_{true}, is_delta_{false};
         bool c_is_on_{true}, c_is_delta_{false};
         // magnitude analyzer
-        std::atomic<bool> mag_analyzer_on_{true}, spec_analyzer_on_{false};
-        bool c_mag_analyzer_on_{true}, c_spec_analyzer_on_{false};
+        std::atomic<bool> mag_analyzer_on_{true};
+        bool c_mag_analyzer_on_{true};
         zldsp::analyzer::MagReductionAnalyzer<float, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
+        // lufs matcher
+        std::atomic<bool> lufs_matcher_on_{false};
+        bool c_lufs_matcher_on_{false};
+        zldsp::loudness::LUFSMatcher<float, true> lufs_matcher_;
+        // copy pre post flags
+        bool c_copy_pre{false}, c_copy_post{false};
         // stereo control
         std::atomic<int> stereo_mode_{0};
         int c_stereo_mode_{0};
@@ -161,11 +172,10 @@ namespace zlp {
         std::atomic<int> oversample_idx_{0};
         int c_oversample_idx_{-1};
         juce::AudioBuffer<float> oversampled_side_buffer_{};
-
+        // oversamplers
         zldsp::oversample::OverSampler<float, 1> over_sampler2_;
         zldsp::oversample::OverSampler<float, 2> over_sampler4_;
         zldsp::oversample::OverSampler<float, 3> over_sampler8_;
-
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
         // lookahead
         std::atomic<float> lookahead_delay_length_{0.f};
@@ -198,18 +208,18 @@ namespace zlp {
             zldsp::compressor::VocalCompressor<float>{computer_[0], tracker_[0], follower_[0]},
             zldsp::compressor::VocalCompressor<float>{computer_[1], tracker_[1], follower_[1]}
         };
-
+        // hold
         std::atomic<bool> to_update_hold_{true};
         std::atomic<float> hold_length_{0.0};
         std::array<zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMin>, 2> hold_buffer_ = {
             zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMin>{},
             zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMin>{},
         };
-
+        // range
         std::atomic<bool> to_update_range_{true};
         std::atomic<float> range_{80.f};
         float c_range_{80.f};
-
+        // output gain
         std::atomic<bool> to_update_output_gain_{true};
         std::atomic<float> output_gain_db_{0.f};
         zldsp::gain::Gain<float> output_gain_{};

@@ -14,9 +14,12 @@
 #include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class RightControlPanel final : public juce::Component {
+    class RightControlPanel final : public juce::Component,
+                                    private juce::ValueTree::Listener {
     public:
         explicit RightControlPanel(PluginProcessor &p, zlgui::UIBase &base);
+
+        ~RightControlPanel() override;
 
         void paint(juce::Graphics &g) override;
 
@@ -40,11 +43,13 @@ namespace zlpanel {
         zlgui::attachment::SliderAttachment<true> hold_attachment_;
 
         juce::Label gain_label_;
-        zlgui::slider::TwoValueRotarySlider<true, false, false> gain_slider_;
+        zlgui::slider::TwoValueRotarySlider<false, false, false> gain_slider_;
         zlgui::attachment::SliderAttachment<true> gain_attachment_;
 
         juce::Label wet_label_;
-        zlgui::slider::TwoValueRotarySlider<true, false, false> wet_slider_;
+        zlgui::slider::TwoValueRotarySlider<false, false, false> wet_slider_;
         zlgui::attachment::SliderAttachment<true> wet_attachment_;
+
+        void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &identifier) override;
     };
 } // zlpanel

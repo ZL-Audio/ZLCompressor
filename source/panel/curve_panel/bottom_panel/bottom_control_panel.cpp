@@ -14,18 +14,19 @@ namespace zlpanel {
         : p_ref_(p), base_(base),
           side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
           side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
-          time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base_),
+          time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base),
           time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
                                   zlstate::PAnalyzerTimeLength::kID, updater_),
-          mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base_),
+          mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base),
           mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
                                zlstate::PAnalyzerMagType::kID, updater_),
-          min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base_),
+          min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base),
           min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
                              zlstate::PAnalyzerMinDB::kID, updater_),
-          label_laf_(base_),
-          style_box_(zlp::PCompStyle::kChoices, base_),
-          style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_) {
+          label_laf_(base),
+          style_box_(zlp::PCompStyle::kChoices, base),
+          style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
+          lufs_button_(p, base) {
         juce::ignoreUnused(p_ref_, base_);
 
         time_length_box_.getLAF().setLabelJustification(juce::Justification::centredRight);
@@ -64,19 +65,14 @@ namespace zlpanel {
         style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
 
+        addAndMakeVisible(lufs_button_);
+
         setBufferedToImage(true);
     }
 
     void BottomControlPanel::paint(juce::Graphics &g) {
         g.setColour(base_.getBackgroundColor());
         g.fillPath(show_path1_ ? background_path1_ : background_path0_);
-    }
-
-    int BottomControlPanel::getIdealWidth() const {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
-        const auto right_padding = juce::roundToInt(base_.getFontSize() * 1.75f);
-        return (padding + slider_width) * 6 + right_padding;
     }
 
     void BottomControlPanel::repaintCallBackSlow() {
@@ -92,7 +88,8 @@ namespace zlpanel {
     void BottomControlPanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale); {
             const auto bound = getLocalBounds().toFloat();
             const auto sum_padding = static_cast<float>(padding + slider_width);
 
@@ -147,6 +144,11 @@ namespace zlpanel {
                 mag_type_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);
             }
+        }
+        {
+            auto bound = getLocalBounds();
+            bound.removeFromRight(2 * padding + small_slider_width);
+            lufs_button_.setBounds(bound.removeFromRight(small_slider_width));
         }
     }
 }

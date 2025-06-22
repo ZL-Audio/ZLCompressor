@@ -32,6 +32,8 @@ namespace zlgui::button {
             if (tooltip_text.length() > 0) {
                 button_.setTooltip(tooltip_text);
             }
+
+            setInterceptsMouseClicks(false, true);
         }
 
         ~ClickButton() override = default;
