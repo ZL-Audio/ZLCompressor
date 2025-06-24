@@ -16,6 +16,8 @@ namespace zlpanel {
           min_db_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         avg_analyzer_ref_.setToReset();
         setBufferedToImage(true);
+        
+        setInterceptsMouseClicks(true, false);
     }
 
     void RMSPanel::paint(juce::Graphics &g) {

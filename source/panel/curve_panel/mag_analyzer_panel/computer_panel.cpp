@@ -25,6 +25,8 @@ namespace zlpanel {
         for (auto &ID: kNAIDs) {
             p_ref_.na_parameters_.addParameterListener(ID, this);
         }
+
+        setInterceptsMouseClicks(false, false);
     }
 
     ComputerPanel::~ComputerPanel() {

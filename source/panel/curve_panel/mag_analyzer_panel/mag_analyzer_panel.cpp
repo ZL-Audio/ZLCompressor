@@ -21,7 +21,7 @@ namespace zlpanel {
         addAndMakeVisible(rms_panel_);
         addAndMakeVisible(computer_panel_);
 
-        setInterceptsMouseClicks(false, false);
+        setInterceptsMouseClicks(false, true);
     }
 
     MagAnalyzerPanel::~MagAnalyzerPanel() {

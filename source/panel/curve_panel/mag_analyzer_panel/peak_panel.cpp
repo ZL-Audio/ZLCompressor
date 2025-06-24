@@ -24,6 +24,8 @@ namespace zlpanel {
             p_ref_.na_parameters_.addParameterListener(ID, this);
             parameterChanged(ID, p_ref_.na_parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
         }
+
+        setInterceptsMouseClicks(false, false);
     }
 
     PeakPanel::~PeakPanel() {

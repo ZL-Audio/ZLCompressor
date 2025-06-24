@@ -12,6 +12,8 @@
 namespace zlpanel {
     SeparatePanel::SeparatePanel(zlgui::UIBase &base)
         : base_(base) {
+        setInterceptsMouseClicks(false, false);
+
         setBufferedToImage(true);
     }
 
