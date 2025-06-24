@@ -84,7 +84,7 @@ namespace zldsp::analyzer {
         static inline void updateHist(std::array<float, BinNum> &hist, const float x) {
             const auto idx = static_cast<size_t>(std::max(0.f, std::round(-x)));
             if (idx < BinNum) {
-                zldsp::vector::multiply(hist.data(),0.999999f, hist.size());
+                zldsp::vector::multiply(hist.data(), 0.999999f, hist.size());
                 hist[idx] += 1.f;
             }
         }

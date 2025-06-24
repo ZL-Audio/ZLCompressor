@@ -43,12 +43,14 @@ namespace zlpanel {
                                      current_bound.getWidth(), current_bound.getHeight());
         next_in_path_.clear();
         next_out_path_.clear();
+        const auto delta_y = (ys_[1] - ys_[0]) * .5f;
         next_in_path_.startNewSubPath(0.f, 0.f);
-        next_in_path_.lineTo(in_xs_[0], ys_[0]);
-        next_out_path_.startNewSubPath(out_xs[0], ys_[0]);
+        next_in_path_.lineTo(in_xs_[0], ys_[0] + delta_y);
+        next_out_path_.startNewSubPath(0.f, 0.f);
+        next_out_path_.lineTo(out_xs[0], ys_[0] + delta_y);
         for (size_t i = 0; i < end_idx; ++i) {
-            next_in_path_.lineTo(in_xs_[i], ys_[i]);
-            next_out_path_.lineTo(out_xs[i], ys_[i]);
+            next_in_path_.lineTo(in_xs_[i], ys_[i] + delta_y);
+            next_out_path_.lineTo(out_xs[i], ys_[i] + delta_y);
         }
         next_in_path_.lineTo(0.f, current_bound.getHeight());
         next_in_path_.closeSubPath();
