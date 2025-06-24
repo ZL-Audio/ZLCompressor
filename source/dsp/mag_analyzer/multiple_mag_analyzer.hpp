@@ -38,11 +38,20 @@ namespace zldsp::analyzer {
                 this->abstract_fifo_.finishRead(fifo_num_ready);
                 return {0, true};
             }
-            bool to_reset_shift = std::abs(fifo_num_ready - num_to_read) >= tolerance;
+            const bool to_reset_shift = (fifo_num_ready - num_to_read > tolerance) || (fifo_num_ready < num_to_read);
 
-            const int num_ready = to_reset_shift
-                                      ? fifo_num_ready
-                                      : std::min(fifo_num_ready, num_to_read);
+            int num_ready = 0;
+
+            if (to_reset_shift) {
+                if (fifo_num_ready > tolerance / 2) {
+                    num_ready = fifo_num_ready - tolerance / 2;
+                } else {
+                    num_ready = 0;
+                }
+            } else {
+                num_ready = std::min(fifo_num_ready, num_to_read);
+            }
+
             if (num_ready <= 0) return {0, to_reset_shift};
             const auto num_ready_shift = static_cast<size_t>(num_ready);
             // shift circular buffers

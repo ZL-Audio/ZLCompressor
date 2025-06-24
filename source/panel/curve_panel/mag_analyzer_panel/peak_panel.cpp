@@ -79,7 +79,7 @@ namespace zlpanel {
             }
         } else {
             const auto c_num_per_second = num_per_second_.load(std::memory_order::relaxed);
-            const auto tolerance = c_num_per_second * .125f;
+            const auto tolerance = std::max(1.0, c_num_per_second / 15.f);
             const auto target_count = (next_time_stamp - start_time_) * c_num_per_second;
             const auto target_delta = target_count - current_count_;
             auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(
