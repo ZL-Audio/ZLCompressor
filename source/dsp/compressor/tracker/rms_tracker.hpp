@@ -85,11 +85,15 @@ namespace zldsp::compressor {
             to_update_.store(true, std::memory_order::release);
         }
 
+        FloatType getMomentarySeconds() const {
+            return time_length_.load(std::memory_order::relaxed);
+        }
+
         /**
          * thread-safe, lock-free
          * get the time length of the tracker
          */
-        inline size_t getMomentarySize() const {
+        size_t getMomentarySize() const {
             return buffer_size_.load(std::memory_order::relaxed);
         }
 

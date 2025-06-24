@@ -30,14 +30,14 @@ namespace zlp {
         post_pointers_[0] = post_buffer_[0].data();
         post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to 8x oversampling
-        for (auto &t: tracker_) {
+        for (auto &t: rms_tracker_) {
             t.setMaximumMomentarySeconds(0.04f * 8.01f);
             t.prepare(spec.sampleRate);
             t.setMaximumMomentarySeconds(0.04f);
         }
-        oversampled_side_buffer_.setSize(2, static_cast<int>(spec.maximumBlockSize) * 8);
+        rms_side_buffer0_.resize(static_cast<size_t>(spec.maximumBlockSize) * 8);
+        rms_side_buffer1_.resize(rms_side_buffer0_.size());
         // init oversamplers
-
         over_sampler2_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
         over_sampler4_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
         over_sampler8_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
@@ -103,16 +103,17 @@ namespace zlp {
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
-            const auto oversample_sr = main_spec_.sampleRate * static_cast<double>(oversample_mul);
-            for (auto &t: tracker_) {
-                t.prepare(oversample_sr);
-            }
+            oversample_sr_ = main_spec_.sampleRate * static_cast<double>(oversample_mul);
+            to_update_rms_.store(true, std::memory_order::release);
             for (auto &f: follower_) {
-                f.prepare(oversample_sr);
+                f.prepare(oversample_sr_);
+            }
+            for (auto &t: rms_tracker_) {
+                t.prepare(oversample_sr_);
             }
             // prepare the hold buffer with the multiplied samplerate
             for (auto &h: hold_buffer_) {
-                h.setCapacity(static_cast<size_t>(oversample_sr));
+                h.setCapacity(static_cast<size_t>(oversample_sr_));
             }
             to_update_hold_.store(true);
         }
@@ -179,6 +180,17 @@ namespace zlp {
         if (to_update_output_gain_.exchange(false, std::memory_order::acquire)) {
             output_gain_.setGainDecibels(
                 output_gain_db_.load(std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed));
+        }
+        if (to_update_rms_.exchange(false, std::memory_order::acquire)) {
+            c_use_rms_ = use_rms_.load(std::memory_order::relaxed);
+            if (c_use_rms_) {
+                c_rms_mix_ = rms_mix_.load(std::memory_order::relaxed);
+                const auto rms_buffer_size = rms_tracker_[0].getMomentarySize();
+                const auto rms_sr = oversample_sr_ / static_cast<double>(rms_buffer_size);
+                for (auto &f: rms_follower_) {
+                    f.prepare(rms_sr);
+                }
+            }
         }
         if (to_update_pdc) {
             pdc_.store(lookahead_delay_.getDelayInSamples() + oversample_delay_.getDelayInSamples());
@@ -278,11 +290,30 @@ namespace zlp {
     void CompressController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
                                            float * __restrict side_buffer0, float * __restrict side_buffer1,
                                            const size_t num_samples) {
+        // create univector refs
+        auto side_v0 = kfr::make_univector(side_buffer0, num_samples);
+        auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
+        auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
+        auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
         // prepare computer, trackers and followers
-        if (computer_[0].prepareBuffer()) { computer_[1].copyFrom(computer_[0]); }
-        tracker_[0].prepareBuffer();
-        tracker_[1].prepareBuffer();
-        if (follower_[0].prepareBuffer()) { follower_[1].copyFrom(follower_[0]); }
+        if (computer_[0].prepareBuffer()) {
+            computer_[1].copyFrom(computer_[0]);
+        }
+        if (follower_[0].prepareBuffer()) {
+            follower_[1].copyFrom(follower_[0]);
+        }
+        // prepare rms compressors
+        if (c_use_rms_) {
+            rms_tracker_[0].prepareBuffer();
+            rms_tracker_[1].prepareBuffer();
+            if (rms_follower_[0].prepareBuffer()) {
+                rms_follower_[1].copyFrom(rms_follower_[0]);
+            }
+            auto rms_side_v0 = kfr::make_univector(rms_side_buffer0_.data(), num_samples);
+            auto rms_side_v1 = kfr::make_univector(rms_side_buffer1_.data(), num_samples);
+            rms_side_v0 = side_v0;
+            rms_side_v1 = side_v1;
+        }
         // process compress style
         switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
@@ -303,6 +334,14 @@ namespace zlp {
             }
             default: return;
         }
+        // process rms compressors and mix rms
+        if (c_use_rms_) {
+            processSideBufferRMS(rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
+            auto rms_side_v0 = kfr::make_univector(rms_side_buffer0_.data(), num_samples);
+            auto rms_side_v1 = kfr::make_univector(rms_side_buffer1_.data(), num_samples);
+            side_v0 = side_v0 * (1.f - c_rms_mix_) + rms_side_v0 * c_rms_mix_;
+            side_v1 = side_v1 * (1.f - c_rms_mix_) + rms_side_v1 * c_rms_mix_;
+        }
         // apply the hold
         if (hold_buffer_[0].getSize() > 0) {
             for (size_t i = 0; i < num_samples; ++i) {
@@ -319,14 +358,9 @@ namespace zlp {
             side_buffer1[i] = x - xy;
         }
         // process wet values and convert decibel to gain
-        auto side_v0 = kfr::make_univector(side_buffer0, num_samples);
-        auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
         side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
         side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
-        // apply gain on the main buffer
-        auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
-        auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        // bypass and stereo swap
+        // apply gain on the main buffer with bypass and stereo swap
         if (c_is_on_) {
             if (c_stereo_swap_) {
                 main_v0 = main_v0 * side_v1;
@@ -360,6 +394,11 @@ namespace zlp {
                                                     const size_t num_samples) {
         vocal_comps_[0].process(buffer0, num_samples);
         vocal_comps_[1].process(buffer1, num_samples);
+    }
+
+    void CompressController::processSideBufferRMS(float *buffer0, float *buffer1, size_t num_samples) {
+        rms_comps_[0].process(buffer0, num_samples);
+        rms_comps_[1].process(buffer1, num_samples);
     }
 
     void CompressController::handleAsyncUpdate() {

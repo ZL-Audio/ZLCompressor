@@ -38,7 +38,7 @@ namespace zlp {
 
         auto &getComputer() { return computer_; }
 
-        auto &getTracker() { return tracker_; }
+        auto &getTracker() { return rms_tracker_; }
 
         auto &getFollower() { return follower_; }
 
@@ -171,12 +171,12 @@ namespace zlp {
         // oversample
         std::atomic<int> oversample_idx_{0};
         int c_oversample_idx_{-1};
-        juce::AudioBuffer<float> oversampled_side_buffer_{};
         // oversamplers
         zldsp::oversample::OverSampler<float, 1> over_sampler2_;
         zldsp::oversample::OverSampler<float, 2> over_sampler4_;
         zldsp::oversample::OverSampler<float, 3> over_sampler8_;
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
+        double oversample_sr_{48000.0};
         // lookahead
         std::atomic<float> lookahead_delay_length_{0.f};
         std::atomic<bool> to_update_lookahead_{false};
@@ -186,27 +186,39 @@ namespace zlp {
         std::atomic<int> pdc_{0};
         // computer, trackers and followers
         std::array<zldsp::compressor::KneeComputer<float, true>, 2> computer_{};
-        std::array<zldsp::compressor::RMSTracker<float>, 2> tracker_{};
+        std::array<zldsp::compressor::RMSTracker<float>, 2> rms_tracker_{};
         std::array<zldsp::compressor::PSFollower<float, true, true>, 2> follower_{};
+        std::array<zldsp::compressor::PSFollower<float, false, false>, 2> rms_follower_{};
         // clean compressors
         std::array<zldsp::compressor::CleanCompressor<float>, 2> clean_comps_ = {
-            zldsp::compressor::CleanCompressor<float>{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::CleanCompressor<float>{computer_[1], tracker_[1], follower_[1]}
+            zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
+            zldsp::compressor::CleanCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
         };
         // classic compressors
         std::array<zldsp::compressor::ClassicCompressor<float>, 2> classic_comps_ = {
-            zldsp::compressor::ClassicCompressor<float>{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::ClassicCompressor<float>{computer_[1], tracker_[1], follower_[1]}
+            zldsp::compressor::ClassicCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
+            zldsp::compressor::ClassicCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
         };
         // optical compressors
         std::array<zldsp::compressor::OpticalCompressor<float>, 2> optical_comps_ = {
-            zldsp::compressor::OpticalCompressor<float>{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::OpticalCompressor<float>{computer_[1], tracker_[1], follower_[1]}
+            zldsp::compressor::OpticalCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
+            zldsp::compressor::OpticalCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
         };
         // vocal compressors
         std::array<zldsp::compressor::VocalCompressor<float>, 2> vocal_comps_ = {
-            zldsp::compressor::VocalCompressor<float>{computer_[0], tracker_[0], follower_[0]},
-            zldsp::compressor::VocalCompressor<float>{computer_[1], tracker_[1], follower_[1]}
+            zldsp::compressor::VocalCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
+            zldsp::compressor::VocalCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
+        };
+        // rms compressors
+        std::atomic<bool> to_update_rms_{true};
+        std::atomic<bool> use_rms_{false};
+        bool c_use_rms_{false};
+        std::atomic<float> rms_mix_{0.f};
+        float c_rms_mix_{0.f};
+        std::vector<float> rms_side_buffer0_, rms_side_buffer1_;
+        std::array<zldsp::compressor::CleanCompressor<float>, 2> rms_comps_ = {
+            zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], rms_follower_[0]},
+            zldsp::compressor::CleanCompressor<float>{computer_[1], rms_tracker_[1], rms_follower_[1]}
         };
         // hold
         std::atomic<bool> to_update_hold_{true};
@@ -237,6 +249,8 @@ namespace zlp {
         void processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+
+        void processSideBufferRMS(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void handleAsyncUpdate() override;
     };
