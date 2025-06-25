@@ -74,6 +74,7 @@ namespace zldsp::compressor {
             if (square_buffer_.size() == c_buffer_size_) {
                 square_sum_ -= static_cast<double>(square_buffer_.popFront());
             }
+            square_sum_ = std::max(square_sum_, 0.0);
             square_buffer_.pushBack(square);
             square_sum_ += static_cast<double>(square);
         }
