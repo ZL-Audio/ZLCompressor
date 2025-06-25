@@ -190,6 +190,8 @@ namespace zlp {
                 for (auto &f: rms_follower_) {
                     f.prepare(rms_sr);
                 }
+                rms_tracker_[0].prepareBuffer();
+                rms_tracker_[1].prepareBuffer();
             }
         }
         if (to_update_pdc) {
@@ -304,8 +306,6 @@ namespace zlp {
         }
         // prepare rms compressors
         if (c_use_rms_) {
-            rms_tracker_[0].prepareBuffer();
-            rms_tracker_[1].prepareBuffer();
             if (rms_follower_[0].prepareBuffer()) {
                 rms_follower_[1].copyFrom(rms_follower_[0]);
             }
@@ -390,15 +390,16 @@ namespace zlp {
         optical_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressController::processSideBufferVocal(float *buffer0, float *buffer1,
+    void CompressController::processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1,
                                                     const size_t num_samples) {
         vocal_comps_[0].process(buffer0, num_samples);
         vocal_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressController::processSideBufferRMS(float *buffer0, float *buffer1, size_t num_samples) {
-        rms_comps_[0].process(buffer0, num_samples);
-        rms_comps_[1].process(buffer1, num_samples);
+    void CompressController::processSideBufferRMS(float * __restrict buffer0, float * __restrict buffer1,
+                                                  const size_t num_samples) {
+        rms_comps_[0].process<true>(buffer0, num_samples);
+        rms_comps_[1].process<true>(buffer1, num_samples);
     }
 
     void CompressController::handleAsyncUpdate() {

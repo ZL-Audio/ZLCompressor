@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "rms_button.hpp"
 #include "lufs_button.hpp"
 
 namespace zlpanel {
@@ -46,6 +47,8 @@ namespace zlpanel {
 
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
+
+        RMSButton rms_button_;
 
         LUFSButton lufs_button_;
     };

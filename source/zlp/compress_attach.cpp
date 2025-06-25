@@ -45,15 +45,13 @@ namespace zlp {
         } else if (parameter_ID == PCurve::kID) {
             computer_ref_.setCurve(PCurve::formatV(new_value));
         } else if (parameter_ID == PAttack::kID) {
-            follower_ref_.setAttack(new_value);
+            controller_ref_.setAttack(new_value);
         } else if (parameter_ID == PRelease::kID) {
-            follower_ref_.setRelease(new_value);
+            controller_ref_.setRelease(new_value);
         } else if (parameter_ID == PPump::kID) {
-            const auto x = PPump::formatV(new_value);
-            follower_ref_.setPumpPunch(x);
+            follower_ref_.setPumpPunch(PPump::formatV(new_value));
         } else if (parameter_ID == PSmooth::kID) {
-            const auto x = PSmooth::formatV(new_value);
-            follower_ref_.setSmooth(x);
+            follower_ref_.setSmooth(PSmooth::formatV(new_value));
         } else if (parameter_ID == PHold::kID) {
             controller_ref_.setHoldLength(new_value);
         } else if (parameter_ID == PRange::kID) {
@@ -80,6 +78,14 @@ namespace zlp {
             controller_ref_.setIsON(new_value > .5f);
         } else if (parameter_ID == PCompDelta::kID) {
             controller_ref_.setIsDelta(new_value > .5f);
+        } else if (parameter_ID == PRMSON::kID) {
+            controller_ref_.setRMSOn(new_value > .5f);
+        } else if (parameter_ID == PRMSLength::kID) {
+            controller_ref_.setRMSLength(new_value);
+        } else if (parameter_ID == PRMSSpeed::kID) {
+            controller_ref_.setRMSSpeed(new_value);
+        } else if (parameter_ID == PRMSMix::kID) {
+            controller_ref_.setRMSMix(new_value);
         }
     }
 } // zlp

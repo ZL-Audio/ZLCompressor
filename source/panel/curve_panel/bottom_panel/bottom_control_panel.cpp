@@ -26,6 +26,7 @@ namespace zlpanel {
           label_laf_(base),
           style_box_(zlp::PCompStyle::kChoices, base),
           style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
+          rms_button_(p, base),
           lufs_button_(p, base) {
         juce::ignoreUnused(p_ref_, base_);
 
@@ -65,6 +66,8 @@ namespace zlpanel {
         style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
 
+        addAndMakeVisible(rms_button_);
+
         addAndMakeVisible(lufs_button_);
 
         setBufferedToImage(true);
@@ -77,6 +80,8 @@ namespace zlpanel {
 
     void BottomControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+        rms_button_.repaintCallBackSlow();
+
         const auto f1 = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
         const auto f2 = side_eq_show_ref_.load(std::memory_order::relaxed) > .5f;
         if (const auto f = f1 || f2; f != show_path1_) {
@@ -130,6 +135,8 @@ namespace zlpanel {
             bound.removeFromLeft(padding);
             release_label_.setBounds(bound.removeFromLeft(slider_width));
 
+            rms_button_.setBounds(bound.removeFromLeft(rms_button_.getIdealWidth()));
+
             bound.removeFromRight(padding / 2); {
                 auto box_bound = bound.removeFromRight(
                     juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3f));
@@ -144,8 +151,7 @@ namespace zlpanel {
                 mag_type_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);
             }
-        }
-        {
+        } {
             auto bound = getLocalBounds();
             bound.removeFromRight(2 * padding + small_slider_width);
             lufs_button_.setBounds(bound.removeFromRight(small_slider_width));

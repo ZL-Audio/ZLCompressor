@@ -47,6 +47,48 @@ namespace zlp {
             to_update_.store(true, std::memory_order::release);
         }
 
+        void setAttack(const float attack) {
+            attack_.store(attack, std::memory_order::release);
+            follower_[0].setAttack(attack);
+            rms_follower_[0].setAttack(attack * rms_speed_.load(std::memory_order::acquire));
+        }
+
+        void setRelease(const float release) {
+            release_.store(release, std::memory_order::release);
+            follower_[0].setRelease(release);
+            rms_follower_[0].setRelease(release * rms_speed_.load(std::memory_order::acquire));
+        }
+
+        void setRMSSpeed(const float speed) {
+            rms_speed_.store(speed, std::memory_order::release);
+            const auto c_attack = attack_.load(std::memory_order::acquire);
+            const auto c_release = release_.load(std::memory_order::acquire);
+            follower_[0].setAttack(c_attack);
+            follower_[0].setRelease(c_release);
+            rms_follower_[0].setAttack(c_attack * speed);
+            rms_follower_[0].setRelease(c_release * speed);
+        }
+
+        void setRMSOn(const bool use_rms) {
+            use_rms_.store(use_rms, std::memory_order::relaxed);
+            to_update_rms_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
+        }
+
+        void setRMSLength(const float millisecond) {
+            const auto seconds = millisecond * 1e-3f;
+            rms_tracker_[0].setMomentarySeconds(seconds);
+            rms_tracker_[1].setMomentarySeconds(seconds);
+            to_update_rms_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
+        }
+
+        void setRMSMix(const float percent) {
+            rms_mix_.store(percent * 0.01f, std::memory_order::relaxed);
+            to_update_rms_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
+        }
+
         void setHoldLength(const float millisecond) {
             hold_length_.store(millisecond * 1e-3f, std::memory_order::relaxed);
             to_update_hold_.store(true, std::memory_order::release);
@@ -215,6 +257,7 @@ namespace zlp {
         bool c_use_rms_{false};
         std::atomic<float> rms_mix_{0.f};
         float c_rms_mix_{0.f};
+        std::atomic<float> attack_{0.f}, release_{0.f}, rms_speed_{1.f};
         std::vector<float> rms_side_buffer0_, rms_side_buffer1_;
         std::array<zldsp::compressor::CleanCompressor<float>, 2> rms_comps_ = {
             zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], rms_follower_[0]},

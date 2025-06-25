@@ -422,6 +422,37 @@ namespace zlp {
         auto static constexpr kDefaultV = 0.f;
     };
 
+    class PRMSON : public BoolParameters<PRMSON> {
+    public:
+        auto static constexpr kID = "rms_on";
+        auto static constexpr kName = "RMS ON";
+        auto static constexpr kDefaultV = false;
+    };
+
+    class PRMSLength : public FloatParameters<PRMSLength> {
+    public:
+        auto static constexpr kID = "rms_length";
+        auto static constexpr kName = "RMS Length";
+        inline auto static const kRange = getLogMidRangeShift(4.f, 44.f, 14.f, 0.01f, -4.f);
+        auto static constexpr kDefaultV = 10.f;
+    };
+
+    class PRMSSpeed : public FloatParameters<PRMSSpeed> {
+    public:
+        auto static constexpr kID = "rms_speed";
+        auto static constexpr kName = "RMS Speed";
+        inline auto static const kRange = getLogMidRangeShift(1.f, 17.f, 5.f, 0.01f, -1.f);
+        auto static constexpr kDefaultV = 2.f;
+    };
+
+    class PRMSMix : public FloatParameters<PRMSMix> {
+    public:
+        auto static constexpr kID = "rms_mix";
+        auto static constexpr kName = "RMS Mix";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        auto static constexpr kDefaultV = 50.f;
+    };
+
     class PFilterStatus : public ChoiceParameters<PFilterStatus> {
     public:
         auto static constexpr kID = "filter_status";
@@ -502,7 +533,8 @@ namespace zlp {
                    PSideStereoMode::get(), PSideStereoSwap::get(),
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
                    PCompON::get(), PCompDelta::get(),
-                   POversample::get(), PLookAhead::get());
+                   POversample::get(), PLookAhead::get(),
+                   PRMSON::get(), PRMSLength::get(), PRMSSpeed::get(), PRMSMix::get());
         for (size_t i = 0; i < kBandNum; ++i) {
             const auto suffix = std::to_string(i);
             layout.add(PFilterStatus::get(suffix), PFilterType::get(suffix), POrder::get(suffix),
