@@ -9,15 +9,12 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#include "../../PluginProcessor.hpp"
-#include "../../gui/gui.hpp"
 #include "mag_analyzer_panel/mag_analyzer_panel.hpp"
 #include "equalize_panel/equalize_panel.hpp"
 #include "bottom_panel/bottom_control_panel.hpp"
 #include "left_control_panel.hpp"
 #include "side_control_panel.hpp"
+#include "rms_control_panel.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -46,6 +43,7 @@ namespace zlpanel {
         BottomControlPanel bottom_control_panel_;
         LeftControlPanel left_control_panel_;
         SideControlPanel side_control_panel_;
+        RMSControlPanel rms_control_panel_;
 
         juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
 

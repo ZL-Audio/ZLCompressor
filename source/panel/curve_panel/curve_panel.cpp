@@ -18,6 +18,7 @@ namespace zlpanel {
           bottom_control_panel_(p, base),
           left_control_panel_(p, base),
           side_control_panel_(p, base),
+          rms_control_panel_(p, base),
           equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
           side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
           computer_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PComputerCurveDisplay::kID)),
@@ -29,6 +30,7 @@ namespace zlpanel {
 
         addChildComponent(equalize_panel_);
         addChildComponent(side_control_panel_);
+        addChildComponent(rms_control_panel_);
         startThread(juce::Thread::Priority::low);
     }
 
@@ -82,8 +84,13 @@ namespace zlpanel {
             } else {
                 equalize_panel_.setBounds(equalize_large_bound_);
             }
-
             separate_panel_.setBounds(getLocalBounds().withWidth(equalize_large_bound_.getWidth()));
+        } {
+            auto bound = getLocalBounds();
+            bound.removeFromLeft((padding + slider_width) * 6 + button_height + button_height / 2);
+            bound = bound.removeFromLeft(rms_control_panel_.getIdealWidth());
+            bound = bound.removeFromBottom(rms_control_panel_.getIdealHeight());
+            rms_control_panel_.setBounds(bound);
         }
     }
 
@@ -128,6 +135,7 @@ namespace zlpanel {
         bottom_control_panel_.repaintCallBackSlow();
         mag_analyzer_panel_.repaintCallBackSlow();
         equalize_panel_.repaintCallBackSlow();
+        rms_control_panel_.repaintCallBackSlow();
     }
 
     void CurvePanel::repaintCallBack(const double time_stamp) {

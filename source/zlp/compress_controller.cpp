@@ -31,9 +31,9 @@ namespace zlp {
         post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to 8x oversampling
         for (auto &t: rms_tracker_) {
-            t.setMaximumMomentarySeconds(0.04f * 8.01f);
+            t.setMaximumMomentarySeconds(0.05f * 8.f);
             t.prepare(spec.sampleRate);
-            t.setMaximumMomentarySeconds(0.04f);
+            t.setMaximumMomentarySeconds(0.05f);
         }
         rms_side_buffer0_.resize(static_cast<size_t>(spec.maximumBlockSize) * 8);
         rms_side_buffer1_.resize(rms_side_buffer0_.size());
@@ -106,6 +106,9 @@ namespace zlp {
             oversample_sr_ = main_spec_.sampleRate * static_cast<double>(oversample_mul);
             to_update_rms_.store(true, std::memory_order::release);
             for (auto &f: follower_) {
+                f.prepare(oversample_sr_);
+            }
+            for (auto &f: rms_follower_) {
                 f.prepare(oversample_sr_);
             }
             for (auto &t: rms_tracker_) {
@@ -185,13 +188,11 @@ namespace zlp {
             c_use_rms_ = use_rms_.load(std::memory_order::relaxed);
             if (c_use_rms_) {
                 c_rms_mix_ = rms_mix_.load(std::memory_order::relaxed);
-                const auto rms_buffer_size = rms_tracker_[0].getMomentarySize();
-                const auto rms_sr = oversample_sr_ / static_cast<double>(rms_buffer_size);
-                for (auto &f: rms_follower_) {
-                    f.prepare(rms_sr);
-                }
                 rms_tracker_[0].prepareBuffer();
                 rms_tracker_[1].prepareBuffer();
+            } else {
+                rms_comps_[0].reset();
+                rms_comps_[1].reset();
             }
         }
         if (to_update_pdc) {

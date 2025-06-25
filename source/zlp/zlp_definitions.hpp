@@ -441,8 +441,8 @@ namespace zlp {
     public:
         auto static constexpr kID = "rms_speed";
         auto static constexpr kName = "RMS Speed";
-        inline auto static const kRange = getLogMidRangeShift(1.f, 17.f, 5.f, 0.01f, -1.f);
-        auto static constexpr kDefaultV = 2.f;
+        inline auto static const kRange = getLogMidRangeShift(1.f, 9.f, 2.f, 0.01f, -1.f);
+        auto static constexpr kDefaultV = 1.f;
     };
 
     class PRMSMix : public FloatParameters<PRMSMix> {

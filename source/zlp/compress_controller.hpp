@@ -63,8 +63,6 @@ namespace zlp {
             rms_speed_.store(speed, std::memory_order::release);
             const auto c_attack = attack_.load(std::memory_order::acquire);
             const auto c_release = release_.load(std::memory_order::acquire);
-            follower_[0].setAttack(c_attack);
-            follower_[0].setRelease(c_release);
             rms_follower_[0].setAttack(c_attack * speed);
             rms_follower_[0].setRelease(c_release * speed);
         }
