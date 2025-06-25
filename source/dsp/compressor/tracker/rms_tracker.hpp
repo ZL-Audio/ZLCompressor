@@ -12,6 +12,7 @@
 #include <atomic>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 #include "../../container/container.hpp"
 
@@ -37,7 +38,7 @@ namespace zldsp::compressor {
         }
 
         void reset() {
-            square_sum_ = FloatType(0);
+            square_sum_ = 0.0;
             square_buffer_.clear();
         }
 
@@ -60,7 +61,10 @@ namespace zldsp::compressor {
                 c_buffer_size_ = buffer_size_.load(std::memory_order::relaxed);
                 c_buffer_size_r = FloatType(1) / static_cast<FloatType>(c_buffer_size_);
                 while (square_buffer_.size() > c_buffer_size_) {
-                    square_sum_ -= square_buffer_.popFront();
+                    square_sum_ -= static_cast<double>(square_buffer_.popFront());
+                }
+                if (c_buffer_size_ == 1) {
+                    square_sum_ = static_cast<double>(square_buffer_.getFront());
                 }
             }
         }
@@ -68,10 +72,10 @@ namespace zldsp::compressor {
         void processSample(const FloatType x) {
             const FloatType square = x * x;
             if (square_buffer_.size() == c_buffer_size_) {
-                square_sum_ -= square_buffer_.popFront();
+                square_sum_ -= static_cast<double>(square_buffer_.popFront());
             }
             square_buffer_.pushBack(square);
-            square_sum_ += square;
+            square_sum_ += static_cast<double>(square);
         }
 
         /**
@@ -100,16 +104,16 @@ namespace zldsp::compressor {
         size_t getCurrentBufferSize() const { return c_buffer_size_; }
 
         FloatType getMomentarySquare() {
-            return square_sum_;
+            return static_cast<FloatType>(square_sum_);
         }
 
         FloatType getMomentaryDB() {
-            FloatType mean_square = square_sum_ * c_buffer_size_r;
+            FloatType mean_square = static_cast<FloatType>(square_sum_) * c_buffer_size_r;
             return std::log10(std::max(FloatType(1e-10), mean_square)) * FloatType(10);
         }
 
     private:
-        FloatType square_sum_{0};
+        double square_sum_{0};
         container::CircularBuffer<FloatType> square_buffer_{1};
 
         std::atomic<double> sample_rate_{48000.0};

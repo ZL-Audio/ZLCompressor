@@ -23,7 +23,7 @@ namespace zldsp::container {
             setCapacity(capacity);
         }
 
-        [[nodiscard]] size_t capacity() const { return data_.size(); }
+        [[nodiscard]] size_t capacity() const { return data_.size() - 1; }
 
         [[nodiscard]] size_t size() const {
             return tail_ >= head_
