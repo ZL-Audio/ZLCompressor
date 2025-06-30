@@ -131,17 +131,19 @@ namespace zlpanel {
         bound.removeFromTop(padding);
         stereo_link_slider_.setBounds(bound.removeFromTop(slider_height));
 
+        const auto label_width = juce::roundToInt(static_cast<float>(button_height) * .75f);
+
         bound.removeFromTop(padding); {
             auto t_bound = bound.removeFromTop(button_height);
-            side_in1_label_.setBounds(t_bound.removeFromLeft(button_height));
-            side_out1_label_.setBounds(t_bound.removeFromRight(button_height));
+            side_in1_label_.setBounds(t_bound.removeFromLeft(label_width));
+            side_out1_label_.setBounds(t_bound.removeFromRight(label_width));
             stereo_wet1_slider_.setBounds(t_bound);
         }
 
         bound.removeFromTop(padding); {
             auto t_bound = bound.removeFromTop(button_height);
-            side_in2_label_.setBounds(t_bound.removeFromLeft(button_height));
-            side_out2_label_.setBounds(t_bound.removeFromRight(button_height));
+            side_in2_label_.setBounds(t_bound.removeFromLeft(label_width));
+            side_out2_label_.setBounds(t_bound.removeFromRight(label_width));
             stereo_wet2_slider_.setBounds(t_bound);
         }
 
