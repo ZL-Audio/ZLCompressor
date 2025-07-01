@@ -47,6 +47,7 @@ namespace zlpanel {
         std::mutex mutex_;
 
         std::atomic<bool> to_reset_path_{true};
+        double consecutive_reset_count_{0.0};
         double start_time_{0.0};
         double current_count_{0.0};
         std::atomic<double> num_per_second_{50.0};

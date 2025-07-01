@@ -90,6 +90,9 @@ namespace zlpanel {
             if (to_reset_shift) {
                 start_time_ = next_time_stamp;
                 current_count_ = 0.;
+                consecutive_reset_count_ = 1.0;
+            } else {
+                consecutive_reset_count_ *= 0.9;
             }
 
             const auto shift = to_reset_shift ? 0.0 : target_count - current_count_;
@@ -97,12 +100,16 @@ namespace zlpanel {
                                                   current_bound.getWidth(), current_bound.getHeight(),
                                                   static_cast<float>(shift),
                                                   analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
-            updatePaths(current_bound);
+            if (consecutive_reset_count_ < 0.75) {
+                updatePaths(current_bound);
+            }
         }
-        std::lock_guard<std::mutex> lock{mutex_};
-        in_path_.swapWithPath(next_in_path_);
-        out_path_.swapWithPath(next_out_path_);
-        reduction_path_.swapWithPath(next_reduction_path_);
+        if (consecutive_reset_count_ < 0.75) {
+            std::lock_guard<std::mutex> lock{mutex_};
+            in_path_.swapWithPath(next_in_path_);
+            out_path_.swapWithPath(next_out_path_);
+            reduction_path_.swapWithPath(next_reduction_path_);
+        }
     }
 
     void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
