@@ -75,6 +75,44 @@ namespace zlgui::attachment {
             }
         }
 
+        SliderAttachment(juce::Slider &slider,
+                         juce::AudioProcessorValueTreeState &apvts,
+                         const juce::String &parameter_ID,
+                         const juce::NormalisableRange<double> &range,
+                         ComponentUpdater &updater,
+                         const juce::NotificationType notification_type = juce::NotificationType::sendNotificationSync)
+            : slider_(slider), notification_type_(notification_type),
+              apvts_(apvts), parameter_ref_(*apvts_.getParameter(parameter_ID)),
+              updater_ref_(updater) {
+            // setup slider values
+            const auto &para_ref(parameter_ref_);
+            slider_.valueFromTextFunction = [&para_ref](const juce::String &text) {
+                return static_cast<double>(para_ref.convertFrom0to1(para_ref.getValueForText(text)));
+            };
+            slider_.textFromValueFunction = [&para_ref](const double value) {
+                return para_ref.getText(para_ref.convertTo0to1(static_cast<float>(value)), 0);
+            };
+            slider_.setDoubleClickReturnValue(slider_.isDoubleClickReturnEnabled(),
+                                              parameter_ref_.convertFrom0to1(parameter_ref_.getDefaultValue()));
+
+            // setup slider range
+            slider_.setNormalisableRange(range);
+            // add slider listener
+            slider_.addListener(this);
+            // add parameter listener
+            if constexpr (UpdateFromAPVTS) {
+                apvts_.addParameterListener(parameter_ref_.getParameterID(), this);
+            }
+            parameterChanged(parameter_ref_.getParameterID(),
+                                 apvts_.getRawParameterValue(
+                                     parameter_ref_.getParameterID())->load(std::memory_order::relaxed));
+            if constexpr (UpdateFromAPVTS) {
+                updater_ref_.addAttachment(*this);
+            } else {
+                updateComponent();
+            }
+        }
+
         ~SliderAttachment() override {
             if constexpr (UpdateFromAPVTS) {
                 updater_ref_.removeAttachment(*this);

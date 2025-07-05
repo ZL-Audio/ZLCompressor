@@ -14,12 +14,14 @@ namespace zlpanel {
                              size_t &selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           eq_max_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
-          q_slider_(base),
+          q_slider_(base), slope_slider_(base),
           eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
           eq_db_box_attachment_(eq_db_box_.getBox(), processor.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
           para_panel_(processor, base, selected_band_idx),
           popup_panel_(processor, base, selected_band_idx) {
         addChildComponent(q_slider_);
+        slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        addChildComponent(slope_slider_);
 
         const auto popup_option = juce::PopupMenu::Options()
                 .withParentComponent(this)
@@ -46,6 +48,7 @@ namespace zlpanel {
     void ButtonPanel::resized() { {
             const auto bound = getLocalBounds();
             q_slider_.setBounds(bound);
+            slope_slider_.setBounds(bound);
             para_panel_.setBounds({
                 bound.getX(), bound.getY(),
                 para_panel_.getIdealWidth(), para_panel_.getIdealHeight()
@@ -93,10 +96,16 @@ namespace zlpanel {
             }
             previous_band_idx_ = selected_band_idx_;
             q_attachment_.reset();
+            slope_attachment_.reset();
             if (selected_band_idx_ != zlp::kBandNum) {
                 q_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true> >(
                     q_slider_,
                     p_ref_.parameters_, zlp::PQ::kID + std::to_string(selected_band_idx_),
+                    updater_);
+                slope_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true> >(
+                    slope_slider_,
+                    p_ref_.parameters_, zlp::POrder::kID + std::to_string(selected_band_idx_),
+                    juce::NormalisableRange<double>(0.0, 5.0, 0.033),
                     updater_);
             }
             para_panel_.updateBand();
@@ -190,6 +199,11 @@ namespace zlpanel {
             event.eventTime, event.mouseDownPosition, event.mouseDownTime,
             event.getNumberOfClicks(), false
         };
-        q_slider_.mouseWheelMove(e, wheel);
+
+        if (e.mods.isCommandDown()) {
+            slope_slider_.mouseWheelMove(e, wheel);
+        } else {
+            q_slider_.mouseWheelMove(e, wheel);
+        }
     }
 } // zlpanel

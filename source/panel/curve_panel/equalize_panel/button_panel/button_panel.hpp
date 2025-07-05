@@ -57,8 +57,12 @@ namespace zlpanel {
         float eq_max_db_id_{-1.f};
 
         zlgui::attachment::ComponentUpdater updater_;
+
         zlgui::slider::SnappingSlider q_slider_;
         std::unique_ptr<zlgui::attachment::SliderAttachment<true> > q_attachment_;
+
+        zlgui::slider::SnappingSlider slope_slider_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true> > slope_attachment_;
 
         zlgui::combobox::CompactCombobox eq_db_box_;
         zlgui::attachment::ComboBoxAttachment<true> eq_db_box_attachment_;
