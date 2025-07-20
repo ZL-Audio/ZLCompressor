@@ -24,7 +24,7 @@ namespace zlpanel {
 
         void resetSetting();
 
-        int getIdealHeight();
+        int getIdealHeight() const;
 
         void resized() override;
 

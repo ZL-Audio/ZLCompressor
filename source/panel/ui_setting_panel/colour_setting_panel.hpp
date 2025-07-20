@@ -28,6 +28,8 @@ namespace zlpanel {
 
         void resetSetting();
 
+        int getIdealHeight() const;
+
         void resized() override;
 
         void mouseDown(const juce::MouseEvent &event) override;

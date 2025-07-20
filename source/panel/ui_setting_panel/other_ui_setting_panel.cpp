@@ -70,7 +70,7 @@ namespace zlpanel {
     void OtherUISettingPanel::resetSetting() {
     }
 
-    int OtherUISettingPanel::getIdealHeight() {
+    int OtherUISettingPanel::getIdealHeight() const {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 

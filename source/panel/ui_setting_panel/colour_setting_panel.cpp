@@ -97,6 +97,13 @@ namespace zlpanel {
         saveSetting();
     }
 
+    int ColourSettingPanel::getIdealHeight() const {
+        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
+        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+
+        return padding * 13 + slider_height * 12;
+    }
+
     void ColourSettingPanel::resized() {
         auto bound = getLocalBounds();
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
@@ -136,7 +143,7 @@ namespace zlpanel {
                 "Load the colour settings...", kSettingDirectory, "*.xml",
                 true, false, nullptr);
             constexpr auto setting_open_flags = juce::FileBrowserComponent::openMode |
-                                              juce::FileBrowserComponent::canSelectFiles;
+                                                juce::FileBrowserComponent::canSelectFiles;
             chooser_->launchAsync(setting_open_flags, [this](const juce::FileChooser &chooser) {
                 if (chooser.getResults().size() <= 0) { return; }
                 const juce::File settingFile(chooser.getResult());
@@ -160,7 +167,7 @@ namespace zlpanel {
                 "Save the colour settings...", kSettingDirectory.getChildFile("colour.xml"), "*.xml",
                 true, false, nullptr);
             constexpr auto setting_save_flags = juce::FileBrowserComponent::saveMode |
-                                              juce::FileBrowserComponent::warnAboutOverwriting;
+                                                juce::FileBrowserComponent::warnAboutOverwriting;
             chooser_->launchAsync(setting_save_flags, [this](const juce::FileChooser &chooser) {
                 if (chooser.getResults().size() <= 0) { return; }
                 juce::File setting_file(chooser.getResult().withFileExtension("xml"));

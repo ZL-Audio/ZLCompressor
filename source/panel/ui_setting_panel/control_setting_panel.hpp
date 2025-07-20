@@ -11,6 +11,7 @@
 
 #include "../../gui/gui.hpp"
 #include "../../PluginProcessor.hpp"
+#include "../helper/panel_constants.hpp"
 
 namespace zlpanel {
     class ControlSettingPanel final : public juce::Component {
@@ -27,13 +28,15 @@ namespace zlpanel {
 
         void resetSetting();
 
+        int getIdealHeight() const;
+
         void resized() override;
 
         void mouseDown(const juce::MouseEvent &event) override;
 
     private:
-        PluginProcessor &processor_ref_;
-        zlgui::UIBase &ui_base_;
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
         zlgui::label::NameLookAndFeel name_laf_;
 
         juce::Label wheel_label_;

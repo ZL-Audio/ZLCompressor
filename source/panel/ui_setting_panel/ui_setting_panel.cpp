@@ -114,10 +114,10 @@ namespace zlpanel {
 
         colour_panel_.setBounds(0, 0,
                                 juce::roundToInt(bound.getWidth()),
-                                juce::roundToInt(base_.getFontSize() * (ColourSettingPanel::kHeightP + 1.f)));
+                                colour_panel_.getIdealHeight());
         control_panel_.setBounds(0, 0,
                                  juce::roundToInt(bound.getWidth()),
-                                 juce::roundToInt(base_.getFontSize() * (ControlSettingPanel::kHeightP + 1.f)));
+                                 control_panel_.getIdealHeight());
         other_panel_.setBounds(0, 0,
                                juce::roundToInt(bound.getWidth()),
                                other_panel_.getIdealHeight());
