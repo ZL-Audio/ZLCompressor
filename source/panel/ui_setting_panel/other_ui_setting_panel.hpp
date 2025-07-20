@@ -11,12 +11,11 @@
 
 #include "../../gui/gui.hpp"
 #include "../../PluginProcessor.hpp"
+#include "../helper/panel_constants.hpp"
 
 namespace zlpanel {
     class OtherUISettingPanel final : public juce::Component {
     public:
-        static constexpr float kHeightP = 4.f * 7.f;
-
         explicit OtherUISettingPanel(PluginProcessor &p, zlgui::UIBase &base);
 
         void loadSetting();
@@ -25,11 +24,13 @@ namespace zlpanel {
 
         void resetSetting();
 
+        int getIdealHeight();
+
         void resized() override;
 
     private:
-        PluginProcessor &pRef;
-        zlgui::UIBase &ui_base_;
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
         zlgui::label::NameLookAndFeel name_laf_;
 
         juce::Label refresh_rate_label_;

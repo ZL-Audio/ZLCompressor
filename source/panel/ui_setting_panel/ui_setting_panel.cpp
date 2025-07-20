@@ -32,7 +32,7 @@ namespace zlpanel {
         addAndMakeVisible(close_button_);
         addAndMakeVisible(reset_button_);
         view_port_.setScrollBarsShown(true, false,
-                                    true, false);
+                                      true, false);
         changeDisplayPanel();
         addAndMakeVisible(view_port_);
         save_button_.getButton().onClick = [this]() {
@@ -104,24 +104,23 @@ namespace zlpanel {
 
     void UISettingPanel::resized() {
         auto bound = getLocalBounds().toFloat();
-        bound = bound.withSizeKeepingCentre(bound.getWidth() * .75f, bound.getHeight());
-        {
+        bound = bound.withSizeKeepingCentre(bound.getWidth() * .75f, bound.getHeight()); {
             auto label_bound = bound.removeFromTop(base_.getFontSize() * 3.f);
             const auto label_width = label_bound.getWidth() / static_cast<float>(panel_labels_.size());
-            for (auto & panel_label : panel_labels_) {
+            for (auto &panel_label: panel_labels_) {
                 panel_label.setBounds(label_bound.removeFromLeft(label_width).toNearestInt());
             }
         }
 
         colour_panel_.setBounds(0, 0,
-                              juce::roundToInt(bound.getWidth()),
-                              juce::roundToInt(base_.getFontSize() * (ColourSettingPanel::kHeightP + 1.f)));
+                                juce::roundToInt(bound.getWidth()),
+                                juce::roundToInt(base_.getFontSize() * (ColourSettingPanel::kHeightP + 1.f)));
         control_panel_.setBounds(0, 0,
-                               juce::roundToInt(bound.getWidth()),
-                               juce::roundToInt(base_.getFontSize() * (ControlSettingPanel::kHeightP + 1.f)));
+                                 juce::roundToInt(bound.getWidth()),
+                                 juce::roundToInt(base_.getFontSize() * (ControlSettingPanel::kHeightP + 1.f)));
         other_panel_.setBounds(0, 0,
-                             juce::roundToInt(bound.getWidth()),
-                             juce::roundToInt(base_.getFontSize() * (OtherUISettingPanel::kHeightP + 1.f)));
+                               juce::roundToInt(bound.getWidth()),
+                               other_panel_.getIdealHeight());
 
         view_port_.setBounds(bound.removeFromTop(bound.getHeight() * .9125f).toNearestInt());
 
