@@ -15,9 +15,7 @@
 namespace zldsp::vector {
     template<typename FloatType>
     inline void copy(FloatType *out, const FloatType* in, const size_t size) {
-        auto v1 = kfr::make_univector(out, size);
-        auto v2 = kfr::make_univector(in, size);
-        v1 = v2;
+        std::memcpy(out, in, sizeof(FloatType) * size);
     }
 
     template<typename FloatType>

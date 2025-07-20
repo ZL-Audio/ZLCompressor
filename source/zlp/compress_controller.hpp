@@ -30,7 +30,8 @@ namespace zlp {
 
         void prepare(const juce::dsp::ProcessSpec &spec);
 
-        void process(std::array<float *, 2>main_pointers, std::array<float *, 2> side_pointers, size_t num_samples);
+        void process(std::array<float *, 2> main_pointers, std::array<float *, 2> side_pointers,
+            size_t num_samples, bool bypass);
 
         auto &getMagAnalyzer() { return mag_analyzer_; }
 
@@ -281,7 +282,7 @@ namespace zlp {
 
         void processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
                            float * __restrict side_buffer0, float * __restrict side_buffer1,
-                           size_t num_samples);
+                           size_t num_samples, bool bypass);
 
         void processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 

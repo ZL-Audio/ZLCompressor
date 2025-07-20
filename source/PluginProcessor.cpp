@@ -160,6 +160,23 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 }
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) {
+    processBlockInternal<false>(buffer);
+}
+
+void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) {
+    processBlockInternal<false>(buffer);
+}
+
+void PluginProcessor::processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) {
+    processBlockInternal<true>(buffer);
+}
+
+void PluginProcessor::processBlockBypassed(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) {
+    processBlockInternal<true>(buffer);
+}
+
+template<bool IsBypassed>
+void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
     const auto c_ext_side = ext_side_.load(std::memory_order::relaxed) > .5f;
@@ -175,7 +192,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
@@ -195,7 +212,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
@@ -215,7 +232,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 auto v0 = kfr::make_univector(double_side_pointers_[0], buffer_size);
@@ -233,7 +250,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
@@ -253,7 +270,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
@@ -273,7 +290,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
@@ -285,7 +302,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
     }
 }
 
-void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) {
+template<bool IsBypassed>
+void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
     juce::ScopedNoDenormals no_denormals;
     if (buffer.getNumSamples() == 0) return; // ignore empty blocks
     const auto c_ext_side = ext_side_.load(std::memory_order::relaxed) > .5f;
@@ -302,7 +320,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, false);
 
             if (!c_side_out) {
                 zldsp::vector::copy(double_side_pointers_[0], main_pointers_[0], buffer_size);
@@ -318,7 +336,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 if (c_ext_side) {
@@ -343,7 +361,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 if (c_ext_side) {
@@ -366,7 +384,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (!c_side_out) {
                 zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
@@ -388,7 +406,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 if (c_ext_side) {
@@ -415,7 +433,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
             equalize_controller_.process(double_side_pointers_, buffer_size);
             zldsp::vector::copy<float, double>(float_side_pointers_, double_side_pointers_, buffer_size);
 
-            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size);
+            compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
             if (c_side_out) {
                 if (c_ext_side) {

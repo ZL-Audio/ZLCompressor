@@ -203,7 +203,7 @@ namespace zlp {
 
     void CompressController::process(std::array<float *, 2> main_pointers,
                                      std::array<float *, 2> side_pointers,
-                                     const size_t num_samples) {
+                                     const size_t num_samples, bool bypass) {
         if (to_update_.exchange(false, std::memory_order::acquire)) {
             prepareBuffer();
         }
@@ -227,13 +227,13 @@ namespace zlp {
         std::array<float *, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
         switch (c_oversample_idx_) {
             case 0: {
-                processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples);
+                processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples, bypass);
                 break;
             }
             case 1: {
                 over_sampler2_.upsample(pointers, num_samples);
                 auto &os_pointers = over_sampler2_.getOSPointer();
-                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 1);
+                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 1, bypass);
                 over_sampler2_.downsample(pointers, num_samples);
                 oversample_delay_.process(pre_pointers_, num_samples);
                 break;
@@ -241,7 +241,7 @@ namespace zlp {
             case 2: {
                 over_sampler4_.upsample(pointers, num_samples);
                 auto &os_pointers = over_sampler4_.getOSPointer();
-                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 2);
+                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 2, bypass);
                 over_sampler4_.downsample(pointers, num_samples);
                 oversample_delay_.process(pre_pointers_, num_samples);
                 break;
@@ -249,7 +249,7 @@ namespace zlp {
             case 3: {
                 over_sampler8_.upsample(pointers, num_samples);
                 auto &os_pointers = over_sampler8_.getOSPointer();
-                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 3);
+                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 3, bypass);
                 over_sampler8_.downsample(pointers, num_samples);
                 oversample_delay_.process(pre_pointers_, num_samples);
                 break;
@@ -261,7 +261,7 @@ namespace zlp {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
         }
         // makeup gain
-        if (c_is_on_) {
+        if (c_is_on_ && !bypass) {
             output_gain_.template process<false>(main_pointers, num_samples);
         } else {
             output_gain_.template process<true>(main_pointers, num_samples);
@@ -292,7 +292,7 @@ namespace zlp {
 
     void CompressController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
                                            float * __restrict side_buffer0, float * __restrict side_buffer1,
-                                           const size_t num_samples) {
+                                           const size_t num_samples, bool bypass) {
         // create univector refs
         auto side_v0 = kfr::make_univector(side_buffer0, num_samples);
         auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
@@ -362,7 +362,7 @@ namespace zlp {
         side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
         side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
         // apply gain on the main buffer with bypass and stereo swap
-        if (c_is_on_) {
+        if (c_is_on_ && !bypass) {
             if (c_stereo_swap_) {
                 main_v0 = main_v0 * side_v1;
                 main_v1 = main_v1 * side_v0;

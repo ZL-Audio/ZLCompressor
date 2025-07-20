@@ -36,9 +36,13 @@ public:
 
     bool isBusesLayoutSupported(const BusesLayout &layouts) const override;
 
-    void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
+    void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) override;
 
-    void processBlock(juce::AudioBuffer<double> &, juce::MidiBuffer &) override;
+    void processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) override;
+
+    void processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) override;
+
+    void processBlockBypassed(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) override;
 
     juce::AudioProcessorEditor *createEditor() override;
 
@@ -98,4 +102,10 @@ private:
     ChannelLayout channel_layout_{kInvalid};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
+
+    template<bool IsBypassed = false>
+    void processBlockInternal(juce::AudioBuffer<float> &buffer);
+
+    template<bool IsBypassed = false>
+    void processBlockInternal(juce::AudioBuffer<double> &buffer);
 };
