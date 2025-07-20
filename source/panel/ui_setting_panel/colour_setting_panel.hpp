@@ -11,6 +11,7 @@
 
 #include "../../gui/gui.hpp"
 #include "../../PluginProcessor.hpp"
+#include "../helper/panel_constants.hpp"
 
 namespace zlpanel {
     class ColourSettingPanel final : public juce::Component {
@@ -33,7 +34,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor &pRef;
-        zlgui::UIBase &ui_base_;
+        zlgui::UIBase &base_;
         zlgui::label::NameLookAndFeel name_laf_;
 
         static constexpr size_t kNumSelectors = static_cast<size_t>(zlgui::ColourIdx::kColourNum);

@@ -17,8 +17,7 @@
 #include "other_ui_setting_panel.hpp"
 
 namespace zlpanel {
-    class UISettingPanel final : public juce::Component,
-                                 private juce::ValueTree::Listener {
+    class UISettingPanel final : public juce::Component {
     public:
         explicit UISettingPanel(PluginProcessor &p, zlgui::UIBase &base);
 
@@ -60,6 +59,6 @@ namespace zlpanel {
 
         void changeDisplayPanel();
 
-        void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
+        void visibilityChanged() override;
     };
 } // zlpanel

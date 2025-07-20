@@ -21,9 +21,12 @@
 #include "ui_setting_panel/ui_setting_panel.hpp"
 
 namespace zlpanel {
-    class MainPanel final : public juce::Component {
+    class MainPanel final : public juce::Component,
+                            private juce::ValueTree::Listener {
     public:
         explicit MainPanel(PluginProcessor &processor, zlgui::UIBase &base);
+
+        ~MainPanel() override;
 
         void resized() override;
 
@@ -40,5 +43,7 @@ namespace zlpanel {
         RefreshHandler refresh_handler_;
         double previous_time_stamp_{-1.0};
         double refresh_rate_{-1.0};
+
+        void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
     };
 } // zlpanel

@@ -25,6 +25,8 @@ namespace zlgui::colour_selector {
             addAndMakeVisible(slider_);
         }
         addAndMakeVisible(selector_);
+
+        setInterceptsMouseClicks(false, true);
     }
 
     ColourOpacitySelector::~ColourOpacitySelector() {
@@ -34,15 +36,12 @@ namespace zlgui::colour_selector {
     }
 
     void ColourOpacitySelector::resized() {
-        auto bound = getLocalBounds().toFloat();
-        bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            base_.getFontSize() * kFontLarge * 1.75f);
-        const auto padding = base_.getFontSize() * 2.f;
-        const auto width = bound.getWidth() - padding;
-        selector_.setBounds(bound.removeFromLeft(width * weights_[0]).toNearestInt());
+        auto bound = getLocalBounds();
+        const auto padding = juce::roundToInt(base_.getFontSize() * 2.f);
+        selector_.setBounds(bound.removeFromLeft(juce::roundToInt(base_.getFontSize() * weights_[0])));
         if (opacity_on_) {
             bound.removeFromLeft(padding);
-            slider_.setBounds(bound.removeFromLeft(width * weights_[1]).toNearestInt());
+            slider_.setBounds(bound.removeFromLeft(juce::roundToInt(base_.getFontSize() * weights_[1])));
         }
     }
 

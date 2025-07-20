@@ -69,8 +69,6 @@ namespace zlpanel {
         export_label_.setLookAndFeel(&name_laf_);
         export_label_.addMouseListener(this, false);
         addAndMakeVisible(export_label_);
-
-        setInterceptsMouseClicks(false, true);
     }
 
     ControlSettingPanel::~ControlSettingPanel() = default;

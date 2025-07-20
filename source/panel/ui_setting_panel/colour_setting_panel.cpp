@@ -20,7 +20,7 @@ namespace zlpanel {
     }
 
     ColourSettingPanel::ColourSettingPanel(PluginProcessor &p, zlgui::UIBase &base)
-        : pRef(p), ui_base_(base), name_laf_(base),
+        : pRef(p), base_(base), name_laf_(base),
           c_map1_selector_(base), c_map2_selector_(base) {
         juce::ignoreUnused(pRef);
         if (!kSettingDirectory.isDirectory()) {
@@ -37,7 +37,9 @@ namespace zlpanel {
             selector_labels_[i].setLookAndFeel(&name_laf_);
             addAndMakeVisible(selector_labels_[i]);
 
-            selectors_[i] = std::make_unique<zlgui::colour_selector::ColourOpacitySelector>(base, *this, i <= 3);
+            selectors_[i] = std::make_unique<zlgui::colour_selector::ColourOpacitySelector>(
+                base, *this, i > 3,
+                12.f, 10.f, kSliderScale, kSliderScale);
             addAndMakeVisible(*selectors_[i]);
         }
         c_map1_label_.setText("Colour Map 1", juce::dontSendNotification);
@@ -60,8 +62,6 @@ namespace zlpanel {
         export_label_.setLookAndFeel(&name_laf_);
         export_label_.addMouseListener(this, false);
         addAndMakeVisible(export_label_);
-
-        setInterceptsMouseClicks(false, true);
     }
 
     ColourSettingPanel::~ColourSettingPanel() {
@@ -72,19 +72,19 @@ namespace zlpanel {
 
     void ColourSettingPanel::loadSetting() {
         for (size_t i = 0; i < kNumSelectors; ++i) {
-            selectors_[i]->setColour(ui_base_.getColourByIdx(static_cast<zlgui::ColourIdx>(i)));
+            selectors_[i]->setColour(base_.getColourByIdx(static_cast<zlgui::ColourIdx>(i)));
         }
-        c_map1_selector_.getBox().setSelectedId(static_cast<int>(ui_base_.getCMap1Idx()) + 1);
-        c_map2_selector_.getBox().setSelectedId(static_cast<int>(ui_base_.getCMap2Idx()) + 1);
+        c_map1_selector_.getBox().setSelectedId(static_cast<int>(base_.getCMap1Idx()) + 1);
+        c_map2_selector_.getBox().setSelectedId(static_cast<int>(base_.getCMap2Idx()) + 1);
     }
 
     void ColourSettingPanel::saveSetting() {
         for (size_t i = 0; i < kNumSelectors; ++i) {
-            ui_base_.setColourByIdx(static_cast<zlgui::ColourIdx>(i), selectors_[i]->getColour());
+            base_.setColourByIdx(static_cast<zlgui::ColourIdx>(i), selectors_[i]->getColour());
         }
-        ui_base_.setCMap1Idx(static_cast<size_t>(c_map1_selector_.getBox().getSelectedId() - 1));
-        ui_base_.setCMap2Idx(static_cast<size_t>(c_map2_selector_.getBox().getSelectedId() - 1));
-        ui_base_.saveToAPVTS();
+        base_.setCMap1Idx(static_cast<size_t>(c_map1_selector_.getBox().getSelectedId() - 1));
+        base_.setCMap2Idx(static_cast<size_t>(c_map2_selector_.getBox().getSelectedId() - 1));
+        base_.saveToAPVTS();
     }
 
     void ColourSettingPanel::resetSetting() {
@@ -98,31 +98,35 @@ namespace zlpanel {
     }
 
     void ColourSettingPanel::resized() {
-        auto bound = getLocalBounds().toFloat();
+        auto bound = getLocalBounds();
+        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+
         for (size_t i = 0; i < kNumSelectors; ++i) {
-            bound.removeFromTop(ui_base_.getFontSize());
-            auto local_bound = bound.removeFromTop(ui_base_.getFontSize() * 3);
-            selector_labels_[i].setBounds(local_bound.removeFromLeft(bound.getWidth() * .3f).toNearestInt());
-            local_bound.removeFromLeft(bound.getWidth() * .05f);
-            selectors_[i]->setBounds(local_bound.removeFromLeft(bound.getWidth() * .5f).toNearestInt());
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            selector_labels_[i].setBounds(local_bound.removeFromLeft(slider_width * 2));
+            local_bound.removeFromLeft(padding);
+            selectors_[i]->setBounds(local_bound);
         } {
-            bound.removeFromTop(ui_base_.getFontSize());
-            auto local_bound = bound.removeFromTop(ui_base_.getFontSize() * 3);
-            c_map1_label_.setBounds(local_bound.removeFromLeft(bound.getWidth() * .3f).toNearestInt());
-            local_bound.removeFromLeft(bound.getWidth() * .05f);
-            c_map1_selector_.setBounds(local_bound.removeFromLeft(bound.getWidth() * .5f).toNearestInt());
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            c_map1_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
+            local_bound.removeFromLeft(padding);
+            c_map1_selector_.setBounds(local_bound.removeFromLeft(slider_width * 4 + padding));
         } {
-            bound.removeFromTop(ui_base_.getFontSize());
-            auto local_bound = bound.removeFromTop(ui_base_.getFontSize() * 3);
-            c_map2_label_.setBounds(local_bound.removeFromLeft(bound.getWidth() * .3f).toNearestInt());
-            local_bound.removeFromLeft(bound.getWidth() * .05f);
-            c_map2_selector_.setBounds(local_bound.removeFromLeft(bound.getWidth() * .5f).toNearestInt());
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            c_map2_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
+            local_bound.removeFromLeft(padding);
+            c_map2_selector_.setBounds(local_bound.removeFromLeft(slider_width * 4 + padding));
         } {
-            bound.removeFromTop(ui_base_.getFontSize());
-            auto local_bound = bound.removeFromTop(ui_base_.getFontSize() * 3);
-            import_label_.setBounds(local_bound.removeFromLeft(bound.getWidth() * .45f).toNearestInt());
-            local_bound.removeFromLeft(bound.getWidth() * .10f);
-            export_label_.setBounds(local_bound.toNearestInt());
+            bound.removeFromTop(padding);
+            const auto label_width = bound.getWidth() / 2;
+            auto local_bound = bound.removeFromTop(slider_height);
+            import_label_.setBounds(local_bound.removeFromLeft(label_width));
+            export_label_.setBounds(local_bound.removeFromRight(label_width));
         }
     }
 
@@ -144,10 +148,10 @@ namespace zlpanel {
                                 xml_colour->getIntAttribute("g"),
                                 xml_colour->getIntAttribute("b"),
                                 static_cast<float>(xml_colour->getDoubleAttribute("o")));
-                            ui_base_.setColourByIdx(static_cast<zlgui::ColourIdx>(i), colour);
+                            base_.setColourByIdx(static_cast<zlgui::ColourIdx>(i), colour);
                         }
                     }
-                    ui_base_.saveToAPVTS();
+                    base_.saveToAPVTS();
                     loadSetting();
                 }
             });

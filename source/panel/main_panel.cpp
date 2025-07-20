@@ -22,6 +22,12 @@ namespace zlpanel {
         addAndMakeVisible(control_panel_);
         addAndMakeVisible(top_panel_);
         addChildComponent(ui_setting_panel_);
+
+        base_.getPanelValueTree().addListener(this);
+    }
+
+    MainPanel::~MainPanel() {
+        base_.getPanelValueTree().removeListener(this);
     }
 
     void MainPanel::resized() {
@@ -69,6 +75,14 @@ namespace zlpanel {
                 p_ref_.getEqualizeController().getFFTAnalyzer().setRefreshRate(
                     static_cast<float>(refresh_rate_));
             }
+        }
+    }
+
+    void MainPanel::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) {
+        if (base_.isPanelIdentifier(zlgui::PanelSettingIdx::kUISettingPanel, property)) {
+            const auto ui_setting_visibility = static_cast<bool>(base_.getPanelProperty(zlgui::PanelSettingIdx::kUISettingPanel));
+            curve_panel_.setVisible(!ui_setting_visibility);
+            ui_setting_panel_.setVisible(ui_setting_visibility);
         }
     }
 } // zlpanel

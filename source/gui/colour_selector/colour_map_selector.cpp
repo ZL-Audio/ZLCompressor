@@ -20,8 +20,7 @@ namespace zlgui::colour_selector {
 
     void ColourMapSelector::paint(juce::Graphics &g) {
         auto bound = getLocalBounds().toFloat();
-        bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            base_.getFontSize() * kFontLarge * 1.75f);
+
         bound.removeFromLeft(bound.getWidth() * map_box_width_p_ + base_.getFontSize());
         g.setColour(base_.getTextColor().withAlpha(.875f));
         g.fillRect(bound);
@@ -37,8 +36,6 @@ namespace zlgui::colour_selector {
 
     void ColourMapSelector::resized() {
         auto bound = getLocalBounds().toFloat();
-        bound = bound.withSizeKeepingCentre(bound.getWidth(),
-                                            base_.getFontSize() * kFontLarge * 1.75f);
         const auto box_bound = bound.removeFromLeft(bound.getWidth() * map_box_width_p_);
         map_box_.setBounds(box_bound.toNearestInt());
     }

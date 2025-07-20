@@ -91,13 +91,9 @@ namespace zlpanel {
         version_label_.setJustificationType(juce::Justification::bottomLeft);
         version_label_.setLookAndFeel(&label_laf_);
         addAndMakeVisible(version_label_);
-
-        base_.getPanelValueTree().addListener(this);
     }
 
-    UISettingPanel::~UISettingPanel() {
-        base_.getPanelValueTree().removeListener(this);
-    }
+    UISettingPanel::~UISettingPanel() = default;
 
     void UISettingPanel::paint(juce::Graphics &g) {
         g.fillAll(base_.getBackgroundColor());
@@ -128,6 +124,7 @@ namespace zlpanel {
                              juce::roundToInt(base_.getFontSize() * (OtherUISettingPanel::kHeightP + 1.f)));
 
         view_port_.setBounds(bound.removeFromTop(bound.getHeight() * .9125f).toNearestInt());
+
         const auto left_bound = bound.removeFromLeft(
             bound.getWidth() * .3333333f).withSizeKeepingCentre(
             base_.getFontSize() * 2.f, base_.getFontSize() * 2.f);
@@ -135,7 +132,7 @@ namespace zlpanel {
             bound.getWidth() * .5f).withSizeKeepingCentre(
             base_.getFontSize() * 2.f, base_.getFontSize() * 2.f);
         const auto right_bound = bound.withSizeKeepingCentre(
-            base_.getFontSize() * 2.f, base_.getFontSize() * 2.f);
+            base_.getFontSize() * 1.95f, base_.getFontSize() * 1.95f);
         save_button_.setBounds(left_bound.toNearestInt());
         reset_button_.setBounds(center_bound.toNearestInt());
         close_button_.setBounds(right_bound.toNearestInt());
@@ -181,13 +178,11 @@ namespace zlpanel {
         }
     }
 
-    void UISettingPanel::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) {
-        if (base_.isPanelIdentifier(zlgui::PanelSettingIdx::kUISettingPanel, property)) {
-            const auto visibility = static_cast<bool>(base_.getPanelProperty(zlgui::PanelSettingIdx::kUISettingPanel));
+    void UISettingPanel::visibilityChanged() {
+        if (isVisible()) {
             colour_panel_.loadSetting();
             control_panel_.loadSetting();
             other_panel_.loadSetting();
-            setVisible(visibility);
         }
     }
 } // zlpanel
