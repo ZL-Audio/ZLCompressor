@@ -97,7 +97,6 @@ namespace zldsp::oversample {
                 for (size_t i = 0; i < num_samples; ++i) {
                     os_data[i << 1] = delay_line[up_coeff_center_pos_] * up_coeff_center_;
                     std::memmove(delay_line.data(), delay_line.data() + 1, memmove_size);
-                    // std::rotate(delay_line.begin(), delay_line.begin() + 1, delay_line.end());
                     delay_line[delay_line.size() - 1] = chan_data[i];
                     if (UseSIMD) {
                         os_data[(i << 1) + 1] = kfr::dotproduct(up_coeff_, delay_line);
@@ -141,7 +140,6 @@ namespace zldsp::oversample {
                     }
                     chan_data[i] = output;
                     std::memmove(delay_line.data(), delay_line.data() + 1, memmove_size);
-                    // std::rotate(delay_line.begin(), delay_line.begin() + 1, delay_line.end());
                     delay_line.back() = os_data[(i << 1) + 1];
                     center_delay_line[center_pos] = os_data[(i << 1)];
                     center_pos = center_pos == 0 ? center_delay_line.size() - 1 : center_pos - 1;
