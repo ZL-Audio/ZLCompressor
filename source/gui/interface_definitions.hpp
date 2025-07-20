@@ -41,12 +41,14 @@ namespace zlgui {
     enum PanelSettingIdx {
         kLUFSLearnButton,
         kUISettingPanel,
+        kUISettingChanged,
         kPanelSettingNum
     };
 
     inline std::array kPanelSettingIdentifiers{
         juce::Identifier("lufs_learn_button"),
-        juce::Identifier("ui_setting_panel")
+        juce::Identifier("ui_setting_panel"),
+        juce::Identifier("ui_setting_changed")
     };
 
     static constexpr size_t kColorMap1Size = 10;

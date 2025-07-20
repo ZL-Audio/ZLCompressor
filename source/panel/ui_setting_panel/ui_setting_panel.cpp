@@ -50,6 +50,8 @@ namespace zlpanel {
                     break;
                 }
             }
+            base_.setPanelProperty(zlgui::kUISettingChanged,
+                !static_cast<bool>(base_.getPanelProperty(zlgui::kUISettingChanged)));
         };
         reset_button_.getButton().onClick = [this]() {
             switch (current_panel_idx_) {

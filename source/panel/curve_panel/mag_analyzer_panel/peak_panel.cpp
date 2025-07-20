@@ -43,12 +43,12 @@ namespace zlpanel {
         g.fillPath(in_path_);
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPostColour));
         g.strokePath(out_path_,
-                     juce::PathStrokeType(base_.getFontSize() * .2f,
+                     juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
         g.strokePath(reduction_path_,
-                     juce::PathStrokeType(base_.getFontSize() * .2f,
+                     juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }
@@ -59,6 +59,7 @@ namespace zlpanel {
         const auto pad = std::max(bound.getWidth() * pad_p, 1.f);
         bound = bound.withWidth(bound.getWidth() + pad);
         atomic_bound_.store(bound);
+        lookAndFeelChanged();
     }
 
     void PeakPanel::run(const double next_time_stamp) {
@@ -127,6 +128,10 @@ namespace zlpanel {
             next_reduction_path_.lineTo(xs_[i], reduction_ys_[i]);
         }
         next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
+    }
+
+    void PeakPanel::lookAndFeelChanged() {
+        curve_thickness_ = base_.getFontSize() * .2f * base_.getMagCurveThickness();
     }
 
     void PeakPanel::parameterChanged(const juce::String &parameter_id, const float new_value) {

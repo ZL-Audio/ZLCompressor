@@ -45,7 +45,7 @@ namespace zlpanel {
         }
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour));
         g.strokePath(comp_path_,
-                     juce::PathStrokeType(base_.getFontSize() * .25f,
+                     juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }
@@ -86,6 +86,11 @@ namespace zlpanel {
     void ComputerPanel::resized() {
         atomic_bound_.store(getLocalBounds().toFloat());
         to_update_.store(true, std::memory_order::release);
+        lookAndFeelChanged();
+    }
+
+    void ComputerPanel::lookAndFeelChanged() {
+        curve_thickness_ = base_.getFontSize() * .25f * base_.getMagCurveThickness();
     }
 
     void ComputerPanel::parameterChanged(const juce::String &, float) {

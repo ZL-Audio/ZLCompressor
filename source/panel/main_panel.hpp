@@ -30,7 +30,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(const double time_stamp);
+        void repaintCallBack(double time_stamp);
 
     private:
         PluginProcessor &p_ref_;

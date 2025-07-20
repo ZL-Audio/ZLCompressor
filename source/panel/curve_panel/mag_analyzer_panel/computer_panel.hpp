@@ -42,11 +42,13 @@ namespace zlpanel {
         zldsp::compressor::KneeComputer<float> computer_{};
         AtomicBound<float> atomic_bound_;
 
+        float curve_thickness_{0.f};
+
         std::atomic<bool> to_update_{true};
         juce::Path comp_path_, next_comp_path_;
         juce::SpinLock path_lock_;
 
-
+        void lookAndFeelChanged() override;
 
         void parameterChanged(const juce::String &parameterID, float newValue) override;
     };

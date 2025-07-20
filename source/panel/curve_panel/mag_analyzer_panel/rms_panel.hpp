@@ -35,9 +35,13 @@ namespace zlpanel {
 
         AtomicBound<float> atomic_bound_;
 
+        float curve_thickness_{0.f};
+
         std::array<float, zlp::CompressController::kAvgAnalyzerPointNum> in_xs_{}, out_xs{}, ys_{};
         juce::Path in_path_, out_path_;
         juce::Path next_in_path_, next_out_path_;
         std::mutex mutex_;
+
+        void lookAndFeelChanged() override;
     };
 } // zlpanel

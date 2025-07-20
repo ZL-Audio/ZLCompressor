@@ -46,6 +46,8 @@ namespace zlpanel {
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         std::mutex mutex_;
 
+        float curve_thickness_{0.f};
+
         std::atomic<bool> to_reset_path_{true};
         double consecutive_reset_count_{0.0};
         double start_time_{0.0};
@@ -57,6 +59,8 @@ namespace zlpanel {
         std::atomic<float> analyzer_min_db_{-72.f};
 
         void updatePaths(juce::Rectangle<float> bound);
+
+        void lookAndFeelChanged() override;
 
         void parameterChanged(const juce::String &parameter_id, float new_value) override;
 

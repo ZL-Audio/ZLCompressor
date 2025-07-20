@@ -29,7 +29,7 @@ namespace zlpanel {
         g.fillPath(in_path_);
         g.setColour(base_.getTextColor().withAlpha(.9f));
         g.strokePath(out_path_,
-                     juce::PathStrokeType(base_.getFontSize() * .2f,
+                     juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
     }
@@ -65,6 +65,11 @@ namespace zlpanel {
     void RMSPanel::resized() {
         const auto bound = getLocalBounds().toFloat();
         atomic_bound_.store(bound.withWidth(bound.getWidth() - 20.f));
+        lookAndFeelChanged();
+    }
+
+    void RMSPanel::lookAndFeelChanged() {
+        curve_thickness_ = base_.getFontSize() * .2f * base_.getMagCurveThickness();
     }
 
     void RMSPanel::mouseDoubleClick(const juce::MouseEvent &event) {

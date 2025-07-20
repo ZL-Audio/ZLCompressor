@@ -16,9 +16,6 @@ PluginEditor::PluginEditor(PluginProcessor &p)
       base_(p.state_),
       main_panel_(p, base_),
       equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)) {
-    for (auto &ID: kIDs) {
-        p_ref_.state_.addParameterListener(ID, this);
-    }
     // set font
     const auto font_face = juce::Typeface::createSystemTypefaceFor(
         BinaryData::MiSansLatinMedium_ttf, BinaryData::MiSansLatinMedium_ttfSize);
@@ -46,13 +43,14 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 
     startTimerHz(2);
     updateIsShowing();
+
+    base_.setPanelProperty(zlgui::kUISettingChanged, true);
+    base_.getPanelValueTree().addListener(this);
 }
 
 PluginEditor::~PluginEditor() {
+    base_.getPanelValueTree().removeListener(this);
     vblank_.reset();
-    for (auto &id: kIDs) {
-        p_ref_.state_.removeParameterListener(id, this);
-    }
     stopTimer();
     p_ref_.getCompressController().setMagAnalyzerOn(false);
 }
@@ -65,6 +63,7 @@ void PluginEditor::resized() {
     main_panel_.setBounds(getLocalBounds());
     last_ui_width_ = getWidth();
     last_ui_height_ = getHeight();
+    triggerAsyncUpdate();
 }
 
 void PluginEditor::visibilityChanged() {
@@ -79,17 +78,18 @@ void PluginEditor::minimisationStateChanged(bool) {
     updateIsShowing();
 }
 
-void PluginEditor::parameterChanged(const juce::String &parameter_id, float new_value) {
-    juce::ignoreUnused(parameter_id, new_value);
-    is_size_changed_.store(parameter_id == zlstate::PWindowH::kID || parameter_id == zlstate::PWindowW::kID);
-    triggerAsyncUpdate();
+void PluginEditor::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) {
+    if (base_.isPanelIdentifier(zlgui::kUISettingChanged, property)) {
+        sendLookAndFeelChange();
+        auto &fft{p_ref_.getEqualizeController().getFFTAnalyzer()};
+        fft.setExtraTilt(base_.getFFTExtraTilt());
+        fft.setExtraSpeed(base_.getFFTExtraSpeed());
+        triggerAsyncUpdate();
+    }
 }
 
 void PluginEditor::handleAsyncUpdate() {
     property_.saveAPVTS(p_ref_.state_);
-    if (!is_size_changed_.exchange(false)) {
-        sendLookAndFeelChange();
-    }
 }
 
 void PluginEditor::timerCallback() {

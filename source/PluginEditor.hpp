@@ -19,7 +19,7 @@
 //==============================================================================
 class PluginEditor : public juce::AudioProcessorEditor,
                      private juce::Timer,
-                     private juce::AudioProcessorValueTreeState::Listener,
+                     private juce::ValueTree::Listener,
                      private juce::AsyncUpdater {
 public:
     explicit PluginEditor(PluginProcessor &);
@@ -41,11 +41,6 @@ private:
     PluginProcessor &p_ref_;
     zlstate::Property &property_;
     juce::Value last_ui_width_, last_ui_height_;
-    std::atomic<bool> is_size_changed_{false};
-
-    static constexpr std::array kIDs{
-        zlstate::PWindowW::kID, zlstate::PWindowH::kID,
-    };
 
     zlgui::UIBase base_;
     zlpanel::MainPanel main_panel_;
@@ -56,7 +51,7 @@ private:
 
     void timerCallback() override;
 
-    void parameterChanged(const juce::String &parameter_id, float new_value) override;
+    void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
 
     void handleAsyncUpdate() override;
 
