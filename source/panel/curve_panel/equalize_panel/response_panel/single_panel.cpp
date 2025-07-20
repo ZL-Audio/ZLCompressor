@@ -41,11 +41,20 @@ namespace zlpanel {
             return;
         }
         g.setColour(base_.getColorMap1(band_idx_));
-        g.strokePath(path_, juce::PathStrokeType(base_.getFontSize() * .15f * curve_thickness_scale,
+        g.strokePath(path_, juce::PathStrokeType(curve_thickness_ * curve_thickness_scale,
                                                  juce::PathStrokeType::curved,
                                                  juce::PathStrokeType::rounded));
 
-        g.drawLine(line_, base_.getFontSize() * .075f);
+        g.drawLine(line_, line_thickness_);
+    }
+
+    void SinglePanel::resized() {
+        lookAndFeelChanged();
+    }
+
+    void SinglePanel::lookAndFeelChanged() {
+        curve_thickness_ = base_.getFontSize() * .15f * base_.getEQCurveThickness();
+        line_thickness_ = base_.getFontSize() * .075f * base_.getEQCurveThickness();
     }
 
     bool SinglePanel::run(const std::span<float> xs, std::span<float> ys,

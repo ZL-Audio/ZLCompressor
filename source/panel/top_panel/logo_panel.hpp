@@ -19,16 +19,18 @@ class LogoPanel : public juce::Component {
 public:
     explicit LogoPanel(PluginProcessor &p, zlgui::UIBase &base);
 
+private:
+    zlgui::UIBase &base_;
+    std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
+    juce::Justification justification_{juce::Justification::topLeft};
+
     void paint(juce::Graphics &g) override;
 
     void mouseEnter(const juce::MouseEvent &event) override;
 
     void mouseExit(const juce::MouseEvent &event) override;
 
-private:
-    zlgui::UIBase &base_;
-    std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
-    juce::Justification justification_{juce::Justification::topLeft};
+    void mouseDoubleClick(const juce::MouseEvent &event) override;
 };
 
 }

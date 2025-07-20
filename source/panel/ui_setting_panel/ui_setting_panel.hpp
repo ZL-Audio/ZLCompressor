@@ -12,8 +12,13 @@
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 
+#include "colour_setting_panel.hpp"
+#include "control_setting_panel.hpp"
+#include "other_ui_setting_panel.hpp"
+
 namespace zlpanel {
-    class UISettingPanel final : public juce::Component {
+    class UISettingPanel final : public juce::Component,
+                                 private juce::ValueTree::Listener {
     public:
         explicit UISettingPanel(PluginProcessor &p, zlgui::UIBase &base);
 
@@ -27,15 +32,20 @@ namespace zlpanel {
 
         void mouseDown(const juce::MouseEvent &event) override;
 
-        void visibilityChanged() override;
-
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
         juce::Viewport view_port_;
 
+        ColourSettingPanel colour_panel_;
+        ControlSettingPanel control_panel_;
+        OtherUISettingPanel other_panel_;
+
+        const std::unique_ptr<juce::Drawable> save_drawable_, close_drawable_, reset_drawable_;
+        zlgui::button::ClickButton save_button_, close_button_, reset_button_;
+
         zlgui::label::NameLookAndFeel panel_name_laf_;
-        juce::Label colour_label_, control_label_, other_label_;
+        std::array<juce::Label, 3> panel_labels_;
 
         zlgui::label::NameLookAndFeel label_laf_;
         juce::Label version_label_;
@@ -46,6 +56,10 @@ namespace zlpanel {
             kOtherP
         };
 
-        PanelIdx panel_idx_ = kColourP;
+        PanelIdx current_panel_idx_ = kColourP;
+
+        void changeDisplayPanel();
+
+        void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
     };
 } // zlpanel

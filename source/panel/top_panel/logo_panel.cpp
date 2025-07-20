@@ -52,4 +52,8 @@ namespace zlpanel {
     void LogoPanel::mouseExit(const juce::MouseEvent &) {
         setAlpha(.5f);
     }
+
+    void LogoPanel::mouseDoubleClick(const juce::MouseEvent &event) {
+        base_.setPanelProperty(zlgui::kUISettingPanel, true);
+    }
 }

@@ -339,17 +339,17 @@ namespace zlstate {
         auto static constexpr kDefaultV = 1.f;
     };
 
-    class PSingleCurveThickness : public FloatParameters<PSingleCurveThickness> {
+    class PMagCurveThickness : public FloatParameters<PMagCurveThickness> {
     public:
-        auto static constexpr kID = "single_curve_thickness";
+        auto static constexpr kID = "mag_curve_thickness";
         auto static constexpr kName = "";
         inline auto static const kRange = juce::NormalisableRange<float>(0.f, 4.f, .01f);
         auto static constexpr kDefaultV = 1.f;
     };
 
-    class PSumCurveThickness : public FloatParameters<PSumCurveThickness> {
+    class PEQCurveThickness : public FloatParameters<PEQCurveThickness> {
     public:
-        auto static constexpr kID = "sum_curve_thickness";
+        auto static constexpr kID = "eq_curve_thickness";
         auto static constexpr kName = "";
         inline auto static const kRange = juce::NormalisableRange<float>(0.f, 4.f, .01f);
         auto static constexpr kDefaultV = 1.f;
@@ -414,6 +414,31 @@ namespace zlstate {
         }
     }
 
+    static constexpr std::array<std::string, 9> kColourNames{
+        "text", "background",
+        "shadow", "glow",
+        "pre", "post", "reduction",
+        "computer", "grid"
+    };
+
+    struct ColourDefaultSetting {
+        int r, g, b;
+        bool has_opacity;
+        float opacity;
+    };
+
+    static constexpr std::array<ColourDefaultSetting, 9> kColourDefaults{
+        ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, 1.f},
+        ColourDefaultSetting{(255 - 214) / 2, (255 - 223) / 2, (255 - 236) / 2, true, 1.f},
+        ColourDefaultSetting{0, 0, 0, true, 1.f},
+        ColourDefaultSetting{70, 66, 62, true, 1.f},
+        ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, .25f},
+        ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, 1.f},
+        ColourDefaultSetting{252, 18, 197, true, 1.f},
+        ColourDefaultSetting{255, 165, 0, true, 1.f},
+        ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, .1f}
+    };
+
     inline juce::AudioProcessorValueTreeState::ParameterLayout getStateParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PWindowW::get(), PWindowH::get(),
@@ -423,16 +448,13 @@ namespace zlstate {
                    PSliderDoubleClickFunc::get(),
                    PTargetRefreshSpeed::get(),
                    PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
-                   PSingleCurveThickness::get(), PSumCurveThickness::get());
-        addOneColour(layout, "text", 255 - 8, 255 - 9, 255 - 11, true, 1.f);
-        addOneColour(layout, "background", (255 - 214) / 2, (255 - 223) / 2, (255 - 236) / 2, true, 1.f);
-        addOneColour(layout, "shadow", 0, 0, 0, true, 1.f);
-        addOneColour(layout, "glow", 70, 66, 62, true, 1.f);
+                   PMagCurveThickness::get(), PEQCurveThickness::get());
 
-        addOneColour(layout, "pre", 255 - 8, 255 - 9, 255 - 11, true, 0.25f);
-        addOneColour(layout, "post", 255 - 8, 255 - 9, 255 - 11, true, 1.f);
-        addOneColour(layout, "reduction", 252, 18, 197, true, 1.f);
-        addOneColour(layout, "computer", 255, 165, 0, true, 1.f);
+        for (size_t i = 0; i < kColourNames.size(); ++i) {
+            const auto &name = kColourNames[i];
+            const auto &dv = kColourDefaults[i];
+            addOneColour(layout, name, dv.r, dv.g, dv.b, dv.has_opacity, dv.opacity);
+        }
 
         layout.add(PColourMap1Idx::get(), PColourMap2Idx::get());
         return layout;

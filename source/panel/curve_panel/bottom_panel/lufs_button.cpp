@@ -21,11 +21,11 @@ namespace zlpanel {
         learn_button_.getButton().onClick = [this]() {
             if (learn_button_.getButton().getToggleState()) {
                 p_ref_.getCompressController().setLUFSMatcherOn(true);
-                base_.setProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, true);
+                base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, true);
                 setAlpha(1.f);
             } else {
                 p_ref_.getCompressController().setLUFSMatcherOn(false);
-                base_.setProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, false);
+                base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, false);
 
                 const auto c_diff = -p_ref_.getCompressController().getLUFSMatcherDiff();
                 const auto c_gain = p_ref_.parameters_.getRawParameterValue(zlp::POutGain::kID)->load();

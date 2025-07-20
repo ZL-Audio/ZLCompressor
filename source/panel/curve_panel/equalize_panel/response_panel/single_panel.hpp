@@ -28,6 +28,8 @@ namespace zlpanel {
 
         void paint(juce::Graphics &g) override;
 
+        void resized() override;
+
         bool run(std::span<float> xs, std::span<float> ys,
                  const juce::Rectangle<float> &bound, float max_db,
                  bool force = false);
@@ -60,8 +62,12 @@ namespace zlpanel {
 
         AtomicPoint<float> button_pos_;
 
+        float curve_thickness_{0.f}, line_thickness_{0.f};
+
         void parameterChanged(const juce::String &parameter_ID, float new_value) override;
 
         void visibilityChanged() override;
+
+        void lookAndFeelChanged() override;
     };
 } // zlpanel

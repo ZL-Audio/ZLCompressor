@@ -15,15 +15,20 @@ namespace zlpanel {
           curve_panel_(processor, base_),
           control_panel_(processor, base_),
           top_panel_(processor, base_),
+          ui_setting_panel_(processor, base_),
           refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
         juce::ignoreUnused(base_);
         addAndMakeVisible(curve_panel_);
         addAndMakeVisible(control_panel_);
         addAndMakeVisible(top_panel_);
+        addChildComponent(ui_setting_panel_);
     }
 
     void MainPanel::resized() {
-        auto bound = getLocalBounds(); {
+        auto bound = getLocalBounds();
+
+        // set actual width/height
+        {
             const auto height = static_cast<float>(bound.getHeight());
             const auto width = static_cast<float>(bound.getWidth());
             if (height < width * 0.47f) {
@@ -35,6 +40,8 @@ namespace zlpanel {
 
         const auto font_size = static_cast<float>(bound.getWidth()) * 0.016f;
         base_.setFontSize(font_size);
+
+        ui_setting_panel_.setBounds(bound);
 
         const auto controlBound = bound.removeFromBottom(juce::roundToInt(font_size * 7.348f));
         control_panel_.setBounds(controlBound);

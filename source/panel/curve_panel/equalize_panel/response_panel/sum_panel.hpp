@@ -25,6 +25,8 @@ namespace zlpanel {
 
         void paint(juce::Graphics &g) override;
 
+        void resized() override;
+
         bool run(std::array<float, kWsFloat.size()> &xs,
                  std::array<std::array<float, kWsFloat.size()>, 8> &yss,
                  std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
@@ -38,5 +40,9 @@ namespace zlpanel {
 
         juce::Path path_, next_path_;
         std::mutex mutex_;
+
+        float curve_thickness_{0.f};
+
+        void lookAndFeelChanged() override;
     };
 } // zlpanel

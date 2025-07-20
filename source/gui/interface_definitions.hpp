@@ -24,6 +24,7 @@ namespace zlgui {
         kPostColour,
         kReductionColour,
         kComputerColour,
+        kGridColour,
         kColourNum
     };
 
@@ -35,20 +36,17 @@ namespace zlgui {
         kSensitivityNum
     };
 
-    static constexpr std::array<std::string, kColourNum> kColourNames{
-        "text", "background",
-        "shadow", "glow",
-        "pre", "post", "reduction",
-        "computer"
-    };
+    static constexpr std::array<std::string, kColourNum> kColourNames = zlstate::kColourNames;
 
     enum PanelSettingIdx {
         kLUFSLearnButton,
-        kBoxNum
+        kUISettingPanel,
+        kPanelSettingNum
     };
 
     inline std::array kPanelSettingIdentifiers{
-        juce::Identifier("lufs_learn_button")
+        juce::Identifier("lufs_learn_button"),
+        juce::Identifier("ui_setting_panel")
     };
 
     static constexpr size_t kColorMap1Size = 10;
@@ -275,43 +273,43 @@ namespace zlgui {
         }
 
         size_t getRefreshRateID() const {
-            return refresh_rate_id_.load();
+            return refresh_rate_id_.load(std::memory_order::relaxed);
         }
 
         void setRefreshRateID(const size_t x) {
-            refresh_rate_id_.store(x);
+            refresh_rate_id_.store(x, std::memory_order::relaxed);
         }
 
         float getFFTExtraTilt() const {
-            return fft_extra_tilt_.load();
+            return fft_extra_tilt_.load(std::memory_order::relaxed);
         }
 
         void setFFTExtraTilt(const float x) {
-            fft_extra_tilt_.store(x);
+            fft_extra_tilt_.store(x, std::memory_order::relaxed);
         }
 
         float getFFTExtraSpeed() const {
-            return fft_extra_speed_.load();
+            return fft_extra_speed_.load(std::memory_order::relaxed);
         }
 
         void setFFTExtraSpeed(const float x) {
-            fft_extra_speed_.store(x);
+            fft_extra_speed_.store(x, std::memory_order::relaxed);
         }
 
-        float getSingleCurveThickness() const {
-            return single_curve_thickness_.load();
+        float getMagCurveThickness() const {
+            return mag_curve_thickness_.load(std::memory_order::relaxed);
         }
 
-        void setSingleCurveThickness(const float x) {
-            single_curve_thickness_.store(x);
+        void setMagCurveThickness(const float x) {
+            mag_curve_thickness_.store(x, std::memory_order::relaxed);
         }
 
-        float getSumCurveThickness() const {
-            return sum_curve_thickness_.load();
+        float getEQCurveThickness() const {
+            return eq_curve_thickness_.load(std::memory_order::relaxed);
         }
 
-        void setSumCurveThickness(const float x) {
-            sum_curve_thickness_.store(x);
+        void setEQCurveThickness(const float x) {
+            eq_curve_thickness_.store(x, std::memory_order::relaxed);
         }
 
         void loadFromAPVTS();
@@ -344,11 +342,15 @@ namespace zlgui {
 
         juce::ValueTree &getPanelValueTree() { return panel_value_tree_; }
 
+        bool isPanelIdentifier(const PanelSettingIdx idx, const juce::Identifier &identifier) const {
+            return identifier == kPanelSettingIdentifiers[static_cast<size_t>(idx)];
+        }
+
         juce::var getPanelProperty(const PanelSettingIdx idx) const {
             return panel_value_tree_.getProperty(kPanelSettingIdentifiers[static_cast<size_t>(idx)]);
         }
 
-        void setProperty(const PanelSettingIdx idx, const juce::var &v) {
+        void setPanelProperty(const PanelSettingIdx idx, const juce::var &v) {
             panel_value_tree_.setProperty(kPanelSettingIdentifiers[idx], v, nullptr);
         }
 
@@ -364,7 +366,7 @@ namespace zlgui {
         std::atomic<size_t> refresh_rate_id_{2};
         float rotary_drag_sensitivity_{1.f};
         std::atomic<float> fft_extra_tilt_{0.f}, fft_extra_speed_{1.f};
-        std::atomic<float> single_curve_thickness_{1.f}, sum_curve_thickness_{1.f};
+        std::atomic<float> mag_curve_thickness_{1.f}, eq_curve_thickness_{1.f};
         std::array<std::atomic<bool>, zlstate::kBandNUM> is_band_selected_{};
         std::atomic<bool> is_mouse_wheel_shift_reverse_{false};
         std::atomic<bool> is_slider_double_click_open_editor_{false};

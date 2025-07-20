@@ -269,8 +269,8 @@ namespace zlgui {
         refresh_rate_id_.store(static_cast<size_t>(state.getRawParameterValue(zlstate::PTargetRefreshSpeed::kID)->load()));
         fft_extra_tilt_.store(loadPara(zlstate::PFFTExtraTilt::kID));
         fft_extra_speed_.store(loadPara(zlstate::PFFTExtraSpeed::kID));
-        single_curve_thickness_.store(loadPara(zlstate::PSingleCurveThickness::kID));
-        sum_curve_thickness_.store(loadPara(zlstate::PSumCurveThickness::kID));
+        mag_curve_thickness_.store(loadPara(zlstate::PMagCurveThickness::kID));
+        eq_curve_thickness_.store(loadPara(zlstate::PEQCurveThickness::kID));
         colour_map1_idx_ = static_cast<size_t>(loadPara(zlstate::PColourMap1Idx::kID));
         colour_map2_idx_ = static_cast<size_t>(loadPara(zlstate::PColourMap2Idx::kID));
     }
@@ -311,10 +311,10 @@ namespace zlgui {
         savePara(zlstate::PTargetRefreshSpeed::kID, zlstate::PTargetRefreshSpeed::convertTo01(static_cast<int>(refresh_rate_id_.load())));
         savePara(zlstate::PFFTExtraTilt::kID, zlstate::PFFTExtraTilt::convertTo01(fft_extra_tilt_.load()));
         savePara(zlstate::PFFTExtraSpeed::kID, zlstate::PFFTExtraSpeed::convertTo01(fft_extra_speed_.load()));
-        savePara(zlstate::PSingleCurveThickness::kID,
-                 zlstate::PSingleCurveThickness::convertTo01(single_curve_thickness_.load()));
-        savePara(zlstate::PSumCurveThickness::kID,
-                 zlstate::PSumCurveThickness::convertTo01(sum_curve_thickness_.load()));
+        savePara(zlstate::PMagCurveThickness::kID,
+                 zlstate::PMagCurveThickness::convertTo01(mag_curve_thickness_.load()));
+        savePara(zlstate::PEQCurveThickness::kID,
+                 zlstate::PEQCurveThickness::convertTo01(eq_curve_thickness_.load()));
         savePara(zlstate::PColourMap1Idx::kID, zlstate::PColourMapIdx::convertTo01(static_cast<int>(colour_map1_idx_)));
         savePara(zlstate::PColourMap2Idx::kID, zlstate::PColourMapIdx::convertTo01(static_cast<int>(colour_map2_idx_)));
     }
