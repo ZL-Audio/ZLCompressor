@@ -96,7 +96,6 @@ jobs:
         shell: bash
         run: |
           choco install ninja --no-progress -y
-          choco upgrade llvm --version 18.1.8 --no-progress -y
 
       - name: Install Deps (macOS)
         if: runner.os == 'macOS'
