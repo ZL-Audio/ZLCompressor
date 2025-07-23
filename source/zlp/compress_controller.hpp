@@ -138,8 +138,8 @@ namespace zlp {
             return lufs_matcher_.getDiff();
         }
 
-        void setStereoModeIsMidSide(const bool f) {
-            stereo_mode_.store(static_cast<int>(f), std::memory_order::relaxed);
+        void setStereoMode(const int mode) {
+            stereo_mode_.store(mode, std::memory_order::relaxed);
             to_update_.store(true, std::memory_order::release);
         }
 
@@ -197,9 +197,9 @@ namespace zlp {
         bool c_copy_pre{false}, c_copy_post{false};
         // stereo control
         std::atomic<int> stereo_mode_{0};
-        int c_stereo_mode_{0};
+        bool c_stereo_mode_is_midside{true}, c_stereo_mode_is_max{false};
         std::atomic<float> stereo_link_{1.};
-        float c_stereo_link_{1.};
+        float c_stereo_link_{1.}, c_stereo_link_max_{1.f};
         std::atomic<bool> stereo_swap_{false};
         bool c_stereo_swap_{false};
         // compressor style

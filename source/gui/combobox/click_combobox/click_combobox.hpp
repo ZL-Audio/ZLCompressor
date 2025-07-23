@@ -9,39 +9,38 @@
 
 #pragma once
 
-#include "../compact_combobox/compact_combobox.hpp"
-#include "../../label/name_look_and_feel.hpp"
-#include "click_combobox_button_look_and_feel.hpp"
+#include <juce_gui_basics/juce_gui_basics.h>
+
+#include "../../interface_definitions.hpp"
 
 namespace zlgui::combobox {
-    class ClickCombobox final : public juce::Component {
+    class ClickCombobox final : public juce::Component,
+                                public juce::SettableTooltipClient,
+                                private juce::ComboBox::Listener {
     public:
-        enum LabelPos {
-            kLeft, kRight, kTop, kBottom
-        };
+        ClickCombobox(UIBase &base, const std::vector<std::string> &choices, const juce::String &tooltip_text = "");
 
-        ClickCombobox(const juce::String &label_text, const juce::StringArray &choices, UIBase &base,
-                      const juce::String &tooltip_text = "");
+        ClickCombobox(UIBase &base, const std::vector<juce::Drawable *> &choices, const juce::String &tooltip_text = "");
 
         ~ClickCombobox() override;
 
-        void resized() override;
+        void paint(juce::Graphics &g) override;
 
-        void setLabelScale(const float x) { l_scale_.store(x); }
+        juce::ComboBox &getBox() { return combo_box_; }
 
-        void setLabelPos(const LabelPos x) { l_pos_.store(x); }
-
-        ClickComboboxButtonLookAndFeel &getLabelLAF() { return label_laf_; }
-
-        CompactCombobox &getCompactBox() { return compact_box_; }
+        void setSizeScale(float width_scale, float height_scale);
 
     private:
-        CompactCombobox compact_box_;
-        juce::DrawableButton label_;
-        ClickComboboxButtonLookAndFeel label_laf_;
-        std::atomic<float> l_scale_{0.f};
-        std::atomic<LabelPos> l_pos_{kLeft};
+        UIBase &base_;
+        juce::ComboBox combo_box_;
 
-        void selectRight();
+        std::vector<std::string> choice_text_;
+        std::vector<juce::Drawable *> choice_icons_;
+
+        float width_scale_{1.f}, height_scale_{1.f};
+
+        void mouseDown(const juce::MouseEvent &event) override;
+
+        void comboBoxChanged(juce::ComboBox *) override;
     };
 } // zlgui

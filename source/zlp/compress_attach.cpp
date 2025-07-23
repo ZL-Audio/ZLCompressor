@@ -61,7 +61,7 @@ namespace zlp {
         } else if (parameter_ID == PWet::kID) {
             controller_ref_.setWet(new_value);
         } else if (parameter_ID == PSideStereoMode::kID) {
-            controller_ref_.setStereoModeIsMidSide(new_value > .5f);
+            controller_ref_.setStereoMode(static_cast<int>(std::round(new_value)));
         } else if (parameter_ID == PSideStereoSwap::kID) {
             controller_ref_.setStereoSwap(new_value > .5f);
         } else if (parameter_ID == PSideStereoLink::kID) {

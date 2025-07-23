@@ -39,8 +39,10 @@ namespace zlpanel {
 
         const std::unique_ptr<juce::Drawable> stereo_mid_side_drawable_;
         const std::unique_ptr<juce::Drawable> stereo_left_right_drawable_;
-        zlgui::button::ClickButton stereo_mode_button_;
-        zlgui::attachment::ButtonAttachment<true> stereo_mode_attachment_;
+        const std::unique_ptr<juce::Drawable> stereo_mid_side_max_drawable_;
+        const std::unique_ptr<juce::Drawable> stereo_left_right_max_drawable_;
+        zlgui::combobox::ClickCombobox stereo_mode_box_;
+        zlgui::attachment::ComboBoxAttachment<true> stereo_mode_attachment_;
 
         const std::unique_ptr<juce::Drawable> stereo_swap_drawable_;
         zlgui::button::CompactButton stereo_swap_button_;

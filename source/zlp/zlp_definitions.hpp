@@ -345,7 +345,7 @@ namespace zlp {
         auto static constexpr kID = "side_stereo_mode";
         auto static constexpr kName = "Side Stereo Mode";
         inline auto static const kChoices = juce::StringArray{
-            "Mid Side", "Left Right"
+            "Mid Side", "Left Right", "Mis Side Max", "Left Right Max"
         };
         int static constexpr kDefaultI = 0;
     };

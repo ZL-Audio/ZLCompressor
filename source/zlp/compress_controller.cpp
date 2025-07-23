@@ -126,9 +126,11 @@ namespace zlp {
             is_lookahead_nonzero = (lookahead_delay_.getDelayInSamples() != 0);
         }
         // load stereo mode
-        c_stereo_mode_ = stereo_mode_.load(std::memory_order::relaxed);
+        const auto stereo_mode = stereo_mode_.load(std::memory_order::relaxed);
+        c_stereo_mode_is_midside = (stereo_mode == 0) || (stereo_mode == 2);
+        c_stereo_mode_is_max = (stereo_mode == 2) || (stereo_mode == 3);
         c_stereo_swap_ = stereo_swap_.load(std::memory_order::relaxed);
-        // load compressor style, if they are different, reset the internal state
+        // load compressor style, reset the internal state if different
         const auto new_comp_style = comp_style_.load(std::memory_order::relaxed);
         if (c_comp_style_ != new_comp_style) {
             c_comp_style_ = new_comp_style;
@@ -158,6 +160,7 @@ namespace zlp {
         }
         // load stereo link
         c_stereo_link_ = stereo_link_.load(std::memory_order::relaxed);
+        c_stereo_link_max_ = 1.f - 2.f * (1.f - c_stereo_link_);
         // load hold values
         if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
             const auto oversample_mul = 1 << c_oversample_idx_;
@@ -215,7 +218,7 @@ namespace zlp {
             lufs_matcher_.processPre(main_pointers, num_samples);
         }
         // stereo split the main/side buffer
-        if (c_stereo_mode_ == 0) {
+        if (c_stereo_mode_is_midside) {
             zldsp::splitter::MSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
             zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
@@ -281,7 +284,7 @@ namespace zlp {
             }
         }
         // stereo combine the main buffer
-        if (c_stereo_mode_ == 0) {
+        if (c_stereo_mode_is_midside) {
             zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
         }
         // process the post lufs matcher
@@ -350,26 +353,40 @@ namespace zlp {
                 side_buffer1[i] = hold_buffer_[1].push(side_buffer1[i]);
             }
         }
+        // if bypassed, skip reduction calculation
+        if (!c_is_on_ || bypass) {
+            return;
+        }
         // apply the stereo link
-        for (size_t i = 0; i < num_samples; ++i) {
-            const auto x = side_buffer0[i];
-            const auto y = side_buffer1[i];
-            const auto xy = c_stereo_link_ * (x - y);
-            side_buffer0[i] = y + xy;
-            side_buffer1[i] = x - xy;
+        if (c_stereo_mode_is_max) {
+            for (size_t i = 0; i < num_samples; ++i) {
+                const auto x = side_buffer0[i];
+                const auto y = side_buffer1[i];
+                if (x < y) {
+                    side_buffer1[i] = (y - x) * c_stereo_link_max_ + x;
+                } else {
+                    side_buffer0[i] = (x - y) * c_stereo_link_max_ + y;
+                }
+            }
+        } else {
+            for (size_t i = 0; i < num_samples; ++i) {
+                const auto x = side_buffer0[i];
+                const auto y = side_buffer1[i];
+                const auto xy = c_stereo_link_ * (x - y);
+                side_buffer0[i] = y + xy;
+                side_buffer1[i] = x - xy;
+            }
         }
         // process wet values and convert decibel to gain
         side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
         side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
-        // apply gain on the main buffer with bypass and stereo swap
-        if (c_is_on_ && !bypass) {
-            if (c_stereo_swap_) {
-                main_v0 = main_v0 * side_v1;
-                main_v1 = main_v1 * side_v0;
-            } else {
-                main_v0 = main_v0 * side_v0;
-                main_v1 = main_v1 * side_v1;
-            }
+        // apply stereo swap
+        if (c_stereo_swap_) {
+            main_v0 = main_v0 * side_v1;
+            main_v1 = main_v1 * side_v0;
+        } else {
+            main_v0 = main_v0 * side_v0;
+            main_v1 = main_v1 * side_v1;
         }
     }
 

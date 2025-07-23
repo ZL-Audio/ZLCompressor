@@ -20,8 +20,15 @@ namespace zlpanel {
                                                                         BinaryData::midside_svgSize)),
           stereo_left_right_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_svg,
                                                                           BinaryData::leftright_svgSize)),
-          stereo_mode_button_(base_, stereo_mid_side_drawable_.get(), stereo_left_right_drawable_.get()),
-          stereo_mode_attachment_(stereo_mode_button_.getButton(), p.parameters_,
+          stereo_mid_side_max_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_max_svg,
+                                                                            BinaryData::midside_max_svgSize)),
+          stereo_left_right_max_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_max_svg,
+                                                                              BinaryData::leftright_max_svgSize)),
+          stereo_mode_box_(base_, {
+                               stereo_mid_side_drawable_.get(), stereo_left_right_drawable_.get(),
+                               stereo_mid_side_max_drawable_.get(), stereo_left_right_max_drawable_.get()
+                           }, ""),
+          stereo_mode_attachment_(stereo_mode_box_.getBox(), p.parameters_,
                                   zlp::PSideStereoMode::kID, updater_),
           stereo_swap_drawable_(juce::Drawable::createFromImageData(BinaryData::shuffle_svg,
                                                                     BinaryData::shuffle_svgSize)),
@@ -63,9 +70,9 @@ namespace zlpanel {
             addAndMakeVisible(b);
         }
 
-        stereo_mode_button_.setImageAlpha(1.f, 1.f);
-        stereo_mode_button_.setBufferedToImage(true);
-        addAndMakeVisible(stereo_mode_button_);
+        stereo_mode_box_.setSizeScale(.8f, .8f);
+        stereo_mode_box_.setBufferedToImage(true);
+        addAndMakeVisible(stereo_mode_box_);
 
         stereo_link_slider_.setBufferedToImage(true);
         addAndMakeVisible(stereo_link_slider_);
@@ -124,7 +131,7 @@ namespace zlpanel {
             const auto spacing = (t_bound.getWidth() - 2 * button_height) / 3;
             t_bound.removeFromLeft(spacing);
             t_bound.removeFromRight(spacing);
-            stereo_mode_button_.setBounds(t_bound.removeFromLeft(button_height));
+            stereo_mode_box_.setBounds(t_bound.removeFromLeft(button_height));
             stereo_swap_button_.setBounds(t_bound.removeFromRight(button_height));
         }
 
@@ -161,7 +168,8 @@ namespace zlpanel {
     }
 
     void SideControlPanel::repaintCallBackSlow() {
-        const auto stereo_mode_flag = stereo_mode_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto stereo_mode_ref = stereo_mode_ref_.load(std::memory_order::relaxed);
+        const auto stereo_mode_flag = (stereo_mode_ref > .5f && stereo_mode_ref < 1.5f) || stereo_mode_ref > 2.5f;
         const auto stereo_swap_flag = stereo_swap_ref_.load(std::memory_order::relaxed) > .5f;
         if (stereo_mode_flag != stereo_mode_flag_ || stereo_swap_flag != stereo_swap_flag_) {
             stereo_mode_flag_ = stereo_mode_flag;
