@@ -12,6 +12,7 @@
 #include "dragger_panel.hpp"
 #include "popup_panel.hpp"
 #include "filter_para_panel.hpp"
+#include "right_click_panel.hpp"
 
 namespace zlpanel {
     class ButtonPanel final : public juce::Component {
@@ -69,6 +70,7 @@ namespace zlpanel {
 
         FilterParaPanel para_panel_;
         PopupPanel popup_panel_;
+        RightClickPanel right_click_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
 
         static constexpr std::array init_IDs{

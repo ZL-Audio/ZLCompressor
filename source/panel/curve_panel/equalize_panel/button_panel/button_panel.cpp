@@ -18,7 +18,8 @@ namespace zlpanel {
           eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
           eq_db_box_attachment_(eq_db_box_.getBox(), processor.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
           para_panel_(processor, base, selected_band_idx),
-          popup_panel_(processor, base, selected_band_idx) {
+          popup_panel_(processor, base, selected_band_idx),
+          right_click_panel_(processor, base, selected_band_idx) {
         addChildComponent(q_slider_);
         slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         addChildComponent(slope_slider_);
@@ -43,6 +44,9 @@ namespace zlpanel {
             dragger_panels_[band]->addMouseListener(this, true);
         }
         addChildComponent(popup_panel_);
+
+        right_click_panel_.setBufferedToImage(true);
+        addChildComponent(right_click_panel_);
     }
 
     void ButtonPanel::resized() { {
@@ -52,6 +56,11 @@ namespace zlpanel {
             para_panel_.setBounds({
                 bound.getX(), bound.getY(),
                 para_panel_.getIdealWidth(), para_panel_.getIdealHeight()
+            });
+            right_click_panel_.setBounds({
+                bound.getX(), bound.getY(),
+                juce::roundToInt(base_.getFontSize() * 7.5f),
+                juce::roundToInt(base_.getFontSize() * 4.5f)
             });
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 dragger_panels_[band]->setBounds(bound);
@@ -124,8 +133,34 @@ namespace zlpanel {
     }
 
     void ButtonPanel::mouseDown(const juce::MouseEvent &event) {
-        if (event.originalComponent != this) { return; }
-        selected_band_idx_ = zlp::kBandNum;
+        if (event.mods.isRightButtonDown()) {
+            const auto bound = getLocalBounds().toFloat();
+            auto target_point = bound.getTopLeft();
+            if (event.originalComponent == this) {
+                target_point.x += event.position.x;
+                target_point.y += event.position.y;
+                right_click_panel_.updateCopyVisibility(false);
+            } else {
+                for (size_t i = 0; i < zlp::kBandNum; ++i) {
+                    if (dragger_panels_[i]->isParentOf(event.originalComponent)) {
+                        target_point.applyTransform(dragger_panels_[i]->getDragger().getButton().getTransform());
+                        right_click_panel_.updateCopyVisibility(true);
+                        break;
+                    }
+                }
+            }
+            if (target_point.x >= bound.getRight() - static_cast<float>(right_click_panel_.getWidth())
+                || target_point.y >= bound.getBottom() - static_cast<float>(right_click_panel_.getHeight())) {
+                target_point.x -= static_cast<float>(right_click_panel_.getWidth());
+                target_point.y -= static_cast<float>(right_click_panel_.getHeight());
+            }
+            right_click_panel_.setTransform(juce::AffineTransform::translation(target_point.x, target_point.y));
+            right_click_panel_.setVisible(true);
+        } else {
+            right_click_panel_.setVisible(false);
+            if (event.originalComponent != this) { return; }
+            selected_band_idx_ = zlp::kBandNum;
+        }
     }
 
     void ButtonPanel::mouseDoubleClick(const juce::MouseEvent &event) {
