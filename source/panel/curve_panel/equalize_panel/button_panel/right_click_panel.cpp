@@ -61,7 +61,7 @@ namespace zlpanel {
         para->beginChangeGesture();
         para->setValueNotifyingHost(1.0f - para->getValue());
         para->endChangeGesture();
-        
+
         setVisible(false);
     }
 
@@ -109,6 +109,8 @@ namespace zlpanel {
                 return;
             }
         }
+
+        selected_band_idx_ = band_idx;
 
         setVisible(false);
     }
