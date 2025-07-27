@@ -49,8 +49,17 @@ namespace zlpanel {
         RMSPanel rms_panel_;
         ComputerPanel computer_panel_;
         SeparatePanel separate_panel_;
+
+        zlgui::attachment::ComponentUpdater updater_;
+        zlgui::slider::SnappingSlider threshold_slider_;
+        zlgui::attachment::SliderAttachment<true> threshold_attachment_;
+        zlgui::slider::SnappingSlider ratio_slider_;
+        zlgui::attachment::SliderAttachment<true> ratio_attachment_;
+
         std::atomic<double> next_stamp_{0.};
         double rms_previous_stamp_{0.};
         std::atomic<bool> to_run_rms_{false};
+
+        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
     };
 } // zlpanel

@@ -14,14 +14,23 @@ namespace zlpanel {
         : base_(base),
           background_panel_(p, base),
           peak_panel_(p, base), rms_panel_(p, base),
-          computer_panel_(p, base), separate_panel_(base) {
+          computer_panel_(p, base), separate_panel_(base),
+          updater_(),
+          threshold_slider_(base),
+          threshold_attachment_(threshold_slider_, p.parameters_,
+                                zlp::PThreshold::kID, updater_),
+          ratio_slider_(base),
+          ratio_attachment_(ratio_slider_, p.parameters_,
+                            zlp::PRatio::kID, updater_) {
         addAndMakeVisible(background_panel_);
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);
         addAndMakeVisible(computer_panel_);
+        addChildComponent(threshold_slider_);
+        addChildComponent(ratio_slider_);
 
-        setInterceptsMouseClicks(false, true);
+        setInterceptsMouseClicks(true, true);
     }
 
     MagAnalyzerPanel::~MagAnalyzerPanel() {
@@ -35,6 +44,8 @@ namespace zlpanel {
         const auto r = std::min(bound.getWidth(), bound.getHeight());
         separate_panel_.setBounds(bound.withSize(r, r));
         computer_panel_.setBounds(bound.withSize(r, r));
+        threshold_slider_.setBounds(bound);
+        ratio_slider_.setBounds(bound);
     }
 
     void MagAnalyzerPanel::run(const juce::Thread &thread) {
@@ -56,6 +67,7 @@ namespace zlpanel {
     }
 
     void MagAnalyzerPanel::repaintCallBackSlow() {
+        updater_.updateComponents();
         background_panel_.repaintCallBackSlow();
     }
 
@@ -66,6 +78,14 @@ namespace zlpanel {
             rms_panel_.repaint();
             rms_previous_stamp_ = time_stamp;
             to_run_rms_.store(true, std::memory_order::relaxed);
+        }
+    }
+
+    void MagAnalyzerPanel::mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) {
+        if (event.mods.isCommandDown()) {
+            ratio_slider_.mouseWheelMove(event, wheel);
+        } else {
+            threshold_slider_.mouseWheelMove(event, wheel);
         }
     }
 } // zlpanel
