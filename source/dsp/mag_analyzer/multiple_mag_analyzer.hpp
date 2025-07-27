@@ -19,14 +19,24 @@ namespace zldsp::analyzer {
 
         ~MultipleMagAnalyzer() override = default;
 
-        void prepare(const double sample_rate) override {
+        void prepare(const double sample_rate, size_t max_num_samples) override {
             this->sample_rate_.store(sample_rate, std::memory_order::relaxed);
+            this->max_num_samples_per_block_.store(static_cast<double>(max_num_samples), std::memory_order::relaxed);
             this->setTimeLength(this->time_length_.load(std::memory_order::relaxed));
             std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }
 
         std::pair<int, bool> run(const int num_to_read = static_cast<int>(PointNum),
-                                 const int tolerance = 0) {
+                                 int tolerance = 0) {
+            // update tolerance
+            const int block_tolerance = static_cast<int>(std::ceil(
+                this->max_num_samples_per_block_.load(std::memory_order::relaxed) /
+                    this->sample_rate_.load(std::memory_order::relaxed) /
+                        this->time_length_.load(std::memory_order::relaxed) *
+                            static_cast<double>(PointNum) * 1.5));
+            if (tolerance > 0) {
+                tolerance = std::max(tolerance, block_tolerance);
+            }
             // calculate the number of points put into circular buffers
             const int fifo_num_ready = this->abstract_fifo_.getNumReady();
             if (this->to_reset_.exchange(false, std::memory_order::acquire)) {
@@ -38,10 +48,11 @@ namespace zldsp::analyzer {
                 this->abstract_fifo_.finishRead(fifo_num_ready);
                 return {0, true};
             }
+
+            if (fifo_num_ready <= 0) return {0, true};
+
             const bool to_reset_shift = (fifo_num_ready - num_to_read > tolerance) || (fifo_num_ready < num_to_read);
-
             int num_ready = 0;
-
             if (to_reset_shift) {
                 if (fifo_num_ready > tolerance / 2) {
                     num_ready = fifo_num_ready - tolerance / 2;

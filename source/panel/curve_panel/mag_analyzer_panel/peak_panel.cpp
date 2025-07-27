@@ -80,8 +80,8 @@ namespace zlpanel {
             }
         } else {
             const auto c_num_per_second = num_per_second_.load(std::memory_order::relaxed);
-            const auto tolerance = std::max(1.0, c_num_per_second / 15.f);
             const auto target_count = (next_time_stamp - start_time_) * c_num_per_second;
+            const auto tolerance = target_count * 1.5;
             const auto target_delta = target_count - current_count_;
             auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(
                 static_cast<int>(std::floor(target_delta)),
@@ -91,9 +91,6 @@ namespace zlpanel {
             if (to_reset_shift) {
                 start_time_ = next_time_stamp;
                 current_count_ = 0.;
-                consecutive_reset_count_ = 1.0;
-            } else {
-                consecutive_reset_count_ *= 0.9;
             }
 
             const auto shift = to_reset_shift ? 0.0 : target_count - current_count_;
@@ -101,11 +98,8 @@ namespace zlpanel {
                                                   current_bound.getWidth(), current_bound.getHeight(),
                                                   static_cast<float>(shift),
                                                   analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
-            if (consecutive_reset_count_ < 0.75) {
-                updatePaths(current_bound);
-            }
-        }
-        if (consecutive_reset_count_ < 0.75) {
+            updatePaths(current_bound);
+        } {
             std::lock_guard<std::mutex> lock{mutex_};
             in_path_.swapWithPath(next_in_path_);
             out_path_.swapWithPath(next_out_path_);

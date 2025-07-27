@@ -28,7 +28,7 @@ namespace zldsp::analyzer {
 
         virtual ~MultipleMagBase() = default;
 
-        virtual void prepare(double sample_rate) = 0;
+        virtual void prepare(double sample_rate, size_t max_num_samples) = 0;
 
         void process(std::array<std::span<FloatType *>, MagNum> buffers,
                      const size_t num_samples) {
@@ -56,7 +56,7 @@ namespace zldsp::analyzer {
         void setMagType(const MagType x) { mag_type_.store(x, std::memory_order::relaxed); }
 
     protected:
-        std::atomic<double> sample_rate_{48000.0};
+        std::atomic<double> sample_rate_{48000.0}, max_num_samples_per_block_{0.};
         std::array<std::array<float, PointNum>, MagNum> mag_fifos_{};
         zldsp::container::AbstractFIFO abstract_fifo_{PointNum};
         std::array<std::array<float, PointNum>, MagNum> circular_mags_{};

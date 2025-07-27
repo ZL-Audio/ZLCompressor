@@ -19,8 +19,9 @@ namespace zldsp::analyzer {
 
         ~MultipleMagAvgAnalyzer() override = default;
 
-        void prepare(const double sample_rate) override {
+        void prepare(const double sample_rate, size_t max_num_samples) override {
             this->sample_rate_.store(sample_rate, std::memory_order::relaxed);
+            this->max_num_samples_per_block_.store(static_cast<double>(max_num_samples), std::memory_order::relaxed);
             this->setTimeLength(0.001f * 999.0f);
             std::fill(this->current_mags_.begin(), this->current_mags_.end(), FloatType(-999));
         }

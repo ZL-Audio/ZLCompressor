@@ -16,8 +16,8 @@ namespace zlp {
 
     void CompressController::prepare(const juce::dsp::ProcessSpec &spec) {
         main_spec_ = spec;
-        mag_analyzer_.prepare(spec.sampleRate);
-        mag_avg_analyzer_.prepare(spec.sampleRate);
+        mag_analyzer_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize));
+        mag_avg_analyzer_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize));
         lufs_matcher_.prepare(spec.sampleRate, 2);
         output_gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.1);
 
