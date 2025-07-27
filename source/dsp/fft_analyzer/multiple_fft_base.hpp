@@ -16,6 +16,7 @@
 #include "../interpolation/interpolation.hpp"
 #include "../fft/fft.hpp"
 #include "../chore/decibels.hpp"
+#include "../lock/spin_lock.hpp"
 
 namespace zldsp::analyzer {
     /**
@@ -64,6 +65,7 @@ namespace zldsp::analyzer {
         ~MultipleFFTBase() = default;
 
         void prepare(const double sample_rate) {
+            lock_.lock();
             sample_rate_.store(static_cast<float>(sample_rate));
             if (sample_rate <= 50000) {
                 setOrder(static_cast<int>(default_fft_order_));
@@ -75,7 +77,7 @@ namespace zldsp::analyzer {
                 setOrder(static_cast<int>(default_fft_order_) + 3);
             }
             reset();
-            is_prepared_.store(true, std::memory_order::release);
+            lock_.unlock();
         }
 
         void reset() {
@@ -127,9 +129,7 @@ namespace zldsp::analyzer {
          * run the forward FFT and calculate the interpolated DBs
          */
         void run() {
-            if (!is_prepared_.load(std::memory_order::acquire)) {
-                return;
-            }
+            if (!lock_.try_lock()) return;
             std::vector<size_t> is_on_vector{};
             for (size_t i = 0; i < FFTNum; ++i) {
                 if (is_on_[i].load()) is_on_vector.push_back(i);
@@ -201,6 +201,7 @@ namespace zldsp::analyzer {
                     v1 = v2 + v3;
                 }
             }
+            lock_.unlock();
         }
 
         void setON(std::array<bool, FFTNum> fs) {
@@ -237,6 +238,7 @@ namespace zldsp::analyzer {
     protected:
         size_t default_fft_order_ = 12;
         size_t bin_size_ = (1 << (default_fft_order_ - 1)) + 1;
+        zldsp::lock::SpinLock lock_;
 
         std::array<std::vector<float>, FFTNum> sample_fifos_;
         std::array<std::vector<float>, FFTNum> circular_buffers_;
@@ -270,7 +272,6 @@ namespace zldsp::analyzer {
 
         std::atomic<float> sample_rate_{48000.f};
         std::array<std::atomic<bool>, FFTNum> to_reset_;
-        std::atomic<bool> is_prepared_{false};
 
         std::array<std::atomic<bool>, FFTNum> is_on_{};
 

@@ -34,10 +34,12 @@ namespace zldsp::analyzer {
          * @param width
          */
         void createPathXs(std::span<float> xs, const float width) {
+            if (!this->lock_.try_lock()) return;
             const auto scale = width / static_cast<float>(PointNum - 1);
             for (size_t idx = 0; idx < PointNum; ++idx) {
                 xs[idx] = static_cast<float>(idx) * scale;
             }
+            this->lock_.unlock();
         }
 
         /**
@@ -47,6 +49,7 @@ namespace zldsp::analyzer {
          * @param min_db
          */
         void createPathYs(std::array<std::span<float>, FFTNum> ys, const float height, const float min_db = -72.f) {
+            if (!this->lock_.try_lock()) return;
             std::vector<size_t> is_on_vector{};
             for (size_t i = 0; i < FFTNum; ++i) {
                 if (this->is_on_[i].load(std::memory_order::relaxed)) {
@@ -59,6 +62,7 @@ namespace zldsp::analyzer {
                 auto y = kfr::make_univector(ys[i]);
                 y = db * scale;
             }
+            this->lock_.unlock();
         }
     };
 }
