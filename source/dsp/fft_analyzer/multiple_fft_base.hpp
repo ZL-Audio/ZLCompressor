@@ -169,10 +169,19 @@ namespace zldsp::analyzer {
                     const auto start_idx = seq_input_starts_[j];
                     const auto end_idx = seq_input_ends_[j];
                     float mean_square = 0.0;
-                    for (size_t k = start_idx; k < end_idx; ++k) {
-                        mean_square += fft_buffer_[k] * fft_buffer_[k];
+                    const auto range_length = end_idx - start_idx;
+                    if (range_length < 4) {
+                        for (size_t k = start_idx; k < end_idx; ++k) {
+                            mean_square += fft_buffer_[k] * fft_buffer_[k];
+                        }
+                    } else {
+                        // for (size_t k = start_idx; k < end_idx; ++k) {
+                        //     mean_square += fft_buffer_[k] * fft_buffer_[k];
+                        // }
+                        auto v = kfr::make_univector(&fft_buffer_[start_idx], range_length);
+                        mean_square = kfr::sumsqr(v);
                     }
-                    mean_square = mean_square / static_cast<float>(end_idx - start_idx);
+                    mean_square = mean_square / static_cast<float>(range_length);
                     const auto current_db = chore::squareGainToDecibels(mean_square);
                     input_dbs[j] = current_db < input_dbs[j]
                                           ? input_dbs[j] * decay + current_db * (1 - decay)
@@ -278,7 +287,7 @@ namespace zldsp::analyzer {
             // calculate start/end indices
             {
                 const auto freq_delta = sample_rate / static_cast<double>(fft_size);
-                const auto freq_mul = std::pow(max_freq / min_freq, 1. / static_cast<double>(PointNum / 2));
+                const auto freq_mul = std::pow(max_freq / min_freq, 2. / static_cast<double>(PointNum));
                 auto freq = min_freq * std::sqrt(freq_mul);
                 seq_input_starts_.clear();
                 seq_input_starts_.reserve(PointNum / 2);
@@ -290,7 +299,7 @@ namespace zldsp::analyzer {
                     std::max(static_cast<size_t>(std::round(freq / freq_delta)),
                              static_cast<size_t>(1)));
                 const auto limit = fft_size / 2;
-                for (size_t i = 1; i < PointNum / 2 + 1; ++i) {
+                for (size_t i = 0; i < PointNum / 2 + 1; ++i) {
                     freq *= freq_mul;
                     const auto new_index = std::min(
                         static_cast<size_t>(std::round(freq / freq_delta)), limit);
@@ -299,8 +308,10 @@ namespace zldsp::analyzer {
                         seq_input_ends_.emplace_back(new_index);
                     }
                 }
-                seq_input_starts_.emplace_back(seq_input_ends_.back());
-                seq_input_ends_.emplace_back(fft_size / 2 + 1);
+                if (freq > sample_rate * .5) {
+                    seq_input_starts_.emplace_back(seq_input_ends_.back());
+                    seq_input_ends_.emplace_back(limit + 1);
+                }
             }
             // calculate medium of each start-end range, which is served as Akima input x
             {
@@ -333,6 +344,9 @@ namespace zldsp::analyzer {
                     if (std::abs(seq_input_freqs_[i] - interplot_freqs_.back()) > 1e-3f) {
                         freq = seq_input_freqs_[i];
                     }
+                }
+                if (std::abs(seq_input_freqs_.back() - interplot_freqs_.back()) > 1e-3f) {
+                    interplot_freqs_.emplace_back(seq_input_freqs_.back());
                 }
 
                 interplot_freqs_p_.resize(interplot_freqs_.size());
