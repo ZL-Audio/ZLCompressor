@@ -47,12 +47,14 @@ namespace zlpanel {
         if (!analyzer.getLock().try_lock()) {
             return;
         }
-        if (analyzer.run()) {
-            const size_t n = analyzer.getInterplotSize();
+        const auto akima_reset_flag = analyzer.run();
+        const size_t n = analyzer.getInterplotSize();
+        if (akima_reset_flag || n != xs_.size()) {
             xs_.resize(n);
             ys_.resize(n);
             width_ = -1.f;
         }
+        
         const auto bound = atomic_bound_.load();
         // re-calculate xs if width changes
         if (std::abs(bound.getWidth() - width_) > 1e-3f) {
