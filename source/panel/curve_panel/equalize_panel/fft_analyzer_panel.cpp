@@ -44,9 +44,15 @@ namespace zlpanel {
 
     void FFTAnalyzerPanel::run() {
         auto &analyzer{p_ref_.getEqualizeController().getFFTAnalyzer()};
-        analyzer.run();
-        next_out_path_.clear();
-
+        if (!analyzer.getLock().try_lock()) {
+            return;
+        }
+        if (analyzer.run()) {
+            const size_t n = analyzer.getInterplotSize();
+            xs_.resize(n);
+            ys_.resize(n);
+            width_ = -1.f;
+        }
         const auto bound = atomic_bound_.load();
         // re-calculate xs if width changes
         if (std::abs(bound.getWidth() - width_) > 1e-3f) {
@@ -54,7 +60,9 @@ namespace zlpanel {
             analyzer.createPathXs(xs_, width_);
         }
         analyzer.createPathYs({std::span{ys_}}, bound.getHeight());
+        analyzer.getLock().unlock();
 
+        next_out_path_.clear();
         next_out_path_.startNewSubPath(bound.getBottomLeft());
         for (size_t i = 0; i < xs_.size(); ++i) {
             if (std::isfinite(xs_[0]) && std::isfinite(ys_[i])) {

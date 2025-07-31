@@ -21,25 +21,25 @@ namespace zldsp::lock {
         std::atomic_flag flag = ATOMIC_FLAG_INIT;
 
     public:
-        void lock() {
+        void lock() noexcept {
             while (flag.test_and_set(std::memory_order_acquire)) {
 #if defined(_MSC_VER)
                 _mm_pause();
 #elif defined(__GNUC__) || defined(__clang__)
-    #if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
                 __builtin_ia32_pause();
-    #elif defined(__aarch64__)
+#elif defined(__aarch64__)
                 asm volatile("yield");
-    #endif
+#endif
 #endif
             }
         }
 
-        bool try_lock() {
+        bool try_lock() noexcept [[clang::nonblocking]] {
             return !flag.test_and_set(std::memory_order_acquire);
         }
 
-        void unlock() {
+        void unlock() noexcept [[clang::nonblocking]] {
             flag.clear(std::memory_order_release);
         }
     };

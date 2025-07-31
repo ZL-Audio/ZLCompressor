@@ -28,31 +28,14 @@ namespace zldsp::analyzer {
     template<typename FloatType, size_t FFTNum, size_t PointNum>
     class MultipleFFTBase {
     private:
-        static constexpr float kMinFreq = 10.f, kMaxFreq = 22000.f, kMinDB = -256.f;
-        static constexpr float kMinFreqLog2 = 3.321928094887362f;
-        static constexpr float kMaxFreqLog2 = 14.425215903299383f;
+        static constexpr float kMinDB = -256.f;
 
     public:
         explicit MultipleFFTBase(const size_t fft_order = 12) {
             default_fft_order_ = fft_order;
-            bin_size_ = (1 << (default_fft_order_ - 1)) + 1;
 
-            for (auto &db: smoothed_dbs_) {
-                db.resize(bin_size_);
-            }
-
-            prepareAkima();
-
-            interplot_freqs_[0] = kMinFreq;
-            for (size_t i = 1; i < PointNum; ++i) {
-                const float temp = static_cast<float>(i) / static_cast<float>(PointNum - 1) * (
-                                       kMaxFreqLog2 - kMinFreqLog2) + kMinFreqLog2;
-                interplot_freqs_[i] = std::pow(2.f, temp);
-            }
-            for (auto &db: interplot_dbs_) {
-                std::fill(db.begin(), db.end(), kMinDB * 2.f);
-            }
             reset();
+
             for (auto &d: decay_rates_) {
                 d.store(0.95f);
             }
@@ -66,7 +49,7 @@ namespace zldsp::analyzer {
 
         void prepare(const double sample_rate) {
             lock_.lock();
-            sample_rate_.store(static_cast<float>(sample_rate));
+            sample_rate_.store(static_cast<float>(sample_rate), std::memory_order::relaxed);
             if (sample_rate <= 50000) {
                 setOrder(static_cast<int>(default_fft_order_));
             } else if (sample_rate <= 100000) {
@@ -77,6 +60,7 @@ namespace zldsp::analyzer {
                 setOrder(static_cast<int>(default_fft_order_) + 3);
             }
             reset();
+            to_update_akima_.store(true, std::memory_order::release);
             lock_.unlock();
         }
 
@@ -125,83 +109,89 @@ namespace zldsp::analyzer {
             abstract_fifo_.finishWrite(free_space);
         }
 
+        size_t getInterplotSize() const {
+            return interplot_freqs_.size();
+        }
+
         /**
          * run the forward FFT and calculate the interpolated DBs
+         * @return whether to update
          */
-        void run() {
-            if (!lock_.try_lock()) return;
+        bool run() {
+            bool to_update{false};
+            // cache on indices
             std::vector<size_t> is_on_vector{};
             for (size_t i = 0; i < FFTNum; ++i) {
                 if (is_on_[i].load()) is_on_vector.push_back(i);
-            } {
-                const int num_ready = abstract_fifo_.getNumReady();
-                const auto range = abstract_fifo_.prepareToRead(num_ready);
-                const auto num_replace = static_cast<int>(circular_buffers_[0].size()) - num_ready;
-                for (const auto &i: is_on_vector) {
-                    auto &circular_buffer{circular_buffers_[i]};
-                    auto &sample_fifo{sample_fifos_[i]};
-                    std::memmove(circular_buffer.data(),
-                                 circular_buffer.data() + static_cast<std::ptrdiff_t>(num_ready),
-                                 sizeof(float) * static_cast<size_t>(num_replace));
-                    if (range.block_size1 > 0) {
-                        std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index1),
-                                  sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index1 + range.block_size1),
-                                  circular_buffer.begin() + static_cast<std::ptrdiff_t>(num_replace));
-                    }
-                    if (range.block_size2 > 0) {
-                        std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index2),
-                                  sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index2 + range.block_size2),
-                                  circular_buffer.begin() + static_cast<std::ptrdiff_t>(num_replace + range.block_size1));
-                    }
+            }
+            // pull data from FIFO
+            const int num_ready = abstract_fifo_.getNumReady();
+            const auto range = abstract_fifo_.prepareToRead(num_ready);
+            const auto num_replace = static_cast<int>(circular_buffers_[0].size()) - num_ready;
+            for (const auto &i: is_on_vector) {
+                auto &circular_buffer{circular_buffers_[i]};
+                auto &sample_fifo{sample_fifos_[i]};
+                std::memmove(circular_buffer.data(),
+                             circular_buffer.data() + static_cast<std::ptrdiff_t>(num_ready),
+                             sizeof(float) * static_cast<size_t>(num_replace));
+                if (range.block_size1 > 0) {
+                    std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index1),
+                              sample_fifo.begin() + static_cast<std::ptrdiff_t>(
+                                  range.start_index1 + range.block_size1),
+                              circular_buffer.begin() + static_cast<std::ptrdiff_t>(num_replace));
                 }
-                abstract_fifo_.finishRead(num_ready);
-            } {
-                for (const auto &i: is_on_vector) {
-                    std::copy(circular_buffers_[i].begin(), circular_buffers_[i].end(), fft_buffer_.begin());
-                    auto temp = kfr::make_univector(fft_buffer_.data(), window_.size());
-                    temp = temp * window_;
-                    fft_.forwardMagnitudeOnly(fft_buffer_.data());
-                    const auto decay = actual_decay_rates_[i].load(std::memory_order::relaxed);
-                    auto &smoothed_db{smoothed_dbs_[i]};
-                    if (to_reset_[i].exchange(false)) {
-                        std::fill(smoothed_db.begin(), smoothed_db.end(), kMinDB * 2.f);
-                    }
-                    for (size_t j = 0; j < smoothed_db.size(); ++j) {
-                        const auto current_db = chore::gainToDecibels(fft_buffer_[j]);
-                        smoothed_db[j] = current_db < smoothed_db[j]
-                                             ? smoothed_db[j] * decay + current_db * (1 - decay)
-                                             : current_db;
-                    }
-                    for (size_t j = 0; j < seq_input_dbs_.size(); ++j) {
-                        const auto start_idx = seq_input_starts_[j];
-                        const auto end_idx = seq_input_ends_[j];
-                        seq_input_dbs_[j] = std::reduce(
-                                                smoothed_db.begin() + start_idx,
-                                                smoothed_db.begin() + end_idx) / static_cast<float>(
-                                                end_idx - start_idx);
-                    }
-                    seq_akima_->prepare();
-                    seq_akima_->eval(interplot_freqs_.data(), pre_interplot_dbs_[i].data(), PointNum);
+                if (range.block_size2 > 0) {
+                    std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index2),
+                              sample_fifo.begin() + static_cast<std::ptrdiff_t>(
+                                  range.start_index2 + range.block_size2),
+                              circular_buffer.begin() + static_cast<std::ptrdiff_t>(
+                                  num_replace + range.block_size1));
                 }
             }
+            abstract_fifo_.finishRead(num_ready);
+            // prepare Akima
+            if (to_update_akima_.exchange(false, std::memory_order::acquire)) {
+                prepareAkima();
+                to_update = true;
+            }
+            // run forward FFT & interpolate
+            for (const auto &i: is_on_vector) {
+                std::copy(circular_buffers_[i].begin(), circular_buffers_[i].end(), fft_buffer_.begin());
+                auto temp = kfr::make_univector(fft_buffer_.data(), window_.size());
+                temp = temp * window_;
+                fft_.forwardMagnitudeOnly(fft_buffer_.data());
+                const auto decay = actual_decay_rates_[i].load(std::memory_order::relaxed);
+                auto &input_dbs{seq_input_dbs_[i]};
+                if (to_reset_[i].exchange(false)) {
+                    std::fill(input_dbs.begin(), input_dbs.end(), kMinDB);
+                }
+                for (size_t j = 0; j < input_dbs.size(); ++j) {
+                    const auto start_idx = seq_input_starts_[j];
+                    const auto end_idx = seq_input_ends_[j];
+                    float mean_square = 0.0;
+                    for (size_t k = start_idx; k < end_idx; ++k) {
+                        mean_square += fft_buffer_[k] * fft_buffer_[k];
+                    }
+                    mean_square = mean_square / static_cast<float>(end_idx - start_idx);
+                    const auto current_db = chore::squareGainToDecibels(mean_square);
+                    input_dbs[j] = current_db < input_dbs[j]
+                                          ? input_dbs[j] * decay + current_db * (1 - decay)
+                                          : current_db;
+                }
+                seq_akima_[i]->prepare();
+                seq_akima_[i]->eval(interplot_freqs_.data(), interplot_dbs_[i].data(), interplot_freqs_.size());
+            }
+            // apply tilt
             if (to_update_tilt_.exchange(false, std::memory_order::acquire)) {
-                const float total_tilt = tilt_slope_.load() + extra_tilt_.load();
-                const float tilt_shift_total = (kMaxFreqLog2 - kMinFreqLog2) * total_tilt;
-                const float tilt_shift_delta = tilt_shift_total / static_cast<float>(PointNum - 1);
-                float tilt_shift = -tilt_shift_total * .5f;
-                for (size_t idx = 0; idx < PointNum; ++idx) {
-                    tilt_shift_[idx] = tilt_shift;
-                    tilt_shift += tilt_shift_delta;
-                }
-            } {
-                for (const auto &i: is_on_vector) {
-                    auto v1 = kfr::make_univector(interplot_dbs_[i]);
-                    auto v2 = kfr::make_univector(tilt_shift_);
-                    auto v3 = kfr::make_univector(pre_interplot_dbs_[i]);
-                    v1 = v2 + v3;
-                }
+                prepareTilt();
             }
-            lock_.unlock();
+            for (const auto &i: is_on_vector) {
+                auto v1 = kfr::make_univector(interplot_dbs_[i]);
+                auto v2 = kfr::make_univector(tilt_shift_);
+                auto v3 = kfr::make_univector(result_dbs_[i]);
+                v3 = v1 + v2;
+            }
+            return to_update;
         }
 
         void setON(std::array<bool, FFTNum> fs) {
@@ -235,108 +225,161 @@ namespace zldsp::analyzer {
             updateActualDecayRate();
         }
 
+        void setMinMaxFreq(const double min_freq, const double max_freq) {
+            min_freq_.store(min_freq, std::memory_order::relaxed);
+            max_freq_.store(max_freq, std::memory_order::relaxed);
+            to_update_akima_.store(true, std::memory_order::release);
+        }
+
+        zldsp::lock::SpinLock &getLock() { return lock_; }
+
     protected:
         size_t default_fft_order_ = 12;
-        size_t bin_size_ = (1 << (default_fft_order_ - 1)) + 1;
         zldsp::lock::SpinLock lock_;
 
         std::array<std::vector<float>, FFTNum> sample_fifos_;
         std::array<std::vector<float>, FFTNum> circular_buffers_;
         zldsp::container::AbstractFIFO abstract_fifo_{0};
-
         std::vector<float> fft_buffer_;
 
-        // smooth dbs over time
-        std::array<std::vector<float>, FFTNum> smoothed_dbs_{};
         // smooth dbs over high frequency for Akimas input
+        std::atomic<double> sample_rate_{48000.}, min_freq_{10.}, max_freq_{22000.};
+        std::atomic<bool> to_update_akima_{true};
         std::vector<float> seq_input_freqs_{};
-        std::vector<std::vector<float>::difference_type> seq_input_starts_, seq_input_ends_;
-        std::vector<size_t> seq_input_indices_;
-        std::vector<float> seq_input_dbs_{};
+        std::vector<size_t> seq_input_starts_, seq_input_ends_;
+        std::array<std::vector<float>, FFTNum> seq_input_dbs_{};
 
-        std::unique_ptr<zldsp::interpolation::SeqMakima<float> > seq_akima_;
+        std::array<std::unique_ptr<zldsp::interpolation::SeqMakima<float> >, FFTNum> seq_akima_;
 
-        std::array<float, PointNum> interplot_freqs_{};
-        std::array<std::array<float, PointNum>, FFTNum> pre_interplot_dbs_{};
-        std::array<std::array<float, PointNum>, FFTNum> interplot_dbs_{};
+        std::vector<float> interplot_freqs_{}, interplot_freqs_p_{};
+        std::array<std::vector<float>, FFTNum> interplot_dbs_{};
+        std::array<std::vector<float>, FFTNum> result_dbs_{};
 
-        std::atomic<float> delta_t_{1.f}, refresh_rate_{60}, tilt_slope_{4.5f};
+        std::atomic<float> refresh_rate_{60}, tilt_slope_{4.5f};
         std::array<std::atomic<float>, FFTNum> decay_rates_{}, actual_decay_rates_{};
         std::atomic<float> extra_tilt_{0.f}, extra_speed_{1.f};
 
-        std::array<float, PointNum> tilt_shift_{};
+        std::vector<float> tilt_shift_{};
         std::atomic<bool> to_update_tilt_{true};
 
         zldsp::fft::KFREngine<float> fft_;
         kfr::univector<float> window_;
 
-        std::atomic<float> sample_rate_{48000.f};
         std::array<std::atomic<bool>, FFTNum> to_reset_;
 
         std::array<std::atomic<bool>, FFTNum> is_on_{};
 
         void prepareAkima() {
-            std::vector<size_t> seq_input_indices{};
-            seq_input_indices.push_back(0);
-            size_t i = 1, i0 = 1;
-            const float delta = std::pow(
-                static_cast<float>(bin_size_), .75f / static_cast<float>(PointNum));
-            while (i < bin_size_ - 1) {
-                while (static_cast<float>(i) / static_cast<float>(i0) < delta) {
-                    i += 1;
-                    if (i >= bin_size_ - 1) {
-                        break;
+            // cache sample rate and frequency values
+            const auto sample_rate = sample_rate_.load(std::memory_order::relaxed);
+            const auto min_freq = min_freq_.load(std::memory_order::relaxed);
+            const auto max_freq = std::min(max_freq_.load(std::memory_order::relaxed), sample_rate * .5);
+            const auto fft_size = fft_.getSize();
+            // calculate start/end indices
+            {
+                const auto freq_delta = sample_rate / static_cast<double>(fft_size);
+                const auto freq_mul = std::pow(max_freq / min_freq, 1. / static_cast<double>(PointNum / 2));
+                auto freq = min_freq * std::sqrt(freq_mul);
+                seq_input_starts_.clear();
+                seq_input_starts_.reserve(PointNum / 2);
+                seq_input_ends_.clear();
+                seq_input_ends_.reserve(PointNum / 2);
+
+                seq_input_starts_.emplace_back(0);
+                seq_input_ends_.emplace_back(
+                    std::max(static_cast<size_t>(std::round(freq / freq_delta)),
+                             static_cast<size_t>(1)));
+                const auto limit = fft_size / 2;
+                for (size_t i = 1; i < PointNum / 2 + 1; ++i) {
+                    freq *= freq_mul;
+                    const auto new_index = std::min(
+                        static_cast<size_t>(std::round(freq / freq_delta)), limit);
+                    if (new_index > seq_input_ends_.back()) {
+                        seq_input_starts_.emplace_back(seq_input_ends_.back());
+                        seq_input_ends_.emplace_back(new_index);
                     }
                 }
-                i0 = i;
-                seq_input_indices.push_back(i);
+                seq_input_starts_.emplace_back(seq_input_ends_.back());
+                seq_input_ends_.emplace_back(fft_size / 2 + 1);
             }
-
-            seq_input_starts_.reserve(seq_input_indices.size());
-            seq_input_ends_.reserve(seq_input_indices.size());
-            seq_input_starts_.push_back(0);
-            seq_input_ends_.push_back(1);
-            for (size_t idx = 1; idx < seq_input_indices.size() - 1; ++idx) {
-                seq_input_starts_.push_back(seq_input_ends_.back());
-                seq_input_ends_.push_back(
-                    static_cast<std::vector<float>::difference_type>(
-                        seq_input_indices[idx] + seq_input_indices[idx + 1]) / 2);
+            // calculate medium of each start-end range, which is served as Akima input x
+            {
+                const auto freq_delta = 0.5 * sample_rate / static_cast<double>(fft_size);
+                seq_input_freqs_.clear();
+                seq_input_freqs_.resize(seq_input_starts_.size());
+                for (size_t i = 0; i < seq_input_starts_.size(); ++i) {
+                    seq_input_freqs_[i] = static_cast<float>(
+                        static_cast<double>(seq_input_starts_[i] + seq_input_ends_[i] - 1) * freq_delta);
+                }
+                for (size_t i = 0; i < FFTNum; ++i) {
+                    seq_input_dbs_[i].resize(seq_input_freqs_.size());
+                    seq_akima_[i] = std::make_unique<zldsp::interpolation::SeqMakima<float> >(
+                        seq_input_freqs_.data(), seq_input_dbs_[i].data(), seq_input_freqs_.size(),
+                        0.f, 0.f);
+                }
             }
-            seq_input_starts_.push_back(seq_input_ends_.back());
-            seq_input_ends_.push_back(static_cast<std::vector<float>::difference_type>(bin_size_) - 1);
+            // calculate the Akima output x
+            {
+                auto freq = min_freq;
+                const auto freq_mul = std::pow(max_freq / min_freq, 1.1 / static_cast<double>(PointNum));
 
-            seq_input_freqs_.resize(seq_input_indices.size());
-            seq_input_dbs_.resize(seq_input_indices.size());
-            seq_akima_ = std::make_unique<zldsp::interpolation::SeqMakima<float> >(
-                seq_input_freqs_.data(), seq_input_dbs_.data(), seq_input_freqs_.size(), 0.f, 0.f);
+                interplot_freqs_.clear();
+                interplot_freqs_.reserve(PointNum);
+                for (size_t i = 1; i < seq_input_freqs_.size(); ++i) {
+                    while (freq < seq_input_freqs_[i]) {
+                        interplot_freqs_.emplace_back(static_cast<float>(freq));
+                        freq *= freq_mul;
+                    }
+                    if (std::abs(seq_input_freqs_[i] - interplot_freqs_.back()) > 1e-3f) {
+                        freq = seq_input_freqs_[i];
+                    }
+                }
+
+                interplot_freqs_p_.resize(interplot_freqs_.size());
+                for (size_t i = 0; i < interplot_freqs_.size(); ++i) {
+                    interplot_freqs_p_[i] = std::log(interplot_freqs_[i] / static_cast<float>(min_freq)
+                        ) / static_cast<float>(std::log(max_freq / min_freq));
+                }
+
+                for (size_t i = 0; i < FFTNum; ++i) {
+                    interplot_dbs_[i].resize(interplot_freqs_.size());
+                    result_dbs_[i].resize(interplot_freqs_.size());
+                }
+                tilt_shift_.resize(interplot_freqs_.size());
+            }
+            reset();
+        }
+
+        void prepareTilt() {
+            float final_tilt = tilt_slope_.load(std::memory_order::relaxed);
+            final_tilt += extra_tilt_.load(std::memory_order::relaxed);
+
+            const auto sample_rate = sample_rate_.load(std::memory_order::relaxed);
+            const auto min_freq = min_freq_.load(std::memory_order::relaxed);
+            const auto max_freq = std::min(max_freq_.load(std::memory_order::relaxed), sample_rate * .5);
+
+            const float total_tilt = static_cast<float>(std::log2(max_freq / min_freq)) * final_tilt;
+
+            for (size_t i = 0; i < tilt_shift_.size(); ++i) {
+                tilt_shift_[i] = (interplot_freqs_p_[i] - .5f) * total_tilt;
+            }
         }
 
         void setOrder(const int fft_order) {
             fft_.setOrder(static_cast<size_t>(fft_order));
+            const auto fft_size = fft_.getSize();
 
-            window_.resize(static_cast<size_t>(fft_.getSize()));
-            zldsp::fft::fillCycleHanningWindow(window_, static_cast<size_t>(fft_.getSize()));
-            const auto scale = 1.f / static_cast<float>(fft_.getSize());
+            window_.resize(static_cast<size_t>(fft_size));
+            zldsp::fft::fillCycleHanningWindow(window_, static_cast<size_t>(fft_size));
+            const auto scale = 1.f / static_cast<float>(fft_size);
             window_ = window_ * scale;
 
-            delta_t_.store(sample_rate_.load() / static_cast<float>(fft_.getSize()));
-
-            const auto currentDeltaT = .5f * delta_t_.load();
-            for (size_t idx = 0; idx < seq_input_freqs_.size(); ++idx) {
-                seq_input_freqs_[idx] = static_cast<float>(seq_input_starts_[idx] + seq_input_ends_[idx] - 1) *
-                                        currentDeltaT;
-            }
+            fft_buffer_.resize(fft_size * 2);
+            abstract_fifo_.setCapacity(static_cast<int>(fft_size));
             for (size_t i = 0; i < FFTNum; ++i) {
-                std::fill(smoothed_dbs_[i].begin(), smoothed_dbs_[i].end(), kMinDB * 2.f);
-            }
-
-            const auto temp_size = fft_.getSize();
-            fft_buffer_.resize(temp_size * 2);
-            abstract_fifo_.setCapacity(static_cast<int>(temp_size));
-            for (size_t i = 0; i < FFTNum; ++i) {
-                sample_fifos_[i].resize(temp_size);
+                sample_fifos_[i].resize(fft_size);
                 std::fill(sample_fifos_[i].begin(), sample_fifos_[i].end(), 0.f);
-                circular_buffers_[i].resize(temp_size);
+                circular_buffers_[i].resize(fft_size);
                 std::fill(circular_buffers_[i].begin(), circular_buffers_[i].end(), 0.f);
             }
         }
@@ -345,8 +388,9 @@ namespace zldsp::analyzer {
             for (size_t i = 0; i < FFTNum; ++i) {
                 const auto x = 1 - (1 - decay_rates_[i].load(std::memory_order::relaxed)
                                ) * extra_speed_.load(std::memory_order::relaxed);
-                actual_decay_rates_[i].store(std::pow(x, 23.4375f / refresh_rate_.load()),
-                                             std::memory_order::relaxed);
+                actual_decay_rates_[i].store(
+                    std::pow(x, 23.4375f / refresh_rate_.load(std::memory_order::relaxed)),
+                    std::memory_order::relaxed);
             }
         }
     };
