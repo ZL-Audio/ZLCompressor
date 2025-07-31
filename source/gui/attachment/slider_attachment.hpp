@@ -50,7 +50,8 @@ namespace zlgui::attachment {
                 return static_cast<double>(range.snapToLegalValue(static_cast<float>(mapped_value)));
             };
             juce::NormalisableRange<double> new_range{
-                range.start, range.end,
+                static_cast<double>(range.start),
+                static_cast<double>(range.end),
                 std::move(convert_from_0to1),
                 std::move(convert_to_0to1),
                 std::move(snap_to_legal_value)
@@ -143,7 +144,9 @@ namespace zlgui::attachment {
 
         void sliderValueChanged(juce::Slider *) override {
             const auto normalized_value = parameter_ref_.convertTo0to1(static_cast<float>(slider_.getValue()));
-            parameter_ref_.setValueNotifyingHost(normalized_value);
+            if (std::abs(normalized_value - parameter_ref_.getValue()) > 1e-6) {
+                parameter_ref_.setValueNotifyingHost(normalized_value);
+            }
         }
 
         void sliderDragStarted(juce::Slider *) override {

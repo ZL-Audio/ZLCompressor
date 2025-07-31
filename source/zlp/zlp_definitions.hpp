@@ -21,7 +21,7 @@ namespace zlp {
         const FloatType x_min, const FloatType x_max, const FloatType x_mid, const FloatType x_interval) {
         const FloatType rng1{std::log(x_mid / x_min) * FloatType(2)};
         const FloatType rng2{std::log(x_max / x_mid) * FloatType(2)};
-        return {
+        auto result_range = juce::NormalisableRange<FloatType> {
             x_min, x_max,
             [=](FloatType, FloatType, const FloatType v) {
                 return v < FloatType(.5) ? std::exp(v * rng1) * x_min : std::exp((v - FloatType(.5)) * rng2) * x_mid;
@@ -34,6 +34,8 @@ namespace zlp {
                 return x <= x_min ? x_min : (x >= x_max ? x_max : x);
             }
         };
+        result_range.interval = x_interval;
+        return result_range;
     }
 
     template<typename FloatType>
@@ -41,7 +43,7 @@ namespace zlp {
         const FloatType x_min, const FloatType x_max, const FloatType x_mid,
         const FloatType x_interval, const FloatType shift) {
         const auto range = getLogMidRange<FloatType>(x_min, x_max, x_mid, x_interval);
-        return {
+        auto result_range = juce::NormalisableRange<FloatType> {
             x_min + shift, x_max + shift,
             [=](FloatType, FloatType, const FloatType v) {
                 return range.convertFrom0to1(v) + shift;
@@ -53,6 +55,8 @@ namespace zlp {
                 return range.snapToLegalValue(v - shift) + shift;
             }
         };
+        result_range.interval = x_interval;
+        return result_range;
     }
 
     template<typename FloatType>
@@ -60,7 +64,7 @@ namespace zlp {
         const FloatType x_min, const FloatType x_max, const FloatType x_mid,
         const FloatType x_interval, const FloatType shift) {
         const auto range = getLogMidRangeShift<FloatType>(x_min, x_max, x_mid, x_interval, shift);
-        return {
+        auto result_range = juce::NormalisableRange<FloatType> {
             -(x_max + shift), x_max + shift,
             [=](FloatType, FloatType, const FloatType v) {
                 if (v > FloatType(0.5)) {
@@ -84,12 +88,14 @@ namespace zlp {
                 }
             }
         };
+        result_range.interval = x_interval;
+        return result_range;
     }
 
     template<typename FloatType>
     inline juce::NormalisableRange<FloatType> getLinearMidRange(
         const FloatType x_min, const FloatType x_max, const FloatType x_mid, const FloatType x_interval) {
-        return {
+        auto result_range =  juce::NormalisableRange<FloatType> {
             x_min, x_max,
             [=](FloatType, FloatType, const FloatType v) {
                 return v < FloatType(.5)
@@ -106,6 +112,8 @@ namespace zlp {
                 return x <= x_min ? x_min : (x >= x_max ? x_max : x);
             }
         };
+        result_range.interval = x_interval;
+        return result_range;
     }
 
     // float
