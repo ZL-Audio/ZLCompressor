@@ -22,7 +22,8 @@
 
 namespace zlpanel {
     class MainPanel final : public juce::Component,
-                            private juce::ValueTree::Listener {
+                            private juce::ValueTree::Listener,
+                            private juce::Timer {
     public:
         explicit MainPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
@@ -45,5 +46,7 @@ namespace zlpanel {
         double refresh_rate_{-1.0};
 
         void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
+
+        void timerCallback() override;
     };
 } // zlpanel

@@ -24,10 +24,13 @@ namespace zlpanel {
         addChildComponent(ui_setting_panel_);
 
         base_.getPanelValueTree().addListener(this);
+
+        startTimerHz(10);
     }
 
     MainPanel::~MainPanel() {
         base_.getPanelValueTree().removeListener(this);
+        stopTimer();
     }
 
     void MainPanel::resized() {
@@ -80,9 +83,19 @@ namespace zlpanel {
 
     void MainPanel::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) {
         if (base_.isPanelIdentifier(zlgui::PanelSettingIdx::kUISettingPanel, property)) {
-            const auto ui_setting_visibility = static_cast<bool>(base_.getPanelProperty(zlgui::PanelSettingIdx::kUISettingPanel));
+            const auto ui_setting_visibility = static_cast<bool>(base_.getPanelProperty(
+                zlgui::PanelSettingIdx::kUISettingPanel));
             curve_panel_.setVisible(!ui_setting_visibility);
             ui_setting_panel_.setVisible(ui_setting_visibility);
+        }
+    }
+
+    void MainPanel::timerCallback() {
+        if (juce::Process::isForegroundProcess()) {
+            if (getCurrentlyFocusedComponent() != this) {
+                grabKeyboardFocus();
+            }
+            stopTimer();
         }
     }
 } // zlpanel
