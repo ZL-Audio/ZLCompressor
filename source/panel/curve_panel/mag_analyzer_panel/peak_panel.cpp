@@ -64,9 +64,11 @@ namespace zlpanel {
 
     void PeakPanel::run(const double next_time_stamp) {
         const auto current_bound = atomic_bound_.load();
-        if (to_reset_path_.exchange(false, std::memory_order::acquire)) {
+        if (to_reset_path_.exchange(false, std::memory_order::acquire)
+            || next_time_stamp - current_time > 0.5) {
             is_first_point_ = true;
         }
+        current_time = next_time_stamp;
         if (is_first_point_) {
             auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(1, 0);
             if (actual_delta > 0) {
@@ -81,7 +83,7 @@ namespace zlpanel {
         } else {
             const auto c_num_per_second = num_per_second_.load(std::memory_order::relaxed);
             const auto target_count = (next_time_stamp - start_time_) * c_num_per_second;
-            const auto tolerance = target_count * 1.5;
+            const auto tolerance = std::max(target_count * 1.5, 1.0);
             const auto target_delta = target_count - current_count_;
             auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(
                 static_cast<int>(std::floor(target_delta)),

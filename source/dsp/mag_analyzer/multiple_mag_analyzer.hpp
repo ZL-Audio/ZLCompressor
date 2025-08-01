@@ -54,7 +54,7 @@ namespace zldsp::analyzer {
             const bool to_reset_shift = (fifo_num_ready - num_to_read > tolerance) || (fifo_num_ready < num_to_read);
             int num_ready = 0;
             if (to_reset_shift) {
-                if (fifo_num_ready > tolerance / 2) {
+                if (fifo_num_ready > num_to_read) {
                     num_ready = fifo_num_ready - tolerance / 2;
                 } else {
                     num_ready = 0;
