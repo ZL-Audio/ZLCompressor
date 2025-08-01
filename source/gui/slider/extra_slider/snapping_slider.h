@@ -17,43 +17,41 @@ namespace zlgui::slider {
         explicit SnappingSlider(UIBase &base, const juce::String &name = "") : juce::Slider(name), base_(base) {
         }
 
-        void mouseWheelMove(const juce::MouseEvent &e, const juce::MouseWheelDetails &wheel) override {
-            juce::MouseWheelDetails w = wheel;
-            if (std::signbit(cumulative_x_) != std::signbit(w.deltaX)) {
-                cumulative_x_ = 0.f;
+        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &w) override {
+            // avoid duplicate mousewheel events
+            if (event.eventTime == last_wheel_time_) { return; }
+            last_wheel_time_ = event.eventTime;
+            // apply shift reverse
+            juce::MouseWheelDetails wheel = w;
+            if (event.mods.isShiftDown() && base_.getIsMouseWheelShiftReverse()) {
+                wheel.deltaX = -wheel.deltaX;
+                wheel.deltaY = -wheel.deltaY;
             }
-            if (std::signbit(cumulative_y_) != std::signbit(w.deltaY)) {
-                cumulative_y_ = 0.f;
-            }
-            if (e.mods.isShiftDown()) {
-                const auto sensitivity_mul =
-                    base_.getSensitivity(kMouseWheelFine) * (base_.getIsMouseWheelShiftReverse() ? -1.f : 1.f);
-                cumulative_x_ += w.deltaX * sensitivity_mul;
-                cumulative_y_ += w.deltaY * sensitivity_mul;
-            } else {
-                const auto sensitivity_mul = base_.getSensitivity(kMouseWheel);
-                cumulative_x_ += w.deltaX * sensitivity_mul;
-                cumulative_y_ += w.deltaY * sensitivity_mul;
-            }
-
+            // multiply delta with sensitivity
+            const auto sensitivity_mul = event.mods.isShiftDown()
+                                             ? base_.getSensitivity(kMouseWheelFine)
+                                             : base_.getSensitivity(kMouseWheel);
+            cumulative_x_ += wheel.deltaX * sensitivity_mul;
+            cumulative_y_ += wheel.deltaY * sensitivity_mul;
+            // calculate delta value
             const auto current_value = getValue();
             const auto cumulative_wheel_delta = std::abs(cumulative_x_) > std::abs(cumulative_y_)
                                                     ? -cumulative_x_
                                                     : cumulative_y_;
             const auto delta = getMouseWheelDelta(current_value,
-                                                  cumulative_wheel_delta * (w.isReversed ? -1.0f : 1.0f));
-            if (std::abs(delta) > getInterval() * 0.75) {
-                w.deltaX = cumulative_x_;
-                w.deltaY = cumulative_y_;
+                                                  cumulative_wheel_delta * (wheel.isReversed ? -1.0f : 1.0f));
+            // update slider value if delta value is larger than interval
+            if (std::abs(delta) > getInterval() * 0.9) {
                 cumulative_x_ = 0.f;
                 cumulative_y_ = 0.f;
-                Slider::mouseWheelMove(e, w);
+                setValue(snapValue(current_value + delta, notDragging), juce::sendNotificationSync);
             }
         }
 
     protected:
         UIBase &base_;
         float cumulative_x_{0.f}, cumulative_y_{0.f};
+        juce::Time last_wheel_time_{};
 
         double getMouseWheelDelta(const double value, const float wheel_delta) {
             const auto proportion_delta = static_cast<double>(wheel_delta) * 0.15;
