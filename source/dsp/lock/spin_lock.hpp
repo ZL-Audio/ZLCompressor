@@ -23,7 +23,7 @@ namespace zldsp::lock {
     public:
         void lock() noexcept {
             while (flag.test_and_set(std::memory_order_acquire)) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
                 _mm_pause();
 #elif defined(__GNUC__) || defined(__clang__)
 #if defined(__i386__) || defined(__x86_64__)
