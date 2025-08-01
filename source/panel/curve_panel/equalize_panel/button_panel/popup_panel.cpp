@@ -131,5 +131,21 @@ namespace zlpanel {
             const auto is_on = bypass_ref_->load(std::memory_order::relaxed) > 1.5f;
             bypass_button_.getButton().setToggleState(is_on, juce::dontSendNotification);
         }
+        if (ftype_ != ftype_box_.getBox().getSelectedItemIndex() && selected_band_idx_ < zlp::kBandNum) {
+            ftype_ = ftype_box_.getBox().getSelectedItemIndex();
+            if (slope_box_.getBox().getSelectedItemIndex() == 0) {
+                if (ftype_ == 0 || ftype_ == 5 || ftype_ == 6) {
+                    auto *para = p_ref_.parameters_.getParameter(zlp::POrder::kID + std::to_string(selected_band_idx_));
+                    para->beginChangeGesture();
+                    para->setValueNotifyingHost(para->convertTo0to1(1.f));
+                    para->endChangeGesture();
+                }
+            }
+            if (ftype_ == 0 || ftype_ == 5 || ftype_ == 6) {
+                slope_box_.getBox().setItemEnabled(1, false);
+            } else {
+                slope_box_.getBox().setItemEnabled(1, true);
+            }
+        }
     }
 } // zlpanel

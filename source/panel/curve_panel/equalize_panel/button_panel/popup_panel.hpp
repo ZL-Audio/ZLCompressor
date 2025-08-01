@@ -37,6 +37,7 @@ namespace zlpanel {
         size_t &selected_band_idx_;
         size_t band_{zlp::kBandNum};
         std::atomic<float> *bypass_ref_{nullptr};
+        int ftype_{-1};
 
         const std::unique_ptr<juce::Drawable> bypass_drawable_;
         zlgui::button::ClickButton bypass_button_;
