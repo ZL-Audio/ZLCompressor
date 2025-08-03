@@ -47,19 +47,24 @@ namespace zldsp::filter {
 
         /**
          * prepare for processing the incoming audio buffer
+         * @return
          */
-        void prepareBuffer() {
+        bool prepareBuffer() {
+            bool update = false;
             if (to_update_para_.exchange(false, std::memory_order::acquire)) {
                 c_filter_type_ = filter_type_.load(std::memory_order::relaxed);
                 c_order_ = order_.load(std::memory_order::relaxed);
                 updateCoeffs();
                 reset();
+                update = true;
             }
             if (to_update_fgq_.exchange(false, std::memory_order::acquire)) {
                 c_freq_.setTarget(freq_.load(std::memory_order::relaxed));
                 c_gain_.setTarget(gain_.load(std::memory_order::relaxed));
                 c_q_.setTarget(q_.load(std::memory_order::relaxed));
+                update = true;
             }
+            return update;
         }
 
         /**
@@ -98,11 +103,13 @@ namespace zldsp::filter {
          */
         template<bool Update = true, bool Async = true, bool Force = false>
         void setFreq(const FloatType freq) {
-            if (Async) {
+            if constexpr (Async) {
                 freq_.store(static_cast<double>(freq), std::memory_order::relaxed);
-                if (Update) { to_update_fgq_.store(true, std::memory_order::release); }
+                if constexpr (Update) {
+                    to_update_fgq_.store(true, std::memory_order::release);
+                }
             } else {
-                if (Force) {
+                if constexpr (Force) {
                     c_freq_.setCurrentAndTarget(static_cast<double>(freq));
                 } else {
                     c_freq_.setTarget(static_cast<double>(freq));
@@ -112,10 +119,10 @@ namespace zldsp::filter {
 
         template<bool Async = true>
         FloatType getFreq() const {
-            if (Async) {
+            if constexpr (Async) {
                 return static_cast<FloatType>(freq_.load(std::memory_order::relaxed));
             } else {
-                return static_cast<FloatType>(c_freq_.getCurrent());
+                return static_cast<FloatType>(c_freq_.getTarget());
             }
         }
 
@@ -125,11 +132,13 @@ namespace zldsp::filter {
          */
         template<bool Update = true, bool Async = true, bool Force = false>
         void setGain(const FloatType gain) {
-            if (Async) {
+            if constexpr (Async) {
                 gain_.store(static_cast<double>(gain), std::memory_order::relaxed);
-                if (Update) to_update_fgq_.store(true, std::memory_order::release);
+                if constexpr (Update) {
+                    to_update_fgq_.store(true, std::memory_order::release);
+                }
             } else {
-                if (Force) {
+                if constexpr (Force) {
                     c_gain_.setCurrentAndTarget(static_cast<double>(gain));
                 } else {
                     c_gain_.setTarget(static_cast<double>(gain));
@@ -139,10 +148,10 @@ namespace zldsp::filter {
 
         template<bool Async = true>
         FloatType getGain() const {
-            if (Async) {
+            if constexpr (Async) {
                 return static_cast<FloatType>(gain_.load(std::memory_order::relaxed));
             } else {
-                return static_cast<FloatType>(c_gain_.getCurrent());
+                return static_cast<FloatType>(c_gain_.getTarget());
             }
         }
 
@@ -152,11 +161,13 @@ namespace zldsp::filter {
          */
         template<bool Update = true, bool Async = true, bool Force = false>
         void setQ(const FloatType q) {
-            if (Async) {
+            if constexpr (Async) {
                 q_.store(static_cast<double>(q), std::memory_order::relaxed);
-                if (Update) to_update_fgq_.store(true, std::memory_order::release);
+                if constexpr (Update) {
+                    to_update_fgq_.store(true, std::memory_order::release);
+                }
             } else {
-                if (Force) {
+                if constexpr (Force) {
                     c_q_.setCurrentAndTarget(static_cast<double>(q));
                 } else {
                     c_q_.setTarget(static_cast<double>(q));
@@ -166,10 +177,10 @@ namespace zldsp::filter {
 
         template<bool Async = true>
         FloatType getQ() const {
-            if (Async) {
+            if constexpr (Async) {
                 return static_cast<FloatType>(q_.load(std::memory_order::relaxed));
             } else {
-                return static_cast<FloatType>(c_q_.getCurrent());
+                return static_cast<FloatType>(c_q_.getTarget());
             }
         }
 
@@ -186,14 +197,20 @@ namespace zldsp::filter {
          */
         template<bool Update = true>
         void setFilterType(const FilterType filter_type) {
-            filter_type_.store(filter_type, std::memory_order::relaxed);
-            if (Update) {
-                to_update_para_.store(true, std::memory_order::release);
+            if (filter_type_.exchange(filter_type, std::memory_order::relaxed) != filter_type) {
+                if constexpr (Update) {
+                    to_update_para_.store(true, std::memory_order::release);
+                }
             }
         }
 
+        template<bool Async = true>
         inline FilterType getFilterType() const {
-            return filter_type_.load(std::memory_order::relaxed);
+            if constexpr (Async) {
+                return filter_type_.load(std::memory_order::relaxed);
+            } else {
+                return c_filter_type_;
+            }
         }
 
         /**
@@ -202,14 +219,20 @@ namespace zldsp::filter {
          */
         template<bool Update = true>
         void setOrder(const size_t order) {
-            order_.store(order, std::memory_order::relaxed);
-            if (Update) {
-                to_update_para_.store(true, std::memory_order::release);
+            if (order_.exchange(order, std::memory_order::relaxed) != order) {
+                if constexpr (Update) {
+                    to_update_para_.store(true, std::memory_order::release);
+                }
             }
         }
 
+        template<bool Async = true>
         inline size_t getOrder() const {
-            return order_.load(std::memory_order::relaxed);
+            if constexpr (Async) {
+                return order_.load(std::memory_order::relaxed);
+            } else {
+                return c_order_;
+            }
         }
 
         /**
