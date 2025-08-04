@@ -13,6 +13,7 @@
 #include "popup_panel.hpp"
 #include "filter_para_panel.hpp"
 #include "right_click_panel.hpp"
+#include "solo_panel.hpp"
 
 namespace zlpanel {
     class ButtonPanel final : public juce::Component {
@@ -20,7 +21,7 @@ namespace zlpanel {
         explicit ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
                              size_t &selected_band_idx);
 
-        ~ButtonPanel() override = default;
+        ~ButtonPanel() override;
 
         void resized() override;
 
@@ -72,6 +73,7 @@ namespace zlpanel {
         PopupPanel popup_panel_;
         RightClickPanel right_click_panel_;
         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> dragger_panels_;
+        SoloPanel solo_panel_;
 
         static constexpr std::array init_IDs{
             zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID,

@@ -21,6 +21,7 @@ namespace zlp {
     class EqualizeController {
     public:
         static constexpr size_t kAnalyzerPointNum = 100;
+
         enum FilterStatus {
             kOff, kBypass, kOn
         };
@@ -45,7 +46,7 @@ namespace zlp {
             return filters_[idx];
         }
 
-        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100>& getFFTAnalyzer() {
+        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100> &getFFTAnalyzer() {
             return fft_analyzer_;
         }
 
@@ -56,6 +57,22 @@ namespace zlp {
 
         [[nodiscard]] bool getFFTAnalyzerON() const {
             return fft_analyzer_on_.load(std::memory_order::relaxed);
+        }
+
+        void setSoloBand(const size_t solo_band) {
+            solo_band_.store(solo_band, std::memory_order::relaxed);
+        }
+
+        size_t getSoloBand() const {
+            return solo_band_.load(std::memory_order::relaxed);
+        }
+
+        bool getSoloOn() const {
+            return c_solo_on_;
+        }
+
+        std::array<double *, 2> &getSoloPointers() {
+            return solo_pointers_;
         }
 
     private:
@@ -74,6 +91,15 @@ namespace zlp {
         bool c_fft_analyzer_on_{false};
         zldsp::analyzer::MultipleFFTAnalyzer<double, 1, kAnalyzerPointNum> fft_analyzer_;
 
+        zldsp::filter::IIR<double, 16> solo_filter_{};
+        std::atomic<size_t> solo_band_{kBandNum};
+        size_t c_solo_band_{kBandNum};
+        bool c_solo_on_{false};
+        std::array<std::vector<double>, 2> solo_buffers_;
+        std::array<double *, 2> solo_pointers_{};
+
         void prepareBuffer();
+
+        void updateSoloFilter();
     };
 }

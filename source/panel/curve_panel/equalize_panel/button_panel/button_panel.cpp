@@ -19,7 +19,8 @@ namespace zlpanel {
           eq_db_box_attachment_(eq_db_box_.getBox(), processor.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
           para_panel_(processor, base, selected_band_idx),
           popup_panel_(processor, base, selected_band_idx),
-          right_click_panel_(processor, base, selected_band_idx) {
+          right_click_panel_(processor, base, selected_band_idx),
+          solo_panel_(processor, base, selected_band_idx, dragger_panels_) {
         addChildComponent(q_slider_);
         slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         addChildComponent(slope_slider_);
@@ -35,6 +36,8 @@ namespace zlpanel {
             addAndMakeVisible(box);
         }
 
+        addChildComponent(solo_panel_);
+
         addChildComponent(para_panel_);
 
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
@@ -49,10 +52,16 @@ namespace zlpanel {
         addChildComponent(right_click_panel_);
     }
 
+    ButtonPanel::~ButtonPanel() {
+        solo_panel_.setVisible(false);
+        p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+    }
+
     void ButtonPanel::resized() { {
             const auto bound = getLocalBounds();
             q_slider_.setBounds(bound);
             slope_slider_.setBounds(bound);
+            solo_panel_.setBounds(bound);
             para_panel_.setBounds({
                 bound.getX(), bound.getY(),
                 para_panel_.getIdealWidth(), para_panel_.getIdealHeight()
@@ -81,20 +90,30 @@ namespace zlpanel {
 
     void ButtonPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+        // update eq max dB scale
         const auto c_eq_max_db_id = eq_max_db_id_ref_.load(std::memory_order::relaxed);
         if (std::abs(c_eq_max_db_id - eq_max_db_id_) > 1e-3f) {
             eq_max_db_id_ = std::round(c_eq_max_db_id);
-
             const auto eq_max_db = zlstate::PEQMaxDB::kDBs[static_cast<size_t>(eq_max_db_id_)];
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 dragger_panels_[band]->setEQMaxDB(eq_max_db);
             }
         }
+        // update draggers
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             dragger_panels_[band]->repaintCallBackSlow();
         }
         para_panel_.repaintCallBackSlow();
         popup_panel_.repaintCallBackSlow();
+        // if filter is off, also turn off solo
+        const auto solo_band = p_ref_.getEqualizeController().getSoloBand();
+        if (solo_band < zlp::kBandNum) {
+            if (p_ref_.parameters_.getRawParameterValue(zlp::PFilterStatus::kID + std::to_string(solo_band)
+                )->load(std::memory_order::relaxed) < .5f) {
+                solo_panel_.setVisible(false);
+                p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+            }
+        }
     }
 
     void ButtonPanel::updateBand() {
@@ -133,7 +152,7 @@ namespace zlpanel {
     }
 
     void ButtonPanel::mouseDown(const juce::MouseEvent &event) {
-        if (event.mods.isRightButtonDown()) {
+        if (event.mods.isRightButtonDown() && !event.mods.isCommandDown()) {
             const auto bound = getLocalBounds().toFloat();
             auto target_point = bound.getTopLeft();
             if (event.originalComponent == this) {
@@ -158,13 +177,27 @@ namespace zlpanel {
             right_click_panel_.setVisible(true);
         } else {
             right_click_panel_.setVisible(false);
-            if (event.originalComponent != this) { return; }
-            selected_band_idx_ = zlp::kBandNum;
+            if (event.originalComponent == this) {
+                solo_panel_.setVisible(false);
+                p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+                selected_band_idx_ = zlp::kBandNum;
+            }
         }
     }
 
     void ButtonPanel::mouseDoubleClick(const juce::MouseEvent &event) {
-        if (event.originalComponent != this) { return; }
+        if (event.originalComponent != this) {
+            if (event.mods.isLeftButtonDown()) {
+                for (size_t i = 0; i < zlp::kBandNum; ++i) {
+                    if (dragger_panels_[i]->isParentOf(event.originalComponent)) {
+                        p_ref_.getEqualizeController().setSoloBand(i);
+                        solo_panel_.setVisible(true);
+                        break;
+                    }
+                }
+            }
+            return;
+        }
         // find an off band
         size_t band_idx = zlp::kBandNum;
         for (size_t band = 0; band < zlp::kBandNum; ++band) {

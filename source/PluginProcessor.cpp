@@ -194,7 +194,9 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(main_pointers_[0], equalize_controller_.getSoloPointers()[0], buffer_size);
+            } else if (c_side_out) {
                 zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
             }
             break;
@@ -214,7 +216,9 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(main_pointers_[0], equalize_controller_.getSoloPointers()[0], buffer_size);
+            } else if (c_side_out) {
                 zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
             }
             break;
@@ -234,11 +238,16 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                auto v0 = kfr::make_univector(equalize_controller_.getSoloPointers()[0], buffer_size);
+                auto v1 = kfr::make_univector(equalize_controller_.getSoloPointers()[1], buffer_size);
+                v0 = 0.5 * (v0 + v1);
+                zldsp::vector::copy(main_pointers_[0], v0.data(), buffer_size);
+            } else if (c_side_out) {
                 auto v0 = kfr::make_univector(double_side_pointers_[0], buffer_size);
                 auto v1 = kfr::make_univector(double_side_pointers_[1], buffer_size);
                 v0 = 0.5 * (v0 + v1);
-                zldsp::vector::copy(main_pointers_[0], double_side_pointers_[0], buffer_size);
+                zldsp::vector::copy(main_pointers_[0], v0.data(), buffer_size);
             }
             break;
         }
@@ -252,7 +261,9 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy<float, double>(main_pointers_, equalize_controller_.getSoloPointers(), buffer_size);
+            } else if (c_side_out) {
                 zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
             }
             break;
@@ -272,7 +283,9 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy<float, double>(main_pointers_, equalize_controller_.getSoloPointers(), buffer_size);
+            } else if (c_side_out) {
                 zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
             }
             break;
@@ -292,7 +305,9 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<float> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy<float, double>(main_pointers_, equalize_controller_.getSoloPointers(), buffer_size);
+            } else if (c_side_out) {
                 zldsp::vector::copy<float, double>(main_pointers_, double_side_pointers_, buffer_size);
             }
             break;
@@ -322,7 +337,10 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, false);
 
-            if (!c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(double_side_pointers_[0], equalize_controller_.getSoloPointers()[0], buffer_size);
+            } else if (c_side_out) {
+            } else {
                 zldsp::vector::copy(double_side_pointers_[0], main_pointers_[0], buffer_size);
             }
             break;
@@ -338,7 +356,9 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(buffer.getWritePointer(0), equalize_controller_.getSoloPointers()[0], buffer_size);
+            } else if (c_side_out) {
                 if (c_ext_side) {
                     zldsp::vector::copy(buffer.getWritePointer(0), double_side_pointers_[0], buffer_size);
                 }
@@ -363,7 +383,12 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                auto v = kfr::make_univector(buffer.getWritePointer(0), buffer_size);
+                auto v0 = kfr::make_univector(equalize_controller_.getSoloPointers()[0], buffer_size);
+                auto v1 = kfr::make_univector(equalize_controller_.getSoloPointers()[1], buffer_size);
+                v = 0.5 * (v0 + v1);
+            } else if (c_side_out) {
                 if (c_ext_side) {
                     auto v = kfr::make_univector(buffer.getWritePointer(0), buffer_size);
                     auto v0 = kfr::make_univector(double_side_pointers_[0], buffer_size);
@@ -386,7 +411,11 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (!c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(buffer.getWritePointer(0), equalize_controller_.getSoloPointers()[0], buffer_size);
+                zldsp::vector::copy(buffer.getWritePointer(1), equalize_controller_.getSoloPointers()[1], buffer_size);
+            } else if (c_side_out) {
+            } else {
                 zldsp::vector::copy(buffer.getWritePointer(0), main_pointers_[0], buffer_size);
                 zldsp::vector::copy(buffer.getWritePointer(1), main_pointers_[1], buffer_size);
             }
@@ -408,7 +437,10 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(buffer.getWritePointer(0), equalize_controller_.getSoloPointers()[0], buffer_size);
+                zldsp::vector::copy(buffer.getWritePointer(1), equalize_controller_.getSoloPointers()[0], buffer_size);
+            } else if (c_side_out) {
                 if (c_ext_side) {
                     zldsp::vector::copy(buffer.getWritePointer(0), double_side_pointers_[0], buffer_size);
                     zldsp::vector::copy(buffer.getWritePointer(1), double_side_pointers_[0], buffer_size);
@@ -435,7 +467,10 @@ void PluginProcessor::processBlockInternal(juce::AudioBuffer<double> &buffer) {
 
             compress_controller_.process(main_pointers_, float_side_pointers_, buffer_size, IsBypassed);
 
-            if (c_side_out) {
+            if (equalize_controller_.getSoloOn()) {
+                zldsp::vector::copy(buffer.getWritePointer(0), equalize_controller_.getSoloPointers()[0], buffer_size);
+                zldsp::vector::copy(buffer.getWritePointer(1), equalize_controller_.getSoloPointers()[1], buffer_size);
+            } else if (c_side_out) {
                 if (c_ext_side) {
                     zldsp::vector::copy(buffer.getWritePointer(0), double_side_pointers_[0], buffer_size);
                     zldsp::vector::copy(buffer.getWritePointer(1), double_side_pointers_[1], buffer_size);
