@@ -53,8 +53,7 @@ namespace zlpanel {
     }
 
     ButtonPanel::~ButtonPanel() {
-        solo_panel_.setVisible(false);
-        p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+        turnOffSolo();
     }
 
     void ButtonPanel::resized() { {
@@ -105,19 +104,11 @@ namespace zlpanel {
         }
         para_panel_.repaintCallBackSlow();
         popup_panel_.repaintCallBackSlow();
-        // if filter is off, also turn off solo
-        const auto solo_band = p_ref_.getEqualizeController().getSoloBand();
-        if (solo_band < zlp::kBandNum) {
-            if (p_ref_.parameters_.getRawParameterValue(zlp::PFilterStatus::kID + std::to_string(solo_band)
-                )->load(std::memory_order::relaxed) < .5f) {
-                solo_panel_.setVisible(false);
-                p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
-            }
-        }
     }
 
     void ButtonPanel::updateBand() {
         if (previous_band_idx_ != selected_band_idx_) {
+            turnOffSolo();
             if (previous_band_idx_ != zlp::kBandNum) {
                 dragger_panels_[previous_band_idx_]->getDragger().getButton().setToggleState(
                     false, juce::sendNotificationSync);
@@ -178,8 +169,7 @@ namespace zlpanel {
         } else {
             right_click_panel_.setVisible(false);
             if (event.originalComponent == this) {
-                solo_panel_.setVisible(false);
-                p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+                turnOffSolo();
                 selected_band_idx_ = zlp::kBandNum;
             }
         }
@@ -190,8 +180,7 @@ namespace zlpanel {
             if (event.mods.isLeftButtonDown()) {
                 for (size_t i = 0; i < zlp::kBandNum; ++i) {
                     if (dragger_panels_[i]->isParentOf(event.originalComponent)) {
-                        p_ref_.getEqualizeController().setSoloBand(i);
-                        solo_panel_.setVisible(true);
+                        turnOnSolo(i);
                         break;
                     }
                 }
@@ -273,5 +262,15 @@ namespace zlpanel {
         } else {
             q_slider_.mouseWheelMove(e, wheel);
         }
+    }
+
+    void ButtonPanel::turnOnSolo(const size_t band) {
+        p_ref_.getEqualizeController().setSoloBand(band);
+        solo_panel_.setVisible(true);
+    }
+
+    void ButtonPanel::turnOffSolo() {
+        solo_panel_.setVisible(false);
+        p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
     }
 } // zlpanel

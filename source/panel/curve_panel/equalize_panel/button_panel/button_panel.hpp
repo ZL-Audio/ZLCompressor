@@ -79,5 +79,9 @@ namespace zlpanel {
             zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID,
             zlp::PFilterStatus::kID
         };
+
+        void turnOnSolo(size_t band);
+
+        void turnOffSolo();
     };
 } // zlpanel
