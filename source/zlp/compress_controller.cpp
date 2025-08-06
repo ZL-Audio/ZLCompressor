@@ -301,9 +301,18 @@ namespace zlp {
         auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
+        // prepare clipper
+        clipper_.prepareBuffer();
+        if (clipper_on_ != clipper_.getIsON()) {
+            clipper_on_ = clipper_.getIsON();
+            if (clipper_on_) {
+                updateClipper();
+            }
+        }
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) {
             computer_[1].copyFrom(computer_[0]);
+            updateClipper();
         }
         if (follower_[0].prepareBuffer()) {
             follower_[1].copyFrom(follower_[0]);
@@ -388,6 +397,11 @@ namespace zlp {
             main_v0 = main_v0 * side_v0;
             main_v1 = main_v1 * side_v1;
         }
+        // apply clipper
+        if (clipper_.getIsON()) {
+            clipper_.process(main_buffer0, num_samples);
+            clipper_.process(main_buffer1, num_samples);
+        }
     }
 
     void CompressController::processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1,
@@ -422,5 +436,13 @@ namespace zlp {
 
     void CompressController::handleAsyncUpdate() {
         processor_ref_.setLatencySamples(pdc_.load(std::memory_order::relaxed));
+    }
+
+    void CompressController::updateClipper() {
+        const auto threshold = computer_[0].getThreshold();
+        const auto x1 = zldsp::chore::decibelsToGain(threshold);
+        const auto y1 = zldsp::chore::decibelsToGain(threshold + computer_[0].eval(threshold));
+        const auto y2 = zldsp::chore::decibelsToGain(computer_[0].eval(0.f));
+        clipper_.update(x1, y1, y2);
     }
 } // zlDSP

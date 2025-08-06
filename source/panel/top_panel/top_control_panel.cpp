@@ -26,7 +26,10 @@ namespace zlpanel {
           lookahead_attachment_(lookahead_slider_.getSlider(), p.parameters_, zlp::PLookAhead::kID, updater_),
           oversample_label_("Oversample", "Oversample"),
           oversample_box_(zlp::POversample::kChoices, base_),
-          oversample_attachment_(oversample_box_.getBox(), p.parameters_, zlp::POversample::kID, updater_) {
+          oversample_attachment_(oversample_box_.getBox(), p.parameters_, zlp::POversample::kID, updater_),
+          clipper_label_("Clipper", "Clipper"),
+          clipper_slider_("", base_),
+          clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperWet::kID, updater_) {
         on_button_.setDrawable(on_drawable_.get());
         on_button_.getLAF().setScale(1.15f);
         delta_button_.setDrawable(delta_drawable_.get());
@@ -60,8 +63,20 @@ namespace zlpanel {
         oversample_label_.setBufferedToImage(true);
         addAndMakeVisible(oversample_label_);
 
-        setOversampleAlpha(.5f);
+        clipper_slider_.setFontScale(1.25f);
+        clipper_slider_.setJustification(juce::Justification::centred);
+        clipper_slider_.setBufferedToImage(true);
+        clipper_slider_.getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        clipper_slider_.getSlider().setSliderSnapsToMousePosition(false);
+        addAndMakeVisible(clipper_slider_);
+        clipper_label_.setLookAndFeel(&label_laf_);
+        clipper_label_.setJustificationType(juce::Justification::centredRight);
+        clipper_label_.setBufferedToImage(true);
+        addAndMakeVisible(clipper_label_);
+
         setLookaheadAlpha(.5f);
+        setOversampleAlpha(.5f);
+        setClipperAlpha(.5f);
     }
 
     int TopControlPanel::getIdealWidth() const {
@@ -69,7 +84,7 @@ namespace zlpanel {
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
         const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale) / 2;
-        return 2 * button_height + 4 * padding + 2 * slider_width + 2 * small_slider_width;
+        return 2 * button_height + 5 * padding + 3 * slider_width + 3 * small_slider_width;
     }
 
     void TopControlPanel::resized() {
@@ -91,6 +106,10 @@ namespace zlpanel {
         oversample_box_.setBounds(bound.removeFromRight(small_slider_width));
         bound.removeFromRight(padding);
         oversample_label_.setBounds(bound.removeFromRight(slider_width));
+        bound.removeFromRight(padding);
+        clipper_slider_.setBounds(bound.removeFromRight(small_slider_width));
+        bound.removeFromRight(padding);
+        clipper_label_.setBounds(bound.removeFromRight(slider_width));
     }
 
     void TopControlPanel::repaintCallBackSlow() {
@@ -105,10 +124,22 @@ namespace zlpanel {
             }
             old_lookahead_value_ = new_lookahead_value;
         }
+
         const auto new_oversample_id = oversample_box_.getBox().getSelectedItemIndex();
         if (new_oversample_id != old_oversample_id_) {
             setOversampleAlpha(new_oversample_id > 0 ? 1.f : .5f);
             old_oversample_id_ = new_oversample_id;
+        }
+
+        const auto new_clipper_value = clipper_slider_.getSlider().getValue();
+        if (std::abs(new_clipper_value - old_clipper_value_) > 1e-4) {
+            if (new_clipper_value < 1e-4 && old_clipper_value_ > 1e-4) {
+                setClipperAlpha(.5f);
+            }
+            if (new_clipper_value > 1e-4 && old_clipper_value_ < 1e-4) {
+                setClipperAlpha(1.f);
+            }
+            old_clipper_value_ = new_clipper_value;
         }
     }
 
@@ -120,5 +151,10 @@ namespace zlpanel {
     void TopControlPanel::setLookaheadAlpha(const float alpha) {
         lookahead_slider_.setAlpha(alpha);
         lookahead_label_.setAlpha(alpha);
+    }
+
+    void TopControlPanel::setClipperAlpha(const float alpha) {
+        clipper_slider_.setAlpha(alpha);
+        clipper_label_.setAlpha(alpha);
     }
 }

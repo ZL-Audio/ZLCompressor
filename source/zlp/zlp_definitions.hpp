@@ -412,6 +412,14 @@ namespace zlp {
         int static constexpr kDefaultI = 0;
     };
 
+    class PClipperWet : public FloatParameters<PClipperWet> {
+    public:
+        auto static constexpr kID = "clipper_wet";
+        auto static constexpr kName = "Clipper Wet";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 100.f, .1f);
+        auto static constexpr kDefaultV = 0.f;
+    };
+
     class POversample : public ChoiceParameters<POversample> {
     public:
         auto static constexpr kID = "oversample";
@@ -541,6 +549,7 @@ namespace zlp {
                    PSideStereoMode::get(), PSideStereoSwap::get(),
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
                    PCompON::get(), PCompDelta::get(),
+                   PClipperWet::get(),
                    POversample::get(), PLookAhead::get(),
                    PRMSON::get(), PRMSLength::get(), PRMSSpeed::get(), PRMSMix::get());
         for (size_t i = 0; i < kBandNum; ++i) {

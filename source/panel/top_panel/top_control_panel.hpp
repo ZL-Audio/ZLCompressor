@@ -49,8 +49,15 @@ namespace zlpanel {
         zlgui::combobox::CompactCombobox oversample_box_;
         zlgui::attachment::ComboBoxAttachment<true> oversample_attachment_;
 
+        double old_clipper_value_{0.0};
+        juce::Label clipper_label_;
+        zlgui::slider::CompactLinearSlider<false, false, false> clipper_slider_;
+        zlgui::attachment::SliderAttachment<true> clipper_attachment_;
+
         void setLookaheadAlpha(const float alpha);
 
         void setOversampleAlpha(const float alpha);
+
+        void setClipperAlpha(const float alpha);
     };
 }

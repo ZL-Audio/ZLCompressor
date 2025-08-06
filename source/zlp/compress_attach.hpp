@@ -37,6 +37,7 @@ namespace zlp {
             PSideStereoMode::kID, PSideStereoSwap::kID,
             PSideStereoLink::kID,
             PSideStereoWet1::kID, PSideStereoWet2::kID,
+            PClipperWet::kID,
             POversample::kID, PLookAhead::kID,
             PCompON::kID, PCompDelta::kID,
             PRMSON::kID, PRMSLength::kID, PRMSSpeed::kID, PRMSMix::kID
@@ -50,6 +51,7 @@ namespace zlp {
             static_cast<float>(PSideStereoMode::kDefaultI), static_cast<float>(PSideStereoSwap::kDefaultI),
             PSideStereoLink::kDefaultV,
             PSideStereoWet1::kDefaultV, PSideStereoWet2::kDefaultV,
+            PClipperWet::kDefaultV,
             static_cast<float>(POversample::kDefaultI), PLookAhead::kDefaultV,
             static_cast<float>(PCompON::kDefaultI), static_cast<float>(PCompDelta::kDefaultI),
             static_cast<float>(PRMSON::kDefaultV), PRMSLength::kDefaultV, PRMSSpeed::kDefaultV, PRMSMix::kDefaultV

@@ -31,7 +31,7 @@ namespace zlp {
         void prepare(const juce::dsp::ProcessSpec &spec);
 
         void process(std::array<float *, 2> main_pointers, std::array<float *, 2> side_pointers,
-            size_t num_samples, bool bypass);
+                     size_t num_samples, bool bypass);
 
         auto &getMagAnalyzer() { return mag_analyzer_; }
 
@@ -42,6 +42,8 @@ namespace zlp {
         auto &getTracker() { return rms_tracker_; }
 
         auto &getFollower() { return follower_; }
+
+        auto &getClipper() { return clipper_; }
 
         void setCompStyle(const zldsp::compressor::Style style) {
             comp_style_.store(style, std::memory_order::relaxed);
@@ -273,6 +275,9 @@ namespace zlp {
         std::atomic<bool> to_update_range_{true};
         std::atomic<float> range_{80.f};
         float c_range_{80.f};
+        // clipper
+        bool clipper_on_{false};
+        zldsp::compressor::TanhClipper<float> clipper_;
         // output gain
         std::atomic<bool> to_update_output_gain_{true};
         std::atomic<float> output_gain_db_{0.f};
@@ -293,6 +298,8 @@ namespace zlp {
         void processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void processSideBufferRMS(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+
+        void updateClipper();
 
         void handleAsyncUpdate() override;
     };

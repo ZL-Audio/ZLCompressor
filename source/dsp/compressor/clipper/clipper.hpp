@@ -9,8 +9,4 @@
 
 #pragma once
 
-#include "computer/computer.hpp"
-#include "tracker/tracker.hpp"
-#include "follower/follower.hpp"
-#include "styles/styles.hpp"
-#include "clipper/clipper.hpp"
+#include "tanh_clipper.hpp"
