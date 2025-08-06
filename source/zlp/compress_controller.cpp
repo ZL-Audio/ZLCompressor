@@ -301,18 +301,12 @@ namespace zlp {
         auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        // prepare clipper
-        clipper_.prepareBuffer();
-        if (clipper_on_ != clipper_.getIsON()) {
-            clipper_on_ = clipper_.getIsON();
-            if (clipper_on_) {
-                updateClipper();
-            }
-        }
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) {
             computer_[1].copyFrom(computer_[0]);
-            updateClipper();
+            if (clipper_on_) {
+                updateClipper();
+            }
         }
         if (follower_[0].prepareBuffer()) {
             follower_[1].copyFrom(follower_[0]);
@@ -398,7 +392,14 @@ namespace zlp {
             main_v1 = main_v1 * side_v1;
         }
         // apply clipper
-        if (clipper_.getIsON()) {
+        clipper_.prepareBuffer();
+        if (clipper_on_ != clipper_.getIsON()) {
+            clipper_on_ = clipper_.getIsON();
+            if (clipper_on_) {
+                updateClipper();
+            }
+        }
+        if (clipper_on_) {
             clipper_.process(main_buffer0, num_samples);
             clipper_.process(main_buffer1, num_samples);
         }

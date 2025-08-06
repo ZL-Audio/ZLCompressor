@@ -25,28 +25,28 @@ namespace zldsp::compressor {
         void update(FloatType x1, FloatType y1, FloatType y2) {
             const auto k1 = getK(static_cast<double>(x1), static_cast<double>(y1));
             const auto k2 = getK(1.0, static_cast<double>(y2));
-
-            k_ = std::min(k1, k2);
-            k_reciprocal_ = 1.0 / k_;
-            c_wet_mul_ = k_reciprocal_ * c_wet_;
+            k_ = std::clamp(std::min(k1, k2), kKLeft * 1.01, kKRight * 0.99);
+            updateActualK();
         }
 
         void prepareBuffer() {
-            c_wet_ = wet_.load(std::memory_order::relaxed) / 100.0;
-            cc_wet_ = 1.0 - c_wet_;
-            is_on_ = c_wet_ > 1e-5;
-            c_wet_mul_ = k_reciprocal_ * c_wet_;
+            if (to_update_wet_.exchange(false, std::memory_order::acquire)) {
+                c_wet_ = wet_.load(std::memory_order::relaxed) / 100.0;
+                is_on_ = c_wet_ > 1e-5;
+                updateActualK();
+            }
         }
 
         void process(FloatType *buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 const auto v = static_cast<double>(buffer[i]);
-                buffer[i] = static_cast<FloatType>(std::tanh(v * k_) * c_wet_mul_ + v * cc_wet_);
+                buffer[i] = static_cast<FloatType>(std::tanh(v * k1_) * k2_);
             }
         }
 
         void setWet(const FloatType wet) {
-            wet_.store(static_cast<double>(wet), std::memory_order::relaxed);
+            wet_.store(std::clamp(static_cast<double>(wet), 0.0, 100.0), std::memory_order::relaxed);
+            to_update_wet_.store(true, std::memory_order::release);
         }
 
         bool getIsON() const {
@@ -54,22 +54,35 @@ namespace zldsp::compressor {
         }
 
     private:
-        static constexpr double kLowThres = 0.989;
-        static constexpr double kHighThres = 0.991;
+        static constexpr double kLowThres = 0.989, kHighThres = 0.991;
+        static constexpr double kKLeft = 0.1, kKRight = 100.0;
 
         std::atomic<double> wet_{0.0};
-        double c_wet_{0.0}, cc_wet_{1.0};
-        double c_wet_mul_{0.0};
+        std::atomic<bool> to_update_wet_{true};
+        double c_wet_{0.0};
         bool is_on_{false};
-        double k_{1.0}, k_reciprocal_{1.0};
+        double k_{1.0}, k1_{1.0}, k2_{1.0};
+
+        void updateActualK() {
+            const auto medium = std::min(k_, 1.0);
+            const auto right = std::max(k_, 1.0);
+            if (c_wet_ < 0.5) {
+                const auto wet = c_wet_ * 2.0;
+                k1_ = wet * (medium - kKLeft) + kKLeft;
+            } else {
+                const auto wet = (c_wet_ - 0.5) * 2.0;
+                k1_ = wet * (right - medium) + medium;
+            }
+            k2_ = 1.0 / k1_;
+        }
 
         static double evalP(const double x, const double y, const double k) {
             return std::tanh(k * x) / k / y;
         }
 
         static double getK(const double x, const double y) {
-            auto k_left = 0.01;
-            auto k_right = 100.0;
+            auto k_left = kKLeft;
+            auto k_right = kKRight;
             if (evalP(x, y, k_right) >= kLowThres) {
                 return k_right;
             } else if (evalP(x, y, k_left) <= kHighThres) {
