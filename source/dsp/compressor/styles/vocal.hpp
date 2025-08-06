@@ -46,7 +46,7 @@ namespace zldsp::compressor {
                     -chore::decibelsToGain(base::computer_.eval(input_db)));
                 // apply the gain on the current sample and save it as the feedback sample for the next
                 x0_ = buffer[i] * smooth_reduction_gain;
-                buffer[i] = smooth_reduction_gain;
+                buffer[i] = std::max(smooth_reduction_gain, FloatType(1e-12));
             }
             auto vector = kfr::make_univector(buffer, num_samples);
             vector = FloatType(20) * kfr::log10(vector);
