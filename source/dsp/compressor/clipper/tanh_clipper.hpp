@@ -23,33 +23,30 @@ namespace zldsp::compressor {
         TanhClipper() = default;
 
         void update(FloatType x1, FloatType y1, FloatType y2) {
-            x1 = std::clamp(x1, static_cast<FloatType>(1e-5), static_cast<FloatType>(0.99999));
-            y1 = std::clamp(y1, static_cast<FloatType>(1e-5), static_cast<FloatType>(0.99999));
-            y2 = std::clamp(y2, static_cast<FloatType>(1e-5), static_cast<FloatType>(1));
-            const auto k1 = getK(x1, y1);
-            const auto k2 = getK(static_cast<FloatType>(1), y2);
+            const auto k1 = getK(static_cast<double>(x1), static_cast<double>(y1));
+            const auto k2 = getK(1.0, static_cast<double>(y2));
 
             k_ = std::min(k1, k2);
-            k_reciprocal_ = static_cast<FloatType>(1) / k_;
+            k_reciprocal_ = 1.0 / k_;
             c_wet_mul_ = k_reciprocal_ * c_wet_;
         }
 
         void prepareBuffer() {
-            c_wet_ = wet_.load(std::memory_order::relaxed) / 100.f;
-            cc_wet_ = static_cast<FloatType>(1) - c_wet_;
-            is_on_ = c_wet_ > static_cast<FloatType>(1e-5);
+            c_wet_ = wet_.load(std::memory_order::relaxed) / 100.0;
+            cc_wet_ = 1.0 - c_wet_;
+            is_on_ = c_wet_ > 1e-5;
             c_wet_mul_ = k_reciprocal_ * c_wet_;
         }
 
         void process(FloatType *buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
-                const auto v = buffer[i];
-                buffer[i] = std::tanh(v * k_) * c_wet_mul_ + v * cc_wet_;
+                const auto v = static_cast<double>(buffer[i]);
+                buffer[i] = static_cast<FloatType>(std::tanh(v * k_) * c_wet_mul_ + v * cc_wet_);
             }
         }
 
         void setWet(const FloatType wet) {
-            wet_.store(wet, std::memory_order::relaxed);
+            wet_.store(static_cast<double>(wet), std::memory_order::relaxed);
         }
 
         bool getIsON() const {
@@ -57,22 +54,22 @@ namespace zldsp::compressor {
         }
 
     private:
-        static constexpr FloatType kLowThres = static_cast<FloatType>(0.9875);
-        static constexpr FloatType kHighThres = static_cast<FloatType>(0.9925);
+        static constexpr double kLowThres = 0.989;
+        static constexpr double kHighThres = 0.991;
 
-        std::atomic<FloatType> wet_{static_cast<FloatType>(0)};
-        FloatType c_wet_, cc_wet_{static_cast<FloatType>(1)};
-        FloatType c_wet_mul_{};
+        std::atomic<double> wet_{0.0};
+        double c_wet_{0.0}, cc_wet_{1.0};
+        double c_wet_mul_{0.0};
         bool is_on_{false};
-        FloatType k_{static_cast<FloatType>(1)}, k_reciprocal_{static_cast<FloatType>(1)};
+        double k_{1.0}, k_reciprocal_{1.0};
 
-        static FloatType evalP(const FloatType x, const FloatType y, const FloatType k) {
+        static double evalP(const double x, const double y, const double k) {
             return std::tanh(k * x) / k / y;
         }
 
-        static FloatType getK(const FloatType x, const FloatType y) {
-            auto k_left = static_cast<FloatType>(1e-2);
-            auto k_right = static_cast<FloatType>(100);
+        static double getK(const double x, const double y) {
+            auto k_left = 0.01;
+            auto k_right = 100.0;
             if (evalP(x, y, k_right) >= kLowThres) {
                 return k_right;
             } else if (evalP(x, y, k_left) <= kHighThres) {
@@ -81,7 +78,7 @@ namespace zldsp::compressor {
             size_t i = 0;
             while (i < 100) {
                 i += 1;
-                const FloatType k = std::sqrt(k_left * k_right);
+                const auto k = std::sqrt(k_left * k_right);
                 const auto p = evalP(x, y, k);
                 if (p > kHighThres) {
                     k_left = k;
