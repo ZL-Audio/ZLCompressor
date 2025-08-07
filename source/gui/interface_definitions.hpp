@@ -314,6 +314,14 @@ namespace zlgui {
             eq_curve_thickness_.store(x, std::memory_order::relaxed);
         }
 
+        size_t getTooltipLangID() {
+            return tooltip_lang_id_.load(std::memory_order::relaxed);
+        }
+
+        void setTooltipLandID(const size_t x) {
+            tooltip_lang_id_.store(x, std::memory_order::relaxed);
+        }
+
         void loadFromAPVTS();
 
         void saveToAPVTS() const;
@@ -356,7 +364,6 @@ namespace zlgui {
             panel_value_tree_.setProperty(kPanelSettingIdentifiers[idx], v, nullptr);
         }
 
-
     private:
         juce::AudioProcessorValueTreeState &state;
         juce::ValueTree panel_value_tree_{"panel_setting"};
@@ -369,6 +376,8 @@ namespace zlgui {
         float rotary_drag_sensitivity_{1.f};
         std::atomic<float> fft_extra_tilt_{0.f}, fft_extra_speed_{1.f};
         std::atomic<float> mag_curve_thickness_{1.f}, eq_curve_thickness_{1.f};
+        std::atomic<size_t> tooltip_lang_id_{1};
+
         std::array<std::atomic<bool>, zlstate::kBandNUM> is_band_selected_{};
         std::atomic<bool> is_mouse_wheel_shift_reverse_{false};
         std::atomic<bool> is_slider_double_click_open_editor_{false};

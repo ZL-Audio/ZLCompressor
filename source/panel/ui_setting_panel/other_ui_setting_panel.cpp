@@ -17,7 +17,8 @@ namespace zlpanel {
           fft_tilt_slider_("Tilt", base),
           fft_speed_slider_("Speed", base),
           mag_curve_slider_("Mag", base),
-          eq_curve_slider_("EQ", base) {
+          eq_curve_slider_("EQ", base),
+          tooltip_box_(zlstate::PTooltipLang::kChoices, base) {
         juce::ignoreUnused(p_ref_);
         name_laf_.setFontScale(zlgui::kFontHuge);
 
@@ -48,22 +49,30 @@ namespace zlpanel {
         eq_curve_slider_.getSlider().setNormalisableRange(juce::NormalisableRange<double>(0., 4., .01));
         eq_curve_slider_.getSlider().setDoubleClickReturnValue(true, 1.0);
         addAndMakeVisible(eq_curve_slider_);
+
+        tooltip_label_.setText("Tooltip", juce::dontSendNotification);
+        tooltip_label_.setJustificationType(juce::Justification::centredRight);
+        tooltip_label_.setLookAndFeel(&name_laf_);
+        addAndMakeVisible(tooltip_label_);
+        addAndMakeVisible(tooltip_box_);
     }
 
     void OtherUISettingPanel::loadSetting() {
-        refresh_rate_box_.getBox().setSelectedId(static_cast<int>(base_.getRefreshRateID()) + 1);
+        refresh_rate_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getRefreshRateID()));
         fft_tilt_slider_.getSlider().setValue(static_cast<double>(base_.getFFTExtraTilt()));
         fft_speed_slider_.getSlider().setValue(static_cast<double>(base_.getFFTExtraSpeed()));
         mag_curve_slider_.getSlider().setValue(base_.getMagCurveThickness());
+        tooltip_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getTooltipLangID()));
         eq_curve_slider_.getSlider().setValue(base_.getEQCurveThickness());
     }
 
     void OtherUISettingPanel::saveSetting() {
-        base_.setRefreshRateID(static_cast<size_t>(refresh_rate_box_.getBox().getSelectedId() - 1));
+        base_.setRefreshRateID(static_cast<size_t>(refresh_rate_box_.getBox().getSelectedItemIndex()));
         base_.setFFTExtraTilt(static_cast<float>(fft_tilt_slider_.getSlider().getValue()));
         base_.setFFTExtraSpeed(static_cast<float>(fft_speed_slider_.getSlider().getValue()));
         base_.setMagCurveThickness(static_cast<float>(mag_curve_slider_.getSlider().getValue()));
         base_.setEQCurveThickness(static_cast<float>(eq_curve_slider_.getSlider().getValue()));
+        base_.setTooltipLandID(static_cast<size_t>(tooltip_box_.getBox().getSelectedItemIndex()));
         base_.saveToAPVTS();
     }
 
@@ -74,7 +83,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
-        return padding * 4 + slider_height * 3;
+        return padding * 5 + slider_height * 4;
     }
 
     void OtherUISettingPanel::resized() {
@@ -104,6 +113,12 @@ namespace zlpanel {
             mag_curve_slider_.setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
             eq_curve_slider_.setBounds(local_bound.removeFromLeft(slider_width));
+        } {
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            tooltip_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
+            local_bound.removeFromLeft(padding);
+            tooltip_box_.setBounds(local_bound.removeFromLeft(slider_width));
         }
     }
 } // zlpanel

@@ -47,17 +47,17 @@ namespace zlgui {
         juce::Path mask(path);
         mask.setUsingNonZeroWinding(false);
         mask.addRectangle(box_bounds.withSizeKeepingCentre(box_bounds.getWidth() + corner_size * 3,
-                                                          box_bounds.getHeight() + corner_size * 3));
+                                                           box_bounds.getHeight() + corner_size * 3));
         g.saveState();
         g.reduceClipRegion(mask);
         if (args.draw_bright) {
             juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
-                                          {-offset, -offset});
+                                           {-offset, -offset});
             bright_shadow.drawForPath(g, path);
         }
         if (args.draw_dark) {
             juce::DropShadow dark_shadow(args.dark_shadow_color, radius,
-                                        {offset, offset});
+                                         {offset, offset});
             dark_shadow.drawForPath(g, path);
         }
         g.restoreState();
@@ -95,17 +95,17 @@ namespace zlgui {
         auto radius = juce::jmax(juce::roundToInt(corner_size * args.blur_radius * 1.5f), 1);
         if (!args.flip) {
             juce::DropShadow dark_shadow(args.dark_shadow_color.withMultipliedAlpha(0.75f), radius,
-                                        {-offset, -offset});
+                                         {-offset, -offset});
             dark_shadow.drawForPath(g, mask);
             juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
-                                          {offset, offset});
+                                           {offset, offset});
             bright_shadow.drawForPath(g, mask);
         } else {
             juce::DropShadow bright_shadow(args.dark_shadow_color, radius,
-                                          {offset, offset});
+                                           {offset, offset});
             bright_shadow.drawForPath(g, mask);
             juce::DropShadow dark_shadow(args.bright_shadow_color.withMultipliedAlpha(0.75f), radius,
-                                        {-offset, -offset});
+                                         {-offset, -offset});
             dark_shadow.drawForPath(g, mask);
         }
         box_bounds = box_bounds.withSizeKeepingCentre(
@@ -119,7 +119,7 @@ namespace zlgui {
                                  args.curve_bottom_left, args.curve_bottom_right);
 
         juce::DropShadow back_shadow(args.main_colour, radius,
-                                    {0, 0});
+                                     {0, 0});
         back_shadow.drawForPath(g, path);
         g.restoreState();
         return box_bounds;
@@ -167,23 +167,23 @@ namespace zlgui {
         if (!args.flip) {
             if (args.draw_dark) {
                 juce::DropShadow dark_shadow(args.dark_shadow_color, radius,
-                                            {offset, offset});
+                                             {offset, offset});
                 dark_shadow.drawForPath(g, path);
             }
             if (args.draw_bright) {
                 juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
-                                              {-offset, -offset});
+                                               {-offset, -offset});
                 bright_shadow.drawForPath(g, path);
             }
         } else {
             if (args.draw_dark) {
                 juce::DropShadow dark_shadow(args.dark_shadow_color, radius,
-                                            {-offset, -offset});
+                                             {-offset, -offset});
                 dark_shadow.drawForPath(g, path);
             }
             if (args.draw_bright) {
                 juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
-                                              {offset, offset});
+                                               {offset, offset});
                 bright_shadow.drawForPath(g, path);
             }
         }
@@ -225,17 +225,17 @@ namespace zlgui {
         auto offset = static_cast<int>(corner_size * args.blur_radius) * 2;
         if (!args.flip) {
             juce::DropShadow dark_shadow(args.dark_shadow_color.withMultipliedAlpha(0.75f), radius,
-                                        {-offset, -offset});
+                                         {-offset, -offset});
             dark_shadow.drawForPath(g, mask);
             juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
-                                          {offset, offset});
+                                           {offset, offset});
             bright_shadow.drawForPath(g, mask);
         } else {
             juce::DropShadow bright_shadow(args.dark_shadow_color, radius,
-                                          {offset, offset});
+                                           {offset, offset});
             bright_shadow.drawForPath(g, mask);
             juce::DropShadow dark_shadow(args.bright_shadow_color.withMultipliedAlpha(0.75f), radius,
-                                        {-offset, -offset});
+                                         {-offset, -offset});
             dark_shadow.drawForPath(g, mask);
         }
         box_bounds = box_bounds.withSizeKeepingCentre(
@@ -266,11 +266,14 @@ namespace zlgui {
         rotary_style_id_ = static_cast<size_t>(state.getRawParameterValue(zlstate::PRotaryStyle::kID)->load());
         rotary_drag_sensitivity_ = state.getRawParameterValue(zlstate::PRotaryDragSensitivity::kID)->load();
         is_slider_double_click_open_editor_.store(loadPara(zlstate::PSliderDoubleClickFunc::kID) > .5f);
-        refresh_rate_id_.store(static_cast<size_t>(state.getRawParameterValue(zlstate::PTargetRefreshSpeed::kID)->load()));
+        refresh_rate_id_.store(
+            static_cast<size_t>(std::round(state.getRawParameterValue(zlstate::PTargetRefreshSpeed::kID)->load())));
         fft_extra_tilt_.store(loadPara(zlstate::PFFTExtraTilt::kID));
         fft_extra_speed_.store(loadPara(zlstate::PFFTExtraSpeed::kID));
         mag_curve_thickness_.store(loadPara(zlstate::PMagCurveThickness::kID));
         eq_curve_thickness_.store(loadPara(zlstate::PEQCurveThickness::kID));
+        tooltip_lang_id_.store(
+            static_cast<size_t>(std::round(state.getRawParameterValue(zlstate::PTooltipLang::kID)->load())));
         colour_map1_idx_ = static_cast<size_t>(loadPara(zlstate::PColourMap1Idx::kID));
         colour_map2_idx_ = static_cast<size_t>(loadPara(zlstate::PColourMap2Idx::kID));
     }
@@ -308,13 +311,16 @@ namespace zlgui {
         savePara(zlstate::PRotaryDragSensitivity::kID,
                  zlstate::PRotaryDragSensitivity::convertTo01(rotary_drag_sensitivity_));
         savePara(zlstate::PSliderDoubleClickFunc::kID, static_cast<float>(is_slider_double_click_open_editor_.load()));
-        savePara(zlstate::PTargetRefreshSpeed::kID, zlstate::PTargetRefreshSpeed::convertTo01(static_cast<int>(refresh_rate_id_.load())));
+        savePara(zlstate::PTargetRefreshSpeed::kID,
+                 zlstate::PTargetRefreshSpeed::convertTo01(static_cast<int>(refresh_rate_id_.load())));
         savePara(zlstate::PFFTExtraTilt::kID, zlstate::PFFTExtraTilt::convertTo01(fft_extra_tilt_.load()));
         savePara(zlstate::PFFTExtraSpeed::kID, zlstate::PFFTExtraSpeed::convertTo01(fft_extra_speed_.load()));
         savePara(zlstate::PMagCurveThickness::kID,
                  zlstate::PMagCurveThickness::convertTo01(mag_curve_thickness_.load()));
         savePara(zlstate::PEQCurveThickness::kID,
                  zlstate::PEQCurveThickness::convertTo01(eq_curve_thickness_.load()));
+        savePara(zlstate::PTooltipLang::kID,
+                 zlstate::PTooltipLang::convertTo01(static_cast<int>(tooltip_lang_id_.load())));
         savePara(zlstate::PColourMap1Idx::kID, zlstate::PColourMapIdx::convertTo01(static_cast<int>(colour_map1_idx_)));
         savePara(zlstate::PColourMap2Idx::kID, zlstate::PColourMapIdx::convertTo01(static_cast<int>(colour_map2_idx_)));
     }
