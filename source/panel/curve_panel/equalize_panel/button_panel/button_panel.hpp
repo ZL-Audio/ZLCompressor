@@ -49,6 +49,10 @@ namespace zlpanel {
 
         void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
 
+        void turnOnSolo(size_t band);
+
+        void turnOffSolo();
+
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
@@ -79,9 +83,5 @@ namespace zlpanel {
             zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID,
             zlp::PFilterStatus::kID
         };
-
-        void turnOnSolo(size_t band);
-
-        void turnOffSolo();
     };
 } // zlpanel

@@ -144,6 +144,9 @@ namespace zlpanel {
 
     void EqualizePanel::visibilityChanged() {
         p_ref_.getEqualizeController().setFFTAnalyzerON(isVisible());
+        if (!isVisible()) {
+            button_panel_.turnOffSolo();
+        }
     }
 
     void EqualizePanel::parameterChanged(const juce::String &parameter_ID, float new_value) {
