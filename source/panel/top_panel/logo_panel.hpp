@@ -12,25 +12,26 @@
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
+#include "../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
+    class LogoPanel : public juce::Component,
+                      public juce::SettableTooltipClient {
+    public:
+        explicit LogoPanel(PluginProcessor &p, zlgui::UIBase &base,
+                           multilingual::TooltipHelper &tooltip_helper);
 
-class LogoPanel : public juce::Component {
-public:
-    explicit LogoPanel(PluginProcessor &p, zlgui::UIBase &base);
+    private:
+        zlgui::UIBase &base_;
+        std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
+        juce::Justification justification_{juce::Justification::topLeft};
 
-private:
-    zlgui::UIBase &base_;
-    std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
-    juce::Justification justification_{juce::Justification::topLeft};
+        void paint(juce::Graphics &g) override;
 
-    void paint(juce::Graphics &g) override;
+        void mouseEnter(const juce::MouseEvent &event) override;
 
-    void mouseEnter(const juce::MouseEvent &event) override;
+        void mouseExit(const juce::MouseEvent &event) override;
 
-    void mouseExit(const juce::MouseEvent &event) override;
-
-    void mouseDoubleClick(const juce::MouseEvent &event) override;
-};
-
+        void mouseDoubleClick(const juce::MouseEvent &event) override;
+    };
 }

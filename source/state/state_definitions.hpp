@@ -355,6 +355,24 @@ namespace zlstate {
         auto static constexpr kDefaultV = 1.f;
     };
 
+    class PTooltipLang : public ChoiceParameters<PTooltipLang> {
+    public:
+        auto static constexpr kID = "tool_tip_lang";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "Off",
+            "System",
+            "English",
+            juce::String(juce::CharPointer_UTF8("简体中文")),
+            juce::String(juce::CharPointer_UTF8("繁體中文")),
+            juce::String(juce::CharPointer_UTF8("Italiano")),
+            juce::String(juce::CharPointer_UTF8("日本語")),
+            juce::String(juce::CharPointer_UTF8("Deutsch")),
+            juce::String(juce::CharPointer_UTF8("Español"))
+        };
+        int static constexpr kDefaultI = 1;
+    };
+
     class PColourMapIdx : public ChoiceParameters<PColourMapIdx> {
     public:
         auto static constexpr kID = "colour_map_idx";
@@ -448,7 +466,8 @@ namespace zlstate {
                    PSliderDoubleClickFunc::get(),
                    PTargetRefreshSpeed::get(),
                    PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
-                   PMagCurveThickness::get(), PEQCurveThickness::get());
+                   PMagCurveThickness::get(), PEQCurveThickness::get(),
+                   PTooltipLang::get());
 
         for (size_t i = 0; i < kColourNames.size(); ++i) {
             const auto &name = kColourNames[i];

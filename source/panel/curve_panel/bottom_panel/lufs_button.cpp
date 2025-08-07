@@ -11,10 +11,12 @@
 #include "lufs_button.hpp"
 
 namespace zlpanel {
-    LUFSButton::LUFSButton(PluginProcessor &p, zlgui::UIBase &base)
+    LUFSButton::LUFSButton(PluginProcessor &p, zlgui::UIBase &base,
+                           multilingual::TooltipHelper &tooltip_helper)
         : p_ref_(p), base_(base),
           learn_drawable_(juce::Drawable::createFromImageData(BinaryData::learn_svg, BinaryData::learn_svgSize)),
-          learn_button_(base, learn_drawable_.get(), learn_drawable_.get()) {
+          learn_button_(base, learn_drawable_.get(), learn_drawable_.get(),
+                        tooltip_helper.getToolTipText(multilingual::kLoudnessMatch)) {
         learn_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
         learn_button_.addMouseListener(this, true);
 

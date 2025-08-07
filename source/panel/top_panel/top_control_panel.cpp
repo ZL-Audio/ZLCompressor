@@ -11,24 +11,30 @@
 #include "top_control_panel.hpp"
 
 namespace zlpanel {
-    TopControlPanel::TopControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+    TopControlPanel::TopControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                     multilingual::TooltipHelper &tooltip_helper)
         : p_ref_(p), base_(base), label_laf_(base_),
           on_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
                                                            BinaryData::mode_off_on_svgSize)),
-          on_button_("", base_, ""),
+          on_button_("", base_,
+                     tooltip_helper.getToolTipText(multilingual::TooltipLabel::kBypass)),
           on_attachment_(on_button_.getButton(), p.parameters_, zlp::PCompON::kID, updater_),
           delta_drawable_(juce::Drawable::createFromImageData(BinaryData::change_svg,
                                                               BinaryData::change_svgSize)),
-          delta_button_("", base_, ""),
+          delta_button_("", base_,
+                        tooltip_helper.getToolTipText(multilingual::TooltipLabel::kDelta)),
           delta_attachment_(delta_button_.getButton(), p.parameters_, zlp::PCompDelta::kID, updater_),
           lookahead_label_("Lookahead", "Lookahead"),
-          lookahead_slider_("", base_),
+          lookahead_slider_("", base_,
+                            tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLookahead)),
           lookahead_attachment_(lookahead_slider_.getSlider(), p.parameters_, zlp::PLookAhead::kID, updater_),
           oversample_label_("Oversample", "Oversample"),
-          oversample_box_(zlp::POversample::kChoices, base_),
+          oversample_box_(zlp::POversample::kChoices, base_,
+                          tooltip_helper.getToolTipText(multilingual::TooltipLabel::kOversample)),
           oversample_attachment_(oversample_box_.getBox(), p.parameters_, zlp::POversample::kID, updater_),
           clipper_label_("Clipper", "Clipper"),
-          clipper_slider_("", base_),
+          clipper_slider_("", base_,
+                          tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper)),
           clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperWet::kID, updater_) {
         on_button_.setDrawable(on_drawable_.get());
         on_button_.getLAF().setScale(1.15f);
@@ -53,6 +59,7 @@ namespace zlpanel {
         lookahead_label_.setLookAndFeel(&label_laf_);
         lookahead_label_.setJustificationType(juce::Justification::centredRight);
         lookahead_label_.setBufferedToImage(true);
+        lookahead_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLookahead));
         addAndMakeVisible(lookahead_label_);
 
         oversample_box_.getLAF().setFontScale(1.25f);
@@ -61,6 +68,7 @@ namespace zlpanel {
         oversample_label_.setLookAndFeel(&label_laf_);
         oversample_label_.setJustificationType(juce::Justification::centredRight);
         oversample_label_.setBufferedToImage(true);
+        oversample_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kOversample));
         addAndMakeVisible(oversample_label_);
 
         clipper_slider_.setFontScale(1.25f);
@@ -72,6 +80,7 @@ namespace zlpanel {
         clipper_label_.setLookAndFeel(&label_laf_);
         clipper_label_.setJustificationType(juce::Justification::centredRight);
         clipper_label_.setBufferedToImage(true);
+        clipper_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper));
         addAndMakeVisible(clipper_label_);
 
         setLookaheadAlpha(.5f);

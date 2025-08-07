@@ -11,12 +11,14 @@
 #include "rms_button.hpp"
 
 namespace zlpanel {
-    RMSButton::RMSButton(PluginProcessor &p, zlgui::UIBase &base)
+    RMSButton::RMSButton(PluginProcessor &p, zlgui::UIBase &base,
+                         multilingual::TooltipHelper &tooltip_helper)
         : p_ref_(p), base_(base),
           updater_(),
           rms_drawable_(juce::Drawable::createFromImageData(BinaryData::rms_svg,
                                                             BinaryData::rms_svgSize)),
-          rms_button_(base, rms_drawable_.get(), rms_drawable_.get(), ""),
+          rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
+                      tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
           rms_attachment_(rms_button_.getButton(), p.parameters_,
                           zlp::PRMSON::kID, updater_),
           rms_open_drawable_(juce::Drawable::createFromImageData(BinaryData::arrow_menu_open_svg,

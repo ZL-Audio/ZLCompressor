@@ -10,23 +10,32 @@
 #include "mid_control_panel.hpp"
 
 namespace zlpanel {
-    MidControlPanel::MidControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+    MidControlPanel::MidControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                     multilingual::TooltipHelper &tooltip_helper)
         : p_ref_(p), base_(base),
-          knee_slider_("Knee", base_),
+          knee_slider_("Knee", base_,
+                       tooltip_helper.getToolTipText(multilingual::kKnee)),
           knee_attachment_(knee_slider_.getSlider(), p_ref_.parameters_, zlp::PKneeW::kID, updater_),
-          curve_slider_("Curve", base_),
+          curve_slider_("Curve", base_,
+                        tooltip_helper.getToolTipText(multilingual::kCurve)),
           curve_attachment_(curve_slider_.getSlider(), p_ref_.parameters_, zlp::PCurve::kID, updater_),
-          th_slider_("Threshold", base_, "", 1.25f),
+          th_slider_("Threshold", base_,
+                     tooltip_helper.getToolTipText(multilingual::kThreshold), 1.25f),
           th_attachment_(th_slider_.getSlider1(), p_ref_.parameters_, zlp::PThreshold::kID, updater_),
-          ratio_slider_("Ratio", base_, "", 1.25f),
+          ratio_slider_("Ratio", base_,
+                        tooltip_helper.getToolTipText(multilingual::kRatio), 1.25f),
           ratio_attachment_(ratio_slider_.getSlider1(), p_ref_.parameters_, zlp::PRatio::kID, updater_),
-          attack_slider_("Attack", base_, "", 1.25f),
+          attack_slider_("Attack", base_,
+                         tooltip_helper.getToolTipText(multilingual::kAttack), 1.25f),
           attack_attachment_(attack_slider_.getSlider1(), p_ref_.parameters_, zlp::PAttack::kID, updater_),
-          release_slider_("Release", base_, "", 1.25f),
+          release_slider_("Release", base_,
+                          tooltip_helper.getToolTipText(multilingual::kRelease), 1.25f),
           release_attachment_(release_slider_.getSlider1(), p_ref_.parameters_, zlp::PRelease::kID, updater_),
-          pump_slider_("Pump", base_),
+          pump_slider_("Pump", base_,
+                       tooltip_helper.getToolTipText(multilingual::kPump)),
           pump_attachment_(pump_slider_.getSlider(), p_ref_.parameters_, zlp::PPump::kID, updater_),
-          smooth_slider_("Smooth", base_),
+          smooth_slider_("Smooth", base_,
+                         tooltip_helper.getToolTipText(multilingual::kSmooth)),
           smooth_attachment_(smooth_slider_.getSlider(), p_ref_.parameters_, zlp::PSmooth::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
@@ -76,7 +85,7 @@ namespace zlpanel {
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
         bound.removeFromTop(padding);
-        bound.removeFromBottom(padding);{
+        bound.removeFromBottom(padding); {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             release_slider_.setBounds(t_bound);

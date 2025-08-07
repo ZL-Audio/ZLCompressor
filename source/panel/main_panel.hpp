@@ -15,6 +15,7 @@
 #include "../gui/gui.hpp"
 #include "../state/state_definitions.hpp"
 #include "helper/refresh_handler.hpp"
+#include "multilingual/tooltip_helper.hpp"
 #include "curve_panel/curve_panel.hpp"
 #include "control_panel/control_panel.hpp"
 #include "top_panel/top_panel.hpp"
@@ -36,10 +37,15 @@ namespace zlpanel {
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
+        multilingual::TooltipHelper tooltip_helper_;
+
         CurvePanel curve_panel_;
         ControlPanel control_panel_;
         TopPanel top_panel_;
         UISettingPanel ui_setting_panel_;
+
+        zlgui::tooltip::TooltipLookAndFeel tooltipLAF;
+        zlgui::tooltip::TooltipWindow tooltipWindow;
 
         RefreshHandler refresh_handler_;
         double previous_time_stamp_{-1.0};

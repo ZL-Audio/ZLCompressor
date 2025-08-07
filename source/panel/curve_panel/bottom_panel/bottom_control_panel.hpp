@@ -15,7 +15,8 @@
 namespace zlpanel {
     class BottomControlPanel final : public juce::Component {
     public:
-        explicit BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                    multilingual::TooltipHelper &tooltip_helper);
 
         void paint(juce::Graphics &g) override;
 

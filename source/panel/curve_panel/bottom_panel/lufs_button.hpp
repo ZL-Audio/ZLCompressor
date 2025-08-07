@@ -12,30 +12,30 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
+    class LUFSButton final : public juce::Component {
+    public:
+        explicit LUFSButton(PluginProcessor &p, zlgui::UIBase &base,
+                            multilingual::TooltipHelper &tooltip_helper);
 
-class LUFSButton final : public juce::Component {
-public:
-    explicit LUFSButton(PluginProcessor &p, zlgui::UIBase &base);
+        ~LUFSButton() override;
 
-    ~LUFSButton() override;
+        void paint(juce::Graphics &g) override;
 
-    void paint(juce::Graphics &g) override;
+        void resized() override;
 
-    void resized() override;
+    private:
+        PluginProcessor &p_ref_;
+        zlgui::UIBase &base_;
+        bool mouse_over_{false};
 
-private:
-    PluginProcessor &p_ref_;
-    zlgui::UIBase &base_;
-    bool mouse_over_{false};
+        const std::unique_ptr<juce::Drawable> learn_drawable_;
+        zlgui::button::ClickButton learn_button_;
 
-    const std::unique_ptr<juce::Drawable> learn_drawable_;
-    zlgui::button::ClickButton learn_button_;
+        void mouseEnter(const juce::MouseEvent &event) override;
 
-    void mouseEnter(const juce::MouseEvent &event) override;
-
-    void mouseExit(const juce::MouseEvent &event) override;
-};
-
+        void mouseExit(const juce::MouseEvent &event) override;
+    };
 } // zlpanel

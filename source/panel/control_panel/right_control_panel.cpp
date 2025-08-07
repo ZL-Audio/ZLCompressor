@@ -10,15 +10,20 @@
 #include "right_control_panel.hpp"
 
 namespace zlpanel {
-    RightControlPanel::RightControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+    RightControlPanel::RightControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                         multilingual::TooltipHelper &tooltip_helper)
         : p_ref_(p), base_(base), label_laf_(base_),
-          range_slider_("Range", base_),
+          range_slider_("Range", base_,
+                        tooltip_helper.getToolTipText(multilingual::kRange)),
           range_attachment_(range_slider_.getSlider(), p.parameters_, zlp::PRange::kID, updater_),
-          hold_slider_("Hold", base_),
+          hold_slider_("Hold", base_,
+                       tooltip_helper.getToolTipText(multilingual::kHold)),
           hold_attachment_(hold_slider_.getSlider(), p.parameters_, zlp::PHold::kID, updater_),
-          gain_slider_("Output Gain", base_, "", 1.f),
+          gain_slider_("Output Gain", base_,
+                       tooltip_helper.getToolTipText(multilingual::kMakeup), 1.f),
           gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_),
-          wet_slider_("Wet", base_),
+          wet_slider_("Wet", base_,
+                      tooltip_helper.getToolTipText(multilingual::kWet), 1.f),
           wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 

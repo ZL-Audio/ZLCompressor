@@ -26,24 +26,30 @@ namespace zlgui::tooltip {
                                              static_cast<float>(parent_area.getHeight()) * .4f);
             const auto w = static_cast<int>(std::ceil(tl.getWidth() + base_.getFontSize() * .25f));
             const auto h = static_cast<int>(std::ceil(tl.getHeight() + base_.getFontSize() * .25f));
-            const auto padding = static_cast<int>(std::round(base_.getFontSize() * .5f));
+            const auto padding = static_cast<int>(std::round(base_.getFontSize() * kPaddingScale));
             if (screen_pos.x > parent_area.getCentreX() && screen_pos.y < parent_area.getCentreY()) {
-                return juce::Rectangle<int>(parent_area.getX() + padding,
-                                            parent_area.getY() + padding,
-                                            w, h);
+                return {
+                    parent_area.getX(),
+                    parent_area.getY(),
+                    w + 2 * padding, h + 2 * padding
+                };
             } else {
-                return juce::Rectangle<int>(parent_area.getRight() - w - padding,
-                                            parent_area.getY() + padding,
-                                            w, h);
+                return {
+                    parent_area.getRight() - w - 2 * padding,
+                    parent_area.getY(),
+                    w + 2 * padding, h + 2 * padding
+                };
             }
         }
 
         void drawTooltip(juce::Graphics &g, const juce::String &text, const int width, const int height) override {
-            const juce::Rectangle<float> bound{static_cast<float>(width), static_cast<float>(height)};
+            juce::Rectangle<float> bound{static_cast<float>(width), static_cast<float>(height)};
 
             g.setColour(base_.getBackgroundColor().withAlpha(.875f));
             g.fillRect(bound);
 
+            const auto padding = std::round(base_.getFontSize() * kPaddingScale);
+            bound = bound.reduced(padding);
             const auto tl = getTipTextLayout(text, bound.getWidth(), bound.getHeight());
             tl.draw(g, bound);
         }
@@ -51,7 +57,9 @@ namespace zlgui::tooltip {
     private:
         UIBase &base_;
 
-        juce::TextLayout getTipTextLayout(const juce::String &text,
+        static constexpr float kPaddingScale = .5f;
+
+        [[nodiscard]] juce::TextLayout getTipTextLayout(const juce::String &text,
                                           const float w, const float h) const {
             juce::AttributedString s;
             s.setJustification(juce::Justification::centredLeft);

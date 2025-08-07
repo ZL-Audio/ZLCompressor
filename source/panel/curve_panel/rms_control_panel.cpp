@@ -10,20 +10,24 @@
 #include "rms_control_panel.hpp"
 
 namespace zlpanel {
-    RMSControlPanel::RMSControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+    RMSControlPanel::RMSControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                     multilingual::TooltipHelper &tooltip_helper)
         : base_(base), updater_(),
           rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSPanelDisplay::kID)),
           label_laf_(base),
           rms_length_label_("", "RMS Length"),
           rms_speed_label_("", "RMS Speed"),
           rms_mix_label_("", "RMS Mix"),
-          rms_length_slider_("", base, ""),
+          rms_length_slider_("", base,
+                             tooltip_helper.getToolTipText(multilingual::kRMSLength)),
           rms_length_attachment_(rms_length_slider_.getSlider(), p.parameters_,
                                  zlp::PRMSLength::kID, updater_),
-          rms_speed_slider_("", base, ""),
+          rms_speed_slider_("", base,
+                            tooltip_helper.getToolTipText(multilingual::kRMSSpeed)),
           rms_speed_attachment_(rms_speed_slider_.getSlider(), p.parameters_,
                                 zlp::PRMSSpeed::kID, updater_),
-          rms_mix_slider_("", base, ""),
+          rms_mix_slider_("", base,
+                          tooltip_helper.getToolTipText(multilingual::kRMSMix)),
           rms_mix_attachment_(rms_mix_slider_.getSlider(), p.parameters_,
                               zlp::PRMSMix::kID, updater_) {
         label_laf_.setFontScale(1.25f);

@@ -12,11 +12,13 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
     class RMSButton final : public juce::Component {
     public:
-        explicit RMSButton(PluginProcessor &p, zlgui::UIBase &base);
+        explicit RMSButton(PluginProcessor &p, zlgui::UIBase &base,
+                           multilingual::TooltipHelper &tooltip_helper);
 
         void paint(juce::Graphics &g) override;
 

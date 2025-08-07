@@ -12,16 +12,25 @@
 namespace zlpanel {
     MainPanel::MainPanel(PluginProcessor &processor, zlgui::UIBase &base)
         : p_ref_(processor), base_(base),
-          curve_panel_(processor, base_),
-          control_panel_(processor, base_),
-          top_panel_(processor, base_),
+          tooltip_helper_(
+              static_cast<multilingual::TooltipLanguage>(std::round(
+                  p_ref_.state_.getRawParameterValue(zlstate::PTooltipLang::kID)->load(std::memory_order::relaxed)))
+          ),
+          curve_panel_(processor, base_, tooltip_helper_),
+          control_panel_(processor, base_, tooltip_helper_),
+          top_panel_(processor, base_, tooltip_helper_),
           ui_setting_panel_(processor, base_),
-          refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
+          tooltipLAF(base_), tooltipWindow(&curve_panel_),
+          refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]){
         juce::ignoreUnused(base_);
         addAndMakeVisible(curve_panel_);
         addAndMakeVisible(control_panel_);
         addAndMakeVisible(top_panel_);
         addChildComponent(ui_setting_panel_);
+
+        tooltipWindow.setLookAndFeel(&tooltipLAF);
+        tooltipWindow.setOpaque(false);
+        tooltipWindow.setBufferedToImage(true);
 
         base_.getPanelValueTree().addListener(this);
 

@@ -10,9 +10,11 @@
 #include "control_panel.hpp"
 
 namespace zlpanel {
-    ControlPanel::ControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+    ControlPanel::ControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                               multilingual::TooltipHelper &tooltip_helper)
         : base_(base),
-          mid_control_panel_(p, base_), right_control_panel_(p, base_) {
+          mid_control_panel_(p, base_, tooltip_helper),
+          right_control_panel_(p, base_, tooltip_helper) {
         addAndMakeVisible(mid_control_panel_);
         addAndMakeVisible(right_control_panel_);
 

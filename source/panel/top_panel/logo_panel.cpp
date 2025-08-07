@@ -11,12 +11,14 @@
 #include "logo_panel.hpp"
 
 namespace zlpanel {
-    LogoPanel::LogoPanel(PluginProcessor &, zlgui::UIBase &base)
+    LogoPanel::LogoPanel(PluginProcessor &, zlgui::UIBase &base, multilingual::TooltipHelper &tooltip_helper)
         : base_(base),
           brand_drawable_(juce::Drawable::createFromImageData(BinaryData::zlaudio_svg, BinaryData::zlaudio_svgSize)),
           logo_drawable_(juce::Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize)) {
         setAlpha(.5f);
         setBufferedToImage(true);
+
+        SettableTooltipClient::setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLogo));
     }
 
     void LogoPanel::paint(juce::Graphics &g) {

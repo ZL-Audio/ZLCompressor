@@ -12,12 +12,14 @@
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
+#include "../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
     class RightControlPanel final : public juce::Component,
                                     private juce::ValueTree::Listener {
     public:
-        explicit RightControlPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit RightControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                   multilingual::TooltipHelper &tooltip_helper);
 
         ~RightControlPanel() override;
 

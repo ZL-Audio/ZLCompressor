@@ -11,11 +11,15 @@
 
 namespace zlgui::combobox {
     ClickCombobox::ClickCombobox(UIBase &base, const std::vector<std::string> &choices,
-                                 const juce::String &tooltip_text)
+                                 const juce::String &tooltip_text,
+                                 const std::vector<juce::String> &item_labels)
         : base_(base) {
         choice_text_ = choices;
         if (tooltip_text.length() > 0) {
             SettableTooltipClient::setTooltip(tooltip_text);
+        } else if (item_labels.size() >= choices.size()) {
+            item_labels_ = item_labels;
+            SettableTooltipClient::setTooltip(item_labels_[0]);
         }
         for (size_t i = 0; i < choice_text_.size(); ++i) {
             combo_box_.addItem("t", static_cast<int>(i + 1));
@@ -24,11 +28,15 @@ namespace zlgui::combobox {
     }
 
     ClickCombobox::ClickCombobox(UIBase &base, const std::vector<juce::Drawable *> &choices,
-                                 const juce::String &tooltip_text)
+                                 const juce::String &tooltip_text,
+                                 const std::vector<juce::String> &item_labels)
         : base_(base) {
         choice_icons_ = choices;
         if (tooltip_text.length() > 0) {
             SettableTooltipClient::setTooltip(tooltip_text);
+        } else if (item_labels.size() >= choices.size()) {
+            item_labels_ = item_labels;
+            SettableTooltipClient::setTooltip(item_labels_[0]);
         }
         for (size_t i = 0; i < choice_icons_.size(); ++i) {
             combo_box_.addItem("t", static_cast<int>(i + 1));
@@ -58,18 +66,20 @@ namespace zlgui::combobox {
     }
 
     void ClickCombobox::mouseDown(const juce::MouseEvent &) {
-        DBG(combo_box_.getNumItems());
         combo_box_.setSelectedItemIndex(
             (combo_box_.getSelectedItemIndex() + 1) % combo_box_.getNumItems(),
             juce::sendNotificationSync);
     }
 
-    void ClickCombobox::setSizeScale(float width_scale, float height_scale) {
+    void ClickCombobox::setSizeScale(const float width_scale, const float height_scale) {
         width_scale_ = width_scale;
         height_scale_ = height_scale;
     }
 
     void ClickCombobox::comboBoxChanged(juce::ComboBox *) {
+        if (combo_box_.getSelectedItemIndex() >= 0 && !item_labels_.empty()) {
+            SettableTooltipClient::setTooltip(item_labels_[static_cast<size_t>(combo_box_.getSelectedItemIndex())]);
+        }
         repaint();
     }
 } // zlgui

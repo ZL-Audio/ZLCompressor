@@ -10,7 +10,8 @@
 #include "bottom_control_panel.hpp"
 
 namespace zlpanel {
-    BottomControlPanel::BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base)
+    BottomControlPanel::BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                           multilingual::TooltipHelper &tooltip_helper)
         : p_ref_(p), base_(base),
           side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
           side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
@@ -24,10 +25,11 @@ namespace zlpanel {
           min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
                              zlstate::PAnalyzerMinDB::kID, updater_),
           label_laf_(base),
-          style_box_(zlp::PCompStyle::kChoices, base),
+          style_box_(zlp::PCompStyle::kChoices, base,
+                     tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
           style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
-          rms_button_(p, base),
-          lufs_button_(p, base) {
+          rms_button_(p, base, tooltip_helper),
+          lufs_button_(p, base, tooltip_helper) {
         juce::ignoreUnused(p_ref_, base_);
 
         time_length_box_.getLAF().setLabelJustification(juce::Justification::centredRight);

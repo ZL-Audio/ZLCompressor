@@ -15,7 +15,8 @@
 namespace zlpanel {
     class ControlPanel : public juce::Component {
     public:
-        explicit ControlPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit ControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                              multilingual::TooltipHelper &tooltip_helper);
 
         void paint(juce::Graphics &g) override;
 

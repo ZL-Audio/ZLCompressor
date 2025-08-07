@@ -18,9 +18,12 @@ namespace zlgui::combobox {
                                 public juce::SettableTooltipClient,
                                 private juce::ComboBox::Listener {
     public:
-        ClickCombobox(UIBase &base, const std::vector<std::string> &choices, const juce::String &tooltip_text = "");
+        ClickCombobox(UIBase &base, const std::vector<std::string> &choices, const juce::String &tooltip_text = "",
+                      const std::vector<juce::String> &item_labels = {});
 
-        ClickCombobox(UIBase &base, const std::vector<juce::Drawable *> &choices, const juce::String &tooltip_text = "");
+        ClickCombobox(UIBase &base, const std::vector<juce::Drawable *> &choices,
+                      const juce::String &tooltip_text = "",
+                      const std::vector<juce::String> &item_labels = {});
 
         ~ClickCombobox() override;
 
@@ -33,6 +36,7 @@ namespace zlgui::combobox {
     private:
         UIBase &base_;
         juce::ComboBox combo_box_;
+        std::vector<juce::String> item_labels_;
 
         std::vector<std::string> choice_text_;
         std::vector<juce::Drawable *> choice_icons_;

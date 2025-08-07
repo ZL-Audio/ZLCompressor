@@ -13,11 +13,13 @@
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
+#include "../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
     class LeftControlPanel final : public juce::Component {
     public:
-        explicit LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                  multilingual::TooltipHelper &tooltip_helper);
 
         void resized() override;
 

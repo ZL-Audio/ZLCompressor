@@ -10,15 +10,16 @@
 #include "curve_panel.hpp"
 
 namespace zlpanel {
-    CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base)
+    CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base,
+                           multilingual::TooltipHelper &tooltip_helper)
         : Thread("curve_panel"), p_ref_(p), base_(base),
           mag_analyzer_panel_(p, base),
           separate_panel_(base),
           equalize_panel_(p, base),
-          bottom_control_panel_(p, base),
-          left_control_panel_(p, base),
-          side_control_panel_(p, base),
-          rms_control_panel_(p, base),
+          bottom_control_panel_(p, base, tooltip_helper),
+          left_control_panel_(p, base, tooltip_helper),
+          side_control_panel_(p, base, tooltip_helper),
+          rms_control_panel_(p, base, tooltip_helper),
           equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
           side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
           computer_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PComputerCurveDisplay::kID)),
