@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "mag_background_panel.hpp"
+#include "mag_background_panel/mag_background_panel.hpp"
 #include "computer_panel.hpp"
 #include "peak_panel.hpp"
 #include "rms_panel.hpp"

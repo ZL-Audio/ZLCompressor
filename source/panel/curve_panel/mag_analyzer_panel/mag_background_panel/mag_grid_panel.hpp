@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "../../../PluginProcessor.hpp"
-#include "../../helper/helper.hpp"
-#include "../../../gui/gui.hpp"
+#include "../../../../PluginProcessor.hpp"
+#include "../../../helper/helper.hpp"
+#include "../../../../gui/gui.hpp"
 
 namespace zlpanel {
-    class MagBackgroundPanel final : public juce::Component {
+    class MagGridgroundPanel final : public juce::Component {
     public:
-        explicit MagBackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit MagGridgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
 
         void paint(juce::Graphics &g) override;
 

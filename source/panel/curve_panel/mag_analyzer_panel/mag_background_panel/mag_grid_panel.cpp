@@ -7,10 +7,10 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "mag_background_panel.hpp"
+#include "mag_grid_panel.hpp"
 
 namespace zlpanel {
-    MagBackgroundPanel::MagBackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    MagGridgroundPanel::MagGridgroundPanel(PluginProcessor &processor, zlgui::UIBase &base)
         : base_(base),
           mag_min_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         setInterceptsMouseClicks(false, false);
@@ -18,7 +18,7 @@ namespace zlpanel {
         setBufferedToImage(true);
     }
 
-    void MagBackgroundPanel::paint(juce::Graphics& g) {
+    void MagGridgroundPanel::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColor());
 
         const auto bound = getLocalBounds().toFloat();
@@ -45,11 +45,11 @@ namespace zlpanel {
         }
     }
 
-    void MagBackgroundPanel::repaintCallBackSlow() {
+    void MagGridgroundPanel::repaintCallBackSlow() {
         const auto c_mag_min_db_id = mag_min_db_id_ref_.load(std::memory_order::relaxed);
         if (std::abs(c_mag_min_db_id - mag_min_db_id_) > 1e-3f) {
             mag_min_db_id_ = std::round(c_mag_min_db_id);
-            mag_min_db_ = zlstate::PAnalyzerMinDB::kDBs[static_cast<size_t>(mag_min_db_id_)];
+            mag_min_db_ = zlstate::PAnalyzerMinDB::getMinDBFromIndex(c_mag_min_db_id);
             repaint();
         }
     }

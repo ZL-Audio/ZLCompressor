@@ -33,7 +33,9 @@ namespace zldsp::compressor {
             if (to_update_wet_.exchange(false, std::memory_order::acquire)) {
                 c_wet_ = wet_.load(std::memory_order::relaxed) / 100.0;
                 is_on_ = c_wet_ > 1e-5;
-                updateActualK();
+                if (is_on_) {
+                    updateActualK();
+                }
             }
         }
 
@@ -42,6 +44,10 @@ namespace zldsp::compressor {
                 const auto v = static_cast<double>(buffer[i]);
                 buffer[i] = static_cast<FloatType>(std::tanh(v * k1_) * k2_);
             }
+        }
+
+        FloatType processSample(FloatType x) const {
+            return static_cast<FloatType>(std::tanh(static_cast<double>(x) * k1_) * k2_);
         }
 
         void setWet(const FloatType wet) {
