@@ -276,7 +276,6 @@ namespace zlp {
         std::atomic<float> range_{80.f};
         float c_range_{80.f};
         // clipper
-        bool clipper_on_{false};
         zldsp::compressor::TanhClipper<float> clipper_;
         // output gain
         std::atomic<bool> to_update_output_gain_{true};
@@ -298,8 +297,6 @@ namespace zlp {
         void processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
 
         void processSideBufferRMS(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
-
-        void updateClipper();
 
         void handleAsyncUpdate() override;
     };

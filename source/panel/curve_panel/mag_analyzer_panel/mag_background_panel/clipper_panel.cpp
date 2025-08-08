@@ -48,19 +48,16 @@ namespace zlpanel {
         if (!to_update_path_.exchange(false, std::memory_order::acquire)) {
             return;
         }
+
+        if (computer_.prepareBuffer()) {
+            clipper_.setReductionAtUnit(computer_.eval(0.f));
+        }
         clipper_.prepareBuffer();
         if (clipper_.getIsON()) {
             setVisible(true);
         } else {
             setVisible(false);
             return;
-        }
-        if (computer_.prepareBuffer()) {
-            const auto threshold = computer_.getThreshold();
-            const auto x1 = zldsp::chore::decibelsToGain(threshold);
-            const auto y1 = zldsp::chore::decibelsToGain(threshold + computer_.eval(threshold));
-            const auto y2 = zldsp::chore::decibelsToGain(computer_.eval(0.f));
-            clipper_.update(x1, y1, y2);
         }
 
         rel_position_ = zldsp::chore::gainToDecibels(clipper_.processSample(1.f));

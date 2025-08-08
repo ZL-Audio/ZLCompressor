@@ -304,9 +304,7 @@ namespace zlp {
         // prepare computer, trackers and followers
         if (computer_[0].prepareBuffer()) {
             computer_[1].copyFrom(computer_[0]);
-            if (clipper_on_) {
-                updateClipper();
-            }
+            clipper_.setReductionAtUnit(computer_[0].eval(0.f));
         }
         if (follower_[0].prepareBuffer()) {
             follower_[1].copyFrom(follower_[0]);
@@ -393,13 +391,7 @@ namespace zlp {
         }
         // apply clipper
         clipper_.prepareBuffer();
-        if (clipper_on_ != clipper_.getIsON()) {
-            clipper_on_ = clipper_.getIsON();
-            if (clipper_on_) {
-                updateClipper();
-            }
-        }
-        if (clipper_on_) {
+        if (clipper_.getIsON()) {
             clipper_.process(main_buffer0, num_samples);
             clipper_.process(main_buffer1, num_samples);
         }
@@ -437,13 +429,5 @@ namespace zlp {
 
     void CompressController::handleAsyncUpdate() {
         processor_ref_.setLatencySamples(pdc_.load(std::memory_order::relaxed));
-    }
-
-    void CompressController::updateClipper() {
-        const auto threshold = computer_[0].getThreshold();
-        const auto x1 = zldsp::chore::decibelsToGain(threshold);
-        const auto y1 = zldsp::chore::decibelsToGain(threshold + computer_[0].eval(threshold));
-        const auto y2 = zldsp::chore::decibelsToGain(computer_[0].eval(0.f));
-        clipper_.update(x1, y1, y2);
     }
 } // zlDSP
