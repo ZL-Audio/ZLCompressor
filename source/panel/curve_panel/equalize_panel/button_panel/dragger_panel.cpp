@@ -35,6 +35,7 @@ namespace zlpanel {
     }
 
     void DraggerPanel::resized() {
+        filter_type_ = filter_type_ref_.load(std::memory_order::relaxed);
         updateDraggerBound();
     }
 
