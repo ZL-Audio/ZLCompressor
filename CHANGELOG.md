@@ -4,6 +4,19 @@ LICENSE and CODE are available at [https://github.com/ZL-Audio/ZLCompressor](htt
 
 # Changelog
 
+## 0.2.0
+
+New Features
+
+- add tooltips
+- add side-chain filter solo (double-click on the dragger)
+- add soft clipper
+
+Bug fixes and Improvements
+
+- fix potential overflow in `Vocal` style
+- improve stability
+
 ## 0.1.2
 
 New Features
