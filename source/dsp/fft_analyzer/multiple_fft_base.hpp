@@ -118,6 +118,9 @@ namespace zldsp::analyzer {
          * @return whether to update
          */
         bool run() {
+            if (fft_buffer_.empty()) {
+                return false;
+            }
             bool to_update{false};
             // cache on indices
             std::vector<size_t> is_on_vector{};
@@ -175,9 +178,6 @@ namespace zldsp::analyzer {
                             mean_square += fft_buffer_[k] * fft_buffer_[k];
                         }
                     } else {
-                        // for (size_t k = start_idx; k < end_idx; ++k) {
-                        //     mean_square += fft_buffer_[k] * fft_buffer_[k];
-                        // }
                         auto v = kfr::make_univector(&fft_buffer_[start_idx], range_length);
                         mean_square = kfr::sumsqr(v);
                     }

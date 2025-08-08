@@ -54,9 +54,11 @@ namespace zldsp::analyzer {
             }
             const auto scale = height / min_db;
             for (const auto &i: is_on_vector) {
-                auto db = kfr::make_univector(this->result_dbs_[i]);
-                auto y = kfr::make_univector(ys[i]);
-                y = db * scale;
+                if (!ys[i].empty()) {
+                    auto db = kfr::make_univector(this->result_dbs_[i]);
+                    auto y = kfr::make_univector(ys[i]);
+                    y = db * scale;
+                }
             }
         }
     };
