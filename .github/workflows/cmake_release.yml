@@ -28,11 +28,11 @@ jobs:
           - name: Linux-x86
             os: ubuntu-22.04
             app_suffix: ""
-            cmake_extra_flags: -DCMAKE_C_COMPILER=clang-17 -DCMAKE_CXX_COMPILER=clang++-17 -DZL_JUCE_FORMATS="VST3;LV2;Standalone"
+            cmake_extra_flags: -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DZL_JUCE_FORMATS="VST3;LV2;Standalone"
           - name: Linux-arm
             os: ubuntu-22.04-arm
             app_suffix: ""
-            cmake_extra_flags: -DCMAKE_C_COMPILER=clang-17 -DCMAKE_CXX_COMPILER=clang++-17 -DZL_JUCE_FORMATS="VST3;LV2;Standalone"
+            cmake_extra_flags: -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DZL_JUCE_FORMATS="VST3;LV2;Standalone"
           - name: macOS-x86
             os: macos-15
             app_suffix: ".app"
@@ -58,7 +58,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x ./llvm.sh
-          sudo ./llvm.sh 17
+          sudo ./llvm.sh 20
 
       # This also starts up our "fake" display Xvfb, needed for pluginval
       - name: Install Deps (Linux)
