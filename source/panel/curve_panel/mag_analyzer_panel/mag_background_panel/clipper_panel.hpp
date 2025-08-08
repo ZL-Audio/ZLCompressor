@@ -38,7 +38,7 @@ namespace zlpanel {
 
         static constexpr std::array kClipperIDs{
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID,
-            zlp::PClipperWet::kID
+            zlp::PClipperDrive::kID
         };
 
         static constexpr std::array kNAIDs{

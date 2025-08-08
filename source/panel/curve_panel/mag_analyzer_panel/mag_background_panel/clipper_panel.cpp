@@ -77,7 +77,7 @@ namespace zlpanel {
             computer_.setKneeW(new_value);
         } else if (parameter_ID == zlp::PCurve::kID) {
             computer_.setCurve(zlp::PCurve::formatV(new_value));
-        } else if (parameter_ID == zlp::PClipperWet::kID) {
+        } else if (parameter_ID == zlp::PClipperDrive::kID) {
             clipper_.setWet(new_value);
         }
         to_update_path_.store(true, std::memory_order::release);

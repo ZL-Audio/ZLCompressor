@@ -70,7 +70,7 @@ namespace zlp {
             controller_ref_.setWet1(new_value);
         } else if (parameter_ID == PSideStereoWet2::kID) {
             controller_ref_.setWet2(new_value);
-        } else if (parameter_ID == PClipperWet::kID) {
+        } else if (parameter_ID == PClipperDrive::kID) {
             controller_ref_.getClipper().setWet(new_value);
         } else if (parameter_ID == POversample::kID) {
             controller_ref_.setOversampleIdx(static_cast<int>(new_value));

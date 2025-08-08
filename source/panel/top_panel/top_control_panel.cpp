@@ -35,7 +35,7 @@ namespace zlpanel {
           clipper_label_("Clipper", "Clipper"),
           clipper_slider_("", base_,
                           tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper)),
-          clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperWet::kID, updater_) {
+          clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperDrive::kID, updater_) {
         on_button_.setDrawable(on_drawable_.get());
         on_button_.getLAF().setScale(1.15f);
         delta_button_.setDrawable(delta_drawable_.get());
