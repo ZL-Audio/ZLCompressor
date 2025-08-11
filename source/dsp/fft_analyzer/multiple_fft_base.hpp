@@ -163,7 +163,9 @@ namespace zldsp::analyzer {
                 auto temp = kfr::make_univector(fft_buffer_.data(), window_.size());
                 temp = temp * window_;
                 fft_.forwardMagnitudeOnly(fft_buffer_.data());
-                const auto decay = actual_decay_rates_[i].load(std::memory_order::relaxed);
+                const auto decay = is_frozen_[i].load(std::memory_order::relaxed)
+                                       ? 1.f
+                                       : actual_decay_rates_[i].load(std::memory_order::relaxed);
                 auto &input_dbs{seq_input_dbs_[i]};
                 if (to_reset_[i].exchange(false)) {
                     std::fill(input_dbs.begin(), input_dbs.end(), kMinDB);
@@ -184,8 +186,8 @@ namespace zldsp::analyzer {
                     mean_square = mean_square / static_cast<float>(range_length);
                     const auto current_db = chore::squareGainToDecibels(mean_square);
                     input_dbs[j] = current_db < input_dbs[j]
-                                          ? input_dbs[j] * decay + current_db * (1 - decay)
-                                          : current_db;
+                                       ? input_dbs[j] * decay + current_db * (1 - decay)
+                                       : current_db;
                 }
                 seq_akima_[i]->prepare();
                 seq_akima_[i]->eval(interplot_freqs_.data(), interplot_dbs_[i].data(), interplot_freqs_.size());
@@ -205,8 +207,12 @@ namespace zldsp::analyzer {
 
         void setON(std::array<bool, FFTNum> fs) {
             for (size_t i = 0; i < FFTNum; ++i) {
-                is_on_[i].store(fs[i]);
+                is_on_[i].store(fs[i], std::memory_order::relaxed);
             }
+        }
+
+        void setFrozen(const size_t idx, const bool frozen) {
+            is_frozen_[idx].store(frozen, std::memory_order::relaxed);
         }
 
         void setDecayRate(const size_t idx, const float x) {
@@ -277,6 +283,7 @@ namespace zldsp::analyzer {
         std::array<std::atomic<bool>, FFTNum> to_reset_;
 
         std::array<std::atomic<bool>, FFTNum> is_on_{};
+        std::array<std::atomic<bool>, FFTNum> is_frozen_{};
 
         void prepareAkima() {
             // cache sample rate and frequency values
@@ -333,7 +340,6 @@ namespace zldsp::analyzer {
             {
                 auto freq = min_freq;
                 const auto freq_mul = std::pow(max_freq / min_freq, 1.1 / static_cast<double>(PointNum));
-
                 interplot_freqs_.clear();
                 interplot_freqs_.reserve(PointNum);
                 for (size_t i = 1; i < seq_input_freqs_.size(); ++i) {
@@ -350,9 +356,9 @@ namespace zldsp::analyzer {
                 }
 
                 interplot_freqs_p_.resize(interplot_freqs_.size());
+                const auto temp_scale = static_cast<float>(std::log(max_freq / min_freq));
                 for (size_t i = 0; i < interplot_freqs_.size(); ++i) {
-                    interplot_freqs_p_[i] = std::log(interplot_freqs_[i] / static_cast<float>(min_freq)
-                        ) / static_cast<float>(std::log(max_freq / min_freq));
+                    interplot_freqs_p_[i] = std::log(interplot_freqs_[i] / static_cast<float>(min_freq)) / temp_scale;
                 }
 
                 for (size_t i = 0; i < FFTNum; ++i) {

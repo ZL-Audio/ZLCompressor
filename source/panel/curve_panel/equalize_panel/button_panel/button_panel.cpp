@@ -54,6 +54,7 @@ namespace zlpanel {
 
     ButtonPanel::~ButtonPanel() {
         turnOffSolo();
+        p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
     }
 
     void ButtonPanel::resized() { {
@@ -272,5 +273,31 @@ namespace zlpanel {
     void ButtonPanel::turnOffSolo() {
         solo_panel_.setVisible(false);
         p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+    }
+
+    void ButtonPanel::mouseEnter(const juce::MouseEvent &event) {
+        if (event.originalComponent != this) {
+            startTimer(2000);
+        }
+    }
+
+    void ButtonPanel::mouseMove(const juce::MouseEvent &event) {
+        if (event.originalComponent == this) {
+            stopTimer();
+            p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
+            startTimer(2000);
+        }
+    }
+
+    void ButtonPanel::mouseExit(const juce::MouseEvent &event) {
+        if (event.originalComponent != this) {
+            stopTimer();
+            p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
+        }
+    }
+
+    void ButtonPanel::timerCallback() {
+        p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, true);
+        stopTimer();
     }
 } // zlpanel

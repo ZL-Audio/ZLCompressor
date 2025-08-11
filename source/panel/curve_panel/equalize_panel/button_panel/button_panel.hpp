@@ -16,7 +16,8 @@
 #include "solo_panel.hpp"
 
 namespace zlpanel {
-    class ButtonPanel final : public juce::Component {
+    class ButtonPanel final : public juce::Component,
+                              private juce::Timer {
     public:
         explicit ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
                              size_t &selected_band_idx);
@@ -48,6 +49,12 @@ namespace zlpanel {
         void mouseDoubleClick(const juce::MouseEvent &event) override;
 
         void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
+
+        void mouseEnter(const juce::MouseEvent &event) override;
+
+        void mouseExit(const juce::MouseEvent &event) override;
+
+        void mouseMove(const juce::MouseEvent &event) override;
 
         void turnOnSolo(size_t band);
 
@@ -83,5 +90,7 @@ namespace zlpanel {
             zlp::PFilterType::kID, zlp::PGain::kID, zlp::PFreq::kID, zlp::PQ::kID, zlp::POrder::kID,
             zlp::PFilterStatus::kID
         };
+
+        void timerCallback() override;
     };
 } // zlpanel
