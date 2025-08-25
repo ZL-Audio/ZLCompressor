@@ -71,6 +71,9 @@ namespace zlpanel {
 
         zlgui::attachment::ComponentUpdater updater_;
 
+        std::atomic<float> *filter_type_ref_{nullptr};
+        float c_filter_type_{-1.f};
+
         zlgui::slider::SnappingSlider q_slider_;
         std::unique_ptr<zlgui::attachment::SliderAttachment<true> > q_attachment_;
 

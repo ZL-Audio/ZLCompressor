@@ -105,6 +105,18 @@ namespace zlpanel {
         }
         para_panel_.repaintCallBackSlow();
         popup_panel_.repaintCallBackSlow();
+        if (filter_type_ref_ && selected_band_idx_ != zlp::kBandNum) {
+            if (std::abs(filter_type_ref_->load(std::memory_order::relaxed) - c_filter_type_) > .1f) {
+                c_filter_type_ = filter_type_ref_->load(std::memory_order::relaxed);
+                const auto filter_type = static_cast<int>(std::round(c_filter_type_));
+                const auto flag = (filter_type == 0) || (filter_type == 5) || (filter_type == 6);
+                slope_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true> >(
+                    slope_slider_,
+                    p_ref_.parameters_, zlp::POrder::kID + std::to_string(selected_band_idx_),
+                    juce::NormalisableRange<double>(flag ? 1.0 : 0.0, 5.0, 0.033),
+                    updater_);
+            }
+        }
     }
 
     void ButtonPanel::updateBand() {
@@ -118,15 +130,14 @@ namespace zlpanel {
             q_attachment_.reset();
             slope_attachment_.reset();
             if (selected_band_idx_ != zlp::kBandNum) {
+                filter_type_ref_ = p_ref_.parameters_.getRawParameterValue(
+                    zlp::PFilterType::kID + std::to_string(selected_band_idx_));
                 q_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true> >(
                     q_slider_,
                     p_ref_.parameters_, zlp::PQ::kID + std::to_string(selected_band_idx_),
                     updater_);
-                slope_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true> >(
-                    slope_slider_,
-                    p_ref_.parameters_, zlp::POrder::kID + std::to_string(selected_band_idx_),
-                    juce::NormalisableRange<double>(0.0, 5.0, 0.033),
-                    updater_);
+            } else {
+                filter_type_ref_ = nullptr;
             }
             para_panel_.updateBand();
             popup_panel_.updateBand();
