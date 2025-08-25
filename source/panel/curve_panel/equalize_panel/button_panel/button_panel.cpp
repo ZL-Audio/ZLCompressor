@@ -276,7 +276,7 @@ namespace zlpanel {
     }
 
     void ButtonPanel::mouseEnter(const juce::MouseEvent &event) {
-        if (event.originalComponent != this) {
+        if (event.originalComponent == this) {
             startTimer(2000);
         }
     }
@@ -290,7 +290,7 @@ namespace zlpanel {
     }
 
     void ButtonPanel::mouseExit(const juce::MouseEvent &event) {
-        if (event.originalComponent != this) {
+        if (event.originalComponent == this) {
             stopTimer();
             p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
         }
