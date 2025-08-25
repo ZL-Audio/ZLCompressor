@@ -15,7 +15,7 @@ namespace zlp {
     }
 
     void EqualizeController::prepare(const juce::dsp::ProcessSpec &spec) {
-        fft_analyzer_.prepare(spec.sampleRate);
+        fft_analyzer_.prepare(spec.sampleRate, {2});
         for (auto &filter: filters_) {
             filter.prepare(spec.sampleRate, 2);
         }
