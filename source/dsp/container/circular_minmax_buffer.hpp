@@ -67,12 +67,12 @@ namespace zldsp::container {
                 minmax_buffer_.popFront();
             }
             // maintain monotonicity
-            if (BufferType == kFindMin) {
+            if constexpr (BufferType == kFindMin) {
                 while (!minmax_buffer_.isEmpty() && minmax_buffer_.getBack().first >= x) {
                     minmax_buffer_.popBack();
                 }
             }
-            if (BufferType == kFindMax) {
+            if constexpr (BufferType == kFindMax) {
                 while (!minmax_buffer_.isEmpty() && minmax_buffer_.getBack().first <= x) {
                     minmax_buffer_.popBack();
                 }

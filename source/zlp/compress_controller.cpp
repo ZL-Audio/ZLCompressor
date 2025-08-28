@@ -219,8 +219,8 @@ namespace zlp {
         }
         // stereo split the main/side buffer
         if (c_stereo_mode_is_midside) {
-            zldsp::splitter::MSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
-            zldsp::splitter::MSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
+            zldsp::splitter::InplaceMSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
+            zldsp::splitter::InplaceMSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
         }
         // copy pre buffer
         if (c_copy_pre) {
@@ -285,7 +285,7 @@ namespace zlp {
         }
         // stereo combine the main buffer
         if (c_stereo_mode_is_midside) {
-            zldsp::splitter::MSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
+            zldsp::splitter::InplaceMSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
         }
         // process the post lufs matcher
         if (c_lufs_matcher_on_) {

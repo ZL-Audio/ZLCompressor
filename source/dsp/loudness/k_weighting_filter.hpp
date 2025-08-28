@@ -27,7 +27,7 @@ namespace zldsp::loudness {
                 zldsp::filter::MartinCoeff::get2HighPass(w1, 0.500242812458813));
             high_shelf_.updateFromBiquad(
                 zldsp::filter::MartinCoeff::get2HighShelf(w2, 1.5847768458311522, 0.7096433028107384));
-            if (UseLowPass) {
+            if constexpr (UseLowPass) {
                 low_pass_.prepare(num_channels);
                 const auto w3 = 2.0 * std::numbers::pi * 22000.0 / sample_rate;
                 low_pass_.updateFromBiquad(
@@ -38,7 +38,7 @@ namespace zldsp::loudness {
         void reset() {
             high_pass_.reset();
             high_shelf_.reset();
-            if (UseLowPass) {
+            if constexpr (UseLowPass) {
                 low_pass_.reset();
             }
         }

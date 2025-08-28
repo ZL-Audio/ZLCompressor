@@ -84,13 +84,13 @@ namespace zldsp::filter {
         template<bool IsBypassed = false, bool IsSmooth = false>
         void processIIR(std::span<FloatType *> buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
-                if (IsSmooth) updateCoeffs();
+                if constexpr (IsSmooth) updateCoeffs();
                 for (size_t channel = 0; channel < buffer.size(); ++channel) {
                     auto sample = buffer[channel][i];
                     for (size_t filter_idx = 0; filter_idx < current_filter_num_; ++filter_idx) {
                         sample = filters_[filter_idx].processSample(channel, sample);
                     }
-                    if (!IsBypassed) {
+                    if constexpr (!IsBypassed) {
                         buffer[channel][i] = sample;
                     }
                 }

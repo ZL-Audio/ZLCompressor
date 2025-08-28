@@ -13,7 +13,7 @@
 
 namespace zldsp::analyzer {
     /**
-     * a fft analyzer which make sure that multiple FFTs are synchronized in time
+     * a fft analyzer which makes sure that multiple FFTs are synchronized in time
      * and can create corresponding analyzer paths
      * @tparam FloatType the float type of input audio buffers
      * @tparam FFTNum the number of FFTs

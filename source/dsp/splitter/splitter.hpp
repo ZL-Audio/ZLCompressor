@@ -9,4 +9,4 @@
 
 #pragma once
 
-#include "ms_splitter.hpp"
+#include "inplace_ms_splitter.hpp"

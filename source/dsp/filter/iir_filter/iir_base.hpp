@@ -58,7 +58,7 @@ namespace zldsp::filter {
             for (size_t channel = 0; channel < buffer.size(); ++channel) {
                 auto *samples = buffer[channel];
                 for (size_t i = 0; i < num_samples; ++i) {
-                    if (isBypass) {
+                    if constexpr (isBypass) {
                         processSample(channel, samples[i]);
                     } else {
                         samples[i] = processSample(channel, samples[i]);

@@ -92,23 +92,18 @@ namespace zldsp::analyzer {
                     if (abstract_fifo_.getNumFree() > 0) {
                         const auto range = abstract_fifo_.prepareToWrite(1);
                         const auto write_idx = range.block_size1 > 0 ? range.start_index1 : range.start_index2;
-                        switch (CurrentMagType) {
-                            case MagType::kPeak: {
-                                for (size_t i = 0; i < MagNum; ++i) {
-                                    mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::gainToDecibels(
-                                        static_cast<float>(current_mags_[i]));
-                                }
-                                break;
+                        if constexpr (CurrentMagType == MagType::kPeak) {
+                            for (size_t i = 0; i < MagNum; ++i) {
+                                mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::gainToDecibels(
+                                    static_cast<float>(current_mags_[i]));
                             }
-                            case MagType::kRMS: {
-                                for (size_t i = 0; i < MagNum; ++i) {
-                                    mag_fifos_[i][static_cast<size_t>(write_idx)] = 0.5f * zldsp::chore::gainToDecibels(
-                                            static_cast<float>(
-                                                current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
-                                }
-                                current_num_samples_ = 0;
-                                break;
+                        } else if constexpr (CurrentMagType == MagType::kRMS) {
+                            for (size_t i = 0; i < MagNum; ++i) {
+                                mag_fifos_[i][static_cast<size_t>(write_idx)] = 0.5f * zldsp::chore::gainToDecibels(
+                                        static_cast<float>(
+                                            current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
                             }
+                            current_num_samples_ = 0;
                         }
                         abstract_fifo_.finishWrite(1);
 
@@ -131,16 +126,11 @@ namespace zldsp::analyzer {
                     auto v = kfr::make_univector(
                         buffer[chan] + static_cast<size_t>(start_idx),
                         static_cast<size_t>(num_samples));
-                    switch (CurrentMagType) {
-                        case MagType::kPeak: {
-                            current_mags_[i] = std::max(current_mags_[i], kfr::absmaxof(v));
-                            break;
-                        }
-                        case MagType::kRMS: {
-                            current_mags_[i] += kfr::sumsqr(v);
-                            current_num_samples_ += num_samples;
-                            break;
-                        }
+                    if constexpr (CurrentMagType == MagType::kPeak) {
+                        current_mags_[i] = std::max(current_mags_[i], kfr::absmaxof(v));
+                    } else if constexpr (CurrentMagType == MagType::kRMS) {
+                        current_mags_[i] += kfr::sumsqr(v);
+                        current_num_samples_ += num_samples;
                     }
                 }
             }

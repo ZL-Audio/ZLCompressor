@@ -17,13 +17,13 @@ namespace zldsp::splitter {
      * @tparam FloatType
      */
     template<typename FloatType>
-    class MSSplitter {
+    class InplaceMSSplitter {
     public:
         enum GainMode {
             kPre, kAvg, kPost
         };
 
-        MSSplitter() = default;
+        InplaceMSSplitter() = default;
 
         /**
          * switch left/right buffer to mid/side buffer
@@ -33,19 +33,15 @@ namespace zldsp::splitter {
             auto l_vector = kfr::make_univector(l_buffer, num_samples);
             auto r_vector = kfr::make_univector(r_buffer, num_samples);
 
-            switch (Mode) {
-                case kPre: {
-                    l_vector = FloatType(0.5) * (l_vector + r_vector);
-                    r_vector = l_vector - r_vector;
-                }
-                case kAvg: {
-                    l_vector = kSqrt2Over2 * (l_vector + r_vector);
-                    r_vector = l_vector - kSqrt2 * r_vector;
-                }
-                case kPost: {
-                    l_vector = l_vector + r_vector;
-                    r_vector = l_vector - FloatType(2) * r_vector;
-                }
+            if constexpr (Mode == GainMode::kPre) {
+                l_vector = FloatType(0.5) * (l_vector + r_vector);
+                r_vector = l_vector - r_vector;
+            } else if constexpr (Mode == GainMode::kAvg) {
+                l_vector = kSqrt2Over2 * (l_vector + r_vector);
+                r_vector = l_vector - kSqrt2 * r_vector;
+            } else if constexpr (Mode == GainMode::kPost) {
+                l_vector = l_vector + r_vector;
+                r_vector = l_vector - FloatType(2) * r_vector;
             }
         }
 
@@ -57,19 +53,15 @@ namespace zldsp::splitter {
             auto l_vector = kfr::make_univector(l_buffer, num_samples);
             auto r_vector = kfr::make_univector(r_buffer, num_samples);
 
-            switch (Mode) {
-                case kPre: {
-                    l_vector = l_vector + r_vector;
-                    r_vector = l_vector - FloatType(2) * r_vector;
-                }
-                case kAvg: {
-                    l_vector = kSqrt2Over2 * (l_vector + r_vector);
-                    r_vector = l_vector - kSqrt2 * r_vector;
-                }
-                case kPost: {
-                    l_vector = FloatType(0.5) * (l_vector + r_vector);
-                    r_vector = l_vector - r_vector;
-                }
+            if constexpr (Mode == GainMode::kPre) {
+                l_vector = l_vector + r_vector;
+                r_vector = l_vector - FloatType(2) * r_vector;
+            } else if constexpr (Mode == GainMode::kAvg) {
+                l_vector = kSqrt2Over2 * (l_vector + r_vector);
+                r_vector = l_vector - kSqrt2 * r_vector;
+            } else if constexpr (Mode == GainMode::kPost) {
+                l_vector = FloatType(0.5) * (l_vector + r_vector);
+                r_vector = l_vector - r_vector;
             }
         }
 
