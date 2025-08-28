@@ -29,25 +29,19 @@ namespace zldsp::chore {
         }
 
         void prepare(const double sample_rate, const double ramp_length_in_seconds) {
-            switch (SmoothedType) {
-                case kLin:
-                case kMul: {
-                    max_count_ = static_cast<int>(sample_rate * ramp_length_in_seconds);
-                    break;
-                }
-                case kFixLin: {
-                    inc_ = static_cast<FloatType>(1.0 / (sample_rate * ramp_length_in_seconds));
-                    increase_inc_ = inc_;
-                    decrease_inc_ = -inc_;
-                    break;
-                }
-                case kFixMul: {
-                    inc_ = static_cast<FloatType>(std::pow(2.0, 1.0 / (sample_rate * ramp_length_in_seconds)));
-                    increase_inc_ = inc_;
-                    decrease_inc_ = FloatType(1.0) / inc_;
-                    break;
-                }
+            if constexpr (SmoothedType == kLin || SmoothedType == kMul) {
+                max_count_ = static_cast<int>(sample_rate * ramp_length_in_seconds);
+                max_count_inverse_ = static_cast<FloatType>(1) / static_cast<FloatType>(max_count_);
+            } else if constexpr (SmoothedType == kFixLin) {
+                inc_ = static_cast<FloatType>(1.0 / (sample_rate * ramp_length_in_seconds));
+                increase_inc_ = inc_;
+                decrease_inc_ = -inc_;
+            } else if constexpr (SmoothedType == kFixMul) {
+                inc_ = static_cast<FloatType>(std::pow(2.0, 1.0 / (sample_rate * ramp_length_in_seconds)));
+                increase_inc_ = inc_;
+                decrease_inc_ = FloatType(1.0) / inc_;
             }
+            setTarget(getTarget());
         }
 
         void setTarget(const FloatType x) {
@@ -56,23 +50,15 @@ namespace zldsp::chore {
                 count_ = 0;
                 return;
             }
-            switch (SmoothedType) {
-                case kLin: {
-                    inc_ = (target_ - current_) / static_cast<FloatType>(max_count_);
-                    count_ = max_count_;
-                    break;
-                }
-                case kMul: {
-                    inc_ = std::exp(std::log(target_ / current_) / static_cast<FloatType>(max_count_));
-                    count_ = max_count_;
-                    break;
-                }
-                case kFixLin:
-                case kFixMul: {
-                    count_ = 1;
-                    is_increasing_ = target_ > current_;
-                    break;
-                }
+            if constexpr (SmoothedType == kLin) {
+                inc_ = (target_ - current_) * max_count_inverse_;
+                count_ = max_count_;
+            } else if constexpr (SmoothedType == kMul) {
+                inc_ = std::exp(std::log(target_ / current_) * max_count_inverse_);
+                count_ = max_count_;
+            } else if constexpr (SmoothedType == kFixLin || SmoothedType == kFixMul) {
+                count_ = 1;
+                is_increasing_ = target_ > current_;
             }
         }
 
@@ -90,57 +76,49 @@ namespace zldsp::chore {
 
         FloatType getNext() {
             if (count_ == 0) { return current_; }
-            switch (SmoothedType) {
-                case kLin: {
-                    current_ += inc_;
-                    count_ -= 1;
-                    return current_;
-                }
-                case kMul: {
-                    current_ *= inc_;
-                    count_ -= 1;
-                    return current_;
-                }
-                case kFixLin: {
-                    if (is_increasing_) {
-                        current_ += increase_inc_;
-                        if (current_ > target_) {
-                            current_ = target_;
-                            count_ = 0;
-                        }
-                    } else {
-                        current_ += decrease_inc_;
-                        if (current_ < target_) {
-                            current_ = target_;
-                            count_ = 0;
-                        }
+            if constexpr (SmoothedType == kLin) {
+                current_ += inc_;
+                count_ -= 1;
+            } else if constexpr (SmoothedType == kMul) {
+                current_ *= inc_;
+                count_ -= 1;
+            } else if constexpr (SmoothedType == kFixLin) {
+                if (is_increasing_) {
+                    current_ += increase_inc_;
+                    if (current_ > target_) {
+                        current_ = target_;
+                        count_ = 0;
                     }
-                    return current_;
-                }
-                case kFixMul: {
-                    if (is_increasing_) {
-                        current_ *= increase_inc_;
-                        if (current_ > target_) {
-                            current_ = target_;
-                            count_ = 0;
-                        }
-                    } else {
-                        current_ *= decrease_inc_;
-                        if (current_ < target_) {
-                            current_ = target_;
-                            count_ = 0;
-                        }
+                } else {
+                    current_ += decrease_inc_;
+                    if (current_ < target_) {
+                        current_ = target_;
+                        count_ = 0;
                     }
-                    return current_;
                 }
-                default: return current_;
+            } else if constexpr (SmoothedType == kFixMul) {
+                if (is_increasing_) {
+                    current_ *= increase_inc_;
+                    if (current_ > target_) {
+                        current_ = target_;
+                        count_ = 0;
+                    }
+                } else {
+                    current_ *= decrease_inc_;
+                    if (current_ < target_) {
+                        current_ = target_;
+                        count_ = 0;
+                    }
+                }
             }
+            return current_;
         }
 
     private:
         FloatType current_{}, target_{}, inc_{};
         FloatType increase_inc_{}, decrease_inc_{};
         int max_count_{}, count_{};
+        FloatType max_count_inverse_{};
         bool is_increasing_{};
     };
 }
