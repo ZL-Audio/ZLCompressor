@@ -55,6 +55,8 @@ namespace zlpanel {
         addChildComponent(lasso_component_);
         items_set_.addChangeListener(this);
         for (size_t i = 0; i < zlp::kBandNum; ++i) {
+            status_updaters_[i] = std::make_unique<zlp::juce_helper::ParaUpdater>(
+                p.parameters_, zlp::PFilterStatus::kID + std::to_string(i));
             freq_updaters_[i] = std::make_unique<zlp::juce_helper::ParaUpdater>(
                 p.parameters_, zlp::PFreq::kID + std::to_string(i));
             gain_updaters_[i] = std::make_unique<zlp::juce_helper::ParaUpdater>(
@@ -398,13 +400,14 @@ namespace zlpanel {
         if (items_set_.getNumSelected() == 0 || !items_set_.isSelected(selected_band_idx_)) {
             return;
         }
-        const std::array<float, 3> new_paras{
+        const std::array<float, 4> new_paras{
+            status_updaters_[selected_band_idx_]->getRawParaValue(),
             freq_updaters_[selected_band_idx_]->getRawParaValue(),
             gain_updaters_[selected_band_idx_]->getRawParaValue(),
             q_updaters_[selected_band_idx_]->getRawParaValue(),
         };
         float diff = 0.f;
-        for (size_t i = 0; i < 3; ++i) {
+        for (size_t i = 0; i < 4; ++i) {
             diff += std::abs(new_paras[i] - previous_paras_[i]);
         }
         if (diff < static_cast<float>(1e-5)) {
@@ -412,12 +415,14 @@ namespace zlpanel {
         }
         previous_paras_ = new_paras;
         const std::array<float, 3> portion{
-            new_paras[0] / selected_freq_[selected_band_idx_],
-            new_paras[1] / selected_gain_[selected_band_idx_],
-            new_paras[2] / selected_q_[selected_band_idx_]
+            new_paras[1] / selected_freq_[selected_band_idx_],
+            new_paras[2] / selected_gain_[selected_band_idx_],
+            new_paras[3] / selected_q_[selected_band_idx_]
         };
         for (const size_t &i: items_set_.getItemArray()) {
             if (i != selected_band_idx_) {
+                status_updaters_[i]->updateSync(
+                    status_updaters_[i]->getPara()->convertTo0to1(new_paras[0]));
                 freq_updaters_[i]->updateSync(
                     freq_updaters_[i]->getPara()->convertTo0to1(selected_freq_[i] * portion[0]));
                 gain_updaters_[i]->updateSync(

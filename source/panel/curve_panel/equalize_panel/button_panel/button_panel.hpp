@@ -106,8 +106,9 @@ namespace zlpanel {
         juce::SelectedItemSet<size_t> &items_set_;
 
         std::array<float, zlp::kBandNum> selected_freq_{}, selected_gain_{}, selected_q_{};
-        std::array<float, 3> previous_paras_{};
-        std::array<std::unique_ptr<zlp::juce_helper::ParaUpdater>, zlp::kBandNum> freq_updaters_, gain_updaters_, q_updaters_;
+        std::array<float, 4> previous_paras_{};
+        std::array<std::unique_ptr<zlp::juce_helper::ParaUpdater>, zlp::kBandNum> status_updaters_, freq_updaters_;
+        std::array<std::unique_ptr<zlp::juce_helper::ParaUpdater>, zlp::kBandNum> gain_updaters_, q_updaters_;
 
         void timerCallback() override;
 

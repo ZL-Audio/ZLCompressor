@@ -40,8 +40,6 @@ namespace zlpanel {
             para->beginChangeGesture();
             para->setValueNotifyingHost(0.f);
             para->endChangeGesture();
-
-            selected_band_idx_ = zlp::kBandNum;
         };
         close_button_.setBufferedToImage(true);
         addAndMakeVisible(close_button_);
