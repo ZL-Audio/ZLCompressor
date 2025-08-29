@@ -406,12 +406,9 @@ namespace zlpanel {
             gain_updaters_[selected_band_idx_]->getRawParaValue(),
             q_updaters_[selected_band_idx_]->getRawParaValue(),
         };
-        float diff = 0.f;
+        std::array<bool, 4> to_update;
         for (size_t i = 0; i < 4; ++i) {
-            diff += std::abs(new_paras[i] - previous_paras_[i]);
-        }
-        if (diff < static_cast<float>(1e-5)) {
-            return;
+            to_update[i] = std::abs(new_paras[i] - previous_paras_[i]) > 1e-5;
         }
         previous_paras_ = new_paras;
         const std::array<float, 3> portion{
@@ -419,16 +416,36 @@ namespace zlpanel {
             new_paras[2] / selected_gain_[selected_band_idx_],
             new_paras[3] / selected_q_[selected_band_idx_]
         };
-        for (const size_t &i: items_set_.getItemArray()) {
-            if (i != selected_band_idx_) {
-                status_updaters_[i]->updateSync(
-                    status_updaters_[i]->getPara()->convertTo0to1(new_paras[0]));
-                freq_updaters_[i]->updateSync(
-                    freq_updaters_[i]->getPara()->convertTo0to1(selected_freq_[i] * portion[0]));
-                gain_updaters_[i]->updateSync(
-                    gain_updaters_[i]->getPara()->convertTo0to1(selected_gain_[i] * portion[1]));
-                q_updaters_[i]->updateSync(
-                    q_updaters_[i]->getPara()->convertTo0to1(selected_q_[i] * portion[2]));
+        if (to_update[0]) {
+            for (const size_t &i: items_set_.getItemArray()) {
+                if (i != selected_band_idx_) {
+                    status_updaters_[i]->updateSync(
+                        status_updaters_[i]->getPara()->convertTo0to1(new_paras[0]));
+                }
+            }
+        }
+        if (to_update[1]) {
+            for (const size_t &i: items_set_.getItemArray()) {
+                if (i != selected_band_idx_) {
+                    freq_updaters_[i]->updateSync(
+                        freq_updaters_[i]->getPara()->convertTo0to1(selected_freq_[i] * portion[0]));
+                }
+            }
+        }
+        if (to_update[2]) {
+            for (const size_t &i: items_set_.getItemArray()) {
+                if (i != selected_band_idx_) {
+                    gain_updaters_[i]->updateSync(
+                        gain_updaters_[i]->getPara()->convertTo0to1(selected_gain_[i] * portion[1]));
+                }
+            }
+        }
+        if (to_update[3]) {
+            for (const size_t &i: items_set_.getItemArray()) {
+                if (i != selected_band_idx_) {
+                    q_updaters_[i]->updateSync(
+                        q_updaters_[i]->getPara()->convertTo0to1(selected_q_[i] * portion[2]));
+                }
             }
         }
     }
