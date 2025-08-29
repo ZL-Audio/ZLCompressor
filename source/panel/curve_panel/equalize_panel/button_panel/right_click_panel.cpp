@@ -15,7 +15,8 @@ namespace zlpanel {
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           invert_gain_button_(base, "Invert Gain", ""),
           copy_button_(base, "Copy", ""),
-          paste_button_(base, "Paste", "") {
+          paste_button_(base, "Paste", ""),
+          items_set_(base.getSelectedBandSet()) {
         invert_gain_button_.getButton().onClick = [this]() {
             invertGain();
         };
@@ -57,61 +58,74 @@ namespace zlpanel {
     }
 
     void RightClickPanel::invertGain() {
+        setVisible(false);
+
         auto *para = p_ref_.parameters_.getParameter(zlp::PGain::kID + std::to_string(selected_band_idx_));
         para->beginChangeGesture();
         para->setValueNotifyingHost(1.0f - para->getValue());
         para->endChangeGesture();
-
-        setVisible(false);
     }
 
     void RightClickPanel::copy() {
+        setVisible(false);
+
         juce::ValueTree tree{"filter_info"};
-        juce::ValueTree filter{"filter0"};
-        tree.addChild(filter, 0, nullptr);
-        const auto band_string = std::to_string(selected_band_idx_);
-        for (auto &para_ID: kIDs) {
-            filter.setProperty(para_ID,
-                               p_ref_.parameters_.getRawParameterValue(
-                                   para_ID + band_string)->load(std::memory_order::relaxed),
-                               nullptr);
+        auto selected_band = items_set_.getItemArray();
+        if (selected_band.isEmpty()) {
+            selected_band.add(selected_band_idx_);
+        }
+
+        int i = 0;
+        for (const size_t band: selected_band) {
+            juce::ValueTree filter{juce::Identifier{"filter" + std::to_string(i)}};
+            tree.addChild(filter, i, nullptr);
+            i += 1;
+            const auto band_string = std::to_string(band);
+            for (auto &para_ID: kIDs) {
+                filter.setProperty(para_ID,
+                                   p_ref_.parameters_.getRawParameterValue(
+                                       para_ID + band_string)->load(std::memory_order::relaxed),
+                                   nullptr);
+            }
         }
 
         juce::SystemClipboard::copyTextToClipboard(tree.toXmlString());
-
-        setVisible(false);
     }
 
     void RightClickPanel::paste() {
         const auto tree = juce::ValueTree::fromXml(juce::SystemClipboard::getTextFromClipboard());
         if (!tree.hasType("filter_info")) { return; }
-        const auto filter = tree.getChildWithName("filter0");
-        if (!filter.isValid()) { return; }
-
-        size_t band_idx = zlp::kBandNum;
-        for (size_t i = 0; i < zlp::kBandNum; ++i) {
-            if (p_ref_.parameters_.getRawParameterValue(
-                    zlp::PFilterStatus::kID + std::to_string(i))->load(std::memory_order::relaxed) < .5f) {
-                band_idx = i;
-                break;
-            }
-        }
-        if (band_idx == zlp::kBandNum) { return; }
-
-        const auto band_string = std::to_string(band_idx);
-        for (auto &para_ID: kIDs) {
-            if (filter.hasProperty(para_ID)) {
-                auto *para = p_ref_.parameters_.getParameter(para_ID + band_string);
-                para->beginChangeGesture();
-                para->setValueNotifyingHost(para->convertTo0to1(filter.getProperty(para_ID)));
-                para->endChangeGesture();
-            } else {
-                return;
-            }
-        }
-
-        selected_band_idx_ = band_idx;
 
         setVisible(false);
+
+        for (size_t i = 0; i < zlp::kBandNum; ++i) {
+            const auto filter = tree.getChildWithName(juce::Identifier{"filter" + std::to_string(i)});
+
+            if (!filter.isValid()) { return; }
+
+            size_t band_idx = zlp::kBandNum;
+            for (size_t next_available = 0; next_available < zlp::kBandNum; ++next_available) {
+                if (p_ref_.parameters_.getRawParameterValue(
+                        zlp::PFilterStatus::kID + std::to_string(next_available))->load(std::memory_order::relaxed) <
+                    .5f) {
+                    band_idx = next_available;
+                    break;
+                }
+            }
+            if (band_idx == zlp::kBandNum) { return; }
+
+            const auto band_string = std::to_string(band_idx);
+            for (auto &para_ID: kIDs) {
+                if (filter.hasProperty(para_ID)) {
+                    auto *para = p_ref_.parameters_.getParameter(para_ID + band_string);
+                    para->beginChangeGesture();
+                    para->setValueNotifyingHost(para->convertTo0to1(filter.getProperty(para_ID)));
+                    para->endChangeGesture();
+                } else {
+                    return;
+                }
+            }
+            selected_band_idx_ = band_idx;
+        }
     }
 } // zlpanel

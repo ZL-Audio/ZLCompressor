@@ -103,7 +103,7 @@ namespace zlpanel {
         };
 
         juce::LassoComponent<size_t> lasso_component_;
-        juce::SelectedItemSet<size_t> items_set_;
+        juce::SelectedItemSet<size_t> &items_set_;
 
         std::array<float, zlp::kBandNum> selected_freq_{}, selected_gain_{}, selected_q_{};
         std::array<float, 3> previous_paras_{};

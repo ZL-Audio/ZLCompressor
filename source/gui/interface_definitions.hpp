@@ -326,10 +326,6 @@ namespace zlgui {
 
         void saveToAPVTS() const;
 
-        bool getIsBandSelected(const size_t x) const { return is_band_selected_[x].load(); }
-
-        void setIsBandSelected(const size_t x, const bool f) { is_band_selected_[x].store(f); }
-
         bool getIsMouseWheelShiftReverse() const { return is_mouse_wheel_shift_reverse_.load(); }
 
         void setIsMouseWheelShiftReverse(const bool x) { is_mouse_wheel_shift_reverse_.store(x); }
@@ -364,6 +360,8 @@ namespace zlgui {
             panel_value_tree_.setProperty(kPanelSettingIdentifiers[idx], v, nullptr);
         }
 
+        juce::SelectedItemSet<size_t> &getSelectedBandSet() { return selected_band_set_; }
+
     private:
         juce::AudioProcessorValueTreeState &state;
         juce::ValueTree panel_value_tree_{"panel_setting"};
@@ -378,10 +376,11 @@ namespace zlgui {
         std::atomic<float> mag_curve_thickness_{1.f}, eq_curve_thickness_{1.f};
         std::atomic<size_t> tooltip_lang_id_{1};
 
-        std::array<std::atomic<bool>, zlstate::kBandNUM> is_band_selected_{};
         std::atomic<bool> is_mouse_wheel_shift_reverse_{false};
         std::atomic<bool> is_slider_double_click_open_editor_{false};
         bool is_editor_showing_{false};
+
+        juce::SelectedItemSet<size_t> selected_band_set_;
 
         float loadPara(const std::string &id) const {
             return state.getRawParameterValue(id)->load();

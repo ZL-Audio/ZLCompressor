@@ -28,6 +28,8 @@ namespace zlpanel {
         size_t &selected_band_idx_;
         zlgui::button::ClickTextButton invert_gain_button_, copy_button_, paste_button_;
 
+        juce::SelectedItemSet<size_t> &items_set_;
+
         constexpr static std::array kIDs{
             zlp::PFilterStatus::kID,
             zlp::PFilterType::kID,

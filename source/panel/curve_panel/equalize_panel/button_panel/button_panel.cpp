@@ -20,7 +20,8 @@ namespace zlpanel {
           para_panel_(p, base, selected_band_idx),
           popup_panel_(p, base, selected_band_idx),
           right_click_panel_(p, base, selected_band_idx),
-          solo_panel_(p, base, selected_band_idx, dragger_panels_) {
+          solo_panel_(p, base, selected_band_idx, dragger_panels_),
+          items_set_(base.getSelectedBandSet()) {
         addChildComponent(q_slider_);
         slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         addChildComponent(slope_slider_);
