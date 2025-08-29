@@ -10,17 +10,17 @@
 #include "button_panel.hpp"
 
 namespace zlpanel {
-    ButtonPanel::ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
+    ButtonPanel::ButtonPanel(PluginProcessor &p, zlgui::UIBase &base,
                              size_t &selected_band_idx)
-        : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-          eq_max_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
+        : p_ref_(p), base_(base), selected_band_idx_(selected_band_idx),
+          eq_max_db_id_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
           q_slider_(base), slope_slider_(base),
           eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
-          eq_db_box_attachment_(eq_db_box_.getBox(), processor.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
-          para_panel_(processor, base, selected_band_idx),
-          popup_panel_(processor, base, selected_band_idx),
-          right_click_panel_(processor, base, selected_band_idx),
-          solo_panel_(processor, base, selected_band_idx, dragger_panels_) {
+          eq_db_box_attachment_(eq_db_box_.getBox(), p.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
+          para_panel_(p, base, selected_band_idx),
+          popup_panel_(p, base, selected_band_idx),
+          right_click_panel_(p, base, selected_band_idx),
+          solo_panel_(p, base, selected_band_idx, dragger_panels_) {
         addChildComponent(q_slider_);
         slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         addChildComponent(slope_slider_);
@@ -50,6 +50,17 @@ namespace zlpanel {
 
         right_click_panel_.setBufferedToImage(true);
         addChildComponent(right_click_panel_);
+
+        addChildComponent(lasso_component_);
+        items_set_.addChangeListener(this);
+        for (size_t i = 0; i < zlp::kBandNum; ++i) {
+            freq_updaters_[i] = std::make_unique<zlp::juce_helper::ParaUpdater>(
+                p.parameters_, zlp::PFreq::kID + std::to_string(i));
+            gain_updaters_[i] = std::make_unique<zlp::juce_helper::ParaUpdater>(
+                p.parameters_, zlp::PGain::kID + std::to_string(i));
+            q_updaters_[i] = std::make_unique<zlp::juce_helper::ParaUpdater>(
+                p.parameters_, zlp::PQ::kID + std::to_string(i));
+        }
     }
 
     ButtonPanel::~ButtonPanel() {
@@ -141,6 +152,13 @@ namespace zlpanel {
             }
             para_panel_.updateBand();
             popup_panel_.updateBand();
+
+            if (!items_set_.isSelected(selected_band_idx_)) {
+                items_set_.deselectAll();
+            } else {
+                previous_paras_ = {-99.f, -99.f, -99.f};
+                loadSelectedParas();
+            }
         }
     }
 
@@ -184,6 +202,28 @@ namespace zlpanel {
                 turnOffSolo();
                 selected_band_idx_ = zlp::kBandNum;
             }
+        }
+        if (event.originalComponent == this) {
+            items_set_.deselectAll();
+            lasso_component_.setColour(juce::LassoComponent<size_t>::lassoFillColourId,
+                                       base_.getTextColor().withMultipliedAlpha(.125f));
+            lasso_component_.setColour(juce::LassoComponent<size_t>::lassoOutlineColourId,
+                                       base_.getTextColor().withMultipliedAlpha(.15f));
+            lasso_component_.setVisible(true);
+            lasso_component_.beginLasso(event, this);
+        }
+    }
+
+    void ButtonPanel::mouseUp(const juce::MouseEvent &event) {
+        if (event.originalComponent == this) {
+            lasso_component_.endLasso();
+            lasso_component_.setVisible(false);
+        }
+    }
+
+    void ButtonPanel::mouseDrag(const juce::MouseEvent &event) {
+        if (event.originalComponent == this) {
+            lasso_component_.dragLasso(event);
         }
     }
 
@@ -310,5 +350,80 @@ namespace zlpanel {
     void ButtonPanel::timerCallback() {
         p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, true);
         stopTimer();
+    }
+
+    void ButtonPanel::findLassoItemsInArea(juce::Array<size_t> &items_found, const juce::Rectangle<int> &area) {
+        const auto float_area = area.toFloat();
+        for (size_t idx = 0; idx < dragger_panels_.size(); ++idx) {
+            if (dragger_panels_[idx]->isVisible()) {
+                if (float_area.contains(dragger_panels_[idx]->getDragger().getButtonPos())) {
+                    items_found.add(idx);
+                }
+            }
+        }
+    }
+
+    juce::SelectedItemSet<size_t> &ButtonPanel::getLassoSelection() {
+        return items_set_;
+    }
+
+    void ButtonPanel::changeListenerCallback(juce::ChangeBroadcaster *) {
+        if (items_set_.getNumSelected() == 1) {
+            selected_band_idx_ = items_set_.getSelectedItem(0);
+        }
+        for (size_t i = 0; i < dragger_panels_.size(); ++i) {
+            const auto f1 = items_set_.isSelected(i);
+            if (f1 != dragger_panels_[i]->getDragger().getLAF().getIsSelected()) {
+                dragger_panels_[i]->getDragger().getLAF().setIsSelected(f1);
+                dragger_panels_[i]->getDragger().getButton().repaint();
+            }
+        }
+        loadSelectedParas();
+    }
+
+    void ButtonPanel::loadSelectedParas() {
+        if (items_set_.getNumSelected() == 0) {
+            previous_paras_ = {-99.f, -99.f, -99.f};
+            return;
+        }
+        for (size_t i: items_set_.getItemArray()) {
+            selected_freq_[i] = freq_updaters_[i]->getRawParaValue();
+            selected_gain_[i] = gain_updaters_[i]->getRawParaValue();
+            selected_q_[i] = q_updaters_[i]->getRawParaValue();
+        }
+    }
+
+    void ButtonPanel::repaintCallBackAfter() {
+        if (items_set_.getNumSelected() == 0 || !items_set_.isSelected(selected_band_idx_)) {
+            return;
+        }
+        const std::array<float, 3> new_paras{
+            freq_updaters_[selected_band_idx_]->getRawParaValue(),
+            gain_updaters_[selected_band_idx_]->getRawParaValue(),
+            q_updaters_[selected_band_idx_]->getRawParaValue(),
+        };
+        float diff = 0.f;
+        for (size_t i = 0; i < 3; ++i) {
+            diff += std::abs(new_paras[i] - previous_paras_[i]);
+        }
+        if (diff < static_cast<float>(1e-5)) {
+            return;
+        }
+        previous_paras_ = new_paras;
+        const std::array<float, 3> portion{
+            new_paras[0] / selected_freq_[selected_band_idx_],
+            new_paras[1] / selected_gain_[selected_band_idx_],
+            new_paras[2] / selected_q_[selected_band_idx_]
+        };
+        for (const size_t &i: items_set_.getItemArray()) {
+            if (i != selected_band_idx_) {
+                freq_updaters_[i]->updateSync(
+                    freq_updaters_[i]->getPara()->convertTo0to1(selected_freq_[i] * portion[0]));
+                gain_updaters_[i]->updateSync(
+                    gain_updaters_[i]->getPara()->convertTo0to1(selected_gain_[i] * portion[1]));
+                q_updaters_[i]->updateSync(
+                    q_updaters_[i]->getPara()->convertTo0to1(selected_q_[i] * portion[2]));
+            }
+        }
     }
 } // zlpanel

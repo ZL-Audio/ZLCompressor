@@ -10,6 +10,7 @@
 #pragma once
 
 #include "zlp_definitions.hpp"
+#include "juce_helper/para_updater.hpp"
 #include "compress_controller.hpp"
 #include "compress_attach.hpp"
 #include "equalize_controller.hpp"

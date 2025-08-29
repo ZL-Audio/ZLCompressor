@@ -138,6 +138,10 @@ namespace zlpanel {
         repaint();
     }
 
+    void EqualizePanel::repaintCallBackAfter() {
+        button_panel_.repaintCallBackAfter();
+    }
+
     void EqualizePanel::mouseEnter(const juce::MouseEvent &) {
         background_panel_.setMouseOver(true);
     }

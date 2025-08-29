@@ -47,6 +47,7 @@ namespace zlpanel {
 
     void CurvePanel::paintOverChildren(juce::Graphics &g) {
         juce::ignoreUnused(g);
+        equalize_panel_.repaintCallBackAfter();
         notify();
     }
 

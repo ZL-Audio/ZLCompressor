@@ -17,14 +17,18 @@
 
 namespace zlpanel {
     class ButtonPanel final : public juce::Component,
-                              private juce::Timer {
+                              private juce::Timer,
+                              private juce::LassoSource<size_t>,
+                              private juce::ChangeListener {
     public:
-        explicit ButtonPanel(PluginProcessor &processor, zlgui::UIBase &base,
+        explicit ButtonPanel(PluginProcessor &p, zlgui::UIBase &base,
                              size_t &selected_band_idx);
 
         ~ButtonPanel() override;
 
         void resized() override;
+
+        void repaintCallBackAfter();
 
         void repaintCallBackSlow();
 
@@ -45,6 +49,10 @@ namespace zlpanel {
         void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
 
         void mouseDown(const juce::MouseEvent &event) override;
+
+        void mouseUp(const juce::MouseEvent &event) override;
+
+        void mouseDrag(const juce::MouseEvent &event) override;
 
         void mouseDoubleClick(const juce::MouseEvent &event) override;
 
@@ -94,6 +102,21 @@ namespace zlpanel {
             zlp::PFilterStatus::kID
         };
 
+        juce::LassoComponent<size_t> lasso_component_;
+        juce::SelectedItemSet<size_t> items_set_;
+
+        std::array<float, zlp::kBandNum> selected_freq_{}, selected_gain_{}, selected_q_{};
+        std::array<float, 3> previous_paras_{};
+        std::array<std::unique_ptr<zlp::juce_helper::ParaUpdater>, zlp::kBandNum> freq_updaters_, gain_updaters_, q_updaters_;
+
         void timerCallback() override;
+
+        void findLassoItemsInArea(juce::Array<size_t> &items_found, const juce::Rectangle<int> &area) override;
+
+        juce::SelectedItemSet<size_t> &getLassoSelection() override;
+
+        void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+
+        void loadSelectedParas();
     };
 } // zlpanel

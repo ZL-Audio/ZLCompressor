@@ -32,6 +32,8 @@ namespace zlpanel {
 
         void repaintCallBack(double time_stamp);
 
+        void repaintCallBackAfter();
+
     private:
         PluginProcessor &p_ref_;
         zlgui::UIBase &base_;
