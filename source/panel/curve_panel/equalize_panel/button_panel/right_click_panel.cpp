@@ -98,6 +98,7 @@ namespace zlpanel {
 
         setVisible(false);
 
+        base_.getSelectedBandSet().deselectAll();
         for (size_t i = 0; i < zlp::kBandNum; ++i) {
             const auto filter = tree.getChildWithName(juce::Identifier{"filter" + std::to_string(i)});
 
@@ -125,6 +126,7 @@ namespace zlpanel {
                     return;
                 }
             }
+            base_.getSelectedBandSet().addToSelection(band_idx);
             selected_band_idx_ = band_idx;
         }
     }
