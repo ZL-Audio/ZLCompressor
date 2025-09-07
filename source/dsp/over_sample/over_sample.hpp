@@ -20,27 +20,30 @@ namespace zldsp::oversample {
      */
     template<typename FloatType, size_t NumStage>
     class OverSampler {
-    private:
-        static constexpr std::array kCoeff_128_05_100 = halfband_coeff::convert<FloatType>(
-            halfband_coeff::kCoeff_128_05_100);
-        static constexpr std::array kCoeff_32_22_100 = halfband_coeff::convert<FloatType>(
-            halfband_coeff::kCoeff_32_22_100);
-
     public:
-        OverSampler() {
+        explicit OverSampler() {
             // ensure the latency is integer
             static_assert(NumStage >= 1);
             static_assert(NumStage <= 6);
             // init the first stage with a large filter
             stages_.emplace_back(OverSampleStage<FloatType>{
-                std::span(kCoeff_128_05_100),
-                std::span(kCoeff_128_05_100)
+                halfband_coeff::getCoeffByID<FloatType>(halfband_coeff::k128_05_100),
+                halfband_coeff::getCoeffByID<FloatType>(halfband_coeff::k128_05_100)
             });
             // init the remaining stages with a small filter
             for (size_t i = 1; i < NumStage; ++i) {
                 stages_.emplace_back(OverSampleStage<FloatType>{
-                    std::span(kCoeff_32_22_100),
-                    std::span(kCoeff_32_22_100)
+                    halfband_coeff::getCoeffByID<FloatType>(halfband_coeff::k32_22_100),
+                    halfband_coeff::getCoeffByID<FloatType>(halfband_coeff::k32_22_100)
+                });
+            }
+        }
+
+        explicit OverSampler(std::array<halfband_coeff::CoeffID, NumStage> coeff_IDs) {
+            for (const auto &coeff_ID: coeff_IDs) {
+                stages_.emplace_back(OverSampleStage<FloatType>{
+                    halfband_coeff::getCoeffByID<FloatType>(coeff_ID),
+                    halfband_coeff::getCoeffByID<FloatType>(coeff_ID)
                 });
             }
         }
