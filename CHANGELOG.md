@@ -4,6 +4,19 @@ LICENSE and CODE are available at [https://github.com/ZL-Audio/ZLCompressor](htt
 
 # Changelog
 
+## 0.2.1
+
+New Features
+
+- add spectrum frozen (hold the mouse over the spectrum)
+- add multiple-band selection
+- add multiple-band copy/paste
+
+Bug fixes and Improvements
+
+- fix wrong 6dB slope choice when using mouse wheel
+- improve over-sampling performance (greatly)
+
 ## 0.2.0
 
 New Features
