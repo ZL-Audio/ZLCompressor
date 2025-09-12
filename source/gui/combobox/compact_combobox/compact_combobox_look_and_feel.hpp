@@ -116,7 +116,6 @@ namespace zlgui::combobox {
                 option = option.withMinimumWidth(box.getWidth());
             }
             return option.withTargetComponent(&box)
-                    .withItemThatMustBeVisible(box.getSelectedId())
                     .withInitiallySelectedItem(box.getSelectedId())
                     .withStandardItemHeight(label.getHeight());
         }
