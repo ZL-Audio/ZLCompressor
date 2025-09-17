@@ -15,7 +15,6 @@
 #include "zlp_definitions.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_dsp/juce_dsp.h>
 
 namespace zlp {
     class EqualizeController {
@@ -28,7 +27,7 @@ namespace zlp {
 
         explicit EqualizeController();
 
-        void prepare(const juce::dsp::ProcessSpec &spec);
+        void prepare(double sample_rate, size_t max_num_samples);
 
         void process(std::array<double *, 2> pointers, size_t num_samples);
 

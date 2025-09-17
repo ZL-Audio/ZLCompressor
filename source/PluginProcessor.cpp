@@ -95,11 +95,6 @@ void PluginProcessor::changeProgramName(int, const juce::String &) {
 //==============================================================================
 void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_per_block) {
     // prepare to play
-    const juce::dsp::ProcessSpec spec{
-        sample_rate,
-        static_cast<juce::uint32>(samples_per_block),
-        2
-    };
     float_buffer_.setSize(4, samples_per_block);
     float_buffer_.clear();
     main_pointers_[0] = float_buffer_.getWritePointer(0);
@@ -110,8 +105,8 @@ void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_
     double_side_pointers_[0] = double_buffer_.getWritePointer(0);
     double_side_pointers_[1] = double_buffer_.getWritePointer(1);
     double_buffer_.clear();
-    compress_controller_.prepare(spec);
-    equalize_controller_.prepare(spec);
+    compress_controller_.prepare(sample_rate, static_cast<size_t>(samples_per_block));
+    equalize_controller_.prepare(sample_rate, static_cast<size_t>(samples_per_block));
     // determine current channel layout
     const auto *main_bus = getBus(true, 0);
     const auto *aux_bus = getBus(true, 1);

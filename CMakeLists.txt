@@ -187,7 +187,6 @@ target_link_libraries(SharedCode
         Assets
         juce_audio_utils
         juce_audio_processors
-        juce_dsp
         juce_gui_basics
         juce_gui_extra
         juce::juce_recommended_config_flags

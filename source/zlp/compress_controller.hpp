@@ -18,7 +18,6 @@
 #include "../dsp/loudness/lufs_matcher.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_dsp/juce_dsp.h>
 
 namespace zlp {
     class CompressController final : private juce::AsyncUpdater {
@@ -28,7 +27,7 @@ namespace zlp {
 
         explicit CompressController(juce::AudioProcessor &processor);
 
-        void prepare(const juce::dsp::ProcessSpec &spec);
+        void prepare(double sample_rate, size_t max_num_samples);
 
         void process(std::array<float *, 2> main_pointers, std::array<float *, 2> side_pointers,
                      size_t num_samples, bool bypass);
@@ -178,7 +177,7 @@ namespace zlp {
 
     private:
         juce::AudioProcessor &processor_ref_;
-        juce::dsp::ProcessSpec main_spec_{48000.0, 512, 2};
+        double sample_rate_{48000.0};
         std::array<kfr::univector<float>, 2> pre_buffer_, post_buffer_;
         std::array<float *, 2> pre_pointers_{}, post_pointers_{};
         // global parameter update flag

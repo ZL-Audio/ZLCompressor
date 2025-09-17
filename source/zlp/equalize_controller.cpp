@@ -14,17 +14,17 @@ namespace zlp {
         on_indices_.reserve(kBandNum);
     }
 
-    void EqualizeController::prepare(const juce::dsp::ProcessSpec &spec) {
-        fft_analyzer_.prepare(spec.sampleRate, {2});
+    void EqualizeController::prepare(const double sample_rate, const size_t max_num_samples) {
+        fft_analyzer_.prepare(sample_rate, {2});
         for (auto &filter: filters_) {
-            filter.prepare(spec.sampleRate, 2);
+            filter.prepare(sample_rate, 2);
         }
-        gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.01);
+        gain_.prepare(sample_rate, max_num_samples, 0.01);
         for (size_t chan = 0; chan < 2; chan ++) {
-            solo_buffers_[chan].resize(static_cast<size_t>(spec.maximumBlockSize));
+            solo_buffers_[chan].resize(max_num_samples);
             solo_pointers_[chan] = solo_buffers_[chan].data();
         }
-        solo_filter_.prepare(spec.sampleRate, 2);
+        solo_filter_.prepare(sample_rate, 2);
     }
 
     void EqualizeController::prepareBuffer() {

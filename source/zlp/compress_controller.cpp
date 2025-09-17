@@ -14,46 +14,45 @@ namespace zlp {
         : processor_ref_(processor) {
     }
 
-    void CompressController::prepare(const juce::dsp::ProcessSpec &spec) {
-        main_spec_ = spec;
-        mag_analyzer_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize));
-        mag_avg_analyzer_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize));
-        lufs_matcher_.prepare(spec.sampleRate, 2);
-        output_gain_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 0.1);
+    void CompressController::prepare(const double sample_rate, const size_t max_num_samples) {
+        sample_rate_ = sample_rate;
+        mag_analyzer_.prepare(sample_rate, max_num_samples);
+        mag_avg_analyzer_.prepare(sample_rate, max_num_samples);
+        lufs_matcher_.prepare(sample_rate, 2);
+        output_gain_.prepare(sample_rate, max_num_samples, 0.1);
 
-        pre_buffer_[0].resize(static_cast<size_t>(spec.maximumBlockSize));
-        pre_buffer_[1].resize(static_cast<size_t>(spec.maximumBlockSize));
+        pre_buffer_[0].resize(max_num_samples);
+        pre_buffer_[1].resize(max_num_samples);
         pre_pointers_[0] = pre_buffer_[0].data();
         pre_pointers_[1] = pre_buffer_[1].data();
-        post_buffer_[0].resize(static_cast<size_t>(spec.maximumBlockSize));
-        post_buffer_[1].resize(static_cast<size_t>(spec.maximumBlockSize));
+        post_buffer_[0].resize(max_num_samples);
+        post_buffer_[1].resize(max_num_samples);
         post_pointers_[0] = post_buffer_[0].data();
         post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to 8x oversampling
         for (auto &t: rms_tracker_) {
             t.setMaximumMomentarySeconds(0.05f * 8.f);
-            t.prepare(spec.sampleRate);
+            t.prepare(sample_rate);
             t.setMaximumMomentarySeconds(0.05f);
         }
-        rms_side_buffer0_.resize(static_cast<size_t>(spec.maximumBlockSize) * 8);
+        rms_side_buffer0_.resize(max_num_samples * 8);
         rms_side_buffer1_.resize(rms_side_buffer0_.size());
         // init oversamplers
-        over_sampler2_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
-        over_sampler4_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
-        over_sampler8_.prepare(4, static_cast<size_t>(spec.maximumBlockSize));
+        over_sampler2_.prepare(4, max_num_samples);
+        over_sampler4_.prepare(4, max_num_samples);
+        over_sampler8_.prepare(4, max_num_samples);
 
-        oversample_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2,
-                                  static_cast<float>(over_sampler8_.getLatency()) / static_cast<float>(spec.
-                                      sampleRate));
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler8_.getLatency()) / static_cast<float>(sample_rate));
         oversample_delay_.setDelayInSamples(0);
         c_oversample_idx_ = -1;
         // init lookahead delay
-        lookahead_delay_.prepare(spec.sampleRate, static_cast<size_t>(spec.maximumBlockSize), 2, 0.02f);
+        lookahead_delay_.prepare(sample_rate, max_num_samples, 2, 0.02f);
         lookahead_delay_.setDelayInSamples(0);
         to_update_lookahead_.store(true, std::memory_order::release);
         // init hold buffers
         for (auto &h: hold_buffer_) {
-            h.setCapacity(static_cast<size_t>(8.0 * spec.sampleRate));
+            h.setCapacity(static_cast<size_t>(8.0 * sample_rate));
         }
         to_update_.store(true, std::memory_order::release);
     }
@@ -103,7 +102,7 @@ namespace zlp {
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
-            oversample_sr_ = main_spec_.sampleRate * static_cast<double>(oversample_mul);
+            oversample_sr_ = sample_rate_ * static_cast<double>(oversample_mul);
             to_update_rms_.store(true, std::memory_order::release);
             for (auto &f: follower_) {
                 f.prepare(oversample_sr_);
@@ -165,7 +164,7 @@ namespace zlp {
         if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
             const auto oversample_mul = 1 << c_oversample_idx_;
             const auto hold_size = static_cast<size_t>(
-                                       main_spec_.sampleRate * hold_length_.load(std::memory_order::relaxed)
+                                       sample_rate_ * hold_length_.load(std::memory_order::relaxed)
                                    ) * static_cast<size_t>(oversample_mul);
             hold_buffer_[0].setSize(hold_size);
             hold_buffer_[1].setSize(hold_size);
