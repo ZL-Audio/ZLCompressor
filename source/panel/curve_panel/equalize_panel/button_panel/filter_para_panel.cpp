@@ -31,6 +31,7 @@ namespace zlpanel {
             s->setFontScale(1.25f);
             s->setJustification(juce::Justification::centredLeft);
             s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+            s->getSlider().setDraggingEnabled(false);
             s->getSlider().setSliderSnapsToMousePosition(false);
             s->setBufferedToImage(true);
         }
@@ -41,21 +42,20 @@ namespace zlpanel {
     }
 
     int FilterParaPanel::getIdealWidth() const {
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale * .5f);
-        return 2 * slider_width;
+        return juce::roundToInt(base_.getFontSize() * kSliderScale * 1.15f);
     }
 
     int FilterParaPanel::getIdealHeight() const {
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale * .66f);
-        return 2 * button_height;
+        return juce::roundToInt(base_.getFontSize() * kButtonScale * 1.33f);
     }
 
     void FilterParaPanel::resized() {
         auto bound = getLocalBounds();
+        const auto label_width = juce::roundToInt(base_.getFontSize() * kSliderScale * .5f);
         auto t_bound = bound.removeFromTop(bound.getHeight() / 2);
-        freq_label_.setBounds(t_bound.removeFromLeft(t_bound.getWidth() / 2));
+        freq_label_.setBounds(t_bound.removeFromLeft(label_width));
         freq_slider_.setBounds(t_bound);
-        gain_label_.setBounds(bound.removeFromLeft(bound.getWidth() / 2));
+        gain_label_.setBounds(bound.removeFromLeft(label_width));
         gain_slider_.setBounds(bound);
     }
 
