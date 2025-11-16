@@ -38,12 +38,6 @@ namespace zlpanel {
 
         zlgui::label::NameLookAndFeel label_laf_;
 
-        zlgui::slider::CompactLinearSlider<true, true, true> range_slider_;
-        zlgui::attachment::SliderAttachment<true> range_attachment_;
-
-        zlgui::slider::CompactLinearSlider<true, true, true> hold_slider_;
-        zlgui::attachment::SliderAttachment<true> hold_attachment_;
-
         juce::Label gain_label_;
         zlgui::slider::TwoValueRotarySlider<false, false, false> gain_slider_;
         zlgui::attachment::SliderAttachment<true> gain_attachment_;

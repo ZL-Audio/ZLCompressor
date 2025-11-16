@@ -18,7 +18,7 @@ namespace zlpanel {
     class MidControlPanel final : public juce::Component {
     public:
         explicit MidControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                 multilingual::TooltipHelper &tooltip_helper);
+                                 const multilingual::TooltipHelper &tooltip_helper);
 
         void paint(juce::Graphics &g) override;
 
@@ -56,5 +56,11 @@ namespace zlpanel {
 
         zlgui::slider::CompactLinearSlider<true, true, true> smooth_slider_;
         zlgui::attachment::SliderAttachment<true> smooth_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> range_slider_;
+        zlgui::attachment::SliderAttachment<true> range_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> hold_slider_;
+        zlgui::attachment::SliderAttachment<true> hold_attachment_;
     };
-} // zlpanel
+}

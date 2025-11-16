@@ -10,8 +10,8 @@
 #include "mid_control_panel.hpp"
 
 namespace zlpanel {
-    MidControlPanel::MidControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                     multilingual::TooltipHelper &tooltip_helper)
+    MidControlPanel::MidControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                     const multilingual::TooltipHelper& tooltip_helper)
         : p_ref_(p), base_(base),
           knee_slider_("Knee", base_,
                        tooltip_helper.getToolTipText(multilingual::kKnee)),
@@ -36,7 +36,13 @@ namespace zlpanel {
           pump_attachment_(pump_slider_.getSlider(), p_ref_.parameters_, zlp::PPump::kID, updater_),
           smooth_slider_("Smooth", base_,
                          tooltip_helper.getToolTipText(multilingual::kSmooth)),
-          smooth_attachment_(smooth_slider_.getSlider(), p_ref_.parameters_, zlp::PSmooth::kID, updater_) {
+          smooth_attachment_(smooth_slider_.getSlider(), p_ref_.parameters_, zlp::PSmooth::kID, updater_),
+          range_slider_("Range", base_,
+                        tooltip_helper.getToolTipText(multilingual::kRange)),
+          range_attachment_(range_slider_.getSlider(), p.parameters_, zlp::PRange::kID, updater_),
+          hold_slider_("Hold", base_,
+                       tooltip_helper.getToolTipText(multilingual::kHold)),
+          hold_attachment_(hold_slider_.getSlider(), p.parameters_, zlp::PHold::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
         knee_slider_.setBufferedToImage(true);
@@ -63,10 +69,16 @@ namespace zlpanel {
         smooth_slider_.setBufferedToImage(true);
         addAndMakeVisible(smooth_slider_);
 
+        range_slider_.setBufferedToImage(true);
+        addAndMakeVisible(range_slider_);
+
+        hold_slider_.setBufferedToImage(true);
+        addAndMakeVisible(hold_slider_);
+
         setOpaque(true);
     }
 
-    void MidControlPanel::paint(juce::Graphics &g) {
+    void MidControlPanel::paint(juce::Graphics& g) {
         g.setColour(base_.getBackgroundColour());
         g.fillRect(getLocalBounds());
     }
@@ -75,7 +87,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
         // const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
-        return padding * 7 + slider_width * 6;
+        return padding * 8 + slider_width * 7;
     }
 
     void MidControlPanel::resized() {
@@ -85,15 +97,28 @@ namespace zlpanel {
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
         bound.removeFromTop(padding);
-        bound.removeFromBottom(padding); {
+        bound.removeFromBottom(padding);
+        {
+            bound.removeFromRight(padding);
+            auto t_bound = bound.removeFromRight(slider_width);
+            t_bound.removeFromTop(padding);
+            const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
+            t_bound.removeFromTop(extra_padding);
+            t_bound.removeFromBottom(extra_padding);
+            range_slider_.setBounds(t_bound.removeFromTop(slider_height));
+            hold_slider_.setBounds(t_bound.removeFromBottom(slider_height));
+        }
+        {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             release_slider_.setBounds(t_bound);
-        } {
+        }
+        {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             attack_slider_.setBounds(t_bound);
-        } {
+        }
+        {
             bound.removeFromRight(padding);
             auto t_bound = bound.removeFromRight(slider_width);
             const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
@@ -101,15 +126,18 @@ namespace zlpanel {
             t_bound.removeFromBottom(extra_padding);
             pump_slider_.setBounds(t_bound.removeFromTop(slider_height));
             smooth_slider_.setBounds(t_bound.removeFromBottom(slider_height));
-        } {
+        }
+        {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             ratio_slider_.setBounds(t_bound);
-        } {
+        }
+        {
             bound.removeFromRight(padding);
             const auto t_bound = bound.removeFromRight(slider_width);
             th_slider_.setBounds(t_bound);
-        } {
+        }
+        {
             bound.removeFromRight(padding);
             auto t_bound = bound.removeFromRight(slider_width);
             const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
@@ -123,4 +151,4 @@ namespace zlpanel {
     void MidControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
     }
-} // zlpanel
+}
