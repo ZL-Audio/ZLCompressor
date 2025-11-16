@@ -27,17 +27,21 @@ namespace zlstate {
 
     void Property::loadAPVTS(juce::AudioProcessorValueTreeState &apvts) {
         const juce::ScopedReadLock scoped_lock(read_write_lock_);
-        const auto file = ui_file_->getFile();
-        if (const auto xml = juce::XmlDocument::parse(file)) {
-            apvts.replaceState(juce::ValueTree::fromXml(*xml));
+        if (ui_file_) {
+            const auto file = ui_file_->getFile();
+            if (const auto xml = juce::XmlDocument::parse(file); xml) {
+                apvts.replaceState(juce::ValueTree::fromXml(*xml));
+            }
         }
     }
 
     void Property::saveAPVTS(juce::AudioProcessorValueTreeState &apvts) {
         const juce::ScopedWriteLock scoped_lock(read_write_lock_);
-        const auto file = ui_file_->getFile();
-        if (const auto xml = apvts.copyState().createXml()) {
-            if (!xml->writeTo(file)) return;
+        if (ui_file_) {
+            const auto file = ui_file_->getFile();
+            if (const auto xml = apvts.copyState().createXml(); xml) {
+                if (!xml->writeTo(file)) return;
+            }
         }
     }
-} // namespace zlstate
+}
