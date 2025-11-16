@@ -86,7 +86,7 @@ namespace zlpanel {
         }
 
         label_laf_.setFontScale(1.125f);
-        label_laf_.setAlpha(.5f);
+        version_label_.setAlpha(.5f);
         version_label_.setText(
             juce::String(ZL_PLUGIN_CURRENT_VERSION) + " " + juce::String(ZL_PLUGIN_CURRENT_HASH),
             juce::dontSendNotification);
@@ -98,7 +98,7 @@ namespace zlpanel {
     UISettingPanel::~UISettingPanel() = default;
 
     void UISettingPanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor());
+        g.fillAll(base_.getBackgroundColour());
         auto bound = getLocalBounds().toFloat();
         bound = bound.withSizeKeepingCentre(bound.getWidth() * .75f, bound.getHeight() * 1.25f);
         base_.fillRoundedShadowRectangle(g, bound, 0.5f * base_.getFontSize(), {.blur_radius = 0.5f});

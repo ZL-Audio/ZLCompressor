@@ -24,11 +24,11 @@ namespace zlpanel {
     void LogoPanel::paint(juce::Graphics &g) {
         const auto temp_brand = brand_drawable_->createCopy();
         const auto temp_logo = logo_drawable_->createCopy();
-        temp_brand->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
-        temp_logo->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
+        temp_brand->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
+        temp_logo->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
         temp_logo->replaceColour(
             juce::Colour(static_cast<juce::uint8>(0), static_cast<juce::uint8>(0), static_cast<juce::uint8>(0), .5f),
-            base_.getTextColor().withMultipliedAlpha(.5f));
+            base_.getTextColour().withMultipliedAlpha(.5f));
 
         auto bound = getLocalBounds().toFloat();
         const auto padding = base_.getFontSize() * kPaddingScale * .5f;

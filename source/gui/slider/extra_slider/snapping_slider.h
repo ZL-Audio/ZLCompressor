@@ -14,11 +14,18 @@
 namespace zlgui::slider {
     class SnappingSlider final : public juce::Slider {
     public:
-        explicit SnappingSlider(UIBase &base, const juce::String &name = "") : juce::Slider(name), base_(base) {
+        explicit SnappingSlider(UIBase& base, const juce::String& name = "") : juce::Slider(name), base_(base) {
         }
 
-        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &w) override {
+        void mouseDrag(const juce::MouseEvent& event) override {
+            if (is_dragging_enabled_) {
+                juce::Slider::mouseDrag(event);
+            }
+        }
+
+        void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& w) override {
             // avoid duplicate mousewheel events
+            if (!isScrollWheelEnabled()) { return; }
             if (event.eventTime == last_wheel_time_) { return; }
             last_wheel_time_ = event.eventTime;
             // apply shift reverse
@@ -44,14 +51,21 @@ namespace zlgui::slider {
             if (std::abs(delta) > getInterval() * 0.9) {
                 cumulative_x_ = 0.f;
                 cumulative_y_ = 0.f;
+                juce::Slider::ScopedDragNotification drag_notification{*this};
                 setValue(snapValue(current_value + delta, notDragging), juce::sendNotificationSync);
             }
         }
 
+        void setDraggingEnabled(const bool f) {
+            is_dragging_enabled_ = f;
+        }
+
     protected:
-        UIBase &base_;
+        UIBase& base_;
         float cumulative_x_{0.f}, cumulative_y_{0.f};
         juce::Time last_wheel_time_{};
+
+        bool is_dragging_enabled_{true};
 
         double getMouseWheelDelta(const double value, const float wheel_delta) {
             const auto proportion_delta = static_cast<double>(wheel_delta) * 0.15;

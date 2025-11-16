@@ -16,26 +16,23 @@
 namespace zlgui::label {
     class NameLookAndFeel final : public juce::LookAndFeel_V4 {
     public:
-        explicit NameLookAndFeel(UIBase &base) : base_(base) {
+        explicit NameLookAndFeel(UIBase& base) : base_(base) {
         }
 
-        void drawLabel(juce::Graphics &g, juce::Label &label) override {
+        void drawLabel(juce::Graphics& g, juce::Label& label) override {
             if (label.isBeingEdited()) {
                 return;
             }
-            g.setColour(base_.getTextColor().withMultipliedAlpha(alpha_));
+            g.setColour(base_.getTextColour());
             g.setFont(base_.getFontSize() * font_scale_);
             g.drawText(label.getText(), label.getLocalBounds().toFloat(), label.getJustificationType());
         }
 
-        inline void setAlpha(const float x) { alpha_ = x; }
-
         inline void setFontScale(const float x) { font_scale_ = x; }
 
     private:
-        UIBase &base_;
+        UIBase& base_;
 
-        float alpha_{1.f};
         float font_scale_{kFontNormal};
     };
 }

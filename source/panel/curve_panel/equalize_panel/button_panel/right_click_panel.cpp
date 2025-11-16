@@ -34,7 +34,7 @@ namespace zlpanel {
     }
 
     void RightClickPanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor());
+        g.fillAll(base_.getBackgroundColour());
     }
 
     void RightClickPanel::updateCopyVisibility(const bool show_copy) {

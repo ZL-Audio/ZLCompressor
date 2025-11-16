@@ -16,20 +16,22 @@
 namespace zlgui {
     class ClickTextButtonLookAndFeel final : public juce::LookAndFeel_V4 {
     public:
-        explicit ClickTextButtonLookAndFeel(UIBase &base) : base_(base) {
+        explicit ClickTextButtonLookAndFeel(UIBase& base) : base_(base) {
         }
 
-        void drawButtonBackground(juce::Graphics &g, juce::Button &,
-                                  const juce::Colour &, bool, bool) override {
-            g.fillAll(base_.getBackgroundColor());
+        void drawButtonBackground(juce::Graphics&, juce::Button&,
+                                  const juce::Colour&, bool, bool) override {
+            // g.fillAll(base_.getBackgroundColour());
         }
 
-        void drawButtonText(juce::Graphics &g, juce::TextButton &button,
+        void drawButtonText(juce::Graphics& g, juce::TextButton& button,
                             const bool highlight, const bool down) override {
-            if (highlight || down) {
-                g.setColour(base_.getTextColor());
+            if (down || button.getToggleState()) {
+                g.setColour(base_.getTextColour());
+            } else if (highlight) {
+                g.setColour(base_.getTextColour().withAlpha(.75f));
             } else {
-                g.setColour(base_.getTextInactiveColor());
+                g.setColour(base_.getTextColour().withAlpha(.5f));
             }
             g.setFont(base_.getFontSize() * font_scale_);
             g.drawText(button.getButtonText(), button.getBounds(), justification_);
@@ -44,7 +46,7 @@ namespace zlgui {
         }
 
     private:
-        UIBase &base_;
+        UIBase& base_;
 
         float font_scale_{1.f};
         juce::Justification justification_{juce::Justification::centredLeft};

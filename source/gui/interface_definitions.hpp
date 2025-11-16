@@ -51,8 +51,8 @@ namespace zlgui {
         juce::Identifier("ui_setting_changed")
     };
 
-    static constexpr size_t kColorMap1Size = 10;
-    static constexpr size_t kColorMap2Size = 6;
+    static constexpr size_t kColourMap1Size = 10;
+    static constexpr size_t kColourMap2Size = 6;
 
     inline std::array kColourMaps = {
         std::vector<juce::Colour>{
@@ -152,13 +152,17 @@ namespace zlgui {
         auto y = std::abs(x);
         if (y < 10) {
             return formatFloat(x, length - 1);
-        } else if (y < 100) {
+        }
+        else if (y < 100) {
             return formatFloat(x, length - 2);
-        } else if (y < 1000) {
+        }
+        else if (y < 1000) {
             return formatFloat(x, length - 3);
-        } else if (y < 10000) {
+        }
+        else if (y < 10000) {
             return formatFloat(x, length - 4);
-        } else {
+        }
+        else {
             return formatFloat(x, length - 5);
         }
     }
@@ -167,78 +171,115 @@ namespace zlgui {
     public:
         juce::ReferenceCountedObjectPtr<juce::Typeface> font_;
 
-        explicit UIBase(juce::AudioProcessorValueTreeState &apvts)
+        explicit UIBase(juce::AudioProcessorValueTreeState& apvts)
             : state(apvts), font_size_{0.f} {
             loadFromAPVTS();
         }
 
-        void setFontSize(const float fSize) { font_size_ = fSize; }
+        void setFontMode(const size_t font_mode) {
+            font_mode_ = font_mode;
+        }
 
-        inline float getFontSize() const { return font_size_; }
+        size_t getFontMode() const {
+            return font_mode_;
+        }
 
-        inline juce::Colour getTextColor() const {
+        void setFontScale(const float font_scale) {
+            font_scale_ = font_scale;
+        }
+
+        float getFontScale() const {
+            return font_scale_;
+        }
+
+        void setStaticFontSize(const float static_font_size) {
+            static_font_size_ = static_font_size;
+        }
+
+        float getStaticFontSize() const {
+            return static_font_size_;
+        }
+
+        void setFontSize(const float font_size) {
+            font_size_ = font_size;
+        }
+
+        float getFontSize() const {
+            return font_size_;
+        }
+
+        juce::Colour getTextColour() const {
             return custom_colours_[static_cast<size_t>(kTextColour)];
         }
 
-        inline juce::Colour getTextInactiveColor() const { return getTextColor().withAlpha(0.5f); }
+        juce::Colour getTextInactiveColour() const { return getTextColour().withAlpha(0.5f); }
 
-        inline juce::Colour getTextHideColor() const { return getTextColor().withAlpha(0.25f); }
+        juce::Colour getTextHideColour() const { return getTextColour().withAlpha(0.25f); }
 
-        inline juce::Colour getBackgroundColor() const {
+        juce::Colour getBackgroundColour() const {
             return custom_colours_[static_cast<size_t>(kBackgroundColour)];
         }
 
-        inline juce::Colour getBackgroundInactiveColor() const { return getBackgroundColor().withAlpha(0.8f); }
+        juce::Colour getBackgroundInactiveColour() const { return getBackgroundColour().withAlpha(0.8f); }
 
-        inline juce::Colour getBackgroundHideColor() const { return getBackgroundColor().withAlpha(0.5f); }
+        juce::Colour getBackgroundHideColour() const { return getBackgroundColour().withAlpha(0.5f); }
 
-        inline juce::Colour getDarkShadowColor() const {
+        juce::Colour getColourBlendedWithBackground(const juce::Colour colour, const float alpha) const {
+            const auto background_color = getBackgroundColour();
+            return juce::Colour::fromFloatRGBA(
+                alpha * colour.getFloatRed() + (1.f - alpha) * background_color.getFloatRed(),
+                alpha * colour.getFloatGreen() + (1.f - alpha) * background_color.getFloatGreen(),
+                alpha * colour.getFloatBlue() + (1.f - alpha) * background_color.getFloatBlue(),
+                1.f);
+        }
+
+        juce::Colour getDarkShadowColour() const {
             return custom_colours_[static_cast<size_t>(kShadowColour)];
         }
 
-        inline juce::Colour getBrightShadowColor() const {
+        juce::Colour getBrightShadowColour() const {
             return custom_colours_[static_cast<size_t>(kGlowColour)];
         }
 
-        inline juce::Colour getColorMap1(const size_t idx) const {
+        juce::Colour getColourMap1(const size_t idx) const {
             return kColourMaps[colour_map1_idx_][idx % kColourMaps[colour_map1_idx_].size()];
         }
 
-        inline juce::Colour getColorMap2(const size_t idx) const {
+        juce::Colour getColourMap2(const size_t idx) const {
             return kColourMaps[colour_map2_idx_][idx % kColourMaps[colour_map2_idx_].size()];
         }
 
         static juce::Rectangle<float> getRoundedShadowRectangleArea(juce::Rectangle<float> box_bounds,
                                                                     float corner_size,
-                                                                    const FillRoundedShadowRectangleArgs &margs);
+                                                                    const FillRoundedShadowRectangleArgs& margs);
 
-        juce::Rectangle<float> fillRoundedShadowRectangle(juce::Graphics &g,
+        juce::Rectangle<float> fillRoundedShadowRectangle(juce::Graphics& g,
                                                           juce::Rectangle<float> box_bounds,
                                                           float corner_size,
-                                                          const FillRoundedShadowRectangleArgs &margs) const;
+                                                          const FillRoundedShadowRectangleArgs& margs) const;
 
-        juce::Rectangle<float> fillRoundedInnerShadowRectangle(juce::Graphics &g,
+        juce::Rectangle<float> fillRoundedInnerShadowRectangle(juce::Graphics& g,
                                                                juce::Rectangle<float> box_bounds,
                                                                float corner_size,
-                                                               const FillRoundedShadowRectangleArgs &margs) const;
+                                                               const FillRoundedShadowRectangleArgs& margs) const;
 
         static juce::Rectangle<float> getShadowEllipseArea(juce::Rectangle<float> box_bounds,
                                                            float corner_size,
-                                                           const FillShadowEllipseArgs &margs);
+                                                           const FillShadowEllipseArgs& margs);
 
-        juce::Rectangle<float> drawShadowEllipse(juce::Graphics &g,
+        juce::Rectangle<float> drawShadowEllipse(juce::Graphics& g,
                                                  juce::Rectangle<float> box_bounds,
                                                  float corner_size,
-                                                 const FillShadowEllipseArgs &margs) const;
+                                                 const FillShadowEllipseArgs& margs) const;
 
         static juce::Rectangle<float> getInnerShadowEllipseArea(juce::Rectangle<float> box_bounds,
                                                                 float corner_size,
-                                                                const FillShadowEllipseArgs &margs);
+                                                                const FillShadowEllipseArgs& margs);
 
-        juce::Rectangle<float> drawInnerShadowEllipse(juce::Graphics &g,
+        juce::Rectangle<float> drawInnerShadowEllipse(juce::Graphics& g,
                                                       juce::Rectangle<float> box_bounds,
                                                       float corner_size,
-                                                      const FillShadowEllipseArgs &margs) const;
+                                                      const FillShadowEllipseArgs& margs) const;
 
         juce::Colour getColourByIdx(ColourIdx idx) const {
             return custom_colours_[static_cast<size_t>(idx)];
@@ -348,9 +389,9 @@ namespace zlgui {
 
         bool getIsEditorShowing() const { return is_editor_showing_; }
 
-        juce::ValueTree &getPanelValueTree() { return panel_value_tree_; }
+        juce::ValueTree& getPanelValueTree() { return panel_value_tree_; }
 
-        bool isPanelIdentifier(const PanelSettingIdx idx, const juce::Identifier &identifier) const {
+        bool isPanelIdentifier(const PanelSettingIdx idx, const juce::Identifier& identifier) const {
             return identifier == kPanelSettingIdentifiers[static_cast<size_t>(idx)];
         }
 
@@ -358,17 +399,20 @@ namespace zlgui {
             return panel_value_tree_.getProperty(kPanelSettingIdentifiers[static_cast<size_t>(idx)]);
         }
 
-        void setPanelProperty(const PanelSettingIdx idx, const juce::var &v) {
+        void setPanelProperty(const PanelSettingIdx idx, const juce::var& v) {
             panel_value_tree_.setProperty(kPanelSettingIdentifiers[idx], v, nullptr);
         }
 
-        juce::SelectedItemSet<size_t> &getSelectedBandSet() { return selected_band_set_; }
+        juce::SelectedItemSet<size_t>& getSelectedBandSet() { return selected_band_set_; }
 
     private:
-        juce::AudioProcessorValueTreeState &state;
+        juce::AudioProcessorValueTreeState& state;
         juce::ValueTree panel_value_tree_{"panel_setting"};
 
         float font_size_{0.f};
+        size_t font_mode_{0};
+        float font_scale_{9.f};
+        float static_font_size_{0.f};
         std::array<juce::Colour, kColourNum> custom_colours_;
         std::array<float, kSensitivityNum> wheel_sensitivity_{1.f, 0.12f, 1.f, .25f};
         size_t rotary_style_id_{0};
@@ -384,11 +428,11 @@ namespace zlgui {
 
         juce::SelectedItemSet<size_t> selected_band_set_;
 
-        float loadPara(const std::string &id) const {
+        float loadPara(const std::string& id) const {
             return state.getRawParameterValue(id)->load();
         }
 
-        void savePara(const std::string &id, const float x) const {
+        void savePara(const std::string& id, const float x) const {
             const auto para = state.getParameter(id);
             para->beginChangeGesture();
             para->setValueNotifyingHost(x);

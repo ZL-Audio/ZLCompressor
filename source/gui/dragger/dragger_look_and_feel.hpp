@@ -24,29 +24,25 @@ namespace zlgui::dragger {
             kLeftArrow
         };
 
-        explicit DraggerLookAndFeel(UIBase &base) : base_(base) {
+        explicit DraggerLookAndFeel(UIBase& base) : base_(base) {
         }
 
-        void drawToggleButton(juce::Graphics &g, juce::ToggleButton &button,
+        void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button,
                               bool should_draw_button_as_highlighted,
                               bool should_draw_button_as_down) override {
             if (should_draw_button_as_down || button.getToggleState()) {
-                g.setColour(base_.getTextColor());
+                g.setColour(base_.getTextColour());
                 g.fillPath(outline_path_);
             } else if (should_draw_button_as_highlighted || is_selected_) {
-                g.setColour(base_.getTextColor().withMultipliedAlpha(0.5f));
+                g.setColour(base_.getTextColour().withAlpha(0.5f));
                 g.fillPath(outline_path_);
             }
 
-            g.setColour(colour_);
+            g.setColour(filling_colour_);
             g.fillPath(inner_path_);
 
             if (label_.length() > 0) {
-                if (colour_.getPerceivedBrightness() <= .5f) {
-                    g.setColour(juce::Colours::white);
-                } else {
-                    g.setColour(juce::Colours::black);
-                }
+                g.setColour(base_.getTextColour().withAlpha(alpha_));
                 g.setFont(base_.getFontSize() * label_scale_);
                 auto bound = button.getLocalBounds().toFloat();
                 const auto radius = std::min(bound.getHeight(), bound.getWidth());
@@ -55,49 +51,52 @@ namespace zlgui::dragger {
             }
         }
 
-        inline void setColour(const juce::Colour c) { colour_ = c; }
+        inline void setColour(const juce::Colour c) {
+            colour_ = c;
+            filling_colour_ = base_.getColourBlendedWithBackground(c, alpha_);
+        }
 
         void setIsSelected(const bool f) { is_selected_ = f; }
 
-        bool getIsSelected() const { return is_selected_; }
+        [[nodiscard]] bool getIsSelected() const { return is_selected_; }
 
         void setDraggerShape(const DraggerShape s) { dragger_shape_ = s; }
 
-        void updatePaths(juce::Rectangle<float> &bound) {
+        void updatePaths(juce::Rectangle<float>& bound) {
             outline_path_.clear();
             inner_path_.clear();
             switch (dragger_shape_) {
-                case kRound: {
-                    updateRoundPaths(bound);
-                    break;
-                }
-                case kRectangle: {
-                    updateRectanglePaths(bound);
-                    break;
-                }
-                case kUpDownArrow: {
-                    updateUpDownArrowPaths(bound);
-                    break;
-                }
-                case kRightArrow: {
-                    updateRightArrowPaths(bound);
-                    break;
-                }
-                case kLeftArrow: {
-                    updateLeftArrowPaths(bound);
-                    break;
-                }
+            case kRound: {
+                updateRoundPaths(bound);
+                break;
+            }
+            case kRectangle: {
+                updateRectanglePaths(bound);
+                break;
+            }
+            case kUpDownArrow: {
+                updateUpDownArrowPaths(bound);
+                break;
+            }
+            case kRightArrow: {
+                updateRightArrowPaths(bound);
+                break;
+            }
+            case kLeftArrow: {
+                updateLeftArrowPaths(bound);
+                break;
+            }
             }
         }
 
-        void updateRoundPaths(juce::Rectangle<float> &bound) {
+        void updateRoundPaths(juce::Rectangle<float>& bound) {
             const auto radius = bound.getWidth();
             outline_path_.addEllipse(bound);
             bound = bound.withSizeKeepingCentre(radius * .75f, radius * .75f);
             inner_path_.addEllipse(bound);
         }
 
-        void updateRectanglePaths(juce::Rectangle<float> &bound) {
+        void updateRectanglePaths(juce::Rectangle<float>& bound) {
             const auto radius = bound.getWidth() * 0.75f;
             bound = bound.withSizeKeepingCentre(radius, radius);
             outline_path_.addRectangle(bound);
@@ -105,8 +104,8 @@ namespace zlgui::dragger {
             inner_path_.addRectangle(bound);
         }
 
-        void updateUpDownArrowPaths(juce::Rectangle<float> &bound) {
-            auto updateOnePath = [](juce::Path &path, const juce::Rectangle<float> &temp) {
+        void updateUpDownArrowPaths(juce::Rectangle<float>& bound) {
+            auto updateOnePath = [](juce::Path& path, const juce::Rectangle<float>& temp) {
                 path.startNewSubPath(temp.getCentreX(), temp.getY());
                 path.lineTo(temp.getCentreX() + temp.getWidth() * .33f, temp.getCentreY());
                 path.lineTo(temp.getCentreX(), temp.getBottom());
@@ -114,12 +113,12 @@ namespace zlgui::dragger {
                 path.closeSubPath();
             };
             updateOnePath(outline_path_, bound);
-            bound = bound.withSizeKeepingCentre(bound.getWidth() * .75f, bound.getHeight() * .75f);
+            bound = bound.withSizeKeepingCentre(bound.getWidth() * .625f, bound.getHeight() * .625f);
             updateOnePath(inner_path_, bound);
         }
 
-        void updateRightArrowPaths(juce::Rectangle<float> &bound) {
-            auto updateOnePath = [](juce::Path &path, const juce::Rectangle<float> &temp) {
+        void updateRightArrowPaths(juce::Rectangle<float>& bound) {
+            auto updateOnePath = [](juce::Path& path, const juce::Rectangle<float>& temp) {
                 const auto center = temp.getCentre();
                 path.startNewSubPath(center.getX() + temp.getWidth() * .5f, center.getY());
                 path.lineTo(center.getX(), center.getY() + temp.getHeight() * std::sqrt(3.f) * .25f);
@@ -131,8 +130,8 @@ namespace zlgui::dragger {
             updateOnePath(inner_path_, bound);
         }
 
-        void updateLeftArrowPaths(juce::Rectangle<float> &bound) {
-            auto updateOnePath = [](juce::Path &path, const juce::Rectangle<float> &temp) {
+        void updateLeftArrowPaths(juce::Rectangle<float>& bound) {
+            auto updateOnePath = [](juce::Path& path, const juce::Rectangle<float>& temp) {
                 const auto center = temp.getCentre();
                 path.startNewSubPath(center.getX() - temp.getWidth() * .5f, center.getY());
                 path.lineTo(center.getX(), center.getY() + temp.getHeight() * std::sqrt(3.f) * .25f);
@@ -144,17 +143,23 @@ namespace zlgui::dragger {
             updateOnePath(inner_path_, bound);
         }
 
-        void setLabel(const juce::String &l) { label_ = l; }
+        void setLabel(const juce::String& l) { label_ = l; }
 
         void setLabelScale(const float x) { label_scale_ = x; }
 
+        void setAlpha(const float a) {
+            alpha_ = a;
+            filling_colour_ = base_.getColourBlendedWithBackground(colour_, alpha_);
+        }
+
     private:
-        juce::Colour colour_;
+        juce::Colour colour_, filling_colour_;
         juce::Path outline_path_, inner_path_;
         bool is_selected_{false};
         DraggerShape dragger_shape_{DraggerShape::kRound};
         juce::String label_;
         float label_scale_ = 1.f;
-        UIBase &base_;
+        float alpha_ = 1.f;
+        UIBase& base_;
     };
 }

@@ -22,7 +22,7 @@ namespace zlpanel {
             return;
         }
         auto &filter{p_ref_.getEqualizeController().getFilter(selected_band_idx_)};
-        g.setColour(base_.getBackgroundColor().withAlpha(.75f));
+        g.setColour(base_.getBackgroundColour().withAlpha(.75f));
         switch (filter.getFilterType<true>()) {
             case zldsp::filter::FilterType::kLowShelf:
             case zldsp::filter::FilterType::kHighPass: {

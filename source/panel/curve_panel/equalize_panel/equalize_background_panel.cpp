@@ -17,13 +17,13 @@ namespace zlpanel {
     }
 
     void EqualizerBackgroundPanel::Background1::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor().withAlpha(.875f));
+        g.fillAll(base_.getBackgroundColour().withAlpha(.875f));
         g.setFont(base_.getFontSize());
-        g.setColour(base_.getTextColor().withAlpha(.375f));
+        g.setColour(base_.getTextColour().withAlpha(.375f));
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
             g.drawText(kBackgroundFreqsNames[i], text_bounds_[i], juce::Justification::bottomRight);
         }
-        g.setColour(base_.getTextColor().withAlpha(.1f));
+        g.setColour(base_.getTextColour().withAlpha(.1f));
         g.fillRectList(rect_list_);
     }
 

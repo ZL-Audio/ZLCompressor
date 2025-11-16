@@ -32,7 +32,7 @@ namespace zlpanel {
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(base_.getTextColor().withAlpha(.375f));
+        g.setColour(base_.getTextColour().withAlpha(.375f));
         g.fillPath(out_path_);
     }
 

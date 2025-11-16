@@ -42,7 +42,7 @@ namespace zlpanel {
     }
 
     void CurvePanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColor());
+        g.fillAll(base_.getBackgroundColour());
     }
 
     void CurvePanel::paintOverChildren(juce::Graphics &g) {

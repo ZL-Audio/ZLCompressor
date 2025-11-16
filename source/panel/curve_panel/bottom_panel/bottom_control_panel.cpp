@@ -76,7 +76,7 @@ namespace zlpanel {
     }
 
     void BottomControlPanel::paint(juce::Graphics &g) {
-        g.setColour(base_.getBackgroundColor());
+        g.setColour(base_.getBackgroundColour());
         g.fillPath(show_path1_ ? background_path1_ : background_path0_);
     }
 

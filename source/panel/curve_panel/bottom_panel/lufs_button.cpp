@@ -66,7 +66,7 @@ namespace zlpanel {
         path.lineTo(bound.getRight() - bound.getHeight(), bound.getY());
         path.lineTo(bound.getX() + bound.getHeight(), bound.getY());
 
-        g.setColour(base_.getBackgroundColor());
+        g.setColour(base_.getBackgroundColour());
         g.fillPath(path);
     }
 

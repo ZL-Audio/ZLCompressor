@@ -49,7 +49,7 @@ namespace zlpanel {
         path.lineTo(bound.getWidth() - static_cast<float>(button_height), bound.getY());
         path.closeSubPath();
 
-        g.setColour(base_.getBackgroundColor());
+        g.setColour(base_.getBackgroundColour());
         g.fillPath(path);
     }
 

@@ -40,7 +40,7 @@ namespace zlpanel {
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(base_.getColorMap1(band_idx_));
+        g.setColour(base_.getColourMap1(band_idx_));
         g.strokePath(path_, juce::PathStrokeType(curve_thickness_ * curve_thickness_scale,
                                                  juce::PathStrokeType::curved,
                                                  juce::PathStrokeType::rounded));

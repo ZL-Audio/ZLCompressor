@@ -55,12 +55,12 @@ namespace zlgui::combobox {
         const auto choice_idx = static_cast<size_t>(combo_box_.getSelectedItemIndex());
         if (!choice_text_.empty()) {
             const auto text = choice_text_[choice_idx];
-            g.setColour(base_.getTextColor());
+            g.setColour(base_.getTextColour());
             g.drawText(text, bound, juce::Justification::centred);
         }
         if (!choice_icons_.empty()) {
             const auto temp_drawable = choice_icons_[choice_idx]->createCopy();
-            temp_drawable->replaceColour(juce::Colour(0, 0, 0), base_.getTextColor());
+            temp_drawable->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
             temp_drawable->drawWithin(g, bound, juce::RectanglePlacement::Flags::centred, 1.0);
         }
     }

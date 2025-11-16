@@ -25,9 +25,9 @@ namespace zlpanel {
         if (!lock.owns_lock()) {
             return;
         }
-        g.setColour(base_.getTextColor().withAlpha(.25f));
+        g.setColour(base_.getTextColour().withAlpha(.25f));
         g.fillPath(in_path_);
-        g.setColour(base_.getTextColor().withAlpha(.9f));
+        g.setColour(base_.getTextColour().withAlpha(.9f));
         g.strokePath(out_path_,
                      juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,

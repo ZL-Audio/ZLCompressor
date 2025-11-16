@@ -11,7 +11,7 @@
 
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
-#include "../../../../gui/attachment/dragger_attachment.hpp"
+#include "../../../../gui/dragger/dragger_attachment.hpp"
 #include "../../../helper/helper.hpp"
 
 namespace zlpanel {
@@ -58,7 +58,8 @@ namespace zlpanel {
 
         zlgui::attachment::ComponentUpdater updater_;
         zlgui::dragger::Dragger dragger_;
-        std::unique_ptr<zlgui::attachment::DraggerAttachment<false>> dragger_attachment_;
+        std::unique_ptr<zlgui::attachment::DraggerAttachment<false, true>> dragger_attachment_x_;
+        std::unique_ptr<zlgui::attachment::DraggerAttachment<false, false>> dragger_attachment_y_;
 
         void updateDraggerBound();
         void lookAndFeelChanged() override;

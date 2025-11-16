@@ -10,7 +10,6 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-
 #include "../interface_definitions.hpp"
 
 namespace zlgui {
@@ -20,12 +19,13 @@ namespace zlgui {
 
         enum ScaleType {
             kScaleWithWidth,
-            kScaleWithHeight
+            kScaleWithHeight,
+            kScaleWithFontSize
         };
 
-        ResizeCorner(UIBase &base,
-                     juce::Component *componentToResize,
-                     juce::ComponentBoundsConstrainer *constrainer,
+        ResizeCorner(UIBase& base,
+                     juce::Component* componentToResize,
+                     juce::ComponentBoundsConstrainer* constrainer,
                      const ScaleType scale_type = kScaleWithWidth,
                      const float corner_scale = .025f)
             : juce::ResizableCornerComponent(componentToResize, constrainer),
@@ -36,7 +36,7 @@ namespace zlgui {
             setBufferedToImage(true);
         }
 
-        void paint(juce::Graphics &g) override {
+        void paint(juce::Graphics& g) override {
             const auto bound = getLocalBounds().toFloat();
             auto rect1 = juce::Rectangle<float>{
                 bound.getX() + bound.getWidth() * (1.f - kDefaultRectScale), bound.getY(),
@@ -47,23 +47,23 @@ namespace zlgui {
                 bound.getWidth(), bound.getHeight() * kDefaultRectScale
             };
 
-            g.setColour(base_.getBackgroundColor());
+            g.setColour(base_.getBackgroundColour());
             g.fillRect(rect1);
             g.fillRect(rect2);
 
             rect1.reduce(bound.getWidth() * 0.05f, bound.getHeight() * 0.05f);
             rect2.reduce(bound.getWidth() * 0.05f, bound.getHeight() * 0.05f);
 
-            g.setColour(base_.getTextColor());
+            g.setColour(base_.getTextColour());
             g.fillRect(rect1);
             g.fillRect(rect2);
         }
 
-        void mouseEnter(const juce::MouseEvent &) override {
+        void mouseEnter(const juce::MouseEvent&) override {
             setAlpha(1.f);
         }
 
-        void mouseExit(const juce::MouseEvent &) override {
+        void mouseExit(const juce::MouseEvent&) override {
             setAlpha(.1f);
         }
 
@@ -76,24 +76,32 @@ namespace zlgui {
         }
 
     private:
-        UIBase &base_;
+        UIBase& base_;
         const float corner_scale_ = 0.05f;
         const ScaleType scale_type_ = kScaleWithWidth;
 
         void updateCornerBound() {
-            auto *parent = getParentComponent();
+            auto* parent = getParentComponent();
             if (parent != nullptr) {
                 const auto parent_bound = parent->getLocalBounds();
                 int corner_size{0};
                 switch (scale_type_) {
-                    case kScaleWithWidth: {
-                        corner_size = parent_bound.getWidth();
-                        break;
-                    }
-                    case kScaleWithHeight: {
-                        corner_size = parent_bound.getHeight();
-                        break;
-                    }
+                case kScaleWithWidth: {
+                    corner_size = parent_bound.getWidth();
+                    break;
+                }
+                case kScaleWithHeight: {
+                    corner_size = parent_bound.getHeight();
+                    break;
+                }
+                case kScaleWithFontSize: {
+                    const auto max_font_size = static_cast<float>(parent_bound.getWidth()) * 0.016f;
+                    const auto min_font_size = max_font_size * .25f;
+                    const auto font_size = base_.getFontMode() == 0
+                        ? max_font_size * base_.getFontScale()
+                        : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
+                    corner_size = static_cast<int>(std::round(font_size));
+                }
                 }
                 corner_size = std::max(1, static_cast<int>(
                                            std::round(static_cast<float>(corner_size) * corner_scale_)));

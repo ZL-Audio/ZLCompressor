@@ -209,9 +209,9 @@ namespace zlpanel {
         if (event.originalComponent == this) {
             items_set_.deselectAll();
             lasso_component_.setColour(juce::LassoComponent<size_t>::lassoFillColourId,
-                                       base_.getTextColor().withMultipliedAlpha(.125f));
+                                       base_.getTextColour().withMultipliedAlpha(.125f));
             lasso_component_.setColour(juce::LassoComponent<size_t>::lassoOutlineColourId,
-                                       base_.getTextColor().withMultipliedAlpha(.15f));
+                                       base_.getTextColour().withMultipliedAlpha(.15f));
             lasso_component_.setVisible(true);
             lasso_component_.beginLasso(event, this);
         }

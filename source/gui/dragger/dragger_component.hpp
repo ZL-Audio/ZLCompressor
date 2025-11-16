@@ -17,27 +17,27 @@
 namespace zlgui::dragger {
     class Dragger final : public juce::Component {
     public:
-        std::function<juce::Point<float>(juce::Point<float> currentC, juce::Point<float> nextC)> check_center_;
+        std::function<juce::Point<float>(juce::Point<float> current, juce::Point<float> next)> check_center_;
 
-        explicit Dragger(UIBase &base);
+        explicit Dragger(UIBase& base);
 
         ~Dragger() override;
 
         bool updateButton();
 
-        bool updateButton(const juce::Point<float> &center);
+        bool updateButton(const juce::Point<float>& center);
 
-        void mouseDown(const juce::MouseEvent &event) override;
+        void mouseDown(const juce::MouseEvent& event) override;
 
-        void mouseUp(const juce::MouseEvent &event) override;
+        void mouseUp(const juce::MouseEvent& event) override;
 
-        void mouseDrag(const juce::MouseEvent &event) override;
+        void mouseDrag(const juce::MouseEvent& event) override;
 
         void setButtonArea(juce::Rectangle<float> bound);
 
         juce::Rectangle<float> getButtonArea() const { return button_area_; }
 
-        juce::ToggleButton &getButton() { return button_; }
+        juce::ToggleButton& getButton() { return button_; }
 
         juce::Point<float> getButtonPos() const { return button_pos_; }
 
@@ -51,49 +51,38 @@ namespace zlgui::dragger {
 
         void setScale(const float x) { scale_ = x; }
 
-        void visibilityChanged() override;
-
         class Listener {
         public:
             virtual ~Listener() = default;
 
-            virtual void draggerValueChanged(Dragger *dragger) = 0;
+            virtual void draggerValueChanged(Dragger* dragger) = 0;
 
-            virtual void dragStarted(Dragger *dragger) = 0;
+            virtual void dragStarted(Dragger* dragger) = 0;
 
-            virtual void dragEnded(Dragger *dragger) = 0;
+            virtual void dragEnded(Dragger* dragger) = 0;
         };
 
         /** Adds a listener to be called when this slider's value changes. */
-        void addListener(Listener *listener);
+        void addListener(Listener* listener);
 
         /** Removes a previously-registered listener. */
-        void removeListener(Listener *listener);
+        void removeListener(Listener* listener);
 
-        DraggerLookAndFeel &getLAF() { return dragger_laf_; }
+        DraggerLookAndFeel& getLAF() { return dragger_laf_; }
 
         void setXYEnabled(const bool x, const bool y) {
-            if (x && !y) {
-                check_center_ = [](const juce::Point<float> currentC,
-                                 const juce::Point<float> nextC) {
-                    return juce::Point<float>(nextC.x, currentC.y);
-                };
-            } else if (!x && y) {
-                check_center_ = [](const juce::Point<float> currentC,
-                                 const juce::Point<float> nextC) {
-                    return juce::Point<float>(currentC.x, nextC.y);
-                };
-            } else {
-                check_center_ = nullptr;
-            }
+            x_enabled_ = x;
+            y_enabled_ = y;
         }
 
     private:
-        UIBase &base_;
+        UIBase& base_;
         DraggerLookAndFeel dragger_laf_;
         juce::ToggleButton button_;
         float x_portion_{0.f}, y_portion_{0.f};
         float scale_{1.f};
+
+        bool x_enabled_{true}, y_enabled_{true};
 
         juce::Point<float> global_pos_{}, current_pos_{};
         juce::Rectangle<float> button_area_{};
@@ -101,4 +90,4 @@ namespace zlgui::dragger {
 
         juce::ListenerList<Listener> listeners_;
     };
-} // zlgui
+}

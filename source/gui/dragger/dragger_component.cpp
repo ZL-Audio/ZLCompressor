@@ -10,25 +10,28 @@
 #include "dragger_component.hpp"
 
 namespace zlgui::dragger {
-    Dragger::Dragger(UIBase &base)
+    Dragger::Dragger(UIBase& base)
         : base_(base), dragger_laf_(base) {
+        dragger_laf_.setColour(base_.getColourMap1(1));
         button_.addMouseListener(this, false);
-        dragger_laf_.setColour(base_.getColorMap1(1));
         button_.setClickingTogglesState(false);
-        setInterceptsMouseClicks(false, true);
         button_.setLookAndFeel(&dragger_laf_);
         addAndMakeVisible(button_);
+
+        setInterceptsMouseClicks(false, true);
     }
 
     Dragger::~Dragger() {
         button_.removeMouseListener(this);
     }
 
-    bool Dragger::updateButton(const juce::Point<float> &center) {
-        if (std::abs(button_pos_.x - center.x) > 0.1f || std::abs(button_pos_.y - center.y) > 0.1f) {
-            button_pos_ = center;
-            button_.setTransform(juce::AffineTransform::translation(button_pos_.x, button_pos_.y));
-            return true;
+    bool Dragger::updateButton(const juce::Point<float>& center) {
+        if (std::isfinite(center.x) && std::isfinite(center.y)) {
+            if (std::abs(button_pos_.x - center.x) > 0.1f || std::abs(button_pos_.y - center.y) > 0.1f) {
+                button_pos_ = center;
+                button_.setTransform(juce::AffineTransform::translation(button_pos_.x, button_pos_.y));
+                return true;
+            }
         }
         return false;
     }
@@ -37,21 +40,21 @@ namespace zlgui::dragger {
         return updateButton(current_pos_);
     }
 
-    void Dragger::mouseDown(const juce::MouseEvent &e) {
+    void Dragger::mouseDown(const juce::MouseEvent& e) {
         current_pos_ = button_pos_;
         global_pos_ = e.position + button_pos_;
         button_.setToggleState(true, juce::NotificationType::sendNotificationSync);
         const BailOutChecker checker(this);
-        listeners_.callChecked(checker, [&](Dragger::Listener &l) { l.dragStarted(this); });
+        listeners_.callChecked(checker, [&](Dragger::Listener& l) { l.dragStarted(this); });
     }
 
-    void Dragger::mouseUp(const juce::MouseEvent &e) {
+    void Dragger::mouseUp(const juce::MouseEvent& e) {
         juce::ignoreUnused(e);
         const BailOutChecker checker(this);
-        listeners_.callChecked(checker, [&](Dragger::Listener &l) { l.dragEnded(this); });
+        listeners_.callChecked(checker, [&](Dragger::Listener& l) { l.dragEnded(this); });
     }
 
-    void Dragger::mouseDrag(const juce::MouseEvent &e) {
+    void Dragger::mouseDrag(const juce::MouseEvent& e) {
         // calculate shift and update global position
         const auto new_global_pos = e.position + button_pos_;
         auto shift = new_global_pos - global_pos_;
@@ -67,6 +70,12 @@ namespace zlgui::dragger {
             } else {
                 shift.setY(0.f);
             }
+        }
+        if (!x_enabled_) {
+            shift.setX(0.f);
+        }
+        if (!y_enabled_) {
+            shift.setY(0.f);
         }
         // update current position
         const auto old_current_pos = current_pos_;
@@ -89,7 +98,7 @@ namespace zlgui::dragger {
         y_portion_ = 1.f - (current_pos_.getY() - button_area_.getY()) / button_area_.getHeight();
         // call listeners
         const BailOutChecker checker(this);
-        listeners_.callChecked(checker, [&](Listener &l) { l.draggerValueChanged(this); });
+        listeners_.callChecked(checker, [&](Listener& l) { l.draggerValueChanged(this); });
     }
 
     void Dragger::setButtonArea(const juce::Rectangle<float> bound) {
@@ -97,20 +106,16 @@ namespace zlgui::dragger {
 
         const auto radius = static_cast<int>(std::round(base_.getFontSize() * scale_ * .5f));
         button_.setBounds(juce::Rectangle<int>(-radius, -radius, radius * 2, radius * 2));
-        updateButton({-99999.f, -99999.f});
 
         auto laf_bound = button_.getBounds().toFloat().withPosition(0.f, 0.f);
         dragger_laf_.updatePaths(laf_bound);
-
-        setXPortion(x_portion_);
-        setYPortion(y_portion_);
     }
 
-    void Dragger::addListener(Listener *listener) {
+    void Dragger::addListener(Listener* listener) {
         listeners_.add(listener);
     }
 
-    void Dragger::removeListener(Listener *listener) {
+    void Dragger::removeListener(Listener* listener) {
         listeners_.remove(listener);
     }
 
@@ -131,8 +136,4 @@ namespace zlgui::dragger {
     float Dragger::getYPortion() const {
         return y_portion_;
     }
-
-    void Dragger::visibilityChanged() {
-        updateButton({-100000.f, -100000.f});
-    }
-} // zlgui
+}

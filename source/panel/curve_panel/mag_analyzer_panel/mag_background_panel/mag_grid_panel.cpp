@@ -19,11 +19,11 @@ namespace zlpanel {
     }
 
     void MagGridgroundPanel::paint(juce::Graphics& g) {
-        g.fillAll(base_.getBackgroundColor());
+        g.fillAll(base_.getBackgroundColour());
 
         const auto bound = getLocalBounds().toFloat();
         const auto thickness = base_.getFontSize() * 0.125f;
-        g.setColour(base_.getTextColor().withAlpha(.1f));
+        g.setColour(base_.getTextColour().withAlpha(.1f));
         for (const auto scale : {1.f, 2.f, 3.f, 4.f, 5.f}) {
             const auto y = bound.getHeight() * scale / 6.f;
             const auto rect = juce::Rectangle<float>({bound.getX(), y, bound.getWidth(), thickness});
@@ -33,7 +33,7 @@ namespace zlpanel {
         const auto text_height = static_cast<float>(juce::roundToInt(base_.getFontSize() * 1.75f));
         const auto text_width = static_cast<float>(juce::roundToInt(base_.getFontSize()  * 2.6f));
         const auto right_padding = static_cast<float>(juce::roundToInt(base_.getFontSize() * kPaddingScale) / 2);
-        g.setColour(base_.getTextColor().withAlpha(.5f));
+        g.setColour(base_.getTextColour().withAlpha(.5f));
         g.setFont(base_.getFontSize());
         for (const auto scale : {2.f, 4.f}) {
             const auto y = bound.getHeight() * scale / 6.f;

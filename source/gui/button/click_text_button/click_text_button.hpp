@@ -7,10 +7,6 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-//
-// Created by Zishu Liu on 7/24/25.
-//
-
 #pragma once
 
 #include "click_text_button_laf.hpp"
@@ -18,10 +14,10 @@
 namespace zlgui::button {
     class ClickTextButton final : public juce::Component {
     public:
-        explicit ClickTextButton(UIBase &base,
-                                 const juce::String &text = "",
-                                 const juce::String &tooltip_text = "")
-            : look_and_feel_(base) {
+        explicit ClickTextButton(UIBase& base,
+                                 const juce::String& text = "",
+                                 const juce::String& tooltip_text = "") :
+            look_and_feel_(base) {
             button_.setButtonText(text);
             button_.setLookAndFeel(&look_and_feel_);
 
@@ -40,9 +36,9 @@ namespace zlgui::button {
             button_.setBounds(getLocalBounds());
         }
 
-        juce::TextButton &getButton() { return button_; }
+        juce::TextButton& getButton() { return button_; }
 
-        ClickTextButtonLookAndFeel &getLAF() { return look_and_feel_; }
+        ClickTextButtonLookAndFeel& getLAF() { return look_and_feel_; }
 
     private:
         ClickTextButtonLookAndFeel look_and_feel_;

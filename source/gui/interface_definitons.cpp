@@ -12,24 +12,24 @@
 
 namespace zlgui {
     juce::Rectangle<float> UIBase::getRoundedShadowRectangleArea(juce::Rectangle<float> box_bounds, float corner_size,
-                                                                 const FillRoundedShadowRectangleArgs &margs) {
+                                                                 const FillRoundedShadowRectangleArgs& margs) {
         const auto radius = juce::jmax(juce::roundToInt(corner_size * margs.blur_radius * 1.5f), 1);
         return box_bounds.withSizeKeepingCentre(
             box_bounds.getWidth() - static_cast<float>(radius) - 1.42f * corner_size,
             box_bounds.getHeight() - static_cast<float>(radius) - 1.42f * corner_size);
     }
 
-    juce::Rectangle<float> UIBase::fillRoundedShadowRectangle(juce::Graphics &g,
+    juce::Rectangle<float> UIBase::fillRoundedShadowRectangle(juce::Graphics& g,
                                                               juce::Rectangle<float> box_bounds,
                                                               float corner_size,
-                                                              const FillRoundedShadowRectangleArgs &margs) const {
+                                                              const FillRoundedShadowRectangleArgs& margs) const {
         auto args = margs;
         if (!args.change_main)
-            args.main_colour = getBackgroundColor().withAlpha(args.main_colour.getAlpha());
+            args.main_colour = getBackgroundColour().withAlpha(args.main_colour.getAlpha());
         if (!args.change_dark)
-            args.dark_shadow_color = getDarkShadowColor();
+            args.dark_shadow_color = getDarkShadowColour();
         if (!args.change_bright)
-            args.bright_shadow_color = getBrightShadowColor();
+            args.bright_shadow_color = getBrightShadowColour();
 
         juce::Path path;
         const auto radius = juce::jmax(juce::roundToInt(corner_size * args.blur_radius * 1.5f), 1);
@@ -68,17 +68,17 @@ namespace zlgui {
         return box_bounds;
     }
 
-    juce::Rectangle<float> UIBase::fillRoundedInnerShadowRectangle(juce::Graphics &g,
+    juce::Rectangle<float> UIBase::fillRoundedInnerShadowRectangle(juce::Graphics& g,
                                                                    juce::Rectangle<float> box_bounds,
                                                                    float corner_size,
-                                                                   const FillRoundedShadowRectangleArgs &margs) const {
+                                                                   const FillRoundedShadowRectangleArgs& margs) const {
         auto args = margs;
         if (!args.change_main)
-            args.main_colour = getBackgroundColor();
+            args.main_colour = getBackgroundColour();
         if (!args.change_dark)
-            args.dark_shadow_color = getDarkShadowColor();
+            args.dark_shadow_color = getDarkShadowColour();
         if (!args.change_bright)
-            args.bright_shadow_color = getBrightShadowColor();
+            args.bright_shadow_color = getBrightShadowColour();
 
         juce::Path mask;
         mask.addRoundedRectangle(box_bounds.getX(), box_bounds.getY(),
@@ -126,7 +126,7 @@ namespace zlgui {
     }
 
     juce::Rectangle<float> UIBase::getShadowEllipseArea(juce::Rectangle<float> box_bounds, float corner_size,
-                                                        const FillShadowEllipseArgs &margs) {
+                                                        const FillShadowEllipseArgs& margs) {
         auto radius = juce::jmax(juce::roundToInt(corner_size * 0.75f), 1);
         if (margs.fit) {
             box_bounds = box_bounds.withSizeKeepingCentre(
@@ -137,24 +137,22 @@ namespace zlgui {
     }
 
 
-    juce::Rectangle<float> UIBase::drawShadowEllipse(juce::Graphics &g,
+    juce::Rectangle<float> UIBase::drawShadowEllipse(juce::Graphics& g,
                                                      juce::Rectangle<float> box_bounds,
                                                      float corner_size,
-                                                     const FillShadowEllipseArgs &margs) const {
+                                                     const FillShadowEllipseArgs& margs) const {
         auto args = margs;
         if (!args.change_main)
-            args.main_colour = getBackgroundColor();
+            args.main_colour = getBackgroundColour();
         if (!args.change_dark)
-            args.dark_shadow_color = getDarkShadowColor();
+            args.dark_shadow_color = getDarkShadowColour();
         if (!args.change_bright)
-            args.bright_shadow_color = getBrightShadowColor();
+            args.bright_shadow_color = getBrightShadowColour();
 
         juce::Path path;
         auto radius = juce::jmax(juce::roundToInt(corner_size * 0.75f), 1);
         if (args.fit) {
-            box_bounds = box_bounds.withSizeKeepingCentre(
-                box_bounds.getWidth() - static_cast<float>(radius) - 1.5f * corner_size,
-                box_bounds.getHeight() - static_cast<float>(radius) - 1.5f * corner_size);
+            box_bounds = box_bounds.reduced((static_cast<float>(radius) + 1.5f * corner_size) * .5f);
         }
         path.addEllipse(box_bounds);
         auto offset = static_cast<int>(corner_size * args.blur_radius);
@@ -188,41 +186,40 @@ namespace zlgui {
             }
         }
         g.restoreState();
-        g.setColour(args.main_colour);
-        g.fillPath(path);
         return box_bounds;
     }
 
     juce::Rectangle<float> UIBase::getInnerShadowEllipseArea(juce::Rectangle<float> box_bounds,
                                                              const float corner_size,
-                                                             const FillShadowEllipseArgs &margs) {
+                                                             const FillShadowEllipseArgs& margs) {
         juce::ignoreUnused(margs);
         const auto radius = juce::jmax(juce::roundToInt(corner_size * 1.5f), 1);
-        box_bounds = box_bounds.withSizeKeepingCentre(
-            box_bounds.getWidth() - 0.75f * static_cast<float>(radius),
-            box_bounds.getHeight() - 0.75f * static_cast<float>(radius));
+        box_bounds = box_bounds.reduced(0.375f * static_cast<float>(radius));
         return box_bounds;
     }
 
-    juce::Rectangle<float> UIBase::drawInnerShadowEllipse(juce::Graphics &g,
+    juce::Rectangle<float> UIBase::drawInnerShadowEllipse(juce::Graphics& g,
                                                           juce::Rectangle<float> box_bounds,
                                                           float corner_size,
-                                                          const FillShadowEllipseArgs &margs) const {
+                                                          const FillShadowEllipseArgs& margs) const {
         auto args = margs;
         if (!args.change_main)
-            args.main_colour = getBackgroundColor();
+            args.main_colour = getBackgroundColour();
         if (!args.change_dark)
-            args.dark_shadow_color = getDarkShadowColor();
+            args.dark_shadow_color = getDarkShadowColour();
         if (!args.change_bright)
-            args.bright_shadow_color = getBrightShadowColor();
+            args.bright_shadow_color = getBrightShadowColour();
+
+        auto radius = juce::jmax(juce::roundToInt(corner_size * 1.5f), 1);
+        auto offset = static_cast<int>(corner_size * args.blur_radius) * 2;
 
         juce::Path mask;
         mask.addEllipse(box_bounds);
+        mask.setUsingNonZeroWinding(false);
+        mask.addEllipse(box_bounds.reduced(static_cast<float>(radius + offset)));
         g.saveState();
         g.reduceClipRegion(mask);
-        g.fillAll(args.main_colour);
-        auto radius = juce::jmax(juce::roundToInt(corner_size * 1.5f), 1);
-        auto offset = static_cast<int>(corner_size * args.blur_radius) * 2;
+
         if (!args.flip) {
             juce::DropShadow dark_shadow(args.dark_shadow_color.withMultipliedAlpha(0.75f), radius,
                                          {-offset, -offset});
@@ -238,9 +235,7 @@ namespace zlgui {
                                          {-offset, -offset});
             dark_shadow.drawForPath(g, mask);
         }
-        box_bounds = box_bounds.withSizeKeepingCentre(
-            box_bounds.getWidth() - 0.75f * static_cast<float>(radius),
-            box_bounds.getHeight() - 0.75f * static_cast<float>(radius));
+        box_bounds = box_bounds.reduced(0.375f * static_cast<float>(radius));
         juce::Path path;
         path.addEllipse(box_bounds);
 

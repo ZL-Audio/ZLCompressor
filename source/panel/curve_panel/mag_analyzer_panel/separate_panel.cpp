@@ -30,8 +30,8 @@ namespace zlpanel {
         gradient_.clearColours();
 
         gradient_.addColour(0.0,
-                           base_.getBackgroundColor().withAlpha(1.f));
+                           base_.getBackgroundColour().withAlpha(1.f));
         gradient_.addColour(1.0,
-                           base_.getBackgroundColor().withAlpha(0.f));
+                           base_.getBackgroundColour().withAlpha(0.f));
     }
 } // zlpanel

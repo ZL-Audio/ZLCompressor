@@ -22,7 +22,7 @@ namespace zlpanel {
     }
 
     void ControlPanel::paint(juce::Graphics &g) {
-        g.setColour(base_.getBackgroundColor());
+        g.setColour(base_.getBackgroundColour());
         g.fillRect(getLocalBounds());
     }
 

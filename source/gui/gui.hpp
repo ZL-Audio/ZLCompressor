@@ -15,7 +15,6 @@
 #include "combobox/combobox.hpp"
 #include "slider/slider.hpp"
 #include "dragger/dragger.hpp"
-#include "calloutbox/call_out_box_laf.hpp"
 #include "colour_selector/colour_selector.hpp"
 #include "colour_selector/colour_opacity_selector.hpp"
 #include "colour_selector/colour_map_selector.hpp"
