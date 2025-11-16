@@ -34,7 +34,6 @@ namespace zlpanel {
         rms_open_close_button_.setImageAlpha(1.f, 1.f, 1.f, 1.f);
         addChildComponent(rms_open_close_button_);
 
-        setAlpha(0.f);
         setInterceptsMouseClicks(false, true);
         setBufferedToImage(true);
     }
@@ -68,11 +67,6 @@ namespace zlpanel {
     void RMSButton::repaintCallBackSlow() {
         updater_.updateComponents();
         rms_open_close_button_.setVisible(rms_button_.getButton().getToggleState());
-        if (rms_button_.getButton().getToggleState() || isMouseOver(true)) {
-            setAlpha(1.f);
-        } else {
-            setAlpha(0.f);
-        }
         // close rms panel if rms button is off
         if (!rms_button_.getButton().getToggleState() && rms_open_close_button_.getButton().getToggleState()) {
             auto *para = p_ref_.na_parameters_.getParameter(zlstate::PRMSPanelDisplay::kID);
@@ -81,4 +75,4 @@ namespace zlpanel {
             para->endChangeGesture();
         }
     }
-} // zlpanel
+}

@@ -50,7 +50,6 @@ namespace zlpanel {
         addAndMakeVisible(learn_button_);
 
         setInterceptsMouseClicks(false, true);
-        setAlpha(.0f);
         setBufferedToImage(true);
     }
 
@@ -73,18 +72,4 @@ namespace zlpanel {
     void LUFSButton::resized() {
         learn_button_.setBounds(getLocalBounds());
     }
-
-    void LUFSButton::mouseEnter(const juce::MouseEvent &) {
-        mouse_over_ = true;
-        setAlpha(1.f);
-    }
-
-    void LUFSButton::mouseExit(const juce::MouseEvent &) {
-        mouse_over_ = false;
-        if (learn_button_.getButton().getToggleState()) {
-            setAlpha(1.f);
-        } else {
-            setAlpha(0.f);
-        }
-    }
-} // zlpanel
+}

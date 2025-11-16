@@ -33,9 +33,5 @@ namespace zlpanel {
 
         const std::unique_ptr<juce::Drawable> learn_drawable_;
         zlgui::button::ClickButton learn_button_;
-
-        void mouseEnter(const juce::MouseEvent &event) override;
-
-        void mouseExit(const juce::MouseEvent &event) override;
     };
 } // zlpanel

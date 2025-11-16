@@ -95,7 +95,7 @@ namespace zlpanel {
         } {
             auto bound = getLocalBounds();
             const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-            bound = bound.removeFromTop(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bound = bound.removeFromTop(juce::roundToInt(base_.getFontSize() * 1.25f));
             bound.removeFromRight(padding);
             bound = bound.removeFromRight(juce::roundToInt(base_.getFontSize() * 2.5f));
             eq_db_box_.setBounds(bound);
