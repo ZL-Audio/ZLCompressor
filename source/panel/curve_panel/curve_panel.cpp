@@ -10,8 +10,8 @@
 #include "curve_panel.hpp"
 
 namespace zlpanel {
-    CurvePanel::CurvePanel(PluginProcessor &p, zlgui::UIBase &base,
-                           multilingual::TooltipHelper &tooltip_helper)
+    CurvePanel::CurvePanel(PluginProcessor& p, zlgui::UIBase& base,
+                           multilingual::TooltipHelper& tooltip_helper)
         : Thread("curve_panel"), p_ref_(p), base_(base),
           mag_analyzer_panel_(p, base),
           separate_panel_(base),
@@ -41,11 +41,11 @@ namespace zlpanel {
         }
     }
 
-    void CurvePanel::paint(juce::Graphics &g) {
+    void CurvePanel::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColour());
     }
 
-    void CurvePanel::paintOverChildren(juce::Graphics &g) {
+    void CurvePanel::paintOverChildren(juce::Graphics& g) {
         juce::ignoreUnused(g);
         equalize_panel_.repaintCallBackAfter();
         notify();
@@ -54,28 +54,33 @@ namespace zlpanel {
     void CurvePanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale); {
+        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        {
             auto bound = getLocalBounds();
             bound.removeFromLeft(button_height);
             mag_analyzer_panel_.setBounds(bound);
-        } {
+        }
+        {
             auto bound = getLocalBounds();
             bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
             bottom_control_panel_.setBounds(bound);
-        } {
+        }
+        {
             auto bound = getLocalBounds();
             bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
             left_control_panel_.setBounds(bound.removeFromLeft(button_height));
-        } {
+        }
+        {
             auto bound = getLocalBounds();
             bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
             bound.removeFromLeft(button_height);
 
             const auto width = side_control_panel_.getIdealWidth();
-            const auto height = side_control_panel_.getIdealHeight();
+            const auto ideal_height = std::min(side_control_panel_.getIdealHeight(), bound.getHeight());
+            const auto height = std::max(static_cast<int>(static_cast<float>(bound.getHeight()) * .618f), ideal_height);
 
             bound = bound.removeFromBottom(height);
-            bound = bound.removeFromLeft((padding + slider_width) * 6 - button_height);
+            bound = bound.removeFromLeft((padding + slider_width) * 6 + button_height / 2);
 
             equalize_large_bound_ = bound;
             side_control_panel_.setBounds(bound.removeFromLeft(width));
@@ -83,11 +88,13 @@ namespace zlpanel {
 
             if (side_control_panel_.isVisible()) {
                 equalize_panel_.setBounds(equalize_small_bound_);
-            } else {
+            }
+            else {
                 equalize_panel_.setBounds(equalize_large_bound_);
             }
             separate_panel_.setBounds(getLocalBounds().withWidth(equalize_large_bound_.getWidth()));
-        } {
+        }
+        {
             auto bound = getLocalBounds();
             bound.removeFromLeft((padding + slider_width) * 6 + button_height + button_height / 2);
             bound = bound.removeFromLeft(rms_control_panel_.getIdealWidth());
@@ -146,4 +153,4 @@ namespace zlpanel {
             equalize_panel_.repaintCallBack(time_stamp);
         }
     }
-} // zlpanel
+}

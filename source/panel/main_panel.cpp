@@ -56,7 +56,11 @@ namespace zlpanel {
             }
         }
 
-        const auto font_size = static_cast<float>(bound.getWidth()) * 0.016f;
+        const auto max_font_size = static_cast<float>(bound.getWidth()) * kFontSizeOverWidth;
+        const auto min_font_size = max_font_size * .25f;
+        const auto font_size = base_.getFontMode() == 0
+            ? max_font_size * base_.getFontScale()
+            : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
         base_.setFontSize(font_size);
 
         ui_setting_panel_.setBounds(bound);

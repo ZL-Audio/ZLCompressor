@@ -17,7 +17,7 @@ namespace zlstate {
     inline static constexpr size_t kBandNUM = 8;
 
     // float
-    template<class T>
+    template <class T>
     class FloatParameters {
     public:
         static std::unique_ptr<juce::AudioParameterFloat> get(const bool automate = true) {
@@ -26,16 +26,16 @@ namespace zlstate {
                                                                T::kName, T::kRange, T::kDefaultV, attributes);
         }
 
-        static std::unique_ptr<juce::AudioParameterFloat> get(const std::string &suffix, const bool automate = true) {
+        static std::unique_ptr<juce::AudioParameterFloat> get(const std::string& suffix, const bool automate = true) {
             auto attributes = juce::AudioParameterFloatAttributes().withAutomatable(automate).withLabel(T::kName);
             return std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(T::kID + suffix, kVersionHint),
                                                                T::kName + suffix, T::kRange, T::kDefaultV, attributes);
         }
 
-        static std::unique_ptr<juce::AudioParameterFloat> get(const std::string &suffix, const bool meta,
+        static std::unique_ptr<juce::AudioParameterFloat> get(const std::string& suffix, const bool meta,
                                                               const bool automate = true) {
             auto attributes = juce::AudioParameterFloatAttributes().withAutomatable(automate).withLabel(T::kName).
-                    withMeta(meta);
+                                                                    withMeta(meta);
             return std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(T::kID + suffix, kVersionHint),
                                                                T::kName + suffix, T::kRange, T::kDefaultV, attributes);
         }
@@ -46,7 +46,7 @@ namespace zlstate {
     };
 
     // bool
-    template<class T>
+    template <class T>
     class BoolParameters {
     public:
         static std::unique_ptr<juce::AudioParameterBool> get(bool automate = true) {
@@ -55,16 +55,16 @@ namespace zlstate {
                                                               T::kName, T::kDefaultV, attributes);
         }
 
-        static std::unique_ptr<juce::AudioParameterBool> get(const std::string &suffix, bool automate = true) {
+        static std::unique_ptr<juce::AudioParameterBool> get(const std::string& suffix, bool automate = true) {
             auto attributes = juce::AudioParameterBoolAttributes().withAutomatable(automate).withLabel(T::kName);
             return std::make_unique<juce::AudioParameterBool>(juce::ParameterID(T::kID + suffix, kVersionHint),
                                                               T::kName + suffix, T::kDefaultV, attributes);
         }
 
-        static std::unique_ptr<juce::AudioParameterBool> get(const std::string &suffix, const bool meta,
+        static std::unique_ptr<juce::AudioParameterBool> get(const std::string& suffix, const bool meta,
                                                              const bool automate = true) {
             auto attributes = juce::AudioParameterBoolAttributes().withAutomatable(automate).withLabel(T::kName).
-                    withMeta(meta);
+                                                                   withMeta(meta);
             return std::make_unique<juce::AudioParameterBool>(juce::ParameterID(T::kID + suffix, kVersionHint),
                                                               T::kName + suffix, T::kDefaultV, attributes);
         }
@@ -75,7 +75,7 @@ namespace zlstate {
     };
 
     // choice
-    template<class T>
+    template <class T>
     class ChoiceParameters {
     public:
         static std::unique_ptr<juce::AudioParameterChoice> get(const bool automate = true) {
@@ -84,17 +84,17 @@ namespace zlstate {
                                                                 T::kName, T::kChoices, T::kDefaultI, attributes);
         }
 
-        static std::unique_ptr<juce::AudioParameterChoice> get(const std::string &suffix, const bool automate = true) {
+        static std::unique_ptr<juce::AudioParameterChoice> get(const std::string& suffix, const bool automate = true) {
             auto attributes = juce::AudioParameterChoiceAttributes().withAutomatable(automate).withLabel(T::kName);
             return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(T::kID + suffix, kVersionHint),
                                                                 T::kName + suffix, T::kChoices, T::kDefaultI,
                                                                 attributes);
         }
 
-        static std::unique_ptr<juce::AudioParameterChoice> get(const std::string &suffix, const bool meta,
+        static std::unique_ptr<juce::AudioParameterChoice> get(const std::string& suffix, const bool meta,
                                                                const bool automate = true) {
             auto attributes = juce::AudioParameterChoiceAttributes().withAutomatable(automate).withLabel(T::kName).
-                    withMeta(meta);
+                                                                     withMeta(meta);
             return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(T::kID + suffix, kVersionHint),
                                                                 T::kName + suffix, T::kChoices, T::kDefaultI,
                                                                 attributes);
@@ -234,6 +234,32 @@ namespace zlstate {
         inline static constexpr float maxV = 6000.f;
         inline static constexpr float kDefaultV = 371.f;
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);
+    };
+
+    class PFontMode : public ChoiceParameters<PFontMode> {
+    public:
+        static constexpr auto kID = "font_mode";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = juce::StringArray{
+            "Scale", "Static"
+        };
+        static constexpr int kDefaultI = 0;
+    };
+
+    class PFontScale : public FloatParameters<PFontScale> {
+    public:
+        static constexpr auto kID = "font_scale";
+        static constexpr auto kName = "";
+        inline static const auto kRange = juce::NormalisableRange<float>(.5f, 1.f, .01f);
+        static constexpr auto kDefaultV = 1.f;
+    };
+
+    class PStaticFontSize : public FloatParameters<PStaticFontSize> {
+    public:
+        static constexpr auto kID = "static_font_size";
+        static constexpr auto kName = "";
+        inline static const auto kRange = juce::NormalisableRange<float>(.1f, 600.f, .01f);
+        static constexpr auto kDefaultV = .9f;
     };
 
     class PWheelSensitivity : public FloatParameters<PWheelSensitivity> {
@@ -412,8 +438,8 @@ namespace zlstate {
         int static constexpr kDefaultI = 5;
     };
 
-    inline void addOneColour(juce::AudioProcessorValueTreeState::ParameterLayout &layout,
-                             const std::string &suffix = "",
+    inline void addOneColour(juce::AudioProcessorValueTreeState::ParameterLayout& layout,
+                             const std::string& suffix = "",
                              const int red = 0, const int green = 0, const int blue = 0,
                              const bool add_opacity = false, const float opacity = 1.f) {
         layout.add(std::make_unique<juce::AudioParameterInt>(
@@ -460,6 +486,7 @@ namespace zlstate {
     inline juce::AudioProcessorValueTreeState::ParameterLayout getStateParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PWindowW::get(), PWindowH::get(),
+                   PFontMode::get(), PFontScale::get(), PStaticFontSize::get(),
                    PWheelSensitivity::get(), PWheelFineSensitivity::get(), PWheelShiftReverse::get(),
                    PDragSensitivity::get(), PDragFineSensitivity::get(),
                    PRotaryStyle::get(), PRotaryDragSensitivity::get(),
@@ -470,8 +497,8 @@ namespace zlstate {
                    PTooltipLang::get());
 
         for (size_t i = 0; i < kColourNames.size(); ++i) {
-            const auto &name = kColourNames[i];
-            const auto &dv = kColourDefaults[i];
+            const auto& name = kColourNames[i];
+            const auto& dv = kColourDefaults[i];
             addOneColour(layout, name, dv.r, dv.g, dv.b, dv.has_opacity, dv.opacity);
         }
 

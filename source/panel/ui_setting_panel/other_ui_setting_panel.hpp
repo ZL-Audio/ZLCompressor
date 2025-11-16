@@ -14,9 +14,10 @@
 #include "../helper/panel_constants.hpp"
 
 namespace zlpanel {
-    class OtherUISettingPanel final : public juce::Component {
+    class OtherUISettingPanel final : public juce::Component,
+                                      private juce::ComboBox::Listener {
     public:
-        explicit OtherUISettingPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit OtherUISettingPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         void loadSetting();
 
@@ -28,9 +29,11 @@ namespace zlpanel {
 
         void resized() override;
 
+        void setParentWidth(int width);
+
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::label::NameLookAndFeel name_laf_;
 
         juce::Label refresh_rate_label_;
@@ -41,5 +44,13 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<true, true, true> mag_curve_slider_, eq_curve_slider_;
         juce::Label tooltip_label_;
         zlgui::combobox::CompactCombobox tooltip_box_;
+
+        juce::Label font_label_;
+        zlgui::combobox::CompactCombobox font_mode_box_;
+        zlgui::slider::CompactLinearSlider<true, true, true> font_scale_slider_;
+        zlgui::slider::CompactLinearSlider<true, true, true> static_font_size_slider_;
+        int parent_width_{0};
+
+        void comboBoxChanged(juce::ComboBox*) override;
     };
 } // zlpanel

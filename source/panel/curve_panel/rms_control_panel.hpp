@@ -18,7 +18,7 @@ namespace zlpanel {
     class RMSControlPanel final : public juce::Component {
     public:
         explicit RMSControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                 multilingual::TooltipHelper &tooltip_helper);
+                                 const multilingual::TooltipHelper &tooltip_helper);
 
         void paint(juce::Graphics &g) override;
 

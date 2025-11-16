@@ -11,7 +11,7 @@
 
 namespace zlpanel {
     RMSControlPanel::RMSControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                     multilingual::TooltipHelper &tooltip_helper)
+                                     const multilingual::TooltipHelper &tooltip_helper)
         : base_(base), updater_(),
           rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSPanelDisplay::kID)),
           label_laf_(base),
@@ -34,7 +34,7 @@ namespace zlpanel {
         for (auto &l: {&rms_length_label_, &rms_speed_label_, &rms_mix_label_}) {
             l->setLookAndFeel(&label_laf_);
             l->setInterceptsMouseClicks(false, false);
-            l->setJustificationType(juce::Justification::centred);
+            l->setJustificationType(juce::Justification::centredLeft);
             l->setBufferedToImage(true);
             addAndMakeVisible(l);
         }
@@ -69,6 +69,7 @@ namespace zlpanel {
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
 
         auto bound = getLocalBounds();
+        bound.removeFromLeft(padding);
         bound.removeFromTop(padding); {
             auto t_bound = bound.removeFromTop(button_height);
             rms_length_label_.setBounds(t_bound.removeFromLeft(slider_width));

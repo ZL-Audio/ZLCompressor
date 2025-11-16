@@ -429,13 +429,13 @@ namespace zlgui {
         juce::SelectedItemSet<size_t> selected_band_set_;
 
         float loadPara(const std::string& id) const {
-            return state.getRawParameterValue(id)->load();
+            return state.getRawParameterValue(id)->load(std::memory_order::relaxed);
         }
 
         void savePara(const std::string& id, const float x) const {
             const auto para = state.getParameter(id);
             para->beginChangeGesture();
-            para->setValueNotifyingHost(x);
+            para->setValueNotifyingHost(para->convertTo0to1(x));
             para->endChangeGesture();
         }
 
