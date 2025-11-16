@@ -12,35 +12,53 @@
 namespace zlstate {
     Property::Property() {
         if (!kPath.isDirectory()) {
-            if (!kPath.createDirectory()) return;
+            if (!kPath.createDirectory()) {
+                return;
+            }
         }
-        ui_file_ = std::make_unique<juce::PropertiesFile>(kUIPath, juce::PropertiesFile::Options());
+        if (!kUIPath.existsAsFile()) {
+            if (const auto res = kUIPath.create(); !res.wasOk()) {
+                return;
+            }
+        }
+        is_directory_created_ = true;
     }
 
-    Property::Property(juce::AudioProcessorValueTreeState &apvts) {
+    Property::Property(juce::AudioProcessorValueTreeState& apvts) {
         if (!kPath.isDirectory()) {
-            if (!kPath.createDirectory()) return;
+            if (!kPath.createDirectory()) {
+                return;
+            }
         }
-        ui_file_ = std::make_unique<juce::PropertiesFile>(kUIPath, juce::PropertiesFile::Options());
+        if (!kUIPath.existsAsFile()) {
+            if (const auto res = kUIPath.create(); !res.wasOk()) {
+                return;
+            }
+        }
+        is_directory_created_ = true;
         loadAPVTS(apvts);
     }
 
-    void Property::loadAPVTS(juce::AudioProcessorValueTreeState &apvts) {
-        const juce::ScopedReadLock scoped_lock(read_write_lock_);
-        if (ui_file_) {
-            const auto file = ui_file_->getFile();
-            if (const auto xml = juce::XmlDocument::parse(file); xml) {
-                apvts.replaceState(juce::ValueTree::fromXml(*xml));
+    void Property::loadAPVTS(juce::AudioProcessorValueTreeState& apvts) {
+        if (is_directory_created_) {
+            std::lock_guard<std::mutex> lock_guard{mutex_};
+            if (kUIPath.existsAsFile()) {
+                if (const auto xml = juce::XmlDocument::parse(kUIPath); xml) {
+                    apvts.replaceState(juce::ValueTree::fromXml(*xml));
+                }
             }
         }
     }
 
-    void Property::saveAPVTS(juce::AudioProcessorValueTreeState &apvts) {
-        const juce::ScopedWriteLock scoped_lock(read_write_lock_);
-        if (ui_file_) {
-            const auto file = ui_file_->getFile();
-            if (const auto xml = apvts.copyState().createXml(); xml) {
-                if (!xml->writeTo(file)) return;
+    void Property::saveAPVTS(juce::AudioProcessorValueTreeState& apvts) {
+        if (is_directory_created_) {
+            std::lock_guard<std::mutex> lock{mutex_};
+            if (kUIPath.existsAsFile()) {
+                if (const auto xml = apvts.copyState().createXml(); xml) {
+                    if (!xml->writeTo(kUIPath)) {
+                        return;
+                    }
+                }
             }
         }
     }
