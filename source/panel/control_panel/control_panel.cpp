@@ -10,8 +10,8 @@
 #include "control_panel.hpp"
 
 namespace zlpanel {
-    ControlPanel::ControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                               multilingual::TooltipHelper &tooltip_helper)
+    ControlPanel::ControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                               multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           mid_control_panel_(p, base_, tooltip_helper),
           right_control_panel_(p, base_, tooltip_helper) {
@@ -21,19 +21,22 @@ namespace zlpanel {
         setOpaque(true);
     }
 
-    void ControlPanel::paint(juce::Graphics &g) {
+    void ControlPanel::paint(juce::Graphics& g) {
         g.setColour(base_.getBackgroundColour());
         g.fillRect(getLocalBounds());
     }
 
     void ControlPanel::resized() {
         auto bound = getLocalBounds();
-        mid_control_panel_.setBounds(bound.removeFromLeft(mid_control_panel_.getIdealWidth()));
-        right_control_panel_.setBounds(bound.removeFromRight(right_control_panel_.getIdealWidth()));
+        const auto right_width = right_control_panel_.getIdealWidth();
+        const auto mid_width = mid_control_panel_.getIdealWidth();
+        right_control_panel_.setBounds(bound.removeFromRight(right_width));
+        bound.removeFromLeft((bound.getWidth() - mid_width) / 2);
+        mid_control_panel_.setBounds(bound.removeFromLeft(mid_width));
     }
 
     void ControlPanel::repaintCallBackSlow() {
         mid_control_panel_.repaintCallBackSlow();
         right_control_panel_.repaintCallBackSlow();
     }
-} // zlpanel
+}

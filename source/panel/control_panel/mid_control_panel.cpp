@@ -86,7 +86,6 @@ namespace zlpanel {
     int MidControlPanel::getIdealWidth() const {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
-        // const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
         return padding * 8 + slider_width * 7;
     }
 

@@ -55,6 +55,8 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        const auto left_padding = (getWidth() - (padding * 11 + slider_width * 7 + small_slider_width * 2)) / 2;
         {
             auto bound = getLocalBounds();
             bound.removeFromLeft(button_height);
@@ -80,7 +82,7 @@ namespace zlpanel {
             const auto height = std::max(static_cast<int>(static_cast<float>(bound.getHeight()) * .618f), ideal_height);
 
             bound = bound.removeFromBottom(height);
-            bound = bound.removeFromLeft((padding + slider_width) * 6 + button_height / 2);
+            bound = bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height / 2);
 
             equalize_large_bound_ = bound;
             side_control_panel_.setBounds(bound.removeFromLeft(width));
@@ -96,7 +98,7 @@ namespace zlpanel {
         }
         {
             auto bound = getLocalBounds();
-            bound.removeFromLeft((padding + slider_width) * 6 + button_height + button_height / 2);
+            bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height + button_height / 2);
             bound = bound.removeFromLeft(rms_control_panel_.getIdealWidth());
             bound = bound.removeFromBottom(rms_control_panel_.getIdealHeight());
             rms_control_panel_.setBounds(bound);
