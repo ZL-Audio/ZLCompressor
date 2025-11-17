@@ -43,7 +43,8 @@ namespace zlpanel {
     bool SumPanel::run(std::array < float, kWsFloat.size() > &xs,
                        std::array < std::array < float, kWsFloat.size() >, 8 > &yss,
                        std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> & filter_status,
-                       
+
+    
     const juce::Rectangle<float>& bound
     )
  {

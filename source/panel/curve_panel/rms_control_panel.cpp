@@ -39,6 +39,7 @@ namespace zlpanel {
             addAndMakeVisible(l);
         }
 
+        rms_mix_slider_.setComponentID(zlp::PRMSMix::kID);
         for (auto& s : {&rms_length_slider_, &rms_speed_slider_, &rms_mix_slider_}) {
             s->setFontScale(1.25f);
             s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);

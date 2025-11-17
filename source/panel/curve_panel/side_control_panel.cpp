@@ -12,67 +12,67 @@
 
 namespace zlpanel {
     SideControlPanel::SideControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                       multilingual::TooltipHelper& tooltip_helper)
-        : base_(base),
-          stereo_mode_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoMode::kID)),
-          stereo_swap_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoSwap::kID)),
-          panel_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
-          stereo_mid_side_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_svg,
-                                                                        BinaryData::midside_svgSize)),
-          stereo_left_right_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_svg,
-                                                                          BinaryData::leftright_svgSize)),
-          stereo_mid_side_max_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_max_svg,
-                                                                            BinaryData::midside_max_svgSize)),
-          stereo_left_right_max_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_max_svg,
-                                                                              BinaryData::leftright_max_svgSize)),
-          stereo_mode_box_(base_, {
-                               stereo_mid_side_drawable_.get(), stereo_left_right_drawable_.get(),
-                               stereo_mid_side_max_drawable_.get(), stereo_left_right_max_drawable_.get()
-                           }, "",
-                           {
-                               tooltip_helper.getToolTipText(multilingual::kStereoMS),
-                               tooltip_helper.getToolTipText(multilingual::kStereoLR),
-                               tooltip_helper.getToolTipText(multilingual::kStereoMSMax),
-                               tooltip_helper.getToolTipText(multilingual::kStereoLRMax),
-                           }),
-          stereo_mode_attachment_(stereo_mode_box_.getBox(), p.parameters_,
-                                  zlp::PSideStereoMode::kID, updater_),
-          stereo_swap_drawable_(juce::Drawable::createFromImageData(BinaryData::shuffle_svg,
-                                                                    BinaryData::shuffle_svgSize)),
-          stereo_swap_button_("", base_,
-                              tooltip_helper.getToolTipText(multilingual::kStereoSwap)),
-          stereo_swap_attachment_(stereo_swap_button_.getButton(), p.parameters_,
-                                  zlp::PSideStereoSwap::kID, updater_),
-          stereo_link_slider_("Link", base_,
-                              tooltip_helper.getToolTipText(multilingual::kStereoLink)),
-          stereo_link_attachment_(stereo_link_slider_.getSlider(), p.parameters_,
-                                  zlp::PSideStereoLink::kID, updater_),
-          stereo_wet1_slider_("", base_,
-                              tooltip_helper.getToolTipText(multilingual::kStereoWet)),
-          stereo_wet1_attachment_(stereo_wet1_slider_.getSlider(), p.parameters_,
-                                  zlp::PSideStereoWet1::kID, updater_),
-          stereo_wet2_slider_("", base_,
-                              tooltip_helper.getToolTipText(multilingual::kStereoWet)),
-          stereo_wet2_attachment_(stereo_wet2_slider_.getSlider(), p.parameters_,
-                                  zlp::PSideStereoWet2::kID, updater_),
-          label_laf_(base_),
-          side_in1_label_(), side_in2_label_(), side_out1_label_(), side_out2_label_(),
-          side_gain_slider_("Gain", base_,
-                            tooltip_helper.getToolTipText(multilingual::kSideGain)),
-          side_gain_attachment_(side_gain_slider_.getSlider(), p.parameters_,
-                                zlp::PSideGain::kID, updater_),
-          ext_side_drawable_(juce::Drawable::createFromImageData(BinaryData::externalside_svg,
-                                                                 BinaryData::externalside_svgSize)),
-          ext_side_button_("", base_,
-                           tooltip_helper.getToolTipText(multilingual::kExtSide)),
-          ext_side_attachment_(ext_side_button_.getButton(), p.parameters_,
-                               zlp::PExtSide::kID, updater_),
-          side_out_drawable_(juce::Drawable::createFromImageData(BinaryData::headphones_svg,
-                                                                 BinaryData::headphones_svgSize)),
-          side_out_button_("", base_,
-                           tooltip_helper.getToolTipText(multilingual::kSideOut)),
-          side_out_attachment_(side_out_button_.getButton(), p.parameters_,
-                               zlp::PSideOut::kID, updater_) {
+                                       multilingual::TooltipHelper& tooltip_helper) :
+        base_(base),
+        stereo_mode_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoMode::kID)),
+        stereo_swap_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoSwap::kID)),
+        panel_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
+        stereo_mid_side_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_svg,
+                                                                      BinaryData::midside_svgSize)),
+        stereo_left_right_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_svg,
+                                                                        BinaryData::leftright_svgSize)),
+        stereo_mid_side_max_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_max_svg,
+                                                                          BinaryData::midside_max_svgSize)),
+        stereo_left_right_max_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_max_svg,
+                                                                            BinaryData::leftright_max_svgSize)),
+        stereo_mode_box_(base_, {
+                             stereo_mid_side_drawable_.get(), stereo_left_right_drawable_.get(),
+                             stereo_mid_side_max_drawable_.get(), stereo_left_right_max_drawable_.get()
+                         }, "",
+                         {
+                             tooltip_helper.getToolTipText(multilingual::kStereoMS),
+                             tooltip_helper.getToolTipText(multilingual::kStereoLR),
+                             tooltip_helper.getToolTipText(multilingual::kStereoMSMax),
+                             tooltip_helper.getToolTipText(multilingual::kStereoLRMax),
+                         }),
+        stereo_mode_attachment_(stereo_mode_box_.getBox(), p.parameters_,
+                                zlp::PSideStereoMode::kID, updater_),
+        stereo_swap_drawable_(juce::Drawable::createFromImageData(BinaryData::shuffle_svg,
+                                                                  BinaryData::shuffle_svgSize)),
+        stereo_swap_button_("", base_,
+                            tooltip_helper.getToolTipText(multilingual::kStereoSwap)),
+        stereo_swap_attachment_(stereo_swap_button_.getButton(), p.parameters_,
+                                zlp::PSideStereoSwap::kID, updater_),
+        stereo_link_slider_("Link", base_,
+                            tooltip_helper.getToolTipText(multilingual::kStereoLink)),
+        stereo_link_attachment_(stereo_link_slider_.getSlider(), p.parameters_,
+                                zlp::PSideStereoLink::kID, updater_),
+        stereo_wet1_slider_("", base_,
+                            tooltip_helper.getToolTipText(multilingual::kStereoWet)),
+        stereo_wet1_attachment_(stereo_wet1_slider_.getSlider(), p.parameters_,
+                                zlp::PSideStereoWet1::kID, updater_),
+        stereo_wet2_slider_("", base_,
+                            tooltip_helper.getToolTipText(multilingual::kStereoWet)),
+        stereo_wet2_attachment_(stereo_wet2_slider_.getSlider(), p.parameters_,
+                                zlp::PSideStereoWet2::kID, updater_),
+        label_laf_(base_),
+        side_in1_label_(), side_in2_label_(), side_out1_label_(), side_out2_label_(),
+        side_gain_slider_("Gain", base_,
+                          tooltip_helper.getToolTipText(multilingual::kSideGain)),
+        side_gain_attachment_(side_gain_slider_.getSlider(), p.parameters_,
+                              zlp::PSideGain::kID, updater_),
+        ext_side_drawable_(juce::Drawable::createFromImageData(BinaryData::externalside_svg,
+                                                               BinaryData::externalside_svgSize)),
+        ext_side_button_("", base_,
+                         tooltip_helper.getToolTipText(multilingual::kExtSide)),
+        ext_side_attachment_(ext_side_button_.getButton(), p.parameters_,
+                             zlp::PExtSide::kID, updater_),
+        side_out_drawable_(juce::Drawable::createFromImageData(BinaryData::headphones_svg,
+                                                               BinaryData::headphones_svgSize)),
+        side_out_button_("", base_,
+                         tooltip_helper.getToolTipText(multilingual::kSideOut)),
+        side_out_attachment_(side_out_button_.getButton(), p.parameters_,
+                             zlp::PSideOut::kID, updater_) {
         stereo_swap_button_.setDrawable(stereo_swap_drawable_.get());
         ext_side_button_.setDrawable(ext_side_drawable_.get());
         side_out_button_.setDrawable(side_out_drawable_.get());
@@ -88,6 +88,7 @@ namespace zlpanel {
         stereo_mode_box_.setBufferedToImage(true);
         addAndMakeVisible(stereo_mode_box_);
 
+        stereo_link_slider_.setComponentID(zlp::PSideStereoLink::kID);
         stereo_link_slider_.setBufferedToImage(true);
         addAndMakeVisible(stereo_link_slider_);
 
@@ -100,6 +101,8 @@ namespace zlpanel {
             addAndMakeVisible(l);
         }
 
+        stereo_wet1_slider_.setComponentID(zlp::PSideStereoWet1::kID);
+        stereo_wet2_slider_.setComponentID(zlp::PSideStereoWet2::kID);
         for (auto& s : {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
             s->setFontScale(1.25f);
             s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -108,6 +111,7 @@ namespace zlpanel {
             addAndMakeVisible(s);
         }
 
+        side_gain_slider_.setComponentID(zlp::PSideGain::kID);
         side_gain_slider_.setBufferedToImage(true);
         addAndMakeVisible(side_gain_slider_);
 
@@ -207,8 +211,7 @@ namespace zlpanel {
             side_in2_label_.setText("R", juce::dontSendNotification);
             side_out1_label_.setText(stereo_swap_flag_ ? "R" : "L", juce::dontSendNotification);
             side_out2_label_.setText(stereo_swap_flag_ ? "L" : "R", juce::dontSendNotification);
-        }
-        else {
+        } else {
             side_in1_label_.setText("M", juce::dontSendNotification);
             side_in2_label_.setText("S", juce::dontSendNotification);
             side_out1_label_.setText(stereo_swap_flag_ ? "S" : "M", juce::dontSendNotification);

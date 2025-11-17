@@ -9,13 +9,13 @@
 
 #include "PluginEditor.hpp"
 
-PluginEditor::PluginEditor(PluginProcessor& p)
-    : AudioProcessorEditor(&p),
-      p_ref_(p),
-      property_(p.property_),
-      base_(p.state_),
-      main_panel_(p, base_),
-      equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)) {
+PluginEditor::PluginEditor(PluginProcessor& p) :
+    AudioProcessorEditor(&p),
+    p_ref_(p),
+    property_(initProperty(p)),
+    base_(p.state_),
+    main_panel_(p, base_),
+    equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)) {
     // set font
 #if defined(JUCE_WINDOWS)
     base_.font_ = juce::Typeface::createSystemTypefaceFor(
@@ -28,6 +28,9 @@ PluginEditor::PluginEditor(PluginProcessor& p)
 
     // add the main panel
     addAndMakeVisible(main_panel_);
+    main_panel_.getControlPanel().addMouseListener(this, true);
+    main_panel_.getSideControlPanel().addMouseListener(this, true);
+    main_panel_.getRMSControlPanel().addMouseListener(this, true);
 
     // set size & size listener
     setResizeLimits(static_cast<int>(zlstate::PWindowW::minV),
@@ -110,9 +113,41 @@ void PluginEditor::updateIsShowing() {
         if (base_.getIsEditorShowing()) {
             vblank_ = std::make_unique<juce::VBlankAttachment>(
                 &main_panel_, [this](const double x) { main_panel_.repaintCallBack(x); });
-        }
-        else {
+        } else {
             vblank_.reset();
         }
     }
+}
+
+int PluginEditor::getControlParameterIndex(Component& c) {
+    const auto id = c.getComponentID();
+    if (id.isEmpty()) {
+        return -1;
+    }
+    if (const auto para = p_ref_.parameters_.getParameter(id); para == nullptr) {
+        return -1;
+    } else {
+        return para->getParameterIndex();
+    }
+}
+
+void PluginEditor::mouseDown(const juce::MouseEvent& event) {
+    if (event.mods.isRightButtonDown() && event.getNumberOfClicks() == 1) {
+        if (event.originalComponent != nullptr) {
+            if (const auto id = event.originalComponent->getComponentID(); !id.isEmpty()) {
+                if (const auto para = p_ref_.parameters_.getParameter(id); para != nullptr) {
+                    if (const auto* context = getHostContext(); context != nullptr) {
+                        if (const auto menu = context->getContextMenuForParameter(para)) {
+                            menu->showNativeMenu(juce::Component::getMouseXYRelative());
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+zlstate::Property& PluginEditor::initProperty(PluginProcessor& p) {
+    p.property_.loadAPVTS(p.state_);
+    return p.property_;
 }

@@ -35,6 +35,14 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
+        SideControlPanel& getSideControlPanel() {
+            return side_control_panel_;
+        }
+
+        RMSControlPanel& getRMSControlPanel() {
+            return rms_control_panel_;
+        }
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;

@@ -34,6 +34,18 @@ namespace zlpanel {
 
         void repaintCallBack(double time_stamp);
 
+        ControlPanel& getControlPanel() {
+            return control_panel_;
+        }
+
+        SideControlPanel& getSideControlPanel() {
+            return curve_panel_.getSideControlPanel();
+        }
+
+        RMSControlPanel& getRMSControlPanel() {
+            return curve_panel_.getRMSControlPanel();
+        }
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;

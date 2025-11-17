@@ -122,6 +122,7 @@ namespace zlpanel {
         para_panel_.repaintCallBackSlow();
         popup_panel_.repaintCallBackSlow();
         if (filter_type_ref_&& selected_band_idx_
+        
         !=
         zlp::kBandNum
         )

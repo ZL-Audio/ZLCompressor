@@ -37,6 +37,10 @@ public:
 
     void minimisationStateChanged(bool isNowMinimised) override;
 
+    int getControlParameterIndex(Component& c) override;
+
+    void mouseDown(const juce::MouseEvent& event) override;
+
 private:
     PluginProcessor& p_ref_;
     zlstate::Property& property_;
@@ -56,6 +60,8 @@ private:
     void handleAsyncUpdate() override;
 
     void updateIsShowing();
+
+    static zlstate::Property& initProperty(PluginProcessor& p);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

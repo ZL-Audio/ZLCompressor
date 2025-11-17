@@ -45,33 +45,43 @@ namespace zlpanel {
           hold_attachment_(hold_slider_.getSlider(), p.parameters_, zlp::PHold::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
+        knee_slider_.setComponentID(zlp::PKneeW::kID);
         knee_slider_.setBufferedToImage(true);
         addAndMakeVisible(knee_slider_);
 
+        curve_slider_.setComponentID(zlp::PCurve::kID);
         curve_slider_.setBufferedToImage(true);
         addAndMakeVisible(curve_slider_);
 
+        th_slider_.setComponentID(zlp::PThreshold::kID);
         th_slider_.setBufferedToImage(true);
         addAndMakeVisible(th_slider_);
 
+        ratio_slider_.setComponentID(zlp::PRatio::kID);
         ratio_slider_.setBufferedToImage(true);
         addAndMakeVisible(ratio_slider_);
 
+        attack_slider_.setComponentID(zlp::PAttack::kID);
         attack_slider_.setBufferedToImage(true);
         addAndMakeVisible(attack_slider_);
 
+        release_slider_.setComponentID(zlp::PRelease::kID);
         release_slider_.setBufferedToImage(true);
         addAndMakeVisible(release_slider_);
 
+        pump_slider_.setComponentID(zlp::PPump::kID);
         pump_slider_.setBufferedToImage(true);
         addAndMakeVisible(pump_slider_);
 
+        smooth_slider_.setComponentID(zlp::PSmooth::kID);
         smooth_slider_.setBufferedToImage(true);
         addAndMakeVisible(smooth_slider_);
 
+        range_slider_.setComponentID(zlp::PRange::kID);
         range_slider_.setBufferedToImage(true);
         addAndMakeVisible(range_slider_);
 
+        hold_slider_.setComponentID(zlp::PHold::kID);
         hold_slider_.setBufferedToImage(true);
         addAndMakeVisible(hold_slider_);
 

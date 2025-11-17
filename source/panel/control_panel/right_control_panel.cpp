@@ -11,14 +11,14 @@
 
 namespace zlpanel {
     RightControlPanel::RightControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                         multilingual::TooltipHelper& tooltip_helper)
-        : p_ref_(p), base_(base), label_laf_(base_),
-          gain_slider_("Output Gain", base_,
-                       tooltip_helper.getToolTipText(multilingual::kMakeup), 1.f),
-          gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_),
-          wet_slider_("Wet", base_,
-                      tooltip_helper.getToolTipText(multilingual::kWet), 1.f),
-          wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_) {
+                                         multilingual::TooltipHelper& tooltip_helper) :
+        p_ref_(p), base_(base), label_laf_(base_),
+        gain_slider_("Output Gain", base_,
+                     tooltip_helper.getToolTipText(multilingual::kMakeup), 1.f),
+        gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_),
+        wet_slider_("Wet", base_,
+                    tooltip_helper.getToolTipText(multilingual::kWet), 1.f),
+        wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
         label_laf_.setFontScale(1.5f);
 
@@ -28,6 +28,7 @@ namespace zlpanel {
         gain_label_.setLookAndFeel(&label_laf_);
         gain_label_.setBufferedToImage(true);
         addAndMakeVisible(gain_label_);
+        gain_slider_.setComponentID(zlp::POutGain::kID);
         gain_slider_.setBufferedToImage(true);
         addAndMakeVisible(gain_slider_);
 
@@ -37,6 +38,7 @@ namespace zlpanel {
         wet_label_.setLookAndFeel(&label_laf_);
         wet_label_.setBufferedToImage(true);
         addAndMakeVisible(wet_label_);
+        wet_slider_.setComponentID(zlp::PWet::kID);
         wet_slider_.setBufferedToImage(true);
         addAndMakeVisible(wet_slider_);
 
@@ -95,8 +97,7 @@ namespace zlpanel {
 
                 gain_slider_.setInterceptsMouseClicks(false, false);
                 wet_slider_.setInterceptsMouseClicks(false, false);
-            }
-            else {
+            } else {
                 gain_label_.setAlpha(1.f);
                 gain_slider_.setAlpha(1.f);
                 wet_label_.setAlpha(1.f);
