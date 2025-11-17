@@ -19,7 +19,7 @@ namespace zldsp::analyzer {
      * @tparam FFTNum the number of FFTs
      * @tparam PointNum the number of output points
      */
-    template<typename FloatType, size_t FFTNum, size_t PointNum>
+    template <typename FloatType, size_t FFTNum, size_t PointNum>
     class MultipleFFTAnalyzer final : public MultipleFFTBase<FloatType, FFTNum, PointNum> {
     public:
         explicit MultipleFFTAnalyzer(const size_t fft_order = 12)
@@ -53,7 +53,7 @@ namespace zldsp::analyzer {
                 }
             }
             const auto scale = height / min_db;
-            for (const auto &i: is_on_vector) {
+            for (const auto& i : is_on_vector) {
                 if (!ys[i].empty()) {
                     auto db = kfr::make_univector(this->result_dbs_[i]);
                     auto y = kfr::make_univector(ys[i]);

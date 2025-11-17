@@ -21,7 +21,7 @@ namespace zlgui::slider {
     public:
         std::string permitted_characters_ = "-0123456789.kK";
         std::function<std::string(double)> value_formatter_;
-        std::function<std::optional<double>(const std::string&)> string_formatter_;
+        std::function<std::optional<double>(const std::string &)> string_formatter_;
 
     private:
         class Background final : public juce::Component {
@@ -201,7 +201,8 @@ namespace zlgui::slider {
         void mouseDoubleClick(const juce::MouseEvent& event) override {
             if (base_.getIsSliderDoubleClickOpenEditor() != event.mods.isCommandDown()) {
                 text_.showEditor();
-            } else {
+            }
+            else {
                 slider_.mouseDoubleClick(event);
             }
         }
@@ -274,7 +275,8 @@ namespace zlgui::slider {
             char buffer[32];
             if (std::abs(value) < 1.0) {
                 snprintf(buffer, sizeof(buffer), "%.*f", actual_precision - 1, display_value);
-            } else {
+            }
+            else {
                 snprintf(buffer, sizeof(buffer), "%.*g", actual_precision, display_value);
             }
             std::string str{buffer};
@@ -318,7 +320,8 @@ namespace zlgui::slider {
             double actual_value;
             if (format_result != std::nullopt) {
                 actual_value = format_result.value();
-            } else {
+            }
+            else {
                 const auto k = ctext.contains("k") || ctext.contains("K") ? 1000.0 : 1.0;
                 actual_value = ctext.getDoubleValue() * k;
             }
@@ -343,7 +346,8 @@ namespace zlgui::slider {
             if (is_shift_pressed_) {
                 actual_drag_distance = juce::roundToInt(
                     static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDragFine));
-            } else {
+            }
+            else {
                 actual_drag_distance = juce::roundToInt(
                     static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDrag));
             }

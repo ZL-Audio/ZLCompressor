@@ -19,22 +19,22 @@
 namespace zlpanel {
     class SumPanel final : public juce::Component {
     public:
-        explicit SumPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit SumPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~SumPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
-        bool run(std::array<float, kWsFloat.size()> &xs,
-                 std::array<std::array<float, kWsFloat.size()>, 8> &yss,
-                 std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
-                 const juce::Rectangle<float> &bound);
+        bool run(std::array<float, kWsFloat.size()>& xs,
+                 std::array<std::array < float, kWsFloat.size()>, 8> &yss,
+                 std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
+                 const juce::Rectangle<float>& bound);
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
 
         kfr::univector<float, kWsFloat.size()> ys{};
 

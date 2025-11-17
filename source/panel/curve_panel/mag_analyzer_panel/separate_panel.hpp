@@ -14,16 +14,16 @@
 #include "../../../gui/gui.hpp"
 
 namespace zlpanel {
-    class SeparatePanel final: public juce::Component {
+    class SeparatePanel final : public juce::Component {
     public:
-        explicit SeparatePanel(zlgui::UIBase &base);
+        explicit SeparatePanel(zlgui::UIBase& base);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
     private:
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         juce::ColourGradient gradient_;
     };
 } // zlpanel

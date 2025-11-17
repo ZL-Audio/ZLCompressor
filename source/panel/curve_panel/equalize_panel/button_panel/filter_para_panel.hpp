@@ -16,7 +16,7 @@
 namespace zlpanel {
     class FilterParaPanel final : public juce::Component {
     public:
-        explicit FilterParaPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx);
+        explicit FilterParaPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx);
 
         void resized() override;
 
@@ -29,15 +29,15 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
-        size_t &selected_band_idx_;
+        size_t& selected_band_idx_;
 
         zlgui::label::NameLookAndFeel label_laf_;
         juce::Label freq_label_, gain_label_;
 
-        std::atomic<float> *ftype_ref_{nullptr};
+        std::atomic<float>* ftype_ref_{nullptr};
         float c_ftype_{-1.f};
 
         zlgui::slider::CompactLinearSlider<false, false, false> freq_slider_;

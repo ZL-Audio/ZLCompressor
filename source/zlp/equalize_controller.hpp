@@ -29,7 +29,7 @@ namespace zlp {
 
         void prepare(double sample_rate, size_t max_num_samples);
 
-        void process(std::array<double *, 2> pointers, size_t num_samples);
+        void process(std::array<double*, 2> pointers, size_t num_samples);
 
         void setFilterStatus(const size_t filter_idx, const FilterStatus filter_status) {
             filter_status_[filter_idx].store(filter_status, std::memory_order::relaxed);
@@ -41,11 +41,11 @@ namespace zlp {
             to_update_gain_.store(true, std::memory_order::release);
         }
 
-        zldsp::filter::IIR<double, 16> &getFilter(const size_t idx) {
+        zldsp::filter::IIR<double, 16>& getFilter(const size_t idx) {
             return filters_[idx];
         }
 
-        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100> &getFFTAnalyzer() {
+        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100>& getFFTAnalyzer() {
             return fft_analyzer_;
         }
 
@@ -70,7 +70,7 @@ namespace zlp {
             return c_solo_on_;
         }
 
-        std::array<double *, 2> &getSoloPointers() {
+        std::array<double*, 2>& getSoloPointers() {
             return solo_pointers_;
         }
 
@@ -80,7 +80,12 @@ namespace zlp {
         zldsp::gain::Gain<double> gain_{};
         bool c_gain_equal_zero_{true};
 
-        std::array<zldsp::filter::IIR<double, 16>, kBandNum> filters_{};
+        std::array<zldsp::filter::IIR < double, 16>
+        ,
+        kBandNum
+        >
+        filters_ {
+        };
         std::atomic<bool> to_update_filter_status_{true};
         std::array<std::atomic<FilterStatus>, kBandNum> filter_status_;
         std::array<FilterStatus, kBandNum> c_filter_status_{};
@@ -95,7 +100,7 @@ namespace zlp {
         size_t c_solo_band_{kBandNum};
         bool c_solo_on_{false};
         std::array<std::vector<double>, 2> solo_buffers_;
-        std::array<double *, 2> solo_pointers_{};
+        std::array<double*, 2> solo_pointers_{};
 
         void prepareBuffer();
 

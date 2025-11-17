@@ -98,8 +98,8 @@ namespace zlgui {
                     const auto max_font_size = static_cast<float>(parent_bound.getWidth()) * 0.016f;
                     const auto min_font_size = max_font_size * .25f;
                     const auto font_size = base_.getFontMode() == 0
-                        ? max_font_size * base_.getFontScale()
-                        : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
+                                               ? max_font_size * base_.getFontScale()
+                                               : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
                     corner_size = static_cast<int>(std::round(font_size));
                 }
                 }

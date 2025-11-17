@@ -13,7 +13,7 @@
 #include "lufs_meter.hpp"
 
 namespace zldsp::loudness {
-    template<typename FloatType, bool UseLowPass = false>
+    template <typename FloatType, bool UseLowPass = false>
     class LUFSMatcher {
     public:
         LUFSMatcher() = default;

@@ -15,7 +15,7 @@
 #include "../vector/kfr_import.hpp"
 
 namespace zldsp::oversample {
-    template<typename FloatType>
+    template <typename FloatType>
     class OverSampleStage {
     public:
         explicit OverSampleStage(std::span<const FloatType> up_coeff,
@@ -42,23 +42,23 @@ namespace zldsp::oversample {
 
             const size_t up_delay_size = up_req_size + max_num_samples + 1;
             up_delay_lines_.resize(num_channels);
-            for (auto &d: up_delay_lines_) {
+            for (auto& d : up_delay_lines_) {
                 d.resize(up_delay_size);
             }
 
             const size_t down_delay_size = down_req_size + max_num_samples + 1;
             down_delay_lines_.resize(num_channels);
-            for (auto &d: down_delay_lines_) {
+            for (auto& d : down_delay_lines_) {
                 d.resize(down_delay_size);
             }
 
             down_center_delay_lines_.resize(num_channels);
-            for (auto &d: down_center_delay_lines_) {
+            for (auto& d : down_center_delay_lines_) {
                 d.resize(down_coeff_.size() / 2);
             }
 
             os_buffers_.resize(num_channels);
-            for (auto &buffer: os_buffers_) {
+            for (auto& buffer : os_buffers_) {
                 buffer.resize(max_num_samples << 1);
             }
 
@@ -71,21 +71,21 @@ namespace zldsp::oversample {
 
         void reset() {
             down_center_pos_ = 0;
-            for (auto &d: up_delay_lines_) {
+            for (auto& d : up_delay_lines_) {
                 std::fill(d.begin(), d.end(), FloatType(0));
             }
-            for (auto &d: down_delay_lines_) {
+            for (auto& d : down_delay_lines_) {
                 std::fill(d.begin(), d.end(), FloatType(0));
             }
-            for (auto &d: down_center_delay_lines_) {
+            for (auto& d : down_center_delay_lines_) {
                 std::fill(d.begin(), d.end(), FloatType(0));
             }
         }
 
         [[nodiscard]] size_t getLatency() const { return latency_; }
 
-        template<bool use_simd = false>
-        void upsample(std::span<FloatType *> buffer, const size_t num_samples) {
+        template <bool use_simd = false>
+        void upsample(std::span<FloatType*> buffer, const size_t num_samples) {
             const auto symmetric_size = up_coeff_.size() >> 1;
             const auto symmetric_shift = up_coeff_.size() - 1;
 
@@ -99,7 +99,8 @@ namespace zldsp::oversample {
                     if constexpr (use_simd) {
                         auto v = kfr::make_univector(&delay_line[i + 1], up_coeff_.size());
                         os_data[(i << 1) + 1] = kfr::dotproduct(v, up_coeff_);
-                    } else {
+                    }
+                    else {
                         FloatType output{FloatType(0)};
                         const auto shifted_delay_line = &delay_line[i + 1];
                         for (size_t k = 0; k < symmetric_size; ++k) {
@@ -111,13 +112,13 @@ namespace zldsp::oversample {
             }
 
             const auto memmove_size = up_coeff_.size() * sizeof(FloatType);
-            for (auto &delay_line: up_delay_lines_) {
+            for (auto& delay_line : up_delay_lines_) {
                 std::memmove(delay_line.data(), delay_line.data() + num_samples, memmove_size);
             }
         }
 
-        template<bool use_simd = false>
-        void downsample(std::span<FloatType *> buffer, const size_t num_samples) {
+        template <bool use_simd = false>
+        void downsample(std::span<FloatType*> buffer, const size_t num_samples) {
             const auto symmetric_size = down_coeff_.size() >> 1;
             const auto symmetric_shift = down_coeff_.size() - 1;
 
@@ -133,7 +134,8 @@ namespace zldsp::oversample {
                         auto v = kfr::make_univector(&delay_line[i], down_coeff_.size());
                         FloatType output = center_delay_line[center_pos] * down_coeff_center_;
                         chan_data[i] = output + kfr::dotproduct(v, down_coeff_);
-                    } else {
+                    }
+                    else {
                         FloatType output = center_delay_line[center_pos] * down_coeff_center_;
                         const auto shifted_delay_line = &delay_line[i];
                         for (size_t k = 0; k < symmetric_size; ++k) {
@@ -152,30 +154,30 @@ namespace zldsp::oversample {
             down_center_pos_ = center_pos;
 
             const auto memmove_size = down_coeff_.size() * sizeof(FloatType);
-            for (auto &delay_line: down_delay_lines_) {
+            for (auto& delay_line : down_delay_lines_) {
                 std::memmove(delay_line.data(), delay_line.data() + num_samples, memmove_size);
             }
         }
 
-        std::vector<std::vector<FloatType> > &getOSBuffer() { return os_buffers_; }
+        std::vector<std::vector<FloatType>>& getOSBuffer() { return os_buffers_; }
 
-        std::vector<FloatType *> &getOSPointer() { return os_pointers_; }
+        std::vector<FloatType*>& getOSPointer() { return os_pointers_; }
 
     private:
         kfr::univector<FloatType> up_coeff_{};
         FloatType up_coeff_center_{FloatType(0)};
         size_t up_coeff_center_pos_{0};
-        std::vector<kfr::univector<FloatType> > up_delay_lines_{};
+        std::vector<kfr::univector<FloatType>> up_delay_lines_{};
 
         kfr::univector<FloatType> down_coeff_{};
         FloatType down_coeff_center_{FloatType(0)};
-        std::vector<kfr::univector<FloatType> > down_delay_lines_{};
+        std::vector<kfr::univector<FloatType>> down_delay_lines_{};
         size_t down_center_pos_{0};
-        std::vector<kfr::univector<FloatType> > down_center_delay_lines_{};
+        std::vector<kfr::univector<FloatType>> down_center_delay_lines_{};
 
         size_t latency_{0};
 
-        std::vector<std::vector<FloatType> > os_buffers_{};
-        std::vector<FloatType *> os_pointers_{};
+        std::vector<std::vector<FloatType>> os_buffers_{};
+        std::vector<FloatType*> os_pointers_{};
     };
 }

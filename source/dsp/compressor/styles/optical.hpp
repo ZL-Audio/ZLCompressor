@@ -12,14 +12,14 @@
 #include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType>
-    class OpticalCompressor final : public CompressorStyleBase<FloatType>{
+    template <typename FloatType>
+    class OpticalCompressor final : public CompressorStyleBase<FloatType> {
     public:
         using base = CompressorStyleBase<FloatType>;
 
-        OpticalCompressor(ComputerBase<FloatType> &computer,
-                          RMSTracker<FloatType> &tracker,
-                          FollowerBase<FloatType> &follower)
+        OpticalCompressor(ComputerBase<FloatType>& computer,
+                          RMSTracker<FloatType>& tracker,
+                          FollowerBase<FloatType>& follower)
             : base(computer, tracker, follower) {
         }
 
@@ -28,7 +28,7 @@ namespace zldsp::compressor {
         }
 
         template <bool UseRMS = false>
-        void process(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType* buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             if constexpr (UseRMS) {
                 // pass through the tracker
@@ -38,7 +38,8 @@ namespace zldsp::compressor {
                 }
                 const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
                 vector = kfr::sqrt(vector * mean_scale);
-            } else {
+            }
+            else {
                 vector = kfr::abs(vector);
             }
             // pass through the follower

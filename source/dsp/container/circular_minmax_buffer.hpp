@@ -22,7 +22,7 @@ namespace zldsp::container {
         kFindMin, kFindMax
     };
 
-    template<typename T, MinMaxBufferType BufferType>
+    template <typename T, MinMaxBufferType BufferType>
     class CircularMinMaxBuffer {
     public:
         explicit CircularMinMaxBuffer(const size_t capacity = 1) {

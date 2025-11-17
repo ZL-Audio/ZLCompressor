@@ -70,7 +70,8 @@ namespace zlgui::attachment {
                              apvts_.getRawParameterValue(parameter_ID)->load(std::memory_order::relaxed));
             if constexpr (kUpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
-            } else {
+            }
+            else {
                 updateComponent();
             }
         }
@@ -107,7 +108,8 @@ namespace zlgui::attachment {
                              apvts_.getRawParameterValue(parameter_ID)->load(std::memory_order::relaxed));
             if constexpr (kUpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
-            } else {
+            }
+            else {
                 updateComponent();
             }
         }

@@ -11,7 +11,7 @@
 #include "popup_panel.hpp"
 
 namespace zlpanel {
-    PopupPanel::PopupPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx)
+    PopupPanel::PopupPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
                                                                BinaryData::mode_off_on_svgSize)),
@@ -22,11 +22,12 @@ namespace zlpanel {
           ftype_box_(zlp::PFilterType::kChoices, base),
           slope_box_(zlp::POrder::kChoices, base) {
         bypass_button_.getButton().onClick = [this]() {
-            auto *para = p_ref_.parameters_.getParameter(zlp::PFilterStatus::kID + std::to_string(band_));
+            auto* para = p_ref_.parameters_.getParameter(zlp::PFilterStatus::kID + std::to_string(band_));
             para->beginChangeGesture();
             if (bypass_button_.getButton().getToggleState()) {
                 para->setValueNotifyingHost(1.f);
-            } else {
+            }
+            else {
                 para->setValueNotifyingHost(.5f);
             }
             para->endChangeGesture();
@@ -36,7 +37,7 @@ namespace zlpanel {
         addAndMakeVisible(bypass_button_);
 
         close_button_.getButton().onClick = [this]() {
-            auto *para = p_ref_.parameters_.getParameter(zlp::PFilterStatus::kID + std::to_string(band_));
+            auto* para = p_ref_.parameters_.getParameter(zlp::PFilterStatus::kID + std::to_string(band_));
             para->beginChangeGesture();
             para->setValueNotifyingHost(0.f);
             para->endChangeGesture();
@@ -44,7 +45,7 @@ namespace zlpanel {
         close_button_.setBufferedToImage(true);
         addAndMakeVisible(close_button_);
 
-        for (auto &box: {&ftype_box_, &slope_box_}) {
+        for (auto& box : {&ftype_box_, &slope_box_}) {
             box->getLAF().setFontScale(1.125f);
             box->setBufferedToImage(true);
             addAndMakeVisible(box);
@@ -54,7 +55,7 @@ namespace zlpanel {
         setBufferedToImage(true);
     }
 
-    void PopupPanel::paint(juce::Graphics &g) {
+    void PopupPanel::paint(juce::Graphics& g) {
         g.setColour(base_.getTextColour().withAlpha(.33f));
         g.fillRoundedRectangle(getLocalBounds().toFloat(),
                                base_.getFontSize() * .5f);
@@ -91,10 +92,10 @@ namespace zlpanel {
         slope_box_.setBounds(bound);
 
         const auto popup_option = juce::PopupMenu::Options()
-                .withParentComponent(getParentComponent())
-                .withMinimumNumColumns(2)
-                .withMinimumWidth(ftype_box_.getWidth() * 2);
-        for (auto &box: {&ftype_box_, &slope_box_}) {
+                                  .withParentComponent(getParentComponent())
+                                  .withMinimumNumColumns(2)
+                                  .withMinimumWidth(ftype_box_.getWidth() * 2);
+        for (auto& box : {&ftype_box_, &slope_box_}) {
             box->getLAF().setOption(popup_option);
         }
     }
@@ -110,12 +111,12 @@ namespace zlpanel {
         bypass_ref_ = p_ref_.parameters_.getRawParameterValue(zlp::PFilterStatus::kID + std::to_string(band_));
 
         ftype_attachment_.reset();
-        ftype_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true> >(
+        ftype_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true>>(
             ftype_box_.getBox(), p_ref_.parameters_,
             zlp::PFilterType::kID + std::to_string(band_), updater_);
 
         slope_attachment_.reset();
-        slope_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true> >(
+        slope_attachment_ = std::make_unique<zlgui::attachment::ComboBoxAttachment<true>>(
             slope_box_.getBox(), p_ref_.parameters_,
             zlp::POrder::kID + std::to_string(band_), updater_);
 
@@ -133,7 +134,7 @@ namespace zlpanel {
             ftype_ = ftype_box_.getBox().getSelectedItemIndex();
             if (slope_box_.getBox().getSelectedItemIndex() == 0) {
                 if (ftype_ == 0 || ftype_ == 5 || ftype_ == 6) {
-                    auto *para = p_ref_.parameters_.getParameter(zlp::POrder::kID + std::to_string(selected_band_idx_));
+                    auto* para = p_ref_.parameters_.getParameter(zlp::POrder::kID + std::to_string(selected_band_idx_));
                     para->beginChangeGesture();
                     para->setValueNotifyingHost(para->convertTo0to1(1.f));
                     para->endChangeGesture();
@@ -141,7 +142,8 @@ namespace zlpanel {
             }
             if (ftype_ == 0 || ftype_ == 5 || ftype_ == 6) {
                 slope_box_.getBox().setItemEnabled(1, false);
-            } else {
+            }
+            else {
                 slope_box_.getBox().setItemEnabled(1, true);
             }
         }

@@ -18,7 +18,7 @@
 namespace zlpanel {
     class MagAnalyzerPanel final : public juce::Component {
     public:
-        explicit MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~MagAnalyzerPanel() override;
 
@@ -28,22 +28,22 @@ namespace zlpanel {
 
         void repaintCallBack(double time_stamp);
 
-        void run(const juce::Thread &thread);
+        void run(const juce::Thread& thread);
 
-        RMSPanel &getRMSPanel() noexcept {
+        RMSPanel& getRMSPanel() noexcept {
             return rms_panel_;
         }
 
-        ComputerPanel &getComputerPanel() noexcept {
+        ComputerPanel& getComputerPanel() noexcept {
             return computer_panel_;
         }
 
-        SeparatePanel &getSeparatePanel() noexcept {
+        SeparatePanel& getSeparatePanel() noexcept {
             return separate_panel_;
         }
 
     private:
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         MagBackgroundPanel background_panel_;
         PeakPanel peak_panel_;
         RMSPanel rms_panel_;
@@ -60,6 +60,6 @@ namespace zlpanel {
         double rms_previous_stamp_{0.};
         std::atomic<bool> to_run_rms_{false};
 
-        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
+        void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
     };
 } // zlpanel

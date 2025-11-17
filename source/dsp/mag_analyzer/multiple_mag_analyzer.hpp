@@ -12,7 +12,7 @@
 #include "multiple_mag_base.hpp"
 
 namespace zldsp::analyzer {
-    template<typename FloatType, size_t MagNum, size_t PointNum>
+    template <typename FloatType, size_t MagNum, size_t PointNum>
     class MultipleMagAnalyzer : public MultipleMagBase<FloatType, MagNum, PointNum> {
     public:
         explicit MultipleMagAnalyzer() = default;
@@ -31,9 +31,9 @@ namespace zldsp::analyzer {
             // update tolerance
             const int block_tolerance = static_cast<int>(std::ceil(
                 this->max_num_samples_per_block_.load(std::memory_order::relaxed) /
-                    this->sample_rate_.load(std::memory_order::relaxed) /
-                        this->time_length_.load(std::memory_order::relaxed) *
-                            static_cast<double>(PointNum) * 1.5));
+                this->sample_rate_.load(std::memory_order::relaxed) /
+                this->time_length_.load(std::memory_order::relaxed) *
+                static_cast<double>(PointNum) * 1.5));
             if (tolerance > 0) {
                 tolerance = std::max(tolerance, block_tolerance);
             }
@@ -56,10 +56,12 @@ namespace zldsp::analyzer {
             if (to_reset_shift) {
                 if (fifo_num_ready > num_to_read) {
                     num_ready = fifo_num_ready - tolerance / 2;
-                } else {
+                }
+                else {
                     num_ready = 0;
                 }
-            } else {
+            }
+            else {
                 num_ready = std::min(fifo_num_ready, num_to_read);
             }
 
@@ -67,7 +69,7 @@ namespace zldsp::analyzer {
             const auto num_ready_shift = static_cast<size_t>(num_ready);
             // shift circular buffers
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &circular_peak{this->circular_mags_[i]};
+                auto& circular_peak{this->circular_mags_[i]};
                 std::rotate(circular_peak.begin(),
                             circular_peak.begin() + num_ready_shift,
                             circular_peak.end());
@@ -75,8 +77,8 @@ namespace zldsp::analyzer {
             // read from FIFOs
             const auto range = this->abstract_fifo_.prepareToRead(num_ready);
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &circular_peak{this->circular_mags_[i]};
-                auto &peak_fifo{this->mag_fifos_[i]};
+                auto& circular_peak{this->circular_mags_[i]};
+                auto& peak_fifo{this->mag_fifos_[i]};
                 size_t j = circular_peak.size() - static_cast<size_t>(num_ready);
                 if (range.block_size1 > 0) {
                     std::copy(&peak_fifo[static_cast<size_t>(range.start_index1)],

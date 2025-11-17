@@ -17,18 +17,18 @@
 namespace zlpanel {
     class LUFSButton final : public juce::Component {
     public:
-        explicit LUFSButton(PluginProcessor &p, zlgui::UIBase &base,
-                            multilingual::TooltipHelper &tooltip_helper);
+        explicit LUFSButton(PluginProcessor& p, zlgui::UIBase& base,
+                            multilingual::TooltipHelper& tooltip_helper);
 
         ~LUFSButton() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         bool mouse_over_{false};
 
         const std::unique_ptr<juce::Drawable> learn_drawable_;

@@ -12,14 +12,14 @@
 #include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType>
+    template <typename FloatType>
     class CleanCompressor final : public CompressorStyleBase<FloatType> {
     public:
         using base = CompressorStyleBase<FloatType>;
 
-        CleanCompressor(ComputerBase<FloatType> &computer,
-                        RMSTracker<FloatType> &tracker,
-                        FollowerBase<FloatType> &follower)
+        CleanCompressor(ComputerBase<FloatType>& computer,
+                        RMSTracker<FloatType>& tracker,
+                        FollowerBase<FloatType>& follower)
             : base(computer, tracker, follower) {
         }
 
@@ -28,7 +28,7 @@ namespace zldsp::compressor {
         }
 
         template <bool UseRMS = false>
-        void process(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType* buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
             if constexpr (UseRMS) {
                 // pass through the tracker
@@ -39,7 +39,8 @@ namespace zldsp::compressor {
                 // transfer square sum to db
                 const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
                 vector = FloatType(10) * kfr::log10(kfr::max(vector * mean_scale, FloatType(1e-12)));
-            } else {
+            }
+            else {
                 vector = FloatType(20) * kfr::log10(kfr::max(kfr::abs(vector), FloatType(1e-12)));
             }
             // pass through the computer and the follower

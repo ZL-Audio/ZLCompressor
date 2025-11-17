@@ -10,33 +10,33 @@
 #include "clipper_panel.hpp"
 
 namespace zlpanel {
-    ClipperPanel::ClipperPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    ClipperPanel::ClipperPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor), base_(base) {
-        for (auto &ID: kClipperIDs) {
+        for (auto& ID : kClipperIDs) {
             p_ref_.parameters_.addParameterListener(ID, this);
         }
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             p_ref_.na_parameters_.addParameterListener(ID, this);
         }
-        for (auto &ID: kClipperIDs) {
+        for (auto& ID : kClipperIDs) {
             parameterChanged(ID, p_ref_.parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
         }
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             parameterChanged(ID, p_ref_.na_parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
         }
         setInterceptsMouseClicks(false, false);
     }
 
     ClipperPanel::~ClipperPanel() {
-        for (auto &ID: kClipperIDs) {
+        for (auto& ID : kClipperIDs) {
             p_ref_.parameters_.removeParameterListener(ID, this);
         }
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             p_ref_.na_parameters_.removeParameterListener(ID, this);
         }
     }
 
-    void ClipperPanel::paint(juce::Graphics &g) {
+    void ClipperPanel::paint(juce::Graphics& g) {
         const auto bound = getLocalBounds().toFloat();
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour).withAlpha(.5f));
         const auto height = base_.getFontSize() * .15f * base_.getMagCurveThickness();
@@ -55,7 +55,8 @@ namespace zlpanel {
         clipper_.prepareBuffer();
         if (clipper_.getIsON()) {
             setVisible(true);
-        } else {
+        }
+        else {
             setVisible(false);
             return;
         }
@@ -66,18 +67,23 @@ namespace zlpanel {
         repaint();
     }
 
-    void ClipperPanel::parameterChanged(const juce::String &parameter_ID, const float new_value) {
+    void ClipperPanel::parameterChanged(const juce::String& parameter_ID, const float new_value) {
         if (parameter_ID == zlstate::PAnalyzerMinDB::kID) {
             mag_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
-        } else if (parameter_ID == zlp::PThreshold::kID) {
+        }
+        else if (parameter_ID == zlp::PThreshold::kID) {
             computer_.setThreshold(new_value);
-        } else if (parameter_ID == zlp::PRatio::kID) {
+        }
+        else if (parameter_ID == zlp::PRatio::kID) {
             computer_.setRatio(new_value);
-        } else if (parameter_ID == zlp::PKneeW::kID) {
+        }
+        else if (parameter_ID == zlp::PKneeW::kID) {
             computer_.setKneeW(new_value);
-        } else if (parameter_ID == zlp::PCurve::kID) {
+        }
+        else if (parameter_ID == zlp::PCurve::kID) {
             computer_.setCurve(zlp::PCurve::formatV(new_value));
-        } else if (parameter_ID == zlp::PClipperDrive::kID) {
+        }
+        else if (parameter_ID == zlp::PClipperDrive::kID) {
             clipper_.setWet(new_value);
         }
         to_update_path_.store(true, std::memory_order::release);

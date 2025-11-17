@@ -17,10 +17,10 @@
 namespace zlpanel {
     class SideControlPanel final : public juce::Component {
     public:
-        explicit SideControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                  multilingual::TooltipHelper &tooltip_helper);
+        explicit SideControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                  multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         int getIdealWidth() const;
 
@@ -31,13 +31,13 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         std::atomic<float> &stereo_mode_ref_, &stereo_swap_ref_;
         bool stereo_mode_flag_{false}, stereo_swap_flag_{false};
 
-        std::atomic<float> &panel_show_ref_;
+        std::atomic<float>& panel_show_ref_;
 
         const std::unique_ptr<juce::Drawable> stereo_mid_side_drawable_;
         const std::unique_ptr<juce::Drawable> stereo_left_right_drawable_;

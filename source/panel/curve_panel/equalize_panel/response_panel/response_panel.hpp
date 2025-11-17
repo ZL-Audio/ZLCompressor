@@ -16,16 +16,16 @@
 namespace zlpanel {
     class ResponsePanel final : public juce::Component {
     public:
-        explicit ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit ResponsePanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~ResponsePanel() override;
 
         void resized() override;
 
-        void run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
+        void run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
                  bool to_update_sum);
 
-        void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
+        void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& status);
 
         juce::Point<float> getBandButtonPos(const size_t band) const {
             return single_panels_[band]->getButtonPos();
@@ -38,17 +38,26 @@ namespace zlpanel {
         void updateBand(size_t band);
 
     private:
-        zlgui::UIBase &base_;
-        std::atomic<float> &eq_max_db_id_ref_;
+        zlgui::UIBase& base_;
+        std::atomic<float>& eq_max_db_id_ref_;
         float eq_max_db_id_{-1.f}, eq_max_db_{0.f};
 
-        std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
+        std::array<zldsp::filter::Ideal < float, 16>
+        ,
+        zlp::kBandNum
+        >
+        filters_;
         juce::Component dummy_component_;
         std::array<std::unique_ptr<SinglePanel>, zlp::kBandNum> single_panels_;
         SumPanel sum_panel_;
 
         std::array<float, kWsFloat.size()> xs_{};
-        std::array<std::array<float, kWsFloat.size()>, 8> yss_{};
+        std::array<std::array < float, kWsFloat.size()>
+        ,
+        8
+        >
+        yss_ {
+        };
 
         AtomicBound<float> bound_;
         juce::Rectangle<float> c_bound_;

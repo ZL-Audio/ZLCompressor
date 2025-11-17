@@ -18,20 +18,21 @@
 namespace zlpanel {
     class RMSPanel final : public juce::Component {
     public:
-        explicit RMSPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit RMSPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void run(bool update_path);
 
         void resized() override;
 
-        void mouseDoubleClick(const juce::MouseEvent &event) override;
+        void mouseDoubleClick(const juce::MouseEvent& event) override;
 
     private:
-        zlgui::UIBase &base_;
-        zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, zlp::CompressController::kAvgAnalyzerPointNum> &avg_analyzer_ref_;
-        std::atomic<float> &min_db_ref_;
+        zlgui::UIBase& base_;
+        zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, zlp::CompressController::kAvgAnalyzerPointNum>&
+        avg_analyzer_ref_;
+        std::atomic<float>& min_db_ref_;
 
         AtomicBound<float> atomic_bound_;
 

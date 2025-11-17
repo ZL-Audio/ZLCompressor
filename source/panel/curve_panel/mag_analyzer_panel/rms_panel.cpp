@@ -10,7 +10,7 @@
 #include "rms_panel.hpp"
 
 namespace zlpanel {
-    RMSPanel::RMSPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    RMSPanel::RMSPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : base_(base),
           avg_analyzer_ref_(processor.getCompressController().getMagAvgAnalyzer()),
           min_db_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
@@ -20,7 +20,7 @@ namespace zlpanel {
         setInterceptsMouseClicks(true, false);
     }
 
-    void RMSPanel::paint(juce::Graphics &g) {
+    void RMSPanel::paint(juce::Graphics& g) {
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
@@ -72,7 +72,7 @@ namespace zlpanel {
         curve_thickness_ = base_.getFontSize() * .2f * base_.getMagCurveThickness();
     }
 
-    void RMSPanel::mouseDoubleClick(const juce::MouseEvent &event) {
+    void RMSPanel::mouseDoubleClick(const juce::MouseEvent& event) {
         juce::ignoreUnused(event);
         avg_analyzer_ref_.setToReset();
     }

@@ -10,17 +10,17 @@
 #include "peak_panel.hpp"
 
 namespace zlpanel {
-    PeakPanel::PeakPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    PeakPanel::PeakPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor), base_(base),
           mag_analyzer_ref_(processor.getCompressController().getMagAnalyzer()) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
-        for (auto &path: {&in_path_, &out_path_, &reduction_path_}) {
+        for (auto& path : {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
         mag_analyzer_ref_.setMagType(zldsp::analyzer::MagType::kPeak);
         mag_analyzer_ref_.setToReset();
 
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             p_ref_.na_parameters_.addParameterListener(ID, this);
             parameterChanged(ID, p_ref_.na_parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
         }
@@ -29,12 +29,12 @@ namespace zlpanel {
     }
 
     PeakPanel::~PeakPanel() {
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             p_ref_.na_parameters_.removeParameterListener(ID, this);
         }
     }
 
-    void PeakPanel::paint(juce::Graphics &g) {
+    void PeakPanel::paint(juce::Graphics& g) {
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
@@ -80,7 +80,8 @@ namespace zlpanel {
                                                       analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
                 updatePaths(current_bound);
             }
-        } else {
+        }
+        else {
             const auto c_num_per_second = num_per_second_.load(std::memory_order::relaxed);
             const auto target_count = (next_time_stamp - start_time_) * c_num_per_second;
             const auto tolerance = std::max(target_count * 1.5, 1.0);
@@ -101,7 +102,8 @@ namespace zlpanel {
                                                   static_cast<float>(shift),
                                                   analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
             updatePaths(current_bound);
-        } {
+        }
+        {
             std::lock_guard<std::mutex> lock{mutex_};
             in_path_.swapWithPath(next_in_path_);
             out_path_.swapWithPath(next_out_path_);
@@ -130,12 +132,14 @@ namespace zlpanel {
         curve_thickness_ = base_.getFontSize() * .2f * base_.getMagCurveThickness();
     }
 
-    void PeakPanel::parameterChanged(const juce::String &parameter_id, const float new_value) {
+    void PeakPanel::parameterChanged(const juce::String& parameter_id, const float new_value) {
         if (parameter_id == zlstate::PAnalyzerMagType::kID) {
             mag_analyzer_ref_.setMagType(static_cast<zldsp::analyzer::MagType>(std::round(new_value)));
-        } else if (parameter_id == zlstate::PAnalyzerMinDB::kID) {
+        }
+        else if (parameter_id == zlstate::PAnalyzerMinDB::kID) {
             analyzer_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
-        } else if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
+        }
+        else if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
             setTimeLength(zlstate::PAnalyzerTimeLength::getTimeLengthFromIndex(new_value));
         }
     }

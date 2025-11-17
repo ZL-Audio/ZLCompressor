@@ -10,7 +10,7 @@
 #include "compress_controller.hpp"
 
 namespace zlp {
-    CompressController::CompressController(juce::AudioProcessor &processor)
+    CompressController::CompressController(juce::AudioProcessor& processor)
         : processor_ref_(processor) {
     }
 
@@ -30,7 +30,7 @@ namespace zlp {
         post_pointers_[0] = post_buffer_[0].data();
         post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to 8x oversampling
-        for (auto &t: rms_tracker_) {
+        for (auto& t : rms_tracker_) {
             t.setMaximumMomentarySeconds(0.05f * 8.f);
             t.prepare(sample_rate);
             t.setMaximumMomentarySeconds(0.05f);
@@ -51,7 +51,7 @@ namespace zlp {
         lookahead_delay_.setDelayInSamples(0);
         to_update_lookahead_.store(true, std::memory_order::release);
         // init hold buffers
-        for (auto &h: hold_buffer_) {
+        for (auto& h : hold_buffer_) {
             h.setCapacity(static_cast<size_t>(8.0 * sample_rate));
         }
         to_update_.store(true, std::memory_order::release);
@@ -79,42 +79,42 @@ namespace zlp {
             to_update_pdc = true;
             c_oversample_idx_ = new_oversample_idx;
             switch (c_oversample_idx_) {
-                case 0: {
-                    oversample_delay_.setDelayInSamples(0);
-                    break;
-                }
-                case 1: {
-                    over_sampler2_.reset();
-                    oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler2_.getLatency()));
-                    break;
-                }
-                case 2: {
-                    over_sampler4_.reset();
-                    oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler4_.getLatency()));
-                    break;
-                }
-                case 3: {
-                    over_sampler8_.reset();
-                    oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler8_.getLatency()));
-                    break;
-                }
-                default: ;
+            case 0: {
+                oversample_delay_.setDelayInSamples(0);
+                break;
+            }
+            case 1: {
+                over_sampler2_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler2_.getLatency()));
+                break;
+            }
+            case 2: {
+                over_sampler4_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler4_.getLatency()));
+                break;
+            }
+            case 3: {
+                over_sampler8_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler8_.getLatency()));
+                break;
+            }
+            default: ;
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
             oversample_sr_ = sample_rate_ * static_cast<double>(oversample_mul);
             to_update_rms_.store(true, std::memory_order::release);
-            for (auto &f: follower_) {
+            for (auto& f : follower_) {
                 f.prepare(oversample_sr_);
             }
-            for (auto &f: rms_follower_) {
+            for (auto& f : rms_follower_) {
                 f.prepare(oversample_sr_);
             }
-            for (auto &t: rms_tracker_) {
+            for (auto& t : rms_tracker_) {
                 t.prepare(oversample_sr_);
             }
             // prepare the hold buffer with the multiplied samplerate
-            for (auto &h: hold_buffer_) {
+            for (auto& h : hold_buffer_) {
                 h.setCapacity(static_cast<size_t>(oversample_sr_));
             }
             to_update_hold_.store(true);
@@ -134,27 +134,27 @@ namespace zlp {
         if (c_comp_style_ != new_comp_style) {
             c_comp_style_ = new_comp_style;
             switch (c_comp_style_) {
-                case zldsp::compressor::Style::kClean: {
-                    clean_comps_[0].reset();
-                    clean_comps_[1].reset();
-                    break;
-                }
-                case zldsp::compressor::Style::kClassic: {
-                    classic_comps_[0].reset();
-                    classic_comps_[1].reset();
-                    break;
-                }
-                case zldsp::compressor::Style::kOptical: {
-                    optical_comps_[0].reset();
-                    optical_comps_[1].reset();
-                    break;
-                }
-                case zldsp::compressor::Style::kVocal: {
-                    vocal_comps_[0].reset();
-                    vocal_comps_[1].reset();
-                    break;
-                }
-                default: break;
+            case zldsp::compressor::Style::kClean: {
+                clean_comps_[0].reset();
+                clean_comps_[1].reset();
+                break;
+            }
+            case zldsp::compressor::Style::kClassic: {
+                classic_comps_[0].reset();
+                classic_comps_[1].reset();
+                break;
+            }
+            case zldsp::compressor::Style::kOptical: {
+                optical_comps_[0].reset();
+                optical_comps_[1].reset();
+                break;
+            }
+            case zldsp::compressor::Style::kVocal: {
+                vocal_comps_[0].reset();
+                vocal_comps_[1].reset();
+                break;
+            }
+            default: break;
             }
         }
         // load stereo link
@@ -164,8 +164,8 @@ namespace zlp {
         if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
             const auto oversample_mul = 1 << c_oversample_idx_;
             const auto hold_size = static_cast<size_t>(
-                                       sample_rate_ * hold_length_.load(std::memory_order::relaxed)
-                                   ) * static_cast<size_t>(oversample_mul);
+                sample_rate_ * hold_length_.load(std::memory_order::relaxed)
+            ) * static_cast<size_t>(oversample_mul);
             hold_buffer_[0].setSize(hold_size);
             hold_buffer_[1].setSize(hold_size);
         }
@@ -180,7 +180,7 @@ namespace zlp {
         }
         if (to_update_range_.exchange(false, std::memory_order::acquire)) {
             c_range_ = range_.load(
-                           std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
+                std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
         }
         if (to_update_output_gain_.exchange(false, std::memory_order::acquire)) {
             output_gain_.setGainDecibels(
@@ -192,7 +192,8 @@ namespace zlp {
                 c_rms_mix_ = rms_mix_.load(std::memory_order::relaxed);
                 rms_tracker_[0].prepareBuffer();
                 rms_tracker_[1].prepareBuffer();
-            } else {
+            }
+            else {
                 rms_comps_[0].reset();
                 rms_comps_[1].reset();
             }
@@ -203,8 +204,8 @@ namespace zlp {
         }
     }
 
-    void CompressController::process(std::array<float *, 2> main_pointers,
-                                     std::array<float *, 2> side_pointers,
+    void CompressController::process(std::array<float*, 2> main_pointers,
+                                     std::array<float*, 2> side_pointers,
                                      const size_t num_samples, bool bypass) {
         if (to_update_.exchange(false, std::memory_order::acquire)) {
             prepareBuffer();
@@ -226,37 +227,37 @@ namespace zlp {
             zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
         }
         // upsample side buffer
-        std::array<float *, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
+        std::array<float*, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
         switch (c_oversample_idx_) {
-            case 0: {
-                processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples, bypass);
-                break;
-            }
-            case 1: {
-                over_sampler2_.upsample(pointers, num_samples);
-                auto &os_pointers = over_sampler2_.getOSPointer();
-                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 1, bypass);
-                over_sampler2_.downsample(pointers, num_samples);
-                oversample_delay_.process(pre_pointers_, num_samples);
-                break;
-            }
-            case 2: {
-                over_sampler4_.upsample(pointers, num_samples);
-                auto &os_pointers = over_sampler4_.getOSPointer();
-                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 2, bypass);
-                over_sampler4_.downsample(pointers, num_samples);
-                oversample_delay_.process(pre_pointers_, num_samples);
-                break;
-            }
-            case 3: {
-                over_sampler8_.upsample(pointers, num_samples);
-                auto &os_pointers = over_sampler8_.getOSPointer();
-                processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 3, bypass);
-                over_sampler8_.downsample(pointers, num_samples);
-                oversample_delay_.process(pre_pointers_, num_samples);
-                break;
-            }
-            default: ;
+        case 0: {
+            processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples, bypass);
+            break;
+        }
+        case 1: {
+            over_sampler2_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler2_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 1, bypass);
+            over_sampler2_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+        case 2: {
+            over_sampler4_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler4_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 2, bypass);
+            over_sampler4_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+        case 3: {
+            over_sampler8_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler8_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 3, bypass);
+            over_sampler8_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+        default: ;
         }
         // copy post buffer
         if (c_copy_post) {
@@ -265,7 +266,8 @@ namespace zlp {
         // makeup gain
         if (c_is_on_ && !bypass) {
             output_gain_.template process<false>(main_pointers, num_samples);
-        } else {
+        }
+        else {
             output_gain_.template process<true>(main_pointers, num_samples);
         }
         // mag analyzer
@@ -292,8 +294,8 @@ namespace zlp {
         }
     }
 
-    void CompressController::processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
-                                           float * __restrict side_buffer0, float * __restrict side_buffer1,
+    void CompressController::processBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
+                                           float* __restrict side_buffer0, float* __restrict side_buffer1,
                                            const size_t num_samples, bool bypass) {
         // create univector refs
         auto side_v0 = kfr::make_univector(side_buffer0, num_samples);
@@ -320,23 +322,23 @@ namespace zlp {
         }
         // process compress style
         switch (c_comp_style_) {
-            case zldsp::compressor::Style::kClean: {
-                processSideBufferClean(side_buffer0, side_buffer1, num_samples);
-                break;
-            }
-            case zldsp::compressor::Style::kClassic: {
-                processSideBufferClassic(side_buffer0, side_buffer1, num_samples);
-                break;
-            }
-            case zldsp::compressor::Style::kOptical: {
-                processSideBufferOptical(side_buffer0, side_buffer1, num_samples);
-                break;
-            }
-            case zldsp::compressor::Style::kVocal: {
-                processSideBufferVocal(side_buffer0, side_buffer1, num_samples);
-                break;
-            }
-            default: return;
+        case zldsp::compressor::Style::kClean: {
+            processSideBufferClean(side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        case zldsp::compressor::Style::kClassic: {
+            processSideBufferClassic(side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        case zldsp::compressor::Style::kOptical: {
+            processSideBufferOptical(side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        case zldsp::compressor::Style::kVocal: {
+            processSideBufferVocal(side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        default: return;
         }
         // process rms compressors and mix rms
         if (c_use_rms_) {
@@ -364,11 +366,13 @@ namespace zlp {
                 const auto y = side_buffer1[i];
                 if (x < y) {
                     side_buffer1[i] = (y - x) * c_stereo_link_max_ + x;
-                } else {
+                }
+                else {
                     side_buffer0[i] = (x - y) * c_stereo_link_max_ + y;
                 }
             }
-        } else {
+        }
+        else {
             for (size_t i = 0; i < num_samples; ++i) {
                 const auto x = side_buffer0[i];
                 const auto y = side_buffer1[i];
@@ -384,7 +388,8 @@ namespace zlp {
         if (c_stereo_swap_) {
             main_v0 = main_v0 * side_v1;
             main_v1 = main_v1 * side_v0;
-        } else {
+        }
+        else {
             main_v0 = main_v0 * side_v0;
             main_v1 = main_v1 * side_v1;
         }
@@ -396,34 +401,34 @@ namespace zlp {
         }
     }
 
-    void CompressController::processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferClean(float* __restrict buffer0, float* __restrict buffer1,
                                                     const size_t num_samples) {
         clean_comps_[0].process(buffer0, num_samples);
         clean_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressController::processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferClassic(float* __restrict buffer0, float* __restrict buffer1,
                                                       const size_t num_samples) {
         classic_comps_[0].process(buffer0, num_samples);
         classic_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressController::processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferOptical(float* __restrict buffer0, float* __restrict buffer1,
                                                       const size_t num_samples) {
         optical_comps_[0].process(buffer0, num_samples);
         optical_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressController::processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferVocal(float* __restrict buffer0, float* __restrict buffer1,
                                                     const size_t num_samples) {
         vocal_comps_[0].process(buffer0, num_samples);
         vocal_comps_[1].process(buffer1, num_samples);
     }
 
-    void CompressController::processSideBufferRMS(float * __restrict buffer0, float * __restrict buffer1,
+    void CompressController::processSideBufferRMS(float* __restrict buffer0, float* __restrict buffer1,
                                                   const size_t num_samples) {
-        rms_comps_[0].process<true>(buffer0, num_samples);
-        rms_comps_[1].process<true>(buffer1, num_samples);
+        rms_comps_[0].process < true > (buffer0, num_samples);
+        rms_comps_[1].process < true > (buffer1, num_samples);
     }
 
     void CompressController::handleAsyncUpdate() {

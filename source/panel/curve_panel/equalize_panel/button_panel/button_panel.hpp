@@ -21,8 +21,8 @@ namespace zlpanel {
                               private juce::LassoSource<size_t>,
                               private juce::ChangeListener {
     public:
-        explicit ButtonPanel(PluginProcessor &p, zlgui::UIBase &base,
-                             size_t &selected_band_idx);
+        explicit ButtonPanel(PluginProcessor& p, zlgui::UIBase& base,
+                             size_t& selected_band_idx);
 
         ~ButtonPanel() override;
 
@@ -32,61 +32,61 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
-        DraggerPanel &getDraggerPanel(const size_t band) {
+        DraggerPanel& getDraggerPanel(const size_t band) {
             return *dragger_panels_[band];
         }
 
-        zlgui::dragger::Dragger &getDragger(const size_t band) {
+        zlgui::dragger::Dragger& getDragger(const size_t band) {
             return dragger_panels_[band]->getDragger();
         }
 
-        PopupPanel &getPopupPanel() {
+        PopupPanel& getPopupPanel() {
             return popup_panel_;
         }
 
         void updateBand();
 
-        void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status);
+        void setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& status);
 
-        void mouseDown(const juce::MouseEvent &event) override;
+        void mouseDown(const juce::MouseEvent& event) override;
 
-        void mouseUp(const juce::MouseEvent &event) override;
+        void mouseUp(const juce::MouseEvent& event) override;
 
-        void mouseDrag(const juce::MouseEvent &event) override;
+        void mouseDrag(const juce::MouseEvent& event) override;
 
-        void mouseDoubleClick(const juce::MouseEvent &event) override;
+        void mouseDoubleClick(const juce::MouseEvent& event) override;
 
-        void mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) override;
+        void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
-        void mouseEnter(const juce::MouseEvent &event) override;
+        void mouseEnter(const juce::MouseEvent& event) override;
 
-        void mouseExit(const juce::MouseEvent &event) override;
+        void mouseExit(const juce::MouseEvent& event) override;
 
-        void mouseMove(const juce::MouseEvent &event) override;
+        void mouseMove(const juce::MouseEvent& event) override;
 
         void turnOnSolo(size_t band);
 
         void turnOffSolo();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         size_t previous_band_idx_{zlp::kBandNum};
-        size_t &selected_band_idx_;
+        size_t& selected_band_idx_;
 
-        std::atomic<float> &eq_max_db_id_ref_;
+        std::atomic<float>& eq_max_db_id_ref_;
         float eq_max_db_id_{-1.f};
 
         zlgui::attachment::ComponentUpdater updater_;
 
-        std::atomic<float> *filter_type_ref_{nullptr};
+        std::atomic<float>* filter_type_ref_{nullptr};
         float c_filter_type_{-1.f};
 
         zlgui::slider::SnappingSlider q_slider_;
-        std::unique_ptr<zlgui::attachment::SliderAttachment<true> > q_attachment_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true>> q_attachment_;
 
         zlgui::slider::SnappingSlider slope_slider_;
-        std::unique_ptr<zlgui::attachment::SliderAttachment<true> > slope_attachment_;
+        std::unique_ptr<zlgui::attachment::SliderAttachment<true>> slope_attachment_;
 
         zlgui::combobox::CompactCombobox eq_db_box_;
         zlgui::attachment::ComboBoxAttachment<true> eq_db_box_attachment_;
@@ -103,7 +103,7 @@ namespace zlpanel {
         };
 
         juce::LassoComponent<size_t> lasso_component_;
-        juce::SelectedItemSet<size_t> &items_set_;
+        juce::SelectedItemSet<size_t>& items_set_;
 
         std::array<float, zlp::kBandNum> selected_freq_{}, selected_gain_{}, selected_q_{};
         std::array<float, 4> previous_paras_{};
@@ -112,11 +112,11 @@ namespace zlpanel {
 
         void timerCallback() override;
 
-        void findLassoItemsInArea(juce::Array<size_t> &items_found, const juce::Rectangle<int> &area) override;
+        void findLassoItemsInArea(juce::Array<size_t>& items_found, const juce::Rectangle<int>& area) override;
 
-        juce::SelectedItemSet<size_t> &getLassoSelection() override;
+        juce::SelectedItemSet<size_t>& getLassoSelection() override;
 
-        void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+        void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
         void loadSelectedParas();
     };

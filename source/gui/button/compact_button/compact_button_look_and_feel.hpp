@@ -27,7 +27,8 @@ namespace zlgui {
                 bounds = base_.drawShadowEllipse(g, bounds, base_.getFontSize() * 0.4f * shrink_scale_, {});
                 bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.15f * shrink_scale_,
                                                       {.flip = true});
-            } else {
+            }
+            else {
                 bounds = base_.getShadowEllipseArea(bounds, base_.getFontSize() * 0.3f * shrink_scale_, {});
                 g.setColour(base_.getBackgroundColour());
                 g.fillEllipse(bounds);
@@ -49,17 +50,20 @@ namespace zlgui {
                 const auto textBound = button.getLocalBounds().toFloat();
                 if (is_pressed) {
                     g.setColour(base_.getTextColour().withAlpha(1.f));
-                } else {
+                }
+                else {
                     g.setColour(base_.getTextColour().withAlpha(0.5f));
                 }
                 g.setFont(base_.getFontSize() * scale_);
                 g.drawText(button.getButtonText(), textBound.toNearestInt(), juce::Justification::centred);
-            } else {
+            }
+            else {
                 const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * .5f * scale_;
                 const auto draw_bound = bounds.withSizeKeepingCentre(radius, radius);
                 if (is_pressed) {
                     internal_img_->drawWithin(g, draw_bound, kPlacement, 1.f);
-                } else {
+                }
+                else {
                     internal_img_->drawWithin(g, draw_bound, kPlacement, .5f);
                 }
             }

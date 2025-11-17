@@ -10,8 +10,8 @@
 #include "right_control_panel.hpp"
 
 namespace zlpanel {
-    RightControlPanel::RightControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                         multilingual::TooltipHelper &tooltip_helper)
+    RightControlPanel::RightControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                         multilingual::TooltipHelper& tooltip_helper)
         : p_ref_(p), base_(base), label_laf_(base_),
           gain_slider_("Output Gain", base_,
                        tooltip_helper.getToolTipText(multilingual::kMakeup), 1.f),
@@ -49,7 +49,7 @@ namespace zlpanel {
         base_.getPanelValueTree().removeListener(this);
     }
 
-    void RightControlPanel::paint(juce::Graphics &g) {
+    void RightControlPanel::paint(juce::Graphics& g) {
         g.setColour(base_.getBackgroundColour());
         g.fillRect(getLocalBounds());
     }
@@ -66,12 +66,14 @@ namespace zlpanel {
         const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
 
         bound.removeFromBottom(padding);
-        const auto label_height = juce::roundToInt(base_.getFontSize() * 1.5f); {
+        const auto label_height = juce::roundToInt(base_.getFontSize() * 1.5f);
+        {
             bound.removeFromLeft(padding);
             auto t_bound = bound.removeFromLeft(small_slider_width);
             gain_label_.setBounds(t_bound.removeFromTop(label_height));
             gain_slider_.setBounds(t_bound);
-        } {
+        }
+        {
             bound.removeFromLeft(padding);
             auto t_bound = bound.removeFromLeft(small_slider_width);
             wet_label_.setBounds(t_bound.removeFromTop(label_height));
@@ -83,7 +85,7 @@ namespace zlpanel {
         updater_.updateComponents();
     }
 
-    void RightControlPanel::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &identifier) {
+    void RightControlPanel::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& identifier) {
         if (base_.isPanelIdentifier(zlgui::PanelSettingIdx::kLUFSLearnButton, identifier)) {
             if (base_.getPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton)) {
                 gain_label_.setAlpha(.5f);
@@ -93,7 +95,8 @@ namespace zlpanel {
 
                 gain_slider_.setInterceptsMouseClicks(false, false);
                 wet_slider_.setInterceptsMouseClicks(false, false);
-            } else {
+            }
+            else {
                 gain_label_.setAlpha(1.f);
                 gain_slider_.setAlpha(1.f);
                 wet_label_.setAlpha(1.f);

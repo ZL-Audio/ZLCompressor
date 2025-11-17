@@ -18,7 +18,7 @@ namespace zldsp::filter {
      * an empty filter which holds filter parameters
      * @tparam FloatType the float type of input audio buffer
      */
-    template<typename FloatType>
+    template <typename FloatType>
     class Empty {
     public:
         explicit Empty() = default;
@@ -63,7 +63,7 @@ namespace zldsp::filter {
 
         size_t getOrder() const { return order_.load(std::memory_order::relaxed); }
 
-        std::atomic<bool> &getUpdateParaFlag() { return to_update_para_; }
+        std::atomic<bool>& getUpdateParaFlag() { return to_update_para_; }
 
     private:
         std::atomic<bool> to_update_para_{true};

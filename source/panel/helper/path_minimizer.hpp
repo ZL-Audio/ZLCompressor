@@ -16,14 +16,15 @@ namespace zlpanel {
     public:
         static constexpr float kTol = 0.01f;
 
-        explicit PathMinimizer(juce::Path &path) : path_ref_(path) {
+        explicit PathMinimizer(juce::Path& path) : path_ref_(path) {
         }
 
-        template<bool start = true>
+        template <bool start = true>
         void startNewSubPath(const float x, const float y) {
             if (start) {
                 path_ref_.startNewSubPath(x, y);
-            } else {
+            }
+            else {
                 path_ref_.lineTo(x, y);
             }
             start_x_ = x;
@@ -48,7 +49,7 @@ namespace zlpanel {
         }
 
     private:
-        juce::Path &path_ref_;
+        juce::Path& path_ref_;
         float start_x_{0.}, start_y_{0.};
         float current_x_{0.}, current_y_{0.};
     };

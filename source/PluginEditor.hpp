@@ -22,12 +22,12 @@ class PluginEditor : public juce::AudioProcessorEditor,
                      private juce::ValueTree::Listener,
                      private juce::AsyncUpdater {
 public:
-    explicit PluginEditor(PluginProcessor &);
+    explicit PluginEditor(PluginProcessor&);
 
     ~PluginEditor() override;
 
     //==============================================================================
-    void paint(juce::Graphics &) override;
+    void paint(juce::Graphics&) override;
 
     void resized() override;
 
@@ -38,8 +38,8 @@ public:
     void minimisationStateChanged(bool isNowMinimised) override;
 
 private:
-    PluginProcessor &p_ref_;
-    zlstate::Property &property_;
+    PluginProcessor& p_ref_;
+    zlstate::Property& property_;
     juce::Value last_ui_width_, last_ui_height_;
 
     zlgui::UIBase base_;
@@ -47,11 +47,11 @@ private:
 
     std::unique_ptr<juce::VBlankAttachment> vblank_;
 
-    std::atomic<float> &equalize_show_ref_;
+    std::atomic<float>& equalize_show_ref_;
 
     void timerCallback() override;
 
-    void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
+    void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) override;
 
     void handleAsyncUpdate() override;
 

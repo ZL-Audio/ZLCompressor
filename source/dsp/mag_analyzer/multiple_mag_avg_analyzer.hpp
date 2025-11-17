@@ -12,7 +12,7 @@
 #include "multiple_mag_base.hpp"
 
 namespace zldsp::analyzer {
-    template<typename FloatType, size_t MagNum, size_t BinNum>
+    template <typename FloatType, size_t MagNum, size_t BinNum>
     class MultipleMagAvgAnalyzer : public MultipleMagBase<FloatType, MagNum, 1000> {
     public:
         explicit MultipleMagAvgAnalyzer() = default;
@@ -29,7 +29,7 @@ namespace zldsp::analyzer {
         void run() {
             if (this->to_reset_.exchange(false, std::memory_order::acquire)) {
                 for (size_t i = 0; i < MagNum; ++i) {
-                    auto &cumulative_count{cumulative_counts_[i]};
+                    auto& cumulative_count{cumulative_counts_[i]};
                     std::fill(cumulative_count.begin(), cumulative_count.end(), 0.);
                 }
             }
@@ -37,8 +37,8 @@ namespace zldsp::analyzer {
             const int num_ready = this->abstract_fifo_.getNumReady();
             const auto range = this->abstract_fifo_.prepareToRead(num_ready);
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &mag_fifo{this->mag_fifos_[i]};
-                auto &cumulative_count{cumulative_counts_[i]};
+                auto& mag_fifo{this->mag_fifos_[i]};
+                auto& cumulative_count{cumulative_counts_[i]};
                 for (auto idx = range.start_index1; idx < range.start_index1 + range.block_size1; ++idx) {
                     updateHist(cumulative_count, mag_fifo[static_cast<size_t>(idx)]);
                 }
@@ -48,7 +48,7 @@ namespace zldsp::analyzer {
             }
             this->abstract_fifo_.finishRead(num_ready);
 
-            std::array<float, MagNum> maximum_counts{};
+            std::array < float, MagNum > maximum_counts{};
             for (size_t i = 0; i < MagNum; ++i) {
                 maximum_counts[i] = *std::max_element(cumulative_counts_[i].begin(), cumulative_counts_[i].end());
             }
@@ -56,8 +56,8 @@ namespace zldsp::analyzer {
                                                 *std::max_element(maximum_counts.begin(), maximum_counts.end()));
             const auto maximum_count_r = 1.f / maximum_count;
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &cumulative_count{cumulative_counts_[i]};
-                auto &avg_count{avg_counts_[i]};
+                auto& cumulative_count{cumulative_counts_[i]};
+                auto& avg_count{avg_counts_[i]};
                 zldsp::vector::multiply(avg_count.data(), cumulative_count.data(), maximum_count_r, avg_count.size());
             }
         }
@@ -79,10 +79,20 @@ namespace zldsp::analyzer {
         }
 
     protected:
-        std::array<std::array<float, BinNum>, MagNum> cumulative_counts_{};
-        std::array<std::array<float, BinNum>, MagNum> avg_counts_{};
+        std::array<std::array < float, BinNum>
+        ,
+        MagNum
+        >
+        cumulative_counts_ {
+        };
+        std::array<std::array < float, BinNum>
+        ,
+        MagNum
+        >
+        avg_counts_ {
+        };
 
-        static inline void updateHist(std::array<float, BinNum> &hist, const float x) {
+        static inline void updateHist(std::array<float, BinNum>& hist, const float x) {
             const auto idx = static_cast<size_t>(std::max(0.f, std::round(-x)));
             if (idx < BinNum) {
                 zldsp::vector::multiply(hist.data(), 0.999999f, hist.size());

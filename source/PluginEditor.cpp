@@ -9,7 +9,7 @@
 
 #include "PluginEditor.hpp"
 
-PluginEditor::PluginEditor(PluginProcessor &p)
+PluginEditor::PluginEditor(PluginProcessor& p)
     : AudioProcessorEditor(&p),
       p_ref_(p),
       property_(p.property_),
@@ -60,7 +60,7 @@ PluginEditor::~PluginEditor() {
     p_ref_.getCompressController().setMagAnalyzerOn(false);
 }
 
-void PluginEditor::paint(juce::Graphics &g) {
+void PluginEditor::paint(juce::Graphics& g) {
     juce::ignoreUnused(g);
 }
 
@@ -83,10 +83,10 @@ void PluginEditor::minimisationStateChanged(bool) {
     updateIsShowing();
 }
 
-void PluginEditor::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) {
+void PluginEditor::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) {
     if (base_.isPanelIdentifier(zlgui::kUISettingChanged, property)) {
         sendLookAndFeelChange();
-        auto &fft{p_ref_.getEqualizeController().getFFTAnalyzer()};
+        auto& fft{p_ref_.getEqualizeController().getFFTAnalyzer()};
         fft.setExtraTilt(base_.getFFTExtraTilt());
         fft.setExtraSpeed(base_.getFFTExtraSpeed());
         triggerAsyncUpdate();
@@ -110,7 +110,8 @@ void PluginEditor::updateIsShowing() {
         if (base_.getIsEditorShowing()) {
             vblank_ = std::make_unique<juce::VBlankAttachment>(
                 &main_panel_, [this](const double x) { main_panel_.repaintCallBack(x); });
-        } else {
+        }
+        else {
             vblank_.reset();
         }
     }

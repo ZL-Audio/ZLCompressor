@@ -10,7 +10,7 @@
 #include "equalize_panel.hpp"
 
 namespace zlpanel {
-    EqualizePanel::EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base)
+    EqualizePanel::EqualizePanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor), base_{base},
           background_panel_(processor, base),
           fft_analyzer_panel_(processor, base),
@@ -40,7 +40,7 @@ namespace zlpanel {
         p_ref_.getEqualizeController().setFFTAnalyzerON(false);
     }
 
-    void EqualizePanel::run(juce::Thread &thread) {
+    void EqualizePanel::run(juce::Thread& thread) {
         juce::ignoreUnused(thread);
         std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
@@ -142,7 +142,7 @@ namespace zlpanel {
         button_panel_.repaintCallBackAfter();
     }
 
-    void EqualizePanel::mouseEnter(const juce::MouseEvent &) {
+    void EqualizePanel::mouseEnter(const juce::MouseEvent&) {
         background_panel_.setMouseOver(true);
     }
 
@@ -153,7 +153,7 @@ namespace zlpanel {
         }
     }
 
-    void EqualizePanel::parameterChanged(const juce::String &parameter_ID, float new_value) {
+    void EqualizePanel::parameterChanged(const juce::String& parameter_ID, float new_value) {
         const auto band = static_cast<size_t>(parameter_ID.getTrailingIntValue());
         filter_status_[band].store(static_cast<zlp::EqualizeController::FilterStatus>(
                                        std::round(new_value)), std::memory_order::relaxed);

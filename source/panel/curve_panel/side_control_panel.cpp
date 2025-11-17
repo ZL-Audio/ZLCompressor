@@ -11,8 +11,8 @@
 #include "side_control_panel.hpp"
 
 namespace zlpanel {
-    SideControlPanel::SideControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                       multilingual::TooltipHelper &tooltip_helper)
+    SideControlPanel::SideControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                       multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           stereo_mode_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoMode::kID)),
           stereo_swap_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoSwap::kID)),
@@ -76,7 +76,7 @@ namespace zlpanel {
         stereo_swap_button_.setDrawable(stereo_swap_drawable_.get());
         ext_side_button_.setDrawable(ext_side_drawable_.get());
         side_out_button_.setDrawable(side_out_drawable_.get());
-        for (auto &b: {&stereo_swap_button_, &ext_side_button_, &side_out_button_}) {
+        for (auto& b : {&stereo_swap_button_, &ext_side_button_, &side_out_button_}) {
             b->getLAF().enableShadow(false);
             b->getLAF().setShrinkScale(.0f);
             b->getLAF().setScale(1.15f);
@@ -93,14 +93,14 @@ namespace zlpanel {
 
         updateLabels();
         label_laf_.setFontScale(1.25f);
-        for (auto &l: {&side_in1_label_, &side_in2_label_, &side_out1_label_, &side_out2_label_}) {
+        for (auto& l : {&side_in1_label_, &side_in2_label_, &side_out1_label_, &side_out2_label_}) {
             l->setJustificationType(juce::Justification::centred);
             l->setLookAndFeel(&label_laf_);
             l->setBufferedToImage(true);
             addAndMakeVisible(l);
         }
 
-        for (auto &s: {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
+        for (auto& s : {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
             s->setFontScale(1.25f);
             s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             s->getSlider().setSliderSnapsToMousePosition(false);
@@ -114,7 +114,7 @@ namespace zlpanel {
         setBufferedToImage(true);
     }
 
-    void SideControlPanel::paint(juce::Graphics &g) {
+    void SideControlPanel::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColour());
     }
 
@@ -140,7 +140,8 @@ namespace zlpanel {
         bound.removeFromLeft(padding);
         bound.removeFromRight(padding);
 
-        bound.removeFromTop(padding); {
+        bound.removeFromTop(padding);
+        {
             auto t_bound = bound.removeFromTop(button_height);
             const auto spacing = (t_bound.getWidth() - 2 * button_height) / 3;
             t_bound.removeFromLeft(spacing);
@@ -154,14 +155,16 @@ namespace zlpanel {
 
         const auto label_width = juce::roundToInt(static_cast<float>(button_height) * .75f);
 
-        bound.removeFromTop(padding); {
+        bound.removeFromTop(padding);
+        {
             auto t_bound = bound.removeFromTop(button_height);
             side_in1_label_.setBounds(t_bound.removeFromLeft(label_width));
             side_out1_label_.setBounds(t_bound.removeFromRight(label_width));
             stereo_wet1_slider_.setBounds(t_bound);
         }
 
-        bound.removeFromTop(padding); {
+        bound.removeFromTop(padding);
+        {
             auto t_bound = bound.removeFromTop(button_height);
             side_in2_label_.setBounds(t_bound.removeFromLeft(label_width));
             side_out2_label_.setBounds(t_bound.removeFromRight(label_width));
@@ -171,7 +174,8 @@ namespace zlpanel {
         bound.removeFromTop(padding);
         side_gain_slider_.setBounds(bound.removeFromTop(slider_height));
 
-        bound.removeFromTop(padding); {
+        bound.removeFromTop(padding);
+        {
             auto t_bound = bound.removeFromTop(button_height);
             const auto spacing = (t_bound.getWidth() - 2 * button_height) / 3;
             t_bound.removeFromLeft(spacing);
@@ -203,7 +207,8 @@ namespace zlpanel {
             side_in2_label_.setText("R", juce::dontSendNotification);
             side_out1_label_.setText(stereo_swap_flag_ ? "R" : "L", juce::dontSendNotification);
             side_out2_label_.setText(stereo_swap_flag_ ? "L" : "R", juce::dontSendNotification);
-        } else {
+        }
+        else {
             side_in1_label_.setText("M", juce::dontSendNotification);
             side_in2_label_.setText("S", juce::dontSendNotification);
             side_out1_label_.setText(stereo_swap_flag_ ? "S" : "M", juce::dontSendNotification);

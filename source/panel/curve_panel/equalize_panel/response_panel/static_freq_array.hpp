@@ -68,8 +68,8 @@ namespace zlpanel {
         2.56432479e+00, 2.66544131e+00, 2.77054506e+00, 2.87979327e+00
     };
 
-    template<typename FloatType, std::size_t N>
-    constexpr std::array<FloatType, N> convert(const std::array<double, N> &arr) {
+    template <typename FloatType, std::size_t N>
+    constexpr std::array<FloatType, N> convert(const std::array<double, N>& arr) {
         std::array<FloatType, N> float_arr{};
         for (std::size_t i = 0; i < N; ++i) {
             float_arr[i] = static_cast<FloatType>(arr[i]);

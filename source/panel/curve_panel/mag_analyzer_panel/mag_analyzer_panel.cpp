@@ -10,7 +10,7 @@
 #include "mag_analyzer_panel.hpp"
 
 namespace zlpanel {
-    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor &p, zlgui::UIBase &base)
+    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base)
         : base_(base),
           background_panel_(p, base),
           peak_panel_(p, base), rms_panel_(p, base),
@@ -48,7 +48,7 @@ namespace zlpanel {
         ratio_slider_.setBounds(bound);
     }
 
-    void MagAnalyzerPanel::run(const juce::Thread &thread) {
+    void MagAnalyzerPanel::run(const juce::Thread& thread) {
         juce::ScopedNoDenormals no_denormals;
         const auto time_stamp = next_stamp_.load(std::memory_order::relaxed);
         peak_panel_.run(time_stamp);
@@ -61,7 +61,8 @@ namespace zlpanel {
         }
         if (to_run_rms_.exchange(false, std::memory_order::relaxed)) {
             rms_panel_.run(true);
-        } else {
+        }
+        else {
             rms_panel_.run(false);
         }
     }
@@ -81,10 +82,11 @@ namespace zlpanel {
         }
     }
 
-    void MagAnalyzerPanel::mouseWheelMove(const juce::MouseEvent &event, const juce::MouseWheelDetails &wheel) {
+    void MagAnalyzerPanel::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) {
         if (event.mods.isCommandDown()) {
             ratio_slider_.mouseWheelMove(event, wheel);
-        } else {
+        }
+        else {
             threshold_slider_.mouseWheelMove(event, wheel);
         }
     }

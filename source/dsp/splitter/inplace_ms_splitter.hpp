@@ -16,7 +16,7 @@ namespace zldsp::splitter {
      * a splitter that splits the stereo audio signal input mid signal and side signal
      * @tparam FloatType
      */
-    template<typename FloatType>
+    template <typename FloatType>
     class InplaceMSSplitter {
     public:
         enum GainMode {
@@ -28,18 +28,20 @@ namespace zldsp::splitter {
         /**
          * switch left/right buffer to mid/side buffer
          */
-        template<GainMode Mode = GainMode::kPre>
-        static constexpr void split(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
+        template <GainMode Mode = GainMode::kPre>
+        static constexpr void split(FloatType* l_buffer, FloatType* r_buffer, const size_t num_samples) {
             auto l_vector = kfr::make_univector(l_buffer, num_samples);
             auto r_vector = kfr::make_univector(r_buffer, num_samples);
 
             if constexpr (Mode == GainMode::kPre) {
                 l_vector = FloatType(0.5) * (l_vector + r_vector);
                 r_vector = l_vector - r_vector;
-            } else if constexpr (Mode == GainMode::kAvg) {
+            }
+            else if constexpr (Mode == GainMode::kAvg) {
                 l_vector = kSqrt2Over2 * (l_vector + r_vector);
                 r_vector = l_vector - kSqrt2 * r_vector;
-            } else if constexpr (Mode == GainMode::kPost) {
+            }
+            else if constexpr (Mode == GainMode::kPost) {
                 l_vector = l_vector + r_vector;
                 r_vector = l_vector - FloatType(2) * r_vector;
             }
@@ -48,18 +50,20 @@ namespace zldsp::splitter {
         /**
          * switch mis/side buffer to left/right buffer
          */
-        template<GainMode Mode = GainMode::kPre>
-        static constexpr void combine(FloatType *l_buffer, FloatType *r_buffer, const size_t num_samples) {
+        template <GainMode Mode = GainMode::kPre>
+        static constexpr void combine(FloatType* l_buffer, FloatType* r_buffer, const size_t num_samples) {
             auto l_vector = kfr::make_univector(l_buffer, num_samples);
             auto r_vector = kfr::make_univector(r_buffer, num_samples);
 
             if constexpr (Mode == GainMode::kPre) {
                 l_vector = l_vector + r_vector;
                 r_vector = l_vector - FloatType(2) * r_vector;
-            } else if constexpr (Mode == GainMode::kAvg) {
+            }
+            else if constexpr (Mode == GainMode::kAvg) {
                 l_vector = kSqrt2Over2 * (l_vector + r_vector);
                 r_vector = l_vector - kSqrt2 * r_vector;
-            } else if constexpr (Mode == GainMode::kPost) {
+            }
+            else if constexpr (Mode == GainMode::kPost) {
                 l_vector = FloatType(0.5) * (l_vector + r_vector);
                 r_vector = l_vector - r_vector;
             }

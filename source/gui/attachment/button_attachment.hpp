@@ -36,7 +36,8 @@ namespace zlgui::attachment {
                                  parameter_ref_.getParameterID())->load(std::memory_order::relaxed));
             if constexpr (kUpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
-            } else {
+            }
+            else {
                 updateComponent();
             }
         }

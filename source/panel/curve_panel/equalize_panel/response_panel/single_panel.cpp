@@ -10,16 +10,16 @@
 #include "single_panel.hpp"
 
 namespace zlpanel {
-    SinglePanel::SinglePanel(PluginProcessor &processor, zlgui::UIBase &base,
+    SinglePanel::SinglePanel(PluginProcessor& processor, zlgui::UIBase& base,
                              const size_t band_idx,
-                             zldsp::filter::Ideal<float, 16> &filter)
+                             zldsp::filter::Ideal<float, 16>& filter)
         : p_ref_(processor), base_(base), band_idx_(band_idx), filter_(filter) {
         path_.preallocateSpace(kWsFloat.size() * 3 + 12);
         next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
         button_pos_.store({0.f, -1e6f});
 
         const std::string suffix = std::to_string(band_idx_);
-        for (auto &ID: kBandIDs) {
+        for (auto& ID : kBandIDs) {
             auto para_ID = ID + suffix;
             p_ref_.parameters_.addParameterListener(para_ID, this);
             parameterChanged(para_ID, p_ref_.parameters_.getRawParameterValue(para_ID)->load());
@@ -30,12 +30,12 @@ namespace zlpanel {
 
     SinglePanel::~SinglePanel() {
         const std::string suffix = std::to_string(band_idx_);
-        for (auto &ID: kBandIDs) {
+        for (auto& ID : kBandIDs) {
             p_ref_.parameters_.removeParameterListener(ID + suffix, this);
         }
     }
 
-    void SinglePanel::paint(juce::Graphics &g) {
+    void SinglePanel::paint(juce::Graphics& g) {
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
@@ -58,7 +58,7 @@ namespace zlpanel {
     }
 
     bool SinglePanel::run(const std::span<float> xs, std::span<float> ys,
-                          const juce::Rectangle<float> &bound, const float max_db,
+                          const juce::Rectangle<float>& bound, const float max_db,
                           const bool force) {
         if (!filter_.getUpdateFlag().exchange(false, std::memory_order::acquire) && !force) {
             return false;
@@ -89,24 +89,24 @@ namespace zlpanel {
         const auto button_x = button_curve_x;
         float button_y{bias};
         switch (filter_type) {
-            case zldsp::filter::FilterType::kPeak:
-            case zldsp::filter::FilterType::kBandShelf:
-            case zldsp::filter::FilterType::kLowShelf:
-            case zldsp::filter::FilterType::kHighShelf: {
-                button_y = button_curve_y;
-                break;
-            }
-            case zldsp::filter::FilterType::kTiltShelf: {
-                button_y = center_gain * scale * .5f + bias;
-                break;
-            }
-            case zldsp::filter::FilterType::kLowPass:
-            case zldsp::filter::FilterType::kHighPass:
-            case zldsp::filter::FilterType::kBandPass:
-            case zldsp::filter::FilterType::kNotch: {
-                button_y = bias;
-                break;
-            }
+        case zldsp::filter::FilterType::kPeak:
+        case zldsp::filter::FilterType::kBandShelf:
+        case zldsp::filter::FilterType::kLowShelf:
+        case zldsp::filter::FilterType::kHighShelf: {
+            button_y = button_curve_y;
+            break;
+        }
+        case zldsp::filter::FilterType::kTiltShelf: {
+            button_y = center_gain * scale * .5f + bias;
+            break;
+        }
+        case zldsp::filter::FilterType::kLowPass:
+        case zldsp::filter::FilterType::kHighPass:
+        case zldsp::filter::FilterType::kBandPass:
+        case zldsp::filter::FilterType::kNotch: {
+            button_y = bias;
+            break;
+        }
         }
         next_line_ = juce::Line<float>(button_x, button_y, button_curve_x, button_curve_y);
         button_pos_.store({button_x, button_y});
@@ -118,16 +118,20 @@ namespace zlpanel {
         return true;
     }
 
-    void SinglePanel::parameterChanged(const juce::String &parameter_ID, const float new_value) {
+    void SinglePanel::parameterChanged(const juce::String& parameter_ID, const float new_value) {
         if (parameter_ID.startsWith(zlp::PFreq::kID)) {
             filter_.setFreq(new_value);
-        } else if (parameter_ID.startsWith(zlp::PGain::kID)) {
+        }
+        else if (parameter_ID.startsWith(zlp::PGain::kID)) {
             filter_.setGain(new_value);
-        } else if (parameter_ID.startsWith(zlp::PQ::kID)) {
+        }
+        else if (parameter_ID.startsWith(zlp::PQ::kID)) {
             filter_.setQ(new_value);
-        } else if (parameter_ID.startsWith(zlp::PFilterType::kID)) {
+        }
+        else if (parameter_ID.startsWith(zlp::PFilterType::kID)) {
             filter_.setFilterType(static_cast<zldsp::filter::FilterType>(std::round(new_value)));
-        } else if (parameter_ID.startsWith(zlp::POrder::kID)) {
+        }
+        else if (parameter_ID.startsWith(zlp::POrder::kID)) {
             filter_.setOrder(zlp::POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
         }
     }

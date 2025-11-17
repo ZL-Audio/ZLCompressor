@@ -10,8 +10,8 @@
 #include "top_panel.hpp"
 
 namespace zlpanel {
-    TopPanel::TopPanel(PluginProcessor &p, zlgui::UIBase &base,
-                       multilingual::TooltipHelper &tooltip_helper)
+    TopPanel::TopPanel(PluginProcessor& p, zlgui::UIBase& base,
+                       multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           logo_panel_(p, base_, tooltip_helper),
           top_control_panel_(p, base_, tooltip_helper) {
@@ -21,7 +21,7 @@ namespace zlpanel {
         setBufferedToImage(true);
     }
 
-    void TopPanel::paint(juce::Graphics &g) {
+    void TopPanel::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColour());
     }
 

@@ -77,7 +77,8 @@ namespace zldsp::container {
             if (num_to_write > range.block_size1) {
                 range.start_index2 = 0;
                 range.block_size2 = num_to_write - range.block_size1;
-            } else {
+            }
+            else {
                 range.start_index2 = 0;
                 range.block_size2 = 0;
             }
@@ -102,7 +103,8 @@ namespace zldsp::container {
             if (num_to_read > range.block_size1) {
                 range.start_index2 = 0;
                 range.block_size2 = num_to_read - range.block_size1;
-            } else {
+            }
+            else {
                 range.start_index2 = 0;
                 range.block_size2 = 0;
             }

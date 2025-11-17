@@ -29,8 +29,8 @@ namespace zlgui::attachment {
             if constexpr (kUpdateFromAPVTS) {
                 apvts.addParameterListener(parameter_ref_.getParameterID(), this);
                 parameterChanged(parameter_ref_.getParameterID(),
-                             apvts.getRawParameterValue(parameter_ref_.getParameterID())->load(
-                                 std::memory_order::relaxed));
+                                 apvts.getRawParameterValue(parameter_ref_.getParameterID())->load(
+                                     std::memory_order::relaxed));
                 updater_ref_.addAttachment(*this);
             }
             // add dragger listener
@@ -53,7 +53,8 @@ namespace zlgui::attachment {
                         dragger_.setXPortion(new_p);
                         dragger_.updateButton();
                     }
-                } else {
+                }
+                else {
                     if (std::abs(dragger_.getYPortion() - new_p) > 0.001f) {
                         dragger_.setYPortion(new_p);
                         dragger_.updateButton();
@@ -90,7 +91,8 @@ namespace zlgui::attachment {
                 parameter_ref_.setValueNotifyingHost(
                     parameter_ref_.convertTo0to1(normalisable_range_.convertFrom0to1(
                         std::clamp(dragger_.getXPortion(), 0.f, 1.f))));
-            } else {
+            }
+            else {
                 parameter_ref_.setValueNotifyingHost(
                     parameter_ref_.convertTo0to1(normalisable_range_.convertFrom0to1(
                         std::clamp(dragger_.getYPortion(), 0.f, 1.f))));

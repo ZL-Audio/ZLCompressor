@@ -10,13 +10,13 @@
 #include "equalize_background_panel.hpp"
 
 namespace zlpanel {
-    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIBase &base)
+    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIBase& base)
         : base_(base) {
         setInterceptsMouseClicks(false, false);
         setBufferedToImage(true);
     }
 
-    void EqualizerBackgroundPanel::Background1::paint(juce::Graphics &g) {
+    void EqualizerBackgroundPanel::Background1::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColour().withAlpha(.875f));
         g.setFont(base_.getFontSize());
         g.setColour(base_.getTextColour().withAlpha(.375f));
@@ -35,19 +35,19 @@ namespace zlpanel {
             const auto x = kBackgroundFreqs[i] * bound.getWidth() + bound.getX();
             rect_list_.add({x - thickness * .5f, bound.getY(), thickness, bound.getHeight()});
             text_bounds_[i] = juce::Rectangle<float>(x - base_.getFontSize() * 3 - base_.getFontSize() * 0.125f,
-                                                   bound.getBottom() - base_.getFontSize() * 2,
-                                                   base_.getFontSize() * 3, base_.getFontSize() * 2);
+                                                     bound.getBottom() - base_.getFontSize() * 2,
+                                                     base_.getFontSize() * 3, base_.getFontSize() * 2);
         }
 
         bound = bound.withSizeKeepingCentre(bound.getWidth(), bound.getHeight() - 2 * base_.getFontSize());
 
-        for (auto &d: kBackgroundDBs) {
+        for (auto& d : kBackgroundDBs) {
             const auto y = d * bound.getHeight() + bound.getY();
             rect_list_.add({bound.getX(), y - thickness * .5f, bound.getWidth(), thickness});
         }
     }
 
-    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor &, zlgui::UIBase &base)
+    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor&, zlgui::UIBase& base)
         : background1_(base) {
         setInterceptsMouseClicks(false, false);
         addAndMakeVisible(background1_);

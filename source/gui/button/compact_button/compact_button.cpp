@@ -40,7 +40,8 @@ namespace zlgui::button {
         if (button_.getToggleState() && laf_.getDepth() < 0.1f) {
             laf_.setDepth(1.f);
             button_.repaint();
-        } else if (!button_.getToggleState()) {
+        }
+        else if (!button_.getToggleState()) {
             laf_.setDepth(0.f);
             button_.repaint();
         }

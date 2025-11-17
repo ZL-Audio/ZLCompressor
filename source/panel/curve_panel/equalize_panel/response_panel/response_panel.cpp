@@ -10,11 +10,11 @@
 #include "response_panel.hpp"
 
 namespace zlpanel {
-    ResponsePanel::ResponsePanel(PluginProcessor &processor, zlgui::UIBase &base)
+    ResponsePanel::ResponsePanel(PluginProcessor& processor, zlgui::UIBase& base)
         : base_(base),
           eq_max_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
           sum_panel_(processor, base) {
-        for (auto &f: filters_) {
+        for (auto& f : filters_) {
             f.prepare(48000.0);
         }
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
@@ -33,21 +33,23 @@ namespace zlpanel {
         }
     }
 
-    void ResponsePanel::resized() { {
+    void ResponsePanel::resized() {
+        {
             auto bound = getLocalBounds().toFloat();
             bound = bound.withSizeKeepingCentre(bound.getWidth(), bound.getHeight() - 2.f * base_.getFontSize());
             bound_.store(bound);
-        } {
+        }
+        {
             const auto bound = getLocalBounds();
             dummy_component_.setBounds(bound);
-            for (auto &panel: single_panels_) {
+            for (auto& panel : single_panels_) {
                 panel->setBounds(bound);
             }
             sum_panel_.setBounds(bound);
         }
     }
 
-    void ResponsePanel::run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
+    void ResponsePanel::run(std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
                             bool to_update_sum) {
         const auto new_bound = bound_.load();
         bool to_update_single = false;
@@ -84,14 +86,14 @@ namespace zlpanel {
         }
     }
 
-    void ResponsePanel::setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &status) {
+    void ResponsePanel::setBandStatus(const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& status) {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             single_panels_[band]->setVisible(status[band] != zlp::EqualizeController::kOff);
         }
     }
 
     void ResponsePanel::updateBand(const size_t band) {
-        for (auto &panel: single_panels_) {
+        for (auto& panel : single_panels_) {
             panel->setCurveThicknessScale(.5f);
         }
         if (band < zlp::kBandNum) {

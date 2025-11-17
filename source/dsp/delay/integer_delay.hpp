@@ -15,13 +15,13 @@
 #include "../vector/vector.hpp"
 
 namespace zldsp::delay {
-    template<typename FloatType>
+    template <typename FloatType>
     class IntegerDelay {
     public:
         IntegerDelay() = default;
 
         void reset() {
-            for (auto &s : states_) {
+            for (auto& s : states_) {
                 s.resize(static_cast<size_t>(capacity_));
                 std::fill(s.begin(), s.end(), FloatType(0));
             }
@@ -42,14 +42,15 @@ namespace zldsp::delay {
             reset();
         }
 
-        void process(std::span<FloatType *> input, size_t num_samples) {
+        void process(std::span<FloatType*> input, size_t num_samples) {
             // write input samples to states
             const auto next_tail = (tail_ + static_cast<int>(num_samples)) % capacity_;
             if (next_tail > tail_) {
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(states_[chan].data() + static_cast<size_t>(tail_), input[chan], num_samples);
                 }
-            } else {
+            }
+            else {
                 const auto block1_size = static_cast<size_t>(capacity_ - tail_);
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(states_[chan].data() + static_cast<size_t>(tail_), input[chan], block1_size);
@@ -63,7 +64,8 @@ namespace zldsp::delay {
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(input[chan], states_[chan].data() + static_cast<size_t>(head_), num_samples);
                 }
-            } else {
+            }
+            else {
                 const auto block1_size = static_cast<size_t>(capacity_ - head_);
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(input[chan], states_[chan].data() + static_cast<size_t>(head_), block1_size);
@@ -83,7 +85,8 @@ namespace zldsp::delay {
                 if (tail_ < 0) {
                     tail_ += capacity_;
                 }
-            } else {
+            }
+            else {
                 head_ -= delta;
                 if (head_ < 0) {
                     head_ += capacity_;
@@ -103,6 +106,6 @@ namespace zldsp::delay {
         double sample_rate_{48000.0};
         FloatType delay_seconds_{0};
         int capacity_{0}, head_{0}, tail_{0};
-        std::vector<std::vector<FloatType> > states_;
+        std::vector<std::vector<FloatType>> states_;
     };
 }

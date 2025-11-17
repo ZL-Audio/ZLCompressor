@@ -19,19 +19,19 @@ namespace zlpanel {
     public:
         static constexpr size_t kNumPoint = 100;
 
-        explicit ComputerPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit ComputerPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~ComputerPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void run();
 
         void resized() override;
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         static constexpr std::array kComputerIDs{
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID
         };
@@ -50,6 +50,6 @@ namespace zlpanel {
 
         void lookAndFeelChanged() override;
 
-        void parameterChanged(const juce::String &parameterID, float newValue) override;
+        void parameterChanged(const juce::String& parameterID, float newValue) override;
     };
 } // zlpanel

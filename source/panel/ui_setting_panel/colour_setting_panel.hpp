@@ -18,7 +18,7 @@ namespace zlpanel {
     public:
         static constexpr float kHeightP = 56.f;
 
-        explicit ColourSettingPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit ColourSettingPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~ColourSettingPanel() override;
 
@@ -32,11 +32,11 @@ namespace zlpanel {
 
         void resized() override;
 
-        void mouseDown(const juce::MouseEvent &event) override;
+        void mouseDown(const juce::MouseEvent& event) override;
 
     private:
-        PluginProcessor &pRef;
-        zlgui::UIBase &base_;
+        PluginProcessor& pRef;
+        zlgui::UIBase& base_;
         zlgui::label::NameLookAndFeel name_laf_;
 
         static constexpr size_t kNumSelectors = static_cast<size_t>(zlgui::ColourIdx::kColourNum);
@@ -49,11 +49,11 @@ namespace zlpanel {
         juce::Label import_label_, export_label_;
 
         std::unique_ptr<juce::FileChooser> chooser_;
-        inline auto static const kSettingDirectory =
-                juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                .getChildFile("Audio")
-                .getChildFile("Presets")
-                .getChildFile(JucePlugin_Manufacturer)
-                .getChildFile("Shared Settings");
+        const juce::File kSettingDirectory =
+            juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+            .getChildFile("Audio")
+            .getChildFile("Presets")
+            .getChildFile(JucePlugin_Manufacturer)
+            .getChildFile("Shared Settings");
     };
-} // zlpanel
+}

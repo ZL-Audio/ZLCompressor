@@ -21,7 +21,7 @@ namespace zldsp::analyzer {
         kPeak, kRMS
     };
 
-    template<typename FloatType, size_t MagNum, size_t PointNum>
+    template <typename FloatType, size_t MagNum, size_t PointNum>
     class MultipleMagBase {
     public:
         explicit MultipleMagBase() = default;
@@ -30,19 +30,19 @@ namespace zldsp::analyzer {
 
         virtual void prepare(double sample_rate, size_t max_num_samples) = 0;
 
-        void process(std::array<std::span<FloatType *>, MagNum> buffers,
+        void process(std::array<std::span<FloatType*>, MagNum> buffers,
                      const size_t num_samples) {
             switch (mag_type_.load(std::memory_order::relaxed)) {
-                case MagType::kPeak: {
-                    processBuffer<MagType::kPeak>(buffers, static_cast<int>(num_samples));
-                    break;
-                }
-                case MagType::kRMS: {
-                    processBuffer<MagType::kRMS>(buffers, static_cast<int>(num_samples));
-                    break;
-                }
-                default: {
-                }
+            case MagType::kPeak: {
+                processBuffer<MagType::kPeak>(buffers, static_cast<int>(num_samples));
+                break;
+            }
+            case MagType::kRMS: {
+                processBuffer<MagType::kRMS>(buffers, static_cast<int>(num_samples));
+                break;
+            }
+            default: {
+            }
             }
         }
 
@@ -57,9 +57,19 @@ namespace zldsp::analyzer {
 
     protected:
         std::atomic<double> sample_rate_{48000.0}, max_num_samples_per_block_{0.};
-        std::array<std::array<float, PointNum>, MagNum> mag_fifos_{};
+        std::array<std::array < float, PointNum>
+        ,
+        MagNum
+        >
+        mag_fifos_ {
+        };
         zldsp::container::AbstractFIFO abstract_fifo_{PointNum};
-        std::array<std::array<float, PointNum>, MagNum> circular_mags_{};
+        std::array<std::array < float, PointNum>
+        ,
+        MagNum
+        >
+        circular_mags_ {
+        };
         size_t circular_idx_{0};
 
         std::atomic<float> time_length_{7.f};
@@ -71,13 +81,13 @@ namespace zldsp::analyzer {
         std::atomic<bool> to_reset_{false};
         std::atomic<MagType> mag_type_{MagType::kRMS};
 
-        template<MagType CurrentMagType>
-        void processBuffer(std::array<std::span<FloatType *>, MagNum> &buffers, int num_samples) {
+        template <MagType CurrentMagType>
+        void processBuffer(std::array<std::span<FloatType*>, MagNum>& buffers, int num_samples) {
             int start_idx{0}, end_idx{0};
             if (num_samples == 0) { return; }
             if (to_update_time_length_.exchange(false, std::memory_order::acquire)) {
                 max_pos_ = sample_rate_.load(std::memory_order::relaxed) * static_cast<double>(
-                               time_length_.load(std::memory_order::relaxed)) / static_cast<double>(PointNum - 1);
+                    time_length_.load(std::memory_order::relaxed)) / static_cast<double>(PointNum - 1);
                 current_pos_ = 0;
                 current_num_samples_ = 0;
             }
@@ -97,11 +107,12 @@ namespace zldsp::analyzer {
                                 mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::gainToDecibels(
                                     static_cast<float>(current_mags_[i]));
                             }
-                        } else if constexpr (CurrentMagType == MagType::kRMS) {
+                        }
+                        else if constexpr (CurrentMagType == MagType::kRMS) {
                             for (size_t i = 0; i < MagNum; ++i) {
                                 mag_fifos_[i][static_cast<size_t>(write_idx)] = 0.5f * zldsp::chore::gainToDecibels(
-                                        static_cast<float>(
-                                            current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
+                                    static_cast<float>(
+                                        current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
                             }
                             current_num_samples_ = 0;
                         }
@@ -109,7 +120,8 @@ namespace zldsp::analyzer {
 
                         std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
                     }
-                } else {
+                }
+                else {
                     updateMags<CurrentMagType>(buffers, start_idx, num_samples);
                     current_pos_ += static_cast<double>(num_samples);
                     break;
@@ -117,18 +129,19 @@ namespace zldsp::analyzer {
             }
         }
 
-        template<MagType CurrentMagType>
-        void updateMags(std::array<std::span<FloatType *>, MagNum> &buffers,
+        template <MagType CurrentMagType>
+        void updateMags(std::array<std::span<FloatType*>, MagNum>& buffers,
                         const int start_idx, const int num_samples) {
             for (size_t i = 0; i < MagNum; ++i) {
-                auto &buffer = buffers[i];
+                auto& buffer = buffers[i];
                 for (size_t chan = 0; chan < buffer.size(); ++chan) {
                     auto v = kfr::make_univector(
                         buffer[chan] + static_cast<size_t>(start_idx),
                         static_cast<size_t>(num_samples));
                     if constexpr (CurrentMagType == MagType::kPeak) {
                         current_mags_[i] = std::max(current_mags_[i], kfr::absmaxof(v));
-                    } else if constexpr (CurrentMagType == MagType::kRMS) {
+                    }
+                    else if constexpr (CurrentMagType == MagType::kRMS) {
                         current_mags_[i] += kfr::sumsqr(v);
                         current_num_samples_ += num_samples;
                     }

@@ -13,7 +13,7 @@
 #include "../filter/filter.hpp"
 
 namespace zldsp::loudness {
-    template<typename FloatType, bool UseLowPass = false>
+    template <typename FloatType, bool UseLowPass = false>
     class KWeightingFilter {
     public:
         KWeightingFilter() = default;
@@ -43,7 +43,7 @@ namespace zldsp::loudness {
             }
         }
 
-        void process(std::span<FloatType *> buffer, const size_t num_samples) {
+        void process(std::span<FloatType*> buffer, const size_t num_samples) {
             for (size_t channel = 0; channel < buffer.size(); ++channel) {
                 auto samples = buffer[channel];
                 for (size_t i = 0; i < num_samples; ++i) {

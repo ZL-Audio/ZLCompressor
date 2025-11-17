@@ -27,7 +27,7 @@ namespace zldsp::filter {
         kIIR, kSVF, kParallel
     };
 
-    inline double dotProduct(const std::array<double, 3> &x, const std::array<double, 3> &y) {
+    inline double dotProduct(const std::array<double, 3>& x, const std::array<double, 3>& y) {
         return std::inner_product(x.begin(), x.end(), y.begin(), 0.0);
     }
 

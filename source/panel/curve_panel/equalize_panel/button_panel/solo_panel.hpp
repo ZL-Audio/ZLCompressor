@@ -14,20 +14,18 @@
 #include "dragger_panel.hpp"
 
 namespace zlpanel {
+    class SoloPanel final : public juce::Component {
+    public:
+        explicit SoloPanel(PluginProcessor& processor, zlgui::UIBase& base,
+                           size_t& selected_band_idx,
+                           std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum>& dragger_panels);
 
-class SoloPanel final : public juce::Component {
-public:
-    explicit SoloPanel(PluginProcessor &processor, zlgui::UIBase &base,
-                         size_t &selected_band_idx,
-                         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> &dragger_panels);
+        void paint(juce::Graphics& g) override;
 
-    void paint(juce::Graphics &g) override;
-
-private:
-    PluginProcessor &p_ref_;
-    zlgui::UIBase &base_;
-    size_t &selected_band_idx_;
-    std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum> &dragger_panels_;
-};
-
+    private:
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
+        size_t& selected_band_idx_;
+        std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum>& dragger_panels_;
+    };
 } // zlpanel

@@ -10,14 +10,14 @@
 #include "separate_panel.hpp"
 
 namespace zlpanel {
-    SeparatePanel::SeparatePanel(zlgui::UIBase &base)
+    SeparatePanel::SeparatePanel(zlgui::UIBase& base)
         : base_(base) {
         setInterceptsMouseClicks(false, false);
 
         setBufferedToImage(true);
     }
 
-    void SeparatePanel::paint(juce::Graphics &g) {
+    void SeparatePanel::paint(juce::Graphics& g) {
         g.setGradientFill(gradient_);
         g.fillRect(getLocalBounds());
     }
@@ -30,8 +30,8 @@ namespace zlpanel {
         gradient_.clearColours();
 
         gradient_.addColour(0.0,
-                           base_.getBackgroundColour().withAlpha(1.f));
+                            base_.getBackgroundColour().withAlpha(1.f));
         gradient_.addColour(1.0,
-                           base_.getBackgroundColour().withAlpha(0.f));
+                            base_.getBackgroundColour().withAlpha(0.f));
     }
 } // zlpanel

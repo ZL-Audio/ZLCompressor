@@ -23,7 +23,8 @@ namespace zlpanel {
             if (time_stamp_ < 0) {
                 time_stamp_ = time_stamp;
                 return true;
-            } else {
+            }
+            else {
                 const auto c_diff = time_stamp - time_stamp_;
 
                 if (std::abs(std::abs(avg_diff_ / c_diff) - 1.0) > 0.25) {

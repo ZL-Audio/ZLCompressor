@@ -15,17 +15,17 @@
 namespace zlpanel {
     class ControlPanel : public juce::Component {
     public:
-        explicit ControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                              multilingual::TooltipHelper &tooltip_helper);
+        explicit ControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                              multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
         void repaintCallBackSlow();
 
     private:
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         MidControlPanel mid_control_panel_;
         RightControlPanel right_control_panel_;
     };

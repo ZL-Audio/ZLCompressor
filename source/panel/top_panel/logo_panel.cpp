@@ -11,7 +11,7 @@
 #include "logo_panel.hpp"
 
 namespace zlpanel {
-    LogoPanel::LogoPanel(PluginProcessor &, zlgui::UIBase &base, multilingual::TooltipHelper &tooltip_helper)
+    LogoPanel::LogoPanel(PluginProcessor&, zlgui::UIBase& base, multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           brand_drawable_(juce::Drawable::createFromImageData(BinaryData::zlaudio_svg, BinaryData::zlaudio_svgSize)),
           logo_drawable_(juce::Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize)) {
@@ -21,7 +21,7 @@ namespace zlpanel {
         SettableTooltipClient::setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLogo));
     }
 
-    void LogoPanel::paint(juce::Graphics &g) {
+    void LogoPanel::paint(juce::Graphics& g) {
         const auto temp_brand = brand_drawable_->createCopy();
         const auto temp_logo = logo_drawable_->createCopy();
         temp_brand->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
@@ -47,15 +47,15 @@ namespace zlpanel {
         temp_logo->drawAt(g, bound.getX() + brand_width + padding, bound.getY(), 1.0f);
     }
 
-    void LogoPanel::mouseEnter(const juce::MouseEvent &) {
+    void LogoPanel::mouseEnter(const juce::MouseEvent&) {
         setAlpha(1.f);
     }
 
-    void LogoPanel::mouseExit(const juce::MouseEvent &) {
+    void LogoPanel::mouseExit(const juce::MouseEvent&) {
         setAlpha(.5f);
     }
 
-    void LogoPanel::mouseDoubleClick(const juce::MouseEvent &) {
+    void LogoPanel::mouseDoubleClick(const juce::MouseEvent&) {
         base_.setPanelProperty(zlgui::kUISettingPanel, true);
     }
 }

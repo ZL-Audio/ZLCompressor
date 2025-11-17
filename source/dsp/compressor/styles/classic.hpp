@@ -13,14 +13,14 @@
 #include "style_base.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType>
+    template <typename FloatType>
     class ClassicCompressor final : public CompressorStyleBase<FloatType> {
     public:
         using base = CompressorStyleBase<FloatType>;
 
-        ClassicCompressor(ComputerBase<FloatType> &computer,
-                          RMSTracker<FloatType> &tracker,
-                          FollowerBase<FloatType> &follower)
+        ClassicCompressor(ComputerBase<FloatType>& computer,
+                          RMSTracker<FloatType>& tracker,
+                          FollowerBase<FloatType>& follower)
             : base(computer, tracker, follower) {
         }
 
@@ -30,7 +30,7 @@ namespace zldsp::compressor {
         }
 
         template <bool UseRMS = false>
-        void process(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType* buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 FloatType input_db;
                 if constexpr (UseRMS) {
@@ -38,7 +38,8 @@ namespace zldsp::compressor {
                     base::tracker_.processSample(x0_);
                     // get the db from the tracker
                     input_db = base::tracker_.getMomentaryDB();
-                } else {
+                }
+                else {
                     input_db = chore::gainToDecibels(std::abs(x0_));
                 }
                 // pass through the computer and the follower

@@ -19,26 +19,26 @@ namespace zlpanel {
     class PeakPanel final : public juce::Component,
                             private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit PeakPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit PeakPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~PeakPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void run(double next_time_stamp);
 
         void resized() override;
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         static constexpr std::array kNAIDs{
             zlstate::PAnalyzerMagType::kID,
             zlstate::PAnalyzerMinDB::kID,
             zlstate::PAnalyzerTimeLength::kID
         };
 
-        zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressController::kAnalyzerPointNum> &mag_analyzer_ref_;
+        zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressController::kAnalyzerPointNum>& mag_analyzer_ref_;
         AtomicBound<float> atomic_bound_;
 
         std::array<float, zlp::CompressController::kAnalyzerPointNum> xs_{}, in_ys_{}, out_ys_{}, reduction_ys_{};
@@ -61,7 +61,7 @@ namespace zlpanel {
 
         void lookAndFeelChanged() override;
 
-        void parameterChanged(const juce::String &parameter_id, float new_value) override;
+        void parameterChanged(const juce::String& parameter_id, float new_value) override;
 
         void setTimeLength(const float x) {
             mag_analyzer_ref_.setTimeLength(x);

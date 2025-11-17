@@ -26,7 +26,7 @@ namespace zlpanel {
                             private juce::ValueTree::Listener,
                             private juce::Timer {
     public:
-        explicit MainPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit MainPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~MainPanel() override;
 
@@ -35,8 +35,8 @@ namespace zlpanel {
         void repaintCallBack(double time_stamp);
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         multilingual::TooltipHelper tooltip_helper_;
 
         CurvePanel curve_panel_;
@@ -51,7 +51,7 @@ namespace zlpanel {
         double previous_time_stamp_{-1.0};
         double refresh_rate_{-1.0};
 
-        void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) override;
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) override;
 
         void timerCallback() override;
     };

@@ -10,7 +10,7 @@
 #include "sum_panel.hpp"
 
 namespace zlpanel {
-    SumPanel::SumPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    SumPanel::SumPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor), base_{base} {
         juce::ignoreUnused(p_ref_);
         path_.preallocateSpace(kWsFloat.size() * 3 + 12);
@@ -21,7 +21,7 @@ namespace zlpanel {
 
     SumPanel::~SumPanel() = default;
 
-    void SumPanel::paint(juce::Graphics &g) {
+    void SumPanel::paint(juce::Graphics& g) {
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
@@ -40,10 +40,13 @@ namespace zlpanel {
         curve_thickness_ = base_.getFontSize() * .2f * base_.getEQCurveThickness();
     }
 
-    bool SumPanel::run(std::array<float, kWsFloat.size()> &xs,
-                       std::array<std::array<float, kWsFloat.size()>, 8> &yss,
-                       std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> &filter_status,
-                       const juce::Rectangle<float> &bound) {
+    bool SumPanel::run(std::array < float, kWsFloat.size() > &xs,
+                       std::array < std::array < float, kWsFloat.size() >, 8 > &yss,
+                       std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> & filter_status,
+                       
+    const juce::Rectangle<float>& bound
+    )
+ {
         int band_count{0};
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             if (filter_status[band] == zlp::EqualizeController::FilterStatus::kOn) {

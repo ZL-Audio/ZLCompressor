@@ -34,17 +34,17 @@ public:
 
     void releaseResources() override;
 
-    bool isBusesLayoutSupported(const BusesLayout &layouts) const override;
+    bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
 
-    void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) override;
+    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override;
 
-    void processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) override;
+    void processBlock(juce::AudioBuffer<double>& buffer, juce::MidiBuffer&) override;
 
-    void processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) override;
+    void processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override;
 
-    void processBlockBypassed(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &) override;
+    void processBlockBypassed(juce::AudioBuffer<double>& buffer, juce::MidiBuffer&) override;
 
-    juce::AudioProcessorEditor *createEditor() override;
+    juce::AudioProcessorEditor* createEditor() override;
 
     bool hasEditor() const override;
 
@@ -66,19 +66,19 @@ public:
 
     const juce::String getProgramName(int index) override;
 
-    void changeProgramName(int, const juce::String &) override;
+    void changeProgramName(int, const juce::String&) override;
 
-    void getStateInformation(juce::MemoryBlock &dest_data) override;
+    void getStateInformation(juce::MemoryBlock& dest_data) override;
 
-    void setStateInformation(const void *data, int size_in_bytes) override;
+    void setStateInformation(const void* data, int size_in_bytes) override;
 
     bool supportsDoublePrecisionProcessing() const override { return true; }
 
-    zlp::CompressController &getCompressController() {
+    zlp::CompressController& getCompressController() {
         return compress_controller_;
     }
 
-    zlp::EqualizeController &getEqualizeController() {
+    zlp::EqualizeController& getEqualizeController() {
         return equalize_controller_;
     }
 
@@ -89,8 +89,8 @@ private:
     zlp::EqualizeAttach equalize_attach_;
     juce::AudioBuffer<float> float_buffer_;
     juce::AudioBuffer<double> double_buffer_;
-    std::array<float *, 2> main_pointers_{}, float_side_pointers_{};
-    std::array<double *, 2> double_side_pointers_{};
+    std::array<float*, 2> main_pointers_{}, float_side_pointers_{};
+    std::array<double*, 2> double_side_pointers_{};
 
     enum ChannelLayout {
         kMain1Aux0, kMain1Aux1, kMain1Aux2,
@@ -103,9 +103,9 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 
-    template<bool IsBypassed = false>
-    void processBlockInternal(juce::AudioBuffer<float> &buffer);
+    template <bool IsBypassed = false>
+    void processBlockInternal(juce::AudioBuffer<float>& buffer);
 
-    template<bool IsBypassed = false>
-    void processBlockInternal(juce::AudioBuffer<double> &buffer);
+    template <bool IsBypassed = false>
+    void processBlockInternal(juce::AudioBuffer<double>& buffer);
 };

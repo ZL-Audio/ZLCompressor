@@ -15,16 +15,16 @@
 namespace zlp {
     class EqualizeAttach final : private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit EqualizeAttach(juce::AudioProcessor &processor,
-                                 juce::AudioProcessorValueTreeState &parameters,
-                                 EqualizeController &controller);
+        explicit EqualizeAttach(juce::AudioProcessor& processor,
+                                juce::AudioProcessorValueTreeState& parameters,
+                                EqualizeController& controller);
 
         ~EqualizeAttach() override;
 
     private:
-        juce::AudioProcessor &processor_ref_;
-        juce::AudioProcessorValueTreeState &parameters_ref_;
-        EqualizeController &controller_ref_;
+        juce::AudioProcessor& processor_ref_;
+        juce::AudioProcessorValueTreeState& parameters_ref_;
+        EqualizeController& controller_ref_;
 
         constexpr static std::array kIDs{
             PSideGain::kID
@@ -46,6 +46,6 @@ namespace zlp {
             PFreq::kDefaultV, PGain::kDefaultV, PQ::kDefaultV
         };
 
-        void parameterChanged(const juce::String &parameter_ID, float new_value) override;
+        void parameterChanged(const juce::String& parameter_ID, float new_value) override;
     };
 }

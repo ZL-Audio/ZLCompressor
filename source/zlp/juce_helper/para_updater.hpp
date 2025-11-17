@@ -18,8 +18,8 @@ namespace zlp::juce_helper {
      */
     class ParaUpdater final : private juce::AsyncUpdater {
     public:
-        explicit ParaUpdater(const juce::AudioProcessorValueTreeState &parameter,
-                             const std::string &parameter_idx)
+        explicit ParaUpdater(const juce::AudioProcessorValueTreeState& parameter,
+                             const std::string& parameter_idx)
             : para_ref_(*parameter.getRawParameterValue(parameter_idx)) {
             para_ = parameter.getParameter(parameter_idx);
         }
@@ -35,15 +35,15 @@ namespace zlp::juce_helper {
             para_->endChangeGesture();
         }
 
-        juce::RangedAudioParameter *getPara() const { return para_; }
+        juce::RangedAudioParameter* getPara() const { return para_; }
 
-        std::atomic<float> &getRawPara() const { return para_ref_; }
+        std::atomic<float>& getRawPara() const { return para_ref_; }
 
         float getRawParaValue() const { return para_ref_.load(std::memory_order::relaxed); }
 
     private:
-        std::atomic<float> &para_ref_;
-        juce::RangedAudioParameter *para_;
+        std::atomic<float>& para_ref_;
+        juce::RangedAudioParameter* para_;
         std::atomic<float> value_{};
 
         void handleAsyncUpdate() override {

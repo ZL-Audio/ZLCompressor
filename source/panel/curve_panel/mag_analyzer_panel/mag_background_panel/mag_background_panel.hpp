@@ -15,7 +15,7 @@
 namespace zlpanel {
     class MagBackgroundPanel final : public juce::Component {
     public:
-        explicit MagBackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit MagBackgroundPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         void repaintCallBackSlow();
 

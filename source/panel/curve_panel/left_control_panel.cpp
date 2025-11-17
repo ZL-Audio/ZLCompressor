@@ -10,8 +10,8 @@
 #include "left_control_panel.hpp"
 
 namespace zlpanel {
-    LeftControlPanel::LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                       multilingual::TooltipHelper &tooltip_helper)
+    LeftControlPanel::LeftControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                       multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           side_control_show_drawable_(
               juce::Drawable::createFromImageData(BinaryData::link_svg, BinaryData::link_svgSize)),
@@ -39,7 +39,7 @@ namespace zlpanel {
         computer_show_button_.setDrawable(computer_show_drawable_.get());
         rms_show_button_.setDrawable(rms_show_drawable_.get());
 
-        for (auto &b: {
+        for (auto& b : {
                  &side_control_show_button_, &equalize_show_button_,
                  &computer_show_button_, &rms_show_button_
              }) {

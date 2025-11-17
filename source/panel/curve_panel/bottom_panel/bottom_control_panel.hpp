@@ -15,18 +15,18 @@
 namespace zlpanel {
     class BottomControlPanel final : public juce::Component {
     public:
-        explicit BottomControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                    multilingual::TooltipHelper &tooltip_helper);
+        explicit BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                    multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         std::atomic<float> &side_control_show_ref_, &side_eq_show_ref_;

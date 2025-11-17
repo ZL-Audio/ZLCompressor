@@ -21,7 +21,7 @@ namespace zldsp::compressor {
      * a tracker that tracks the momentary RMS loudness of the audio signal
      * @tparam FloatType
      */
-    template<typename FloatType>
+    template <typename FloatType>
     class RMSTracker {
     public:
         inline static FloatType kMinusInfinityDB = FloatType(-240);
@@ -86,7 +86,8 @@ namespace zldsp::compressor {
          */
         void setMomentarySeconds(const FloatType second) {
             time_length_.store(second, std::memory_order::relaxed);
-            setMomentarySize(static_cast<size_t>(static_cast<double>(second) * sample_rate_.load(std::memory_order::relaxed)));
+            setMomentarySize(
+                static_cast<size_t>(static_cast<double>(second) * sample_rate_.load(std::memory_order::relaxed)));
             to_update_.store(true, std::memory_order::release);
         }
 

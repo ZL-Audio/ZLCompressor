@@ -16,9 +16,9 @@
 namespace zlpanel {
     class PopupPanel final : public juce::Component {
     public:
-        explicit PopupPanel(PluginProcessor &processor, zlgui::UIBase &base, size_t &selected_band_idx);
+        explicit PopupPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
@@ -31,12 +31,12 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
-        size_t &selected_band_idx_;
+        size_t& selected_band_idx_;
         size_t band_{zlp::kBandNum};
-        std::atomic<float> *bypass_ref_{nullptr};
+        std::atomic<float>* bypass_ref_{nullptr};
         int ftype_{-1};
 
         const std::unique_ptr<juce::Drawable> bypass_drawable_;
@@ -46,9 +46,9 @@ namespace zlpanel {
         zlgui::button::ClickButton close_button_;
 
         zlgui::combobox::CompactCombobox ftype_box_;
-        std::unique_ptr<zlgui::attachment::ComboBoxAttachment<true> > ftype_attachment_;
+        std::unique_ptr<zlgui::attachment::ComboBoxAttachment<true>> ftype_attachment_;
 
         zlgui::combobox::CompactCombobox slope_box_;
-        std::unique_ptr<zlgui::attachment::ComboBoxAttachment<true> > slope_attachment_;
+        std::unique_ptr<zlgui::attachment::ComboBoxAttachment<true>> slope_attachment_;
     };
 } // zlpanel

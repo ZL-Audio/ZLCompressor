@@ -18,12 +18,12 @@ namespace zlpanel {
     class RightControlPanel final : public juce::Component,
                                     private juce::ValueTree::Listener {
     public:
-        explicit RightControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                   multilingual::TooltipHelper &tooltip_helper);
+        explicit RightControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                   multilingual::TooltipHelper& tooltip_helper);
 
         ~RightControlPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         int getIdealWidth() const;
 
@@ -32,8 +32,8 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::label::NameLookAndFeel label_laf_;
@@ -46,6 +46,6 @@ namespace zlpanel {
         zlgui::slider::TwoValueRotarySlider<false, false, false> wet_slider_;
         zlgui::attachment::SliderAttachment<true> wet_attachment_;
 
-        void valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &identifier) override;
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& identifier) override;
     };
 } // zlpanel

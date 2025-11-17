@@ -18,20 +18,20 @@ namespace zlpanel {
     class LogoPanel : public juce::Component,
                       public juce::SettableTooltipClient {
     public:
-        explicit LogoPanel(PluginProcessor &p, zlgui::UIBase &base,
-                           multilingual::TooltipHelper &tooltip_helper);
+        explicit LogoPanel(PluginProcessor& p, zlgui::UIBase& base,
+                           multilingual::TooltipHelper& tooltip_helper);
 
     private:
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
         juce::Justification justification_{juce::Justification::topLeft};
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
-        void mouseEnter(const juce::MouseEvent &event) override;
+        void mouseEnter(const juce::MouseEvent& event) override;
 
-        void mouseExit(const juce::MouseEvent &event) override;
+        void mouseExit(const juce::MouseEvent& event) override;
 
-        void mouseDoubleClick(const juce::MouseEvent &event) override;
+        void mouseDoubleClick(const juce::MouseEvent& event) override;
     };
 }

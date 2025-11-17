@@ -18,13 +18,13 @@
 
 namespace zlpanel {
     class EqualizePanel final : public juce::Component,
-    private juce::AudioProcessorValueTreeState::Listener {
+                                private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit EqualizePanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit EqualizePanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~EqualizePanel() override;
 
-        void run(juce::Thread &thread);
+        void run(juce::Thread& thread);
 
         void resized() override;
 
@@ -35,8 +35,8 @@ namespace zlpanel {
         void repaintCallBackAfter();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         size_t selected_band_idx_{zlp::kBandNum}, previous_band_idx_{zlp::kBandNum};
 
         EqualizerBackgroundPanel background_panel_;
@@ -52,10 +52,10 @@ namespace zlpanel {
 
         int popup_update_wait_count_{0};
 
-        void mouseEnter(const juce::MouseEvent &event) override;
+        void mouseEnter(const juce::MouseEvent& event) override;
 
         void visibilityChanged() override;
 
-        void parameterChanged(const juce::String &parameter_ID, float new_value) override;
+        void parameterChanged(const juce::String& parameter_ID, float new_value) override;
     };
 } // zlpanel

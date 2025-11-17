@@ -15,19 +15,19 @@
 namespace zlp {
     class CompressAttach final : private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit CompressAttach(juce::AudioProcessor &processor,
-                                juce::AudioProcessorValueTreeState &parameters,
-                                CompressController &controller);
+        explicit CompressAttach(juce::AudioProcessor& processor,
+                                juce::AudioProcessorValueTreeState& parameters,
+                                CompressController& controller);
 
         ~CompressAttach() override;
 
     private:
-        juce::AudioProcessor &processor_ref_;
-        juce::AudioProcessorValueTreeState &parameters_ref_;
-        CompressController &controller_ref_;
+        juce::AudioProcessor& processor_ref_;
+        juce::AudioProcessorValueTreeState& parameters_ref_;
+        CompressController& controller_ref_;
 
-        zldsp::compressor::KneeComputer<float, true> &computer_ref_;
-        zldsp::compressor::PSFollower<float, true, true> &follower_ref_;
+        zldsp::compressor::KneeComputer<float, true>& computer_ref_;
+        zldsp::compressor::PSFollower<float, true, true>& follower_ref_;
 
         constexpr static std::array kIDs{
             PCompStyle::kID,
@@ -57,6 +57,6 @@ namespace zlp {
             static_cast<float>(PRMSON::kDefaultV), PRMSLength::kDefaultV, PRMSSpeed::kDefaultV, PRMSMix::kDefaultV
         };
 
-        void parameterChanged(const juce::String &parameter_ID, float new_value) override;
+        void parameterChanged(const juce::String& parameter_ID, float new_value) override;
     };
 } // zlp

@@ -25,7 +25,7 @@ namespace zldsp::compressor {
      * @tparam UseSmooth whether to use smooth
      * @tparam UsePP whether to use pump-punch
      */
-    template<typename FloatType, bool UseSmooth = false, bool UsePP = false>
+    template <typename FloatType, bool UseSmooth = false, bool UsePP = false>
     class PSFollower final : public FollowerBase<FloatType> {
     public:
         PSFollower() = default;
@@ -62,7 +62,7 @@ namespace zldsp::compressor {
         /**
          * update values before processing a buffer by copying parameters from another follower
          */
-        void copyFrom(PSFollower &other) {
+        void copyFrom(PSFollower& other) {
             attack_ = other.attack_;
             release_ = other.release_;
             if constexpr (UseSmooth) {
@@ -81,37 +81,41 @@ namespace zldsp::compressor {
                 const auto y1 = attack_ * (y_ - state_) + state_;
                 const auto y2 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
                 y0 = smooth_ * (y1 - y2) + y2;
-            } else {
+            }
+            else {
                 y0 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
             }
             if constexpr (UsePP) {
                 const auto slope0 = y0 - y_;
                 switch (pp_state_) {
-                    case PPState::kOff: {
-                        slope_ = slope0;
-                        y_ = y0;
-                        break;
-                    }
-                    case PPState::kPump: {
-                        if (slope0 < slope_) {
-                            slope_ = pp_ * (slope_ - slope0) + slope0;
-                        } else {
-                            slope_ = slope0;
-                        }
-                        y_ += slope_;
-                        break;
-                    }
-                    case PPState::kPunch: {
-                        if (slope0 > slope_ && slope_ >= FloatType(0)) {
-                            slope_ = pp_ * (slope_ - slope0) + slope0;
-                        } else {
-                            slope_ = slope0;
-                        }
-                        y_ += slope_;
-                        break;
-                    }
+                case PPState::kOff: {
+                    slope_ = slope0;
+                    y_ = y0;
+                    break;
                 }
-            } else {
+                case PPState::kPump: {
+                    if (slope0 < slope_) {
+                        slope_ = pp_ * (slope_ - slope0) + slope0;
+                    }
+                    else {
+                        slope_ = slope0;
+                    }
+                    y_ += slope_;
+                    break;
+                }
+                case PPState::kPunch: {
+                    if (slope0 > slope_ && slope_ >= FloatType(0)) {
+                        slope_ = pp_ * (slope_ - slope0) + slope0;
+                    }
+                    else {
+                        slope_ = slope0;
+                    }
+                    y_ += slope_;
+                    break;
+                }
+                }
+            }
+            else {
                 y_ = y0;
             }
             return y_;
@@ -157,19 +161,22 @@ namespace zldsp::compressor {
             // update attack
             if (current_attack_time < 0.001) {
                 attack_ = FloatType(0);
-            } else {
+            }
+            else {
                 if constexpr (UsePP) {
                     attack_ = static_cast<FloatType>(std::exp(
                         exp_factor_ / current_attack_time / (
                             1. - std::pow(std::abs(current_pp_portion), 2.) * 0.125)));
-                } else {
+                }
+                else {
                     attack_ = static_cast<FloatType>(std::exp(exp_factor_ / current_attack_time));
                 }
             }
             // update release
             if (current_release_time < 0.001) {
                 release_ = FloatType(0);
-            } else {
+            }
+            else {
                 release_ = static_cast<FloatType>(std::exp(exp_factor_ / current_release_time));
             }
             if constexpr (UseSmooth) {
@@ -181,7 +188,8 @@ namespace zldsp::compressor {
                 if (current_attack_time < 0.001 || std::abs(current_pp_portion) < 0.001) {
                     pp_ = FloatType(0);
                     pp_state_ = PPState::kOff;
-                } else {
+                }
+                else {
                     pp_state_ = current_pp_portion > 0 ? PPState::kPump : PPState::kPunch;
                     pp_ = static_cast<FloatType>(std::exp(
                         exp_factor_ / current_attack_time / std::abs(current_pp_portion)));

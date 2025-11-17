@@ -100,7 +100,8 @@ namespace zlgui {
             juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
                                            {offset, offset});
             bright_shadow.drawForPath(g, mask);
-        } else {
+        }
+        else {
             juce::DropShadow bright_shadow(args.dark_shadow_color, radius,
                                            {offset, offset});
             bright_shadow.drawForPath(g, mask);
@@ -173,7 +174,8 @@ namespace zlgui {
                                                {-offset, -offset});
                 bright_shadow.drawForPath(g, path);
             }
-        } else {
+        }
+        else {
             if (args.draw_dark) {
                 juce::DropShadow dark_shadow(args.dark_shadow_color, radius,
                                              {-offset, -offset});
@@ -227,7 +229,8 @@ namespace zlgui {
             juce::DropShadow bright_shadow(args.bright_shadow_color, radius,
                                            {offset, offset});
             bright_shadow.drawForPath(g, mask);
-        } else {
+        }
+        else {
             juce::DropShadow bright_shadow(args.dark_shadow_color, radius,
                                            {offset, offset});
             bright_shadow.drawForPath(g, mask);
@@ -302,12 +305,13 @@ namespace zlgui {
         savePara(zlstate::PDragSensitivity::kID, wheel_sensitivity_[2]);
         savePara(zlstate::PDragFineSensitivity::kID, wheel_sensitivity_[3]);
         savePara(zlstate::PWheelShiftReverse::kID,
-            static_cast<float>(is_mouse_wheel_shift_reverse_.load(std::memory_order::relaxed)));
+                 static_cast<float>(is_mouse_wheel_shift_reverse_.load(std::memory_order::relaxed)));
         savePara(zlstate::PRotaryStyle::kID, static_cast<float>(rotary_style_id_));
         savePara(zlstate::PRotaryDragSensitivity::kID, rotary_drag_sensitivity_);
         savePara(zlstate::PSliderDoubleClickFunc::kID,
-            static_cast<float>(is_slider_double_click_open_editor_.load(std::memory_order::relaxed)));
-        savePara(zlstate::PTargetRefreshSpeed::kID, static_cast<float>(refresh_rate_id_.load(std::memory_order::relaxed)));
+                 static_cast<float>(is_slider_double_click_open_editor_.load(std::memory_order::relaxed)));
+        savePara(zlstate::PTargetRefreshSpeed::kID,
+                 static_cast<float>(refresh_rate_id_.load(std::memory_order::relaxed)));
         savePara(zlstate::PFFTExtraTilt::kID, fft_extra_tilt_.load(std::memory_order::relaxed));
         savePara(zlstate::PFFTExtraSpeed::kID, fft_extra_speed_.load(std::memory_order::relaxed));
         savePara(zlstate::PMagCurveThickness::kID, mag_curve_thickness_.load(std::memory_order::relaxed));

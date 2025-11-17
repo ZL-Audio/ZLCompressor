@@ -23,7 +23,7 @@ namespace zldsp::filter {
      * @tparam FloatType the float type of input audio buffer
      * @tparam FilterSize the number of cascading filters
      */
-    template<typename FloatType, size_t FilterSize>
+    template <typename FloatType, size_t FilterSize>
     class IIR {
     public:
         IIR() = default;
@@ -35,7 +35,7 @@ namespace zldsp::filter {
         }
 
         void prepare(const double sample_rate, const size_t num_channels) {
-            for (auto &f: filters_) {
+            for (auto& f : filters_) {
                 f.prepare(num_channels);
             }
             sample_rate_ = sample_rate;
@@ -72,17 +72,18 @@ namespace zldsp::filter {
          * @param buffer
          * @param num_samples
          */
-        template<bool IsBypassed = false>
-        void process(std::span<FloatType *> buffer, const size_t num_samples) {
+        template <bool IsBypassed = false>
+        void process(std::span<FloatType*> buffer, const size_t num_samples) {
             if (c_freq_.isSmoothing() || c_gain_.isSmoothing() || c_q_.isSmoothing()) {
                 processIIR<IsBypassed, true>(buffer, num_samples);
-            } else {
+            }
+            else {
                 processIIR<IsBypassed, false>(buffer, num_samples);
             }
         }
 
-        template<bool IsBypassed = false, bool IsSmooth = false>
-        void processIIR(std::span<FloatType *> buffer, const size_t num_samples) {
+        template <bool IsBypassed = false, bool IsSmooth = false>
+        void processIIR(std::span<FloatType*> buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 if constexpr (IsSmooth) updateCoeffs();
                 for (size_t channel = 0; channel < buffer.size(); ++channel) {
@@ -101,27 +102,30 @@ namespace zldsp::filter {
          * set the frequency of the filter
          * @param freq
          */
-        template<bool Update = true, bool Async = true, bool Force = false>
+        template <bool Update = true, bool Async = true, bool Force = false>
         void setFreq(const FloatType freq) {
             if constexpr (Async) {
                 freq_.store(static_cast<double>(freq), std::memory_order::relaxed);
                 if constexpr (Update) {
                     to_update_fgq_.store(true, std::memory_order::release);
                 }
-            } else {
+            }
+            else {
                 if constexpr (Force) {
                     c_freq_.setCurrentAndTarget(static_cast<double>(freq));
-                } else {
+                }
+                else {
                     c_freq_.setTarget(static_cast<double>(freq));
                 }
             }
         }
 
-        template<bool Async = true>
+        template <bool Async = true>
         FloatType getFreq() const {
             if constexpr (Async) {
                 return static_cast<FloatType>(freq_.load(std::memory_order::relaxed));
-            } else {
+            }
+            else {
                 return static_cast<FloatType>(c_freq_.getTarget());
             }
         }
@@ -130,27 +134,30 @@ namespace zldsp::filter {
          * set the gain of the filter
          * @param gain
          */
-        template<bool Update = true, bool Async = true, bool Force = false>
+        template <bool Update = true, bool Async = true, bool Force = false>
         void setGain(const FloatType gain) {
             if constexpr (Async) {
                 gain_.store(static_cast<double>(gain), std::memory_order::relaxed);
                 if constexpr (Update) {
                     to_update_fgq_.store(true, std::memory_order::release);
                 }
-            } else {
+            }
+            else {
                 if constexpr (Force) {
                     c_gain_.setCurrentAndTarget(static_cast<double>(gain));
-                } else {
+                }
+                else {
                     c_gain_.setTarget(static_cast<double>(gain));
                 }
             }
         }
 
-        template<bool Async = true>
+        template <bool Async = true>
         FloatType getGain() const {
             if constexpr (Async) {
                 return static_cast<FloatType>(gain_.load(std::memory_order::relaxed));
-            } else {
+            }
+            else {
                 return static_cast<FloatType>(c_gain_.getTarget());
             }
         }
@@ -159,27 +166,30 @@ namespace zldsp::filter {
          * set the Q value of the filter
          * @param q
          */
-        template<bool Update = true, bool Async = true, bool Force = false>
+        template <bool Update = true, bool Async = true, bool Force = false>
         void setQ(const FloatType q) {
             if constexpr (Async) {
                 q_.store(static_cast<double>(q), std::memory_order::relaxed);
                 if constexpr (Update) {
                     to_update_fgq_.store(true, std::memory_order::release);
                 }
-            } else {
+            }
+            else {
                 if constexpr (Force) {
                     c_q_.setCurrentAndTarget(static_cast<double>(q));
-                } else {
+                }
+                else {
                     c_q_.setTarget(static_cast<double>(q));
                 }
             }
         }
 
-        template<bool Async = true>
+        template <bool Async = true>
         FloatType getQ() const {
             if constexpr (Async) {
                 return static_cast<FloatType>(q_.load(std::memory_order::relaxed));
-            } else {
+            }
+            else {
                 return static_cast<FloatType>(c_q_.getTarget());
             }
         }
@@ -195,7 +205,7 @@ namespace zldsp::filter {
          * set the type of the filter, the filter will always reset
          * @param filter_type
          */
-        template<bool Update = true>
+        template <bool Update = true>
         void setFilterType(const FilterType filter_type) {
             if (filter_type_.exchange(filter_type, std::memory_order::relaxed) != filter_type) {
                 if constexpr (Update) {
@@ -204,11 +214,12 @@ namespace zldsp::filter {
             }
         }
 
-        template<bool Async = true>
+        template <bool Async = true>
         inline FilterType getFilterType() const {
             if constexpr (Async) {
                 return filter_type_.load(std::memory_order::relaxed);
-            } else {
+            }
+            else {
                 return c_filter_type_;
             }
         }
@@ -217,7 +228,7 @@ namespace zldsp::filter {
          * set the order of the filter, the filter will always reset
          * @param order
          */
-        template<bool Update = true>
+        template <bool Update = true>
         void setOrder(const size_t order) {
             if (order_.exchange(order, std::memory_order::relaxed) != order) {
                 if constexpr (Update) {
@@ -226,11 +237,12 @@ namespace zldsp::filter {
             }
         }
 
-        template<bool Async = true>
+        template <bool Async = true>
         inline size_t getOrder() const {
             if constexpr (Async) {
                 return order_.load(std::memory_order::relaxed);
-            } else {
+            }
+            else {
                 return c_order_;
             }
         }
@@ -255,7 +267,7 @@ namespace zldsp::filter {
          * get the array of 2nd order filters
          * @return
          */
-        std::array<IIRBase<FloatType>, FilterSize> &getFilters() {
+        std::array<IIRBase<FloatType>, FilterSize>& getFilters() {
             return filters_;
         }
 
@@ -277,19 +289,24 @@ namespace zldsp::filter {
         std::atomic<bool> to_update_para_{true};
         std::atomic<bool> to_update_fgq_{false};
 
-        std::array<std::array<double, 6>, FilterSize> coeffs_{};
+        std::array<std::array < double, 6>
+        ,
+        FilterSize
+        >
+        coeffs_ {
+        };
 
         static size_t updateIIRCoeffs(const FilterType filterType, const size_t n,
                                       const double f, const double fs, const double g0, const double q0,
-                                      std::array<std::array<double, 6>, FilterSize> &coeffs) {
-            return FilterDesign::updateCoeffs<FilterSize,
+                                      std::array<std::array < double, 6>, FilterSize> &coeffs) {
+            return FilterDesign::updateCoeffs < FilterSize,
                 MartinCoeff::get1LowShelf, MartinCoeff::get1HighShelf, MartinCoeff::get1TiltShelf,
                 MartinCoeff::get1LowPass, MartinCoeff::get1HighPass,
                 MartinCoeff::get2Peak,
                 MartinCoeff::get2LowShelf, MartinCoeff::get2HighShelf, MartinCoeff::get2TiltShelf,
                 MartinCoeff::get2LowPass, MartinCoeff::get2HighPass,
-                MartinCoeff::get2BandPass, MartinCoeff::get2Notch>(
-                filterType, n, f, fs, g0, q0, coeffs);
+                MartinCoeff::get2BandPass, MartinCoeff::get2Notch > (
+                    filterType, n, f, fs, g0, q0, coeffs);
         }
     };
 }

@@ -17,10 +17,10 @@
 namespace zlpanel {
     class RMSControlPanel final : public juce::Component {
     public:
-        explicit RMSControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                 const multilingual::TooltipHelper &tooltip_helper);
+        explicit RMSControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                 const multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         int getIdealWidth() const;
 
@@ -31,10 +31,10 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
-        std::atomic<float> &rms_show_ref_;
+        std::atomic<float>& rms_show_ref_;
 
         zlgui::label::NameLookAndFeel label_laf_;
 

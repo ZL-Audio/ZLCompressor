@@ -17,12 +17,12 @@ namespace zldsp::container {
      * @tparam T the type of elements
      * @tparam N the capacity of array
      */
-    template<typename T, size_t N>
+    template <typename T, size_t N>
     class FixedMaxSizeArray {
     public:
         FixedMaxSizeArray() = default;
 
-        FixedMaxSizeArray &operator =(const FixedMaxSizeArray<T, N> &that) {
+        FixedMaxSizeArray& operator =(const FixedMaxSizeArray<T, N>& that) {
             for (size_t i = 0; i < size_; ++i) {
                 data_[i] = that.data_[i];
             }

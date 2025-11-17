@@ -17,17 +17,17 @@ namespace zlpanel {
     class ClipperPanel final : public juce::Component,
                                private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit ClipperPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit ClipperPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~ClipperPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         float rel_position_{0.f};
 
         std::atomic<float> mag_min_db_{-54.0};
@@ -45,6 +45,6 @@ namespace zlpanel {
             zlstate::PAnalyzerMinDB::kID
         };
 
-        void parameterChanged(const juce::String &parameter_ID, float new_value) override;
+        void parameterChanged(const juce::String& parameter_ID, float new_value) override;
     };
 } // zlpanel

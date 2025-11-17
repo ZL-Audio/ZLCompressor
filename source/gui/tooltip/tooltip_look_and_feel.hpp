@@ -33,7 +33,8 @@ namespace zlgui::tooltip {
                     parent_area.getY(),
                     w + 2 * padding, h + 2 * padding
                 };
-            } else {
+            }
+            else {
                 return {
                     parent_area.getRight() - w - 2 * padding,
                     parent_area.getY(),

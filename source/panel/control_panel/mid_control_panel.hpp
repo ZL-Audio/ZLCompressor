@@ -17,10 +17,10 @@
 namespace zlpanel {
     class MidControlPanel final : public juce::Component {
     public:
-        explicit MidControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                 const multilingual::TooltipHelper &tooltip_helper);
+        explicit MidControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                 const multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         int getIdealWidth() const;
 
@@ -29,8 +29,8 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::slider::CompactLinearSlider<true, true, true> knee_slider_;

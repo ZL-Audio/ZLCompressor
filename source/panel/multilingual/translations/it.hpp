@@ -31,7 +31,8 @@ namespace zlpanel::multilingual::it {
         "Regola il valore massimo della riduzione del guadagno.", // Range/Max GR
         "Regola il tempo minimo in cui la riduzione del guadagno non può diminuire.", // Hold
         "Regola il guadagno di compensazione applicato dopo la compressione.", // Makeup Gain
-        "Premi: avvia la misurazione del loudness integrato del segnale di ingresso e di uscita\nRilascia: aggiorna il Makeup alla differenza tra i due valori di loudness.", // Auto Makeup
+        "Premi: avvia la misurazione del loudness integrato del segnale di ingresso e di uscita\nRilascia: aggiorna il Makeup alla differenza tra i due valori di loudness.",
+        // Auto Makeup
         "Regola la percentuale del segnale processato (wet).", // Mix/Wet/Dry
         "I canali M/S sono collegati tra loro.", // M/S Link
         "I canali L/R sono collegati tra loro.", // L/R Link

@@ -12,7 +12,7 @@
 #include "multiple_mag_analyzer.hpp"
 
 namespace zldsp::analyzer {
-    template<typename FloatType, size_t PointNum>
+    template <typename FloatType, size_t PointNum>
     class MagReductionAnalyzer : public MultipleMagAnalyzer<FloatType, 3, PointNum> {
     public:
         explicit MagReductionAnalyzer() : MultipleMagAnalyzer<FloatType, 3, PointNum>() {

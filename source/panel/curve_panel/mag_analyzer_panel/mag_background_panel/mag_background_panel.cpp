@@ -10,7 +10,7 @@
 #include "mag_background_panel.hpp"
 
 namespace zlpanel {
-    MagBackgroundPanel::MagBackgroundPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    MagBackgroundPanel::MagBackgroundPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : mag_gridground_panel_(processor, base),
           clipper_panel_(processor, base) {
         addAndMakeVisible(mag_gridground_panel_);

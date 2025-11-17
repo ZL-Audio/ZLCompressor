@@ -17,8 +17,8 @@
 namespace zlpanel {
     class TopControlPanel final : public juce::Component {
     public:
-        explicit TopControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                 multilingual::TooltipHelper &tooltip_helper);
+        explicit TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                 multilingual::TooltipHelper& tooltip_helper);
 
         int getIdealWidth() const;
 
@@ -27,8 +27,8 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        [[maybe_unused]] PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        [[maybe_unused]] PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::label::NameLookAndFeel label_laf_;

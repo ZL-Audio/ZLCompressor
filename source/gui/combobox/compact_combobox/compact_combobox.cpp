@@ -17,7 +17,8 @@ namespace zlgui::combobox {
         box_laf_(base) {
         if (item_labels.size() < static_cast<size_t>(choices.size())) {
             combo_box_.addItemList(choices, 1);
-        } else {
+        }
+        else {
             const auto menu = combo_box_.getRootMenu();
             for (int i = 0; i < choices.size(); ++i) {
                 juce::PopupMenu::Item item;

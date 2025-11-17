@@ -17,10 +17,10 @@
 namespace zlpanel {
     class RMSButton final : public juce::Component {
     public:
-        explicit RMSButton(PluginProcessor &p, zlgui::UIBase &base,
-                           multilingual::TooltipHelper &tooltip_helper);
+        explicit RMSButton(PluginProcessor& p, zlgui::UIBase& base,
+                           multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         int getIdealWidth() const;
 
@@ -29,8 +29,8 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         const std::unique_ptr<juce::Drawable> rms_drawable_;

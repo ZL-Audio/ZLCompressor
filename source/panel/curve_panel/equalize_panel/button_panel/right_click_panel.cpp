@@ -10,8 +10,8 @@
 #include "right_click_panel.hpp"
 
 namespace zlpanel {
-    RightClickPanel::RightClickPanel(PluginProcessor &processor, zlgui::UIBase &base,
-                                     size_t &selected_band_idx)
+    RightClickPanel::RightClickPanel(PluginProcessor& processor, zlgui::UIBase& base,
+                                     size_t& selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
           invert_gain_button_(base, "Invert Gain", ""),
           copy_button_(base, "Copy", ""),
@@ -26,14 +26,14 @@ namespace zlpanel {
         paste_button_.getButton().onClick = [this]() {
             paste();
         };
-        for (auto &button: {&invert_gain_button_, &copy_button_, &paste_button_}) {
+        for (auto& button : {&invert_gain_button_, &copy_button_, &paste_button_}) {
             button->getLAF().setFontScale(1.25f);
             addAndMakeVisible(button);
         }
         setInterceptsMouseClicks(false, true);
     }
 
-    void RightClickPanel::paint(juce::Graphics &g) {
+    void RightClickPanel::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColour());
     }
 
@@ -41,7 +41,8 @@ namespace zlpanel {
         if (!show_copy) {
             copy_button_.setAlpha(.25f);
             copy_button_.setInterceptsMouseClicks(false, false);
-        } else {
+        }
+        else {
             copy_button_.setAlpha(1.f);
             copy_button_.setInterceptsMouseClicks(false, true);
         }
@@ -60,7 +61,7 @@ namespace zlpanel {
     void RightClickPanel::invertGain() {
         setVisible(false);
 
-        auto *para = p_ref_.parameters_.getParameter(zlp::PGain::kID + std::to_string(selected_band_idx_));
+        auto* para = p_ref_.parameters_.getParameter(zlp::PGain::kID + std::to_string(selected_band_idx_));
         para->beginChangeGesture();
         para->setValueNotifyingHost(1.0f - para->getValue());
         para->endChangeGesture();
@@ -76,12 +77,12 @@ namespace zlpanel {
         }
 
         int i = 0;
-        for (const size_t band: selected_band) {
+        for (const size_t band : selected_band) {
             juce::ValueTree filter{juce::Identifier{"filter" + std::to_string(i)}};
             tree.addChild(filter, i, nullptr);
             i += 1;
             const auto band_string = std::to_string(band);
-            for (auto &para_ID: kIDs) {
+            for (auto& para_ID : kIDs) {
                 filter.setProperty(para_ID,
                                    p_ref_.parameters_.getRawParameterValue(
                                        para_ID + band_string)->load(std::memory_order::relaxed),
@@ -116,13 +117,14 @@ namespace zlpanel {
             if (band_idx == zlp::kBandNum) { return; }
 
             const auto band_string = std::to_string(band_idx);
-            for (auto &para_ID: kIDs) {
+            for (auto& para_ID : kIDs) {
                 if (filter.hasProperty(para_ID)) {
-                    auto *para = p_ref_.parameters_.getParameter(para_ID + band_string);
+                    auto* para = p_ref_.parameters_.getParameter(para_ID + band_string);
                     para->beginChangeGesture();
                     para->setValueNotifyingHost(para->convertTo0to1(filter.getProperty(para_ID)));
                     para->endChangeGesture();
-                } else {
+                }
+                else {
                     return;
                 }
             }

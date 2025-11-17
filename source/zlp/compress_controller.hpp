@@ -25,24 +25,24 @@ namespace zlp {
         static constexpr size_t kAnalyzerPointNum = 251;
         static constexpr size_t kAvgAnalyzerPointNum = 120;
 
-        explicit CompressController(juce::AudioProcessor &processor);
+        explicit CompressController(juce::AudioProcessor& processor);
 
         void prepare(double sample_rate, size_t max_num_samples);
 
-        void process(std::array<float *, 2> main_pointers, std::array<float *, 2> side_pointers,
+        void process(std::array<float*, 2> main_pointers, std::array<float*, 2> side_pointers,
                      size_t num_samples, bool bypass);
 
-        auto &getMagAnalyzer() { return mag_analyzer_; }
+        auto& getMagAnalyzer() { return mag_analyzer_; }
 
-        auto &getMagAvgAnalyzer() { return mag_avg_analyzer_; }
+        auto& getMagAvgAnalyzer() { return mag_avg_analyzer_; }
 
-        auto &getComputer() { return computer_; }
+        auto& getComputer() { return computer_; }
 
-        auto &getTracker() { return rms_tracker_; }
+        auto& getTracker() { return rms_tracker_; }
 
-        auto &getFollower() { return follower_; }
+        auto& getFollower() { return follower_; }
 
-        auto &getClipper() { return clipper_; }
+        auto& getClipper() { return clipper_; }
 
         void setCompStyle(const zldsp::compressor::Style style) {
             comp_style_.store(style, std::memory_order::relaxed);
@@ -176,10 +176,10 @@ namespace zlp {
         }
 
     private:
-        juce::AudioProcessor &processor_ref_;
+        juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
         std::array<kfr::univector<float>, 2> pre_buffer_, post_buffer_;
-        std::array<float *, 2> pre_pointers_{}, post_pointers_{};
+        std::array<float*, 2> pre_pointers_{}, post_pointers_{};
         // global parameter update flag
         std::atomic<bool> to_update_{true};
         // on and delta
@@ -227,10 +227,25 @@ namespace zlp {
         // pdc
         std::atomic<int> pdc_{0};
         // computer, trackers and followers
-        std::array<zldsp::compressor::KneeComputer<float, true>, 2> computer_{};
+        std::array<zldsp::compressor::KneeComputer < float, true>
+        ,
+        2
+        >
+        computer_ {
+        };
         std::array<zldsp::compressor::RMSTracker<float>, 2> rms_tracker_{};
-        std::array<zldsp::compressor::PSFollower<float, true, true>, 2> follower_{};
-        std::array<zldsp::compressor::PSFollower<float, false, false>, 2> rms_follower_{};
+        std::array<zldsp::compressor::PSFollower < float, true, true>
+        ,
+        2
+        >
+        follower_ {
+        };
+        std::array<zldsp::compressor::PSFollower < float, false, false>
+        ,
+        2
+        >
+        rms_follower_ {
+        };
         // clean compressors
         std::array<zldsp::compressor::CleanCompressor<float>, 2> clean_comps_ = {
             zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
@@ -283,19 +298,19 @@ namespace zlp {
 
         void prepareBuffer();
 
-        void processBuffer(float * __restrict main_buffer0, float * __restrict main_buffer1,
-                           float * __restrict side_buffer0, float * __restrict side_buffer1,
+        void processBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
+                           float* __restrict side_buffer0, float* __restrict side_buffer1,
                            size_t num_samples, bool bypass);
 
-        void processSideBufferClean(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+        void processSideBufferClean(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
-        void processSideBufferClassic(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+        void processSideBufferClassic(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
-        void processSideBufferOptical(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+        void processSideBufferOptical(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
-        void processSideBufferVocal(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+        void processSideBufferVocal(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
-        void processSideBufferRMS(float * __restrict buffer0, float * __restrict buffer1, size_t num_samples);
+        void processSideBufferRMS(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
         void handleAsyncUpdate() override;
     };

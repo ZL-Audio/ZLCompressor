@@ -19,21 +19,21 @@
 namespace zlpanel {
     class UISettingPanel final : public juce::Component {
     public:
-        explicit UISettingPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit UISettingPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~UISettingPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
         void loadSetting();
 
-        void mouseDown(const juce::MouseEvent &event) override;
+        void mouseDown(const juce::MouseEvent& event) override;
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         juce::Viewport view_port_;
 
         ColourSettingPanel colour_panel_;

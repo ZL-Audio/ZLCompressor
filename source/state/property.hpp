@@ -32,9 +32,9 @@ namespace zlstate {
         const juce::File kOldUIPath = kOldPath.getChildFile("ui.xml");
 
         const juce::File kPath =
-        juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-        .getChildFile("ZL Audio")
-        .getChildFile(JucePlugin_Name);
+            juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+            .getChildFile("ZL Audio")
+            .getChildFile(JucePlugin_Name);
         const juce::File kUIPath = kPath.getChildFile("ui.xml");
 
         std::mutex mutex_;

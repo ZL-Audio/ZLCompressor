@@ -21,17 +21,17 @@ namespace zlpanel {
     class SinglePanel final : public juce::Component,
                               private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit SinglePanel(PluginProcessor &processor, zlgui::UIBase &base,
-                             size_t band_idx, zldsp::filter::Ideal<float, 16> &filter);
+        explicit SinglePanel(PluginProcessor& processor, zlgui::UIBase& base,
+                             size_t band_idx, zldsp::filter::Ideal<float, 16>& filter);
 
         ~SinglePanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void resized() override;
 
         bool run(std::span<float> xs, std::span<float> ys,
-                 const juce::Rectangle<float> &bound, float max_db,
+                 const juce::Rectangle<float>& bound, float max_db,
                  bool force = false);
 
         juce::Point<float> getButtonPos() const {
@@ -43,13 +43,13 @@ namespace zlpanel {
         }
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
 
         float curve_thickness_scale{.5f};
 
         const size_t band_idx_;
-        zldsp::filter::Ideal<float, 16> &filter_;
+        zldsp::filter::Ideal<float, 16>& filter_;
 
         constexpr static std::array kBandIDs{
             zlp::PFilterType::kID, zlp::POrder::kID,
@@ -64,7 +64,7 @@ namespace zlpanel {
 
         float curve_thickness_{0.f}, line_thickness_{0.f};
 
-        void parameterChanged(const juce::String &parameter_ID, float new_value) override;
+        void parameterChanged(const juce::String& parameter_ID, float new_value) override;
 
         void visibilityChanged() override;
 

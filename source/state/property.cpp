@@ -46,7 +46,8 @@ namespace zlstate {
         }
         if (kUIPath.existsAsFile()) {
             return true;
-        } else if (!kUIPath.existsAsFile()) {
+        }
+        else if (!kUIPath.existsAsFile()) {
             if (kOldUIPath.existsAsFile()) {
                 if (const auto c_res = kOldUIPath.copyFileTo(kUIPath); c_res) {
                     if (const auto d_res = kOldUIPath.deleteFile(); d_res) {

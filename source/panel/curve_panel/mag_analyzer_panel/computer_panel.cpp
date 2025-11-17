@@ -10,7 +10,7 @@
 #include "computer_panel.hpp"
 
 namespace zlpanel {
-    ComputerPanel::ComputerPanel(PluginProcessor &p, zlgui::UIBase &base)
+    ComputerPanel::ComputerPanel(PluginProcessor& p, zlgui::UIBase& base)
         : p_ref_(p), base_(base),
           threshold_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PThreshold::kID)),
           ratio_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PRatio::kID)),
@@ -19,10 +19,10 @@ namespace zlpanel {
           min_db_ref_(*p_ref_.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         next_comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
-        for (auto &ID: kComputerIDs) {
+        for (auto& ID : kComputerIDs) {
             p_ref_.parameters_.addParameterListener(ID, this);
         }
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             p_ref_.na_parameters_.addParameterListener(ID, this);
         }
 
@@ -30,15 +30,15 @@ namespace zlpanel {
     }
 
     ComputerPanel::~ComputerPanel() {
-        for (auto &ID: kComputerIDs) {
+        for (auto& ID : kComputerIDs) {
             p_ref_.parameters_.removeParameterListener(ID, this);
         }
-        for (auto &ID: kNAIDs) {
+        for (auto& ID : kNAIDs) {
             p_ref_.na_parameters_.removeParameterListener(ID, this);
         }
     }
 
-    void ComputerPanel::paint(juce::Graphics &g) {
+    void ComputerPanel::paint(juce::Graphics& g) {
         const juce::GenericScopedTryLock guard{path_lock_};
         if (!guard.isLocked()) {
             return;
@@ -93,7 +93,7 @@ namespace zlpanel {
         curve_thickness_ = base_.getFontSize() * .25f * base_.getMagCurveThickness();
     }
 
-    void ComputerPanel::parameterChanged(const juce::String &, float) {
+    void ComputerPanel::parameterChanged(const juce::String&, float) {
         to_update_.store(true, std::memory_order::release);
     }
 } // zlpanel

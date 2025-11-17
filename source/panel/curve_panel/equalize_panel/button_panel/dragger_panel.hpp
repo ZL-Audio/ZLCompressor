@@ -17,14 +17,14 @@
 namespace zlpanel {
     class DraggerPanel final : public juce::Component {
     public:
-        explicit DraggerPanel(PluginProcessor &processor, zlgui::UIBase &base,
-                              size_t band_idx, size_t &selected_band_idx);
+        explicit DraggerPanel(PluginProcessor& processor, zlgui::UIBase& base,
+                              size_t band_idx, size_t& selected_band_idx);
 
         void resized() override;
 
         void repaintCallBackSlow();
 
-        zlgui::dragger::Dragger &getDragger() {
+        zlgui::dragger::Dragger& getDragger() {
             return dragger_;
         }
 
@@ -35,11 +35,11 @@ namespace zlpanel {
             10.f, 20000.f,
             [](float rangeStart, float rangeEnd, float valueToRemap) {
                 return std::exp(valueToRemap * std::log(
-                                    rangeEnd / rangeStart)) * rangeStart;
+                    rangeEnd / rangeStart)) * rangeStart;
             },
             [](float rangeStart, float rangeEnd, float valueToRemap) {
                 return std::log(valueToRemap / rangeStart) / std::log(
-                           rangeEnd / rangeStart);
+                    rangeEnd / rangeStart);
             },
             [](float rangeStart, float rangeEnd, float valueToRemap) {
                 return juce::jlimit(
@@ -48,11 +48,11 @@ namespace zlpanel {
         };
         static constexpr float kScale = 1.f;
 
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         const size_t band_idx_;
-        size_t &selected_band_idx_;
-        std::atomic<float> &filter_type_ref_;
+        size_t& selected_band_idx_;
+        std::atomic<float>& filter_type_ref_;
 
         float filter_type_{-1.f};
 

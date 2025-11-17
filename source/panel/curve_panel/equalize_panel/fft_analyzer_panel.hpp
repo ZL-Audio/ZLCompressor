@@ -18,19 +18,19 @@
 namespace zlpanel {
     class FFTAnalyzerPanel final : public juce::Component {
     public:
-        explicit FFTAnalyzerPanel(PluginProcessor &processor, zlgui::UIBase &base);
+        explicit FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
         ~FFTAnalyzerPanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
         void run();
 
         void resized() override;
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
 
         bool skip_next_repaint_{false};
         AtomicBound<float> atomic_bound_;

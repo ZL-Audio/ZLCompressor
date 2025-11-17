@@ -11,8 +11,8 @@
 #include "rms_button.hpp"
 
 namespace zlpanel {
-    RMSButton::RMSButton(PluginProcessor &p, zlgui::UIBase &base,
-                         multilingual::TooltipHelper &tooltip_helper)
+    RMSButton::RMSButton(PluginProcessor& p, zlgui::UIBase& base,
+                         multilingual::TooltipHelper& tooltip_helper)
         : p_ref_(p), base_(base),
           updater_(),
           rms_drawable_(juce::Drawable::createFromImageData(BinaryData::rms_svg,
@@ -38,7 +38,7 @@ namespace zlpanel {
         setBufferedToImage(true);
     }
 
-    void RMSButton::paint(juce::Graphics &g) {
+    void RMSButton::paint(juce::Graphics& g) {
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
         const auto bound = getLocalBounds().toFloat();
         juce::Path path;
@@ -69,7 +69,7 @@ namespace zlpanel {
         rms_open_close_button_.setVisible(rms_button_.getButton().getToggleState());
         // close rms panel if rms button is off
         if (!rms_button_.getButton().getToggleState() && rms_open_close_button_.getButton().getToggleState()) {
-            auto *para = p_ref_.na_parameters_.getParameter(zlstate::PRMSPanelDisplay::kID);
+            auto* para = p_ref_.na_parameters_.getParameter(zlstate::PRMSPanelDisplay::kID);
             para->beginChangeGesture();
             para->setValueNotifyingHost(0.f);
             para->endChangeGesture();

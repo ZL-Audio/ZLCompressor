@@ -10,7 +10,7 @@
 #include "mag_grid_panel.hpp"
 
 namespace zlpanel {
-    MagGridgroundPanel::MagGridgroundPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    MagGridgroundPanel::MagGridgroundPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : base_(base),
           mag_min_db_id_ref_(*processor.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         setInterceptsMouseClicks(false, false);
@@ -31,7 +31,7 @@ namespace zlpanel {
         }
 
         const auto text_height = static_cast<float>(juce::roundToInt(base_.getFontSize() * 1.75f));
-        const auto text_width = static_cast<float>(juce::roundToInt(base_.getFontSize()  * 2.6f));
+        const auto text_width = static_cast<float>(juce::roundToInt(base_.getFontSize() * 2.6f));
         const auto right_padding = static_cast<float>(juce::roundToInt(base_.getFontSize() * kPaddingScale) / 2);
         g.setColour(base_.getTextColour().withAlpha(.5f));
         g.setFont(base_.getFontSize());

@@ -19,7 +19,7 @@
 #include "origin_gain.hpp"
 
 namespace zldsp::gain {
-    template<typename FloatType>
+    template <typename FloatType>
     class SafeGain {
     public:
         SafeGain() noexcept = default;
@@ -50,8 +50,8 @@ namespace zldsp::gain {
             gain_.prepare(sample_rate, max_num_samples, ramp_length_in_seconds);
         }
 
-        template<bool IsBypassed = false>
-        void process(std::span<FloatType *> buffer, const size_t num_samples) {
+        template <bool IsBypassed = false>
+        void process(std::span<FloatType*> buffer, const size_t num_samples) {
             if (to_update_.exchange(false, std::memory_order::acquire)) {
                 gain_.setGainLinear(gain_v_.load(std::memory_order::relaxed));
             }

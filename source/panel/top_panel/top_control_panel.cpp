@@ -11,8 +11,8 @@
 #include "top_control_panel.hpp"
 
 namespace zlpanel {
-    TopControlPanel::TopControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                     multilingual::TooltipHelper &tooltip_helper)
+    TopControlPanel::TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                     multilingual::TooltipHelper& tooltip_helper)
         : p_ref_(p), base_(base), label_laf_(base_),
           on_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
                                                            BinaryData::mode_off_on_svgSize)),
@@ -41,7 +41,7 @@ namespace zlpanel {
         delta_button_.setDrawable(delta_drawable_.get());
         delta_button_.getLAF().setScale(1.25f);
 
-        for (auto &b: {&on_button_, &delta_button_}) {
+        for (auto& b : {&on_button_, &delta_button_}) {
             b->getLAF().enableShadow(false);
             b->getLAF().setShrinkScale(.0f);
             b->setBufferedToImage(true);

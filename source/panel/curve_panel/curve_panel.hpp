@@ -20,14 +20,14 @@ namespace zlpanel {
     class CurvePanel final : public juce::Component,
                              private juce::Thread {
     public:
-        explicit CurvePanel(PluginProcessor &p, zlgui::UIBase &base,
-                            multilingual::TooltipHelper &tooltip_helper);
+        explicit CurvePanel(PluginProcessor& p, zlgui::UIBase& base,
+                            multilingual::TooltipHelper& tooltip_helper);
 
         ~CurvePanel() override;
 
-        void paint(juce::Graphics &g) override;
+        void paint(juce::Graphics& g) override;
 
-        void paintOverChildren(juce::Graphics &g) override;
+        void paintOverChildren(juce::Graphics& g) override;
 
         void resized() override;
 
@@ -36,8 +36,8 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         MagAnalyzerPanel mag_analyzer_panel_;
         SeparatePanel separate_panel_;
         EqualizePanel equalize_panel_;

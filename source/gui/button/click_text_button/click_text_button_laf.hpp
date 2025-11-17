@@ -28,9 +28,11 @@ namespace zlgui {
                             const bool highlight, const bool down) override {
             if (down || button.getToggleState()) {
                 g.setColour(base_.getTextColour());
-            } else if (highlight) {
+            }
+            else if (highlight) {
                 g.setColour(base_.getTextColour().withAlpha(.75f));
-            } else {
+            }
+            else {
                 g.setColour(base_.getTextColour().withAlpha(.5f));
             }
             g.setFont(base_.getFontSize() * font_scale_);

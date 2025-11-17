@@ -16,20 +16,20 @@
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType>
+    template <typename FloatType>
     class CompressorStyleBase {
     public:
-        CompressorStyleBase(ComputerBase<FloatType> &computer,
-                            RMSTracker<FloatType> &tracker,
-                            FollowerBase<FloatType> &follower)
+        CompressorStyleBase(ComputerBase<FloatType>& computer,
+                            RMSTracker<FloatType>& tracker,
+                            FollowerBase<FloatType>& follower)
             : computer_(computer), tracker_(tracker), follower_(follower) {
         }
 
         virtual ~CompressorStyleBase() = default;
 
     protected:
-        ComputerBase<FloatType> &computer_;
-        RMSTracker<FloatType> &tracker_;
-        FollowerBase<FloatType> &follower_;
+        ComputerBase<FloatType>& computer_;
+        RMSTracker<FloatType>& tracker_;
+        FollowerBase<FloatType>& follower_;
     };
 }

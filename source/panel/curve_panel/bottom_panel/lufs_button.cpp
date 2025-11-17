@@ -11,8 +11,8 @@
 #include "lufs_button.hpp"
 
 namespace zlpanel {
-    LUFSButton::LUFSButton(PluginProcessor &p, zlgui::UIBase &base,
-                           multilingual::TooltipHelper &tooltip_helper)
+    LUFSButton::LUFSButton(PluginProcessor& p, zlgui::UIBase& base,
+                           multilingual::TooltipHelper& tooltip_helper)
         : p_ref_(p), base_(base),
           learn_drawable_(juce::Drawable::createFromImageData(BinaryData::learn_svg, BinaryData::learn_svgSize)),
           learn_button_(base, learn_drawable_.get(), learn_drawable_.get(),
@@ -25,7 +25,8 @@ namespace zlpanel {
                 p_ref_.getCompressController().setLUFSMatcherOn(true);
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, true);
                 setAlpha(1.f);
-            } else {
+            }
+            else {
                 p_ref_.getCompressController().setLUFSMatcherOn(false);
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, false);
 
@@ -38,7 +39,7 @@ namespace zlpanel {
                 }
                 const auto target_gain = c_gain + c_diff / (c_wet / 100.f);
 
-                auto *para = p_ref_.parameters_.getParameter(zlp::POutGain::kID);
+                auto* para = p_ref_.parameters_.getParameter(zlp::POutGain::kID);
                 para->beginChangeGesture();
                 para->setValueNotifyingHost(para->convertTo0to1(target_gain));
                 para->endChangeGesture();
@@ -57,7 +58,7 @@ namespace zlpanel {
         p_ref_.getCompressController().setLUFSMatcherOn(false);
     }
 
-    void LUFSButton::paint(juce::Graphics &g) {
+    void LUFSButton::paint(juce::Graphics& g) {
         const auto bound = getLocalBounds().toFloat();
         juce::Path path;
         path.startNewSubPath(bound.getBottomLeft());

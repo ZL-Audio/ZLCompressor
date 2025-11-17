@@ -12,12 +12,12 @@
 #include "../helpers.hpp"
 
 namespace zldsp::filter::FilterDesign {
-    template<size_t ArraySize,
-        std::array<double, 4>(*FirstOrderFunc)(double w),
-        std::array<double, 6>(*Func)(double w, double q)>
+    template <size_t ArraySize,
+              std::array<double, 4>(*FirstOrderFunc)(double w),
+              std::array<double, 6>(*Func)(double w, double q)>
     size_t updatePassCoeffs(const size_t n, const size_t startIdx,
                             const double w0, const double q0,
-                            std::array<std::array<double, 6>, ArraySize> &coeffs) {
+                            std::array<std::array < double, 6>, ArraySize> &coeffs) {
         if (n == 1) {
             const auto coeff = FirstOrderFunc(w0);
             coeffs[startIdx] = {coeff[0], coeff[1], 0.0, coeff[2], coeff[3], 0.0};
@@ -37,12 +37,12 @@ namespace zldsp::filter::FilterDesign {
         return number;
     }
 
-    template<size_t ArraySize,
-        std::array<double, 4>(*FirstOrderFunc)(double w, double g),
-        std::array<double, 6>(*Func)(double w, double g, double q)>
+    template <size_t ArraySize,
+              std::array<double, 4>(*FirstOrderFunc)(double w, double g),
+              std::array<double, 6>(*Func)(double w, double g, double q)>
     size_t updateShelfCoeffs(const size_t n, const size_t startIdx,
                              const double w0, const double g0, const double q0,
-                             std::array<std::array<double, 6>, ArraySize> &coeffs) {
+                             std::array<std::array < double, 6>, ArraySize> &coeffs) {
         if (n == 1) {
             const auto coeff = FirstOrderFunc(w0, g0);
             coeffs[startIdx] = {coeff[0], coeff[1], 0.0, coeff[2], coeff[3], 0.0};
@@ -63,10 +63,10 @@ namespace zldsp::filter::FilterDesign {
         return number;
     }
 
-    template<size_t ArraySize, std::array<double, 6>(*Func)(double w, double q)>
+    template <size_t ArraySize, std::array<double, 6>(*Func)(double w, double q)>
     size_t updateBandPassCoeffs(const size_t n, const size_t startIdx,
                                 const double w0, const double q0,
-                                std::array<std::array<double, 6>, ArraySize> &coeffs) {
+                                std::array<std::array < double, 6>, ArraySize> &coeffs) {
         if (n < 2) { return 0; }
         const size_t number = n / 2;
         const auto halfbw = std::asinh(0.5 / q0) / std::log(2);
@@ -81,10 +81,10 @@ namespace zldsp::filter::FilterDesign {
         return number;
     }
 
-    template<size_t ArraySize, std::array<double, 6>(*Func)(double w, double q)>
+    template <size_t ArraySize, std::array<double, 6>(*Func)(double w, double q)>
     size_t updateNotchCoeffs(const size_t n, const size_t startIdx,
                              const double w0, const double q0,
-                             std::array<std::array<double, 6>, ArraySize> &coeffs) {
+                             std::array<std::array < double, 6>, ArraySize> &coeffs) {
         if (n < 2) { return 0; }
         const size_t number = n / 2;
         const auto halfbw = std::asinh(0.5 / q0) / std::log(2);
@@ -99,14 +99,14 @@ namespace zldsp::filter::FilterDesign {
         return number;
     }
 
-    template<size_t ArraySize,
-        std::array<double, 4>(*LowShelfFirstOrderFunc)(double w, double g),
-        std::array<double, 4>(*HighShelfFirstOrderFunc)(double w, double g),
-        std::array<double, 6>(*LowShelfFunc)(double w, double g, double q),
-        std::array<double, 6>(*HighShelfFunc)(double w, double g, double q)>
+    template <size_t ArraySize,
+              std::array<double, 4>(*LowShelfFirstOrderFunc)(double w, double g),
+              std::array<double, 4>(*HighShelfFirstOrderFunc)(double w, double g),
+              std::array<double, 6>(*LowShelfFunc)(double w, double g, double q),
+              std::array<double, 6>(*HighShelfFunc)(double w, double g, double q)>
     size_t updateBandShelfCoeffs(const size_t n, const size_t startIdx,
                                  const double w0, const double g0, const double q0,
-                                 std::array<std::array<double, 6>, ArraySize> &coeffs) {
+                                 std::array<std::array < double, 6>, ArraySize> &coeffs) {
         if (n < 2) { return 0; }
         const auto halfbw = std::asinh(0.5 / q0) / std::log(2);
         const auto scale = std::pow(2, halfbw);
@@ -120,88 +120,91 @@ namespace zldsp::filter::FilterDesign {
                 n, startIdx, w1, 1 / g0, std::sqrt(2) / 2, coeffs);
             n2 = updateShelfCoeffs<ArraySize, LowShelfFirstOrderFunc, LowShelfFunc>(
                 n, startIdx + n1, w2, g0, std::sqrt(2) / 2, coeffs);
-        } else if (f1) {
+        }
+        else if (f1) {
             n1 = updateShelfCoeffs<ArraySize, HighShelfFirstOrderFunc, HighShelfFunc>(
                 n, startIdx, w1, g0, std::sqrt(2) / 2, coeffs);
-        } else if (f2) {
+        }
+        else if (f2) {
             n1 = updateShelfCoeffs<ArraySize, LowShelfFirstOrderFunc, LowShelfFunc>(
                 n, startIdx, w2, g0, std::sqrt(2) / 2, coeffs);
-        } else {
+        }
+        else {
             coeffs[startIdx] = {1, 1, 1, g0, g0, g0};
         }
         return n1 + n2;
     }
 
-    template<size_t ArraySize,
-        std::array<double, 4>(*LowShelfFirstOrderFunc)(double w, double g),
-        std::array<double, 4>(*HighShelfFirstOrderFunc)(double w, double g),
-        std::array<double, 4>(*TiltShelfFirstOrderFunc)(double w, double g),
-        std::array<double, 4>(*LowPassFirstOrderFunc)(double w),
-        std::array<double, 4>(*HighPassFirstOrderFunc)(double w),
-        std::array<double, 6>(*PeakFunc)(double w, double g, double q),
-        std::array<double, 6>(*LowShelfFunc)(double w, double g, double q),
-        std::array<double, 6>(*HighShelfFunc)(double w, double g, double q),
-        std::array<double, 6>(*TiltShelfFunc)(double w, double g, double q),
-        std::array<double, 6>(*LowPassFunc)(double w, double q),
-        std::array<double, 6>(*HighPassFunc)(double w, double q),
-        std::array<double, 6>(*BandPassFunc)(double w, double q),
-        std::array<double, 6>(*NotchFunc)(double w, double q)>
+    template <size_t ArraySize,
+              std::array<double, 4>(*LowShelfFirstOrderFunc)(double w, double g),
+              std::array<double, 4>(*HighShelfFirstOrderFunc)(double w, double g),
+              std::array<double, 4>(*TiltShelfFirstOrderFunc)(double w, double g),
+              std::array<double, 4>(*LowPassFirstOrderFunc)(double w),
+              std::array<double, 4>(*HighPassFirstOrderFunc)(double w),
+              std::array<double, 6>(*PeakFunc)(double w, double g, double q),
+              std::array<double, 6>(*LowShelfFunc)(double w, double g, double q),
+              std::array<double, 6>(*HighShelfFunc)(double w, double g, double q),
+              std::array<double, 6>(*TiltShelfFunc)(double w, double g, double q),
+              std::array<double, 6>(*LowPassFunc)(double w, double q),
+              std::array<double, 6>(*HighPassFunc)(double w, double q),
+              std::array<double, 6>(*BandPassFunc)(double w, double q),
+              std::array<double, 6>(*NotchFunc)(double w, double q)>
     size_t updateCoeffs(const FilterType filterType, const size_t n,
                         const double f, const double fs, const double gDB, const double q0,
-                        std::array<std::array<double, 6>, ArraySize> &coeffs) {
+                        std::array<std::array < double, 6>, ArraySize> &coeffs) {
         const auto w0 = ppi * f / fs;
         const auto g0 = dbToGain(gDB);
         switch (filterType) {
-            case kPeak:
-                switch (n) {
-                    case 0:
-                    case 1: return 0;
-                    case 2: {
-                        coeffs[0] = PeakFunc(w0, g0, q0);
-                        return 1;
-                    }
-                    default: {
-                        return updateBandShelfCoeffs<
-                            ArraySize,
-                            LowShelfFirstOrderFunc, HighShelfFirstOrderFunc,
-                            LowShelfFunc, HighShelfFunc>(n, 0, w0, g0, q0, coeffs);
-                    }
-                }
-            case kLowShelf:
-                return updateShelfCoeffs<ArraySize, LowShelfFirstOrderFunc, LowShelfFunc>(
-                    n, 0,
-                    w0, g0, std::sqrt(q0 * std::sqrt(2)) / std::sqrt(2),
-                    coeffs);
-            case kLowPass:
-                return updatePassCoeffs<ArraySize, LowPassFirstOrderFunc, LowPassFunc>(
-                    n, 0,
-                    w0, q0,
-                    coeffs);
-            case kHighShelf:
-                return updateShelfCoeffs<ArraySize, HighShelfFirstOrderFunc, HighShelfFunc>(
-                    n, 0,
-                    w0, g0, std::sqrt(q0 * std::sqrt(2)) / std::sqrt(2),
-                    coeffs);
-            case kHighPass:
-                return updatePassCoeffs<ArraySize, HighPassFirstOrderFunc, HighPassFunc>(
-                    n, 0,
-                    w0, q0,
-                    coeffs);
-            case kBandShelf:
-                return updateBandShelfCoeffs<ArraySize,
+        case kPeak:
+            switch (n) {
+            case 0:
+            case 1: return 0;
+            case 2: {
+                coeffs[0] = PeakFunc(w0, g0, q0);
+                return 1;
+            }
+            default: {
+                return updateBandShelfCoeffs<
+                    ArraySize,
                     LowShelfFirstOrderFunc, HighShelfFirstOrderFunc,
                     LowShelfFunc, HighShelfFunc>(n, 0, w0, g0, q0, coeffs);
-            case kTiltShelf:
-                return updateShelfCoeffs<ArraySize, TiltShelfFirstOrderFunc, TiltShelfFunc>(
-                    n, 0,
-                    w0, g0, std::sqrt(q0 * std::sqrt(2)) / std::sqrt(2),
-                    coeffs);
-            case kNotch:
-                return updateNotchCoeffs<ArraySize, NotchFunc>(n, 0, w0, q0, coeffs);
-            case kBandPass:
-                return updateBandPassCoeffs<ArraySize, BandPassFunc>(n, 0, w0, q0, coeffs);
-            default:
-                return 0;
+            }
+            }
+        case kLowShelf:
+            return updateShelfCoeffs<ArraySize, LowShelfFirstOrderFunc, LowShelfFunc>(
+                n, 0,
+                w0, g0, std::sqrt(q0 * std::sqrt(2)) / std::sqrt(2),
+                coeffs);
+        case kLowPass:
+            return updatePassCoeffs<ArraySize, LowPassFirstOrderFunc, LowPassFunc>(
+                n, 0,
+                w0, q0,
+                coeffs);
+        case kHighShelf:
+            return updateShelfCoeffs<ArraySize, HighShelfFirstOrderFunc, HighShelfFunc>(
+                n, 0,
+                w0, g0, std::sqrt(q0 * std::sqrt(2)) / std::sqrt(2),
+                coeffs);
+        case kHighPass:
+            return updatePassCoeffs<ArraySize, HighPassFirstOrderFunc, HighPassFunc>(
+                n, 0,
+                w0, q0,
+                coeffs);
+        case kBandShelf:
+            return updateBandShelfCoeffs<ArraySize,
+                                         LowShelfFirstOrderFunc, HighShelfFirstOrderFunc,
+                                         LowShelfFunc, HighShelfFunc>(n, 0, w0, g0, q0, coeffs);
+        case kTiltShelf:
+            return updateShelfCoeffs<ArraySize, TiltShelfFirstOrderFunc, TiltShelfFunc>(
+                n, 0,
+                w0, g0, std::sqrt(q0 * std::sqrt(2)) / std::sqrt(2),
+                coeffs);
+        case kNotch:
+            return updateNotchCoeffs<ArraySize, NotchFunc>(n, 0, w0, q0, coeffs);
+        case kBandPass:
+            return updateBandPassCoeffs<ArraySize, BandPassFunc>(n, 0, w0, q0, coeffs);
+        default:
+            return 0;
         }
     }
 }

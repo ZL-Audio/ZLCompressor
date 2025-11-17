@@ -14,7 +14,7 @@
 #include "../../chore/chore.hpp"
 
 namespace zldsp::compressor {
-    template<typename FloatType>
+    template <typename FloatType>
     class TanhClipper {
     public:
         TanhClipper() = default;
@@ -34,7 +34,7 @@ namespace zldsp::compressor {
             }
         }
 
-        void process(FloatType *buffer, const size_t num_samples) {
+        void process(FloatType* buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 const auto v = static_cast<double>(buffer[i]);
                 buffer[i] = static_cast<FloatType>(std::tanh(v * k1_) * k2_);
@@ -69,19 +69,26 @@ namespace zldsp::compressor {
             const auto final_reduction_gain = chore::decibelsToGain(final_reduction);
             if (final_reduction > -2.895296501106843e-08) {
                 k1_ = 1e-4;
-            } else if (final_reduction > -2.895295870818236e-06) {
+            }
+            else if (final_reduction > -2.895295870818236e-06) {
                 k1_ = getK(final_reduction_gain, 1e-4, 1e-3);
-            } else if (final_reduction > -0.0002895228991000713) {
+            }
+            else if (final_reduction > -0.0002895228991000713) {
                 k1_ = getK(final_reduction_gain, 1e-3, 1e-2);
-            } else if (final_reduction > -0.02888559791501009) {
+            }
+            else if (final_reduction > -0.02888559791501009) {
                 k1_ = getK(final_reduction_gain, 1e-2, 1e-1);
-            } else if (final_reduction > -2.3655279428366893) {
+            }
+            else if (final_reduction > -2.3655279428366893) {
                 k1_ = getK(final_reduction_gain, 1e-1, 1.0);
-            } else if (final_reduction > -20.000000035805904) {
+            }
+            else if (final_reduction > -20.000000035805904) {
                 k1_ = getK(final_reduction_gain, 1.0, 10.0);
-            } else if (final_reduction > -40.0) {
+            }
+            else if (final_reduction > -40.0) {
                 k1_ = getK(final_reduction_gain, 10.0, 100.0);
-            } else {
+            }
+            else {
                 k1_ = 1.0 / final_reduction_gain;
             }
             k2_ = 1.0 / k1_;
@@ -94,7 +101,8 @@ namespace zldsp::compressor {
         static double getK(const double y, double k_left, double k_right) {
             if (evalP(y, k_right) >= kLowThres) {
                 return k_right;
-            } else if (evalP(y, k_left) <= kHighThres) {
+            }
+            else if (evalP(y, k_left) <= kHighThres) {
                 return k_left;
             }
             size_t i = 0;
@@ -104,9 +112,11 @@ namespace zldsp::compressor {
                 const auto p = evalP(y, k);
                 if (p > kHighThres) {
                     k_left = k;
-                } else if (p < kLowThres) {
+                }
+                else if (p < kLowThres) {
                     k_right = k;
-                } else {
+                }
+                else {
                     return k;
                 }
             }

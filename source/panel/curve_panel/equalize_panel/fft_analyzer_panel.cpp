@@ -10,11 +10,11 @@
 #include "fft_analyzer_panel.hpp"
 
 namespace zlpanel {
-    FFTAnalyzerPanel::FFTAnalyzerPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    FFTAnalyzerPanel::FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor),
           base_(base) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::EqualizeController::kAnalyzerPointNum) * 3 + 1;
-        for (auto &path: {&out_path_, &next_out_path_}) {
+        for (auto& path : {&out_path_, &next_out_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
 
@@ -23,7 +23,7 @@ namespace zlpanel {
 
     FFTAnalyzerPanel::~FFTAnalyzerPanel() = default;
 
-    void FFTAnalyzerPanel::paint(juce::Graphics &g) {
+    void FFTAnalyzerPanel::paint(juce::Graphics& g) {
         if (skip_next_repaint_) {
             skip_next_repaint_ = false;
             return;
@@ -43,7 +43,7 @@ namespace zlpanel {
     }
 
     void FFTAnalyzerPanel::run() {
-        auto &analyzer{p_ref_.getEqualizeController().getFFTAnalyzer()};
+        auto& analyzer{p_ref_.getEqualizeController().getFFTAnalyzer()};
         if (!analyzer.getLock().try_lock()) {
             return;
         }
@@ -54,7 +54,7 @@ namespace zlpanel {
             ys_.resize(n);
             width_ = -1.f;
         }
-        
+
         const auto bound = atomic_bound_.load();
         // re-calculate xs if width changes
         if (std::abs(bound.getWidth() - width_) > 1e-3f) {

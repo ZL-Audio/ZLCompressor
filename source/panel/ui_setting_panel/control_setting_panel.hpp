@@ -18,7 +18,7 @@ namespace zlpanel {
     public:
         static constexpr float kHeightP = 20.f;
 
-        explicit ControlSettingPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit ControlSettingPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~ControlSettingPanel() override;
 
@@ -32,16 +32,20 @@ namespace zlpanel {
 
         void resized() override;
 
-        void mouseDown(const juce::MouseEvent &event) override;
+        void mouseDown(const juce::MouseEvent& event) override;
 
     private:
-        PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
         zlgui::label::NameLookAndFeel name_laf_;
 
         juce::Label wheel_label_;
         juce::Label drag_label_;
-        std::array<zlgui::slider::CompactLinearSlider<true, true, true>, 4> sensitivity_sliders_;
+        std::array<zlgui::slider::CompactLinearSlider < true, true, true>
+        ,
+        4
+        >
+        sensitivity_sliders_;
         zlgui::combobox::CompactCombobox wheel_reverse_box_;
         juce::Label rotary_style_label_;
         zlgui::combobox::CompactCombobox rotary_style_box_;
@@ -52,11 +56,11 @@ namespace zlpanel {
         juce::Label import_label_, export_label_;
         std::unique_ptr<juce::FileChooser> chooser_;
         inline auto static const kSettingDirectory =
-                juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                .getChildFile("Audio")
-                .getChildFile("Presets")
-                .getChildFile(JucePlugin_Manufacturer)
-                .getChildFile("Shared Settings");
+            juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+            .getChildFile("Audio")
+            .getChildFile("Presets")
+            .getChildFile(JucePlugin_Manufacturer)
+            .getChildFile("Shared Settings");
 
         void importControls();
 

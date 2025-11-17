@@ -18,8 +18,8 @@
 namespace zlpanel {
     class LeftControlPanel final : public juce::Component {
     public:
-        explicit LeftControlPanel(PluginProcessor &p, zlgui::UIBase &base,
-                                  multilingual::TooltipHelper &tooltip_helper);
+        explicit LeftControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+                                  multilingual::TooltipHelper& tooltip_helper);
 
         void resized() override;
 
@@ -28,7 +28,7 @@ namespace zlpanel {
     private:
         constexpr static int kButtonNum = 4;
 
-        zlgui::UIBase &base_;
+        zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         const std::unique_ptr<juce::Drawable> side_control_show_drawable_;

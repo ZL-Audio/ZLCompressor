@@ -10,7 +10,7 @@
 #include "main_panel.hpp"
 
 namespace zlpanel {
-    MainPanel::MainPanel(PluginProcessor &processor, zlgui::UIBase &base)
+    MainPanel::MainPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor), base_(base),
           tooltip_helper_(
               static_cast<multilingual::TooltipLanguage>(std::round(
@@ -21,7 +21,7 @@ namespace zlpanel {
           top_panel_(processor, base_, tooltip_helper_),
           ui_setting_panel_(processor, base_),
           tooltipLAF(base_), tooltipWindow(&curve_panel_),
-          refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]){
+          refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
         juce::ignoreUnused(base_);
         addAndMakeVisible(curve_panel_);
         addAndMakeVisible(control_panel_);
@@ -51,7 +51,8 @@ namespace zlpanel {
             const auto width = static_cast<float>(bound.getWidth());
             if (height < width * 0.47f) {
                 bound.setHeight(juce::roundToInt(width * .47f));
-            } else if (height > width * 1.f) {
+            }
+            else if (height > width * 1.f) {
                 bound.setWidth(juce::roundToInt(height * 1.f));
             }
         }
@@ -59,8 +60,8 @@ namespace zlpanel {
         const auto max_font_size = static_cast<float>(bound.getWidth()) * kFontSizeOverWidth;
         const auto min_font_size = max_font_size * .25f;
         const auto font_size = base_.getFontMode() == 0
-            ? max_font_size * base_.getFontScale()
-            : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
+                                   ? max_font_size * base_.getFontScale()
+                                   : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
         base_.setFontSize(font_size);
 
         ui_setting_panel_.setBounds(bound);
@@ -94,7 +95,7 @@ namespace zlpanel {
         }
     }
 
-    void MainPanel::valueTreePropertyChanged(juce::ValueTree &, const juce::Identifier &property) {
+    void MainPanel::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) {
         if (base_.isPanelIdentifier(zlgui::PanelSettingIdx::kUISettingPanel, property)) {
             const auto ui_setting_visibility = static_cast<bool>(base_.getPanelProperty(
                 zlgui::PanelSettingIdx::kUISettingPanel));
