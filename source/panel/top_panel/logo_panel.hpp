@@ -15,8 +15,8 @@
 #include "../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
-    class LogoPanel : public juce::Component,
-                      public juce::SettableTooltipClient {
+    class LogoPanel final : public juce::Component,
+                            public juce::SettableTooltipClient {
     public:
         explicit LogoPanel(PluginProcessor& p, zlgui::UIBase& base,
                            multilingual::TooltipHelper& tooltip_helper);
@@ -24,7 +24,6 @@ namespace zlpanel {
     private:
         zlgui::UIBase& base_;
         std::unique_ptr<juce::Drawable> brand_drawable_, logo_drawable_;
-        juce::Justification justification_{juce::Justification::topLeft};
 
         void paint(juce::Graphics& g) override;
 

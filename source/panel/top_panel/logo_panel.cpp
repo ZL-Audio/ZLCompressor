@@ -7,44 +7,37 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "BinaryData.h"
 #include "logo_panel.hpp"
+#include "BinaryData.h"
 
 namespace zlpanel {
-    LogoPanel::LogoPanel(PluginProcessor&, zlgui::UIBase& base, multilingual::TooltipHelper& tooltip_helper)
-        : base_(base),
-          brand_drawable_(juce::Drawable::createFromImageData(BinaryData::zlaudio_svg, BinaryData::zlaudio_svgSize)),
-          logo_drawable_(juce::Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize)) {
+    LogoPanel::LogoPanel(PluginProcessor&, zlgui::UIBase& base, multilingual::TooltipHelper& tooltip_helper) :
+        base_(base),
+        brand_drawable_(juce::Drawable::createFromImageData(BinaryData::zlaudio_svg, BinaryData::zlaudio_svgSize)),
+        logo_drawable_(juce::Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize)) {
+        juce::ignoreUnused(tooltip_helper);
         setAlpha(.5f);
-        setBufferedToImage(true);
 
-        SettableTooltipClient::setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLogo));
+        SettableTooltipClient::setTooltip(tooltip_helper.getToolTipText(multilingual::kLogo));
     }
 
     void LogoPanel::paint(juce::Graphics& g) {
         const auto temp_brand = brand_drawable_->createCopy();
         const auto temp_logo = logo_drawable_->createCopy();
-        temp_brand->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
-        temp_logo->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
-        temp_logo->replaceColour(
-            juce::Colour(static_cast<juce::uint8>(0), static_cast<juce::uint8>(0), static_cast<juce::uint8>(0), .5f),
-            base_.getTextColour().withMultipliedAlpha(.5f));
+        temp_brand->replaceColour(juce::Colours::black, base_.getTextColour());
+        temp_logo->replaceColour(juce::Colours::black, base_.getTextColour());
+        temp_logo->replaceColour(juce::Colours::black.withAlpha(.5f), base_.getTextColour().withMultipliedAlpha(.5f));
 
-        auto bound = getLocalBounds().toFloat();
-        const auto padding = base_.getFontSize() * kPaddingScale * .5f;
+        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+
+        auto bound = getLocalBounds();
+
+        const auto bound1 = bound.removeFromLeft(bound.getHeight()).toFloat();
+        temp_brand->drawWithin(g, bound1, juce::RectanglePlacement::centred, 1.f);
+
         bound.removeFromLeft(padding);
-        bound.removeFromTop(padding);
-        bound.removeFromBottom(padding);
-
-        const auto brand_scale = bound.getHeight() / static_cast<float>(brand_drawable_->getHeight());
-        const auto brand_width = static_cast<float>(brand_drawable_->getWidth()) * brand_scale;
-
-        temp_brand->setTransform(juce::AffineTransform::scale(brand_scale));
-        temp_brand->drawAt(g, bound.getX(), bound.getY(), 1.0f);
-
-        const auto logo_scale = bound.getHeight() / static_cast<float>(logo_drawable_->getHeight());
-        temp_logo->setTransform(juce::AffineTransform::scale(logo_scale));
-        temp_logo->drawAt(g, bound.getX() + brand_width + padding, bound.getY(), 1.0f);
+        const auto bound2 = bound.removeFromLeft(bound.getHeight()).toFloat();
+        temp_logo->drawWithin(g, bound2, juce::RectanglePlacement::centred, 1.f);
     }
 
     void LogoPanel::mouseEnter(const juce::MouseEvent&) {

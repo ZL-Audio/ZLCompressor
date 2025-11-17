@@ -1,6 +1,6 @@
-<p float="left">
-  <img src="docs/zlaudio.svg" width="16.6%" />
-  <img src="docs/logo.svg" width="7.5%" />
+<p align="center">
+  <img src="docs/zlaudio.svg" width="7.5%" hspace="6.068%"/>
+  <img src="docs/logo.svg" width="7.5%" hspace="6.068%"/>
 </p>
 
 # ZL Compressor

@@ -27,9 +27,10 @@ namespace zlpanel {
 
     void TopPanel::resized() {
         auto bound = getLocalBounds();
+        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         top_control_panel_.setBounds(bound.removeFromRight(top_control_panel_.getIdealWidth()));
 
-        logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 3));
+        logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 3).reduced(padding / 2, padding / 2));
     }
 
     void TopPanel::repaintCallBackSlow() {
