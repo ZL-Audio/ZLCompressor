@@ -122,14 +122,14 @@ namespace zlpanel {
             auto local_bound = bound.removeFromTop(slider_height);
             c_map1_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
             local_bound.removeFromLeft(padding);
-            c_map1_selector_.setBounds(local_bound.removeFromLeft(slider_width * 4 + padding));
+            c_map1_selector_.setBounds(local_bound.removeFromLeft(slider_width * 4 + padding).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);
             auto local_bound = bound.removeFromTop(slider_height);
             c_map2_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
             local_bound.removeFromLeft(padding);
-            c_map2_selector_.setBounds(local_bound.removeFromLeft(slider_width * 4 + padding));
+            c_map2_selector_.setBounds(local_bound.removeFromLeft(slider_width * 4 + padding).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);

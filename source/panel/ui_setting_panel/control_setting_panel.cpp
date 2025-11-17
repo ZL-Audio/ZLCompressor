@@ -124,7 +124,7 @@ namespace zlpanel {
             local_bound.removeFromLeft(padding);
             sensitivity_sliders_[1].setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
-            wheel_reverse_box_.setBounds(local_bound.removeFromLeft(slider_width + padding));
+            wheel_reverse_box_.setBounds(local_bound.removeFromLeft(slider_width + padding).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);
@@ -140,7 +140,7 @@ namespace zlpanel {
             auto local_bound = bound.removeFromTop(slider_height);
             rotary_style_label_.setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
             local_bound.removeFromLeft(padding);
-            rotary_style_box_.setBounds(local_bound.removeFromLeft(slider_width));
+            rotary_style_box_.setBounds(local_bound.removeFromLeft(slider_width / 2 * 3).reduced(0, padding / 3));
             local_bound.removeFromLeft(padding);
             rotary_drag_sensitivity_slider_.setBounds(local_bound.removeFromLeft(slider_width));
         }
@@ -149,7 +149,7 @@ namespace zlpanel {
             auto local_bound = bound.removeFromTop(slider_height);
             slider_double_click_label_.setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
             local_bound.removeFromLeft(padding);
-            slider_double_click_box_.setBounds(local_bound.removeFromLeft(slider_width * 2));
+            slider_double_click_box_.setBounds(local_bound.removeFromLeft(slider_width * 2).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);

@@ -119,7 +119,7 @@ namespace zlpanel {
             auto local_bound = bound.removeFromTop(slider_height);
             refresh_rate_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
             local_bound.removeFromLeft(padding);
-            refresh_rate_box_.setBounds(local_bound.removeFromLeft(slider_width));
+            refresh_rate_box_.setBounds(local_bound.removeFromLeft(slider_width).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);
@@ -144,7 +144,7 @@ namespace zlpanel {
             auto local_bound = bound.removeFromTop(slider_height);
             tooltip_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
             local_bound.removeFromLeft(padding);
-            tooltip_box_.setBounds(local_bound.removeFromLeft(slider_width));
+            tooltip_box_.setBounds(local_bound.removeFromLeft(slider_width).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);
