@@ -11,55 +11,52 @@
 
 namespace zlstate {
     Property::Property() {
-        if (!kPath.isDirectory()) {
-            if (!kPath.createDirectory()) {
-                return;
-            }
-        }
-        if (!kUIPath.existsAsFile()) {
-            if (const auto res = kUIPath.create(); !res.wasOk()) {
-                return;
-            }
-        }
-        is_directory_created_ = true;
     }
 
     Property::Property(juce::AudioProcessorValueTreeState& apvts) {
-        if (!kPath.isDirectory()) {
-            if (!kPath.createDirectory()) {
-                return;
-            }
-        }
-        if (!kUIPath.existsAsFile()) {
-            if (const auto res = kUIPath.create(); !res.wasOk()) {
-                return;
-            }
-        }
-        is_directory_created_ = true;
         loadAPVTS(apvts);
     }
 
     void Property::loadAPVTS(juce::AudioProcessorValueTreeState& apvts) {
-        if (is_directory_created_) {
-            std::lock_guard<std::mutex> lock_guard{mutex_};
-            if (kUIPath.existsAsFile()) {
-                if (const auto xml = juce::XmlDocument::parse(kUIPath); xml) {
-                    apvts.replaceState(juce::ValueTree::fromXml(*xml));
-                }
+        std::lock_guard<std::mutex> lock_guard{mutex_};
+        if (checkCreateDirectory()) {
+            if (const auto xml = juce::XmlDocument::parse(kUIPath); xml) {
+                apvts.replaceState(juce::ValueTree::fromXml(*xml));
             }
         }
     }
 
     void Property::saveAPVTS(juce::AudioProcessorValueTreeState& apvts) {
-        if (is_directory_created_) {
-            std::lock_guard<std::mutex> lock{mutex_};
-            if (kUIPath.existsAsFile()) {
-                if (const auto xml = apvts.copyState().createXml(); xml) {
-                    if (!xml->writeTo(kUIPath)) {
-                        return;
-                    }
+        std::lock_guard<std::mutex> lock{mutex_};
+        if (checkCreateDirectory()) {
+            if (const auto xml = apvts.copyState().createXml(); xml) {
+                if (!xml->writeTo(kUIPath)) {
+                    return;
                 }
             }
         }
+    }
+
+    bool Property::checkCreateDirectory() const {
+        // create directory if not exists
+        if (!kPath.isDirectory()) {
+            if (!kPath.createDirectory()) {
+                return false;
+            }
+        }
+        if (kUIPath.existsAsFile()) {
+            return true;
+        } else if (!kUIPath.existsAsFile()) {
+            if (kOldUIPath.existsAsFile()) {
+                if (const auto c_res = kOldUIPath.copyFileTo(kUIPath); c_res) {
+                    if (const auto d_res = kOldUIPath.deleteFile(); d_res) {
+                        return true;
+                    }
+                }
+            }
+            const auto res = kUIPath.create();
+            return res.wasOk();
+        }
+        return false;
     }
 }

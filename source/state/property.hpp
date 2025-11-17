@@ -23,15 +23,22 @@ namespace zlstate {
         void saveAPVTS(juce::AudioProcessorValueTreeState& apvts);
 
     private:
-        const juce::File kPath =
+        const juce::File kOldPath =
             juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
             .getChildFile("Audio")
             .getChildFile("Presets")
             .getChildFile(JucePlugin_Manufacturer)
             .getChildFile(JucePlugin_Name);
+        const juce::File kOldUIPath = kOldPath.getChildFile("ui.xml");
+
+        const juce::File kPath =
+        juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+        .getChildFile("ZL Audio")
+        .getChildFile(JucePlugin_Name);
         const juce::File kUIPath = kPath.getChildFile("ui.xml");
 
         std::mutex mutex_;
-        bool is_directory_created_{false};
+
+        bool checkCreateDirectory() const;
     };
 }
