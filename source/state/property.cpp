@@ -44,20 +44,21 @@ namespace zlstate {
                 return false;
             }
         }
+        // check if UI preset exists
         if (kUIPath.existsAsFile()) {
             return true;
         }
-        else if (!kUIPath.existsAsFile()) {
-            if (kOldUIPath.existsAsFile()) {
-                if (const auto c_res = kOldUIPath.copyFileTo(kUIPath); c_res) {
-                    if (const auto d_res = kOldUIPath.deleteFile(); d_res) {
-                        return true;
-                    }
+        // check if old UI preset exists
+        // yes -> copy old UI preset to UI preset
+        if (kOldUIPath.existsAsFile()) {
+            if (const auto c_res = kOldUIPath.copyFileTo(kUIPath); c_res) {
+                if (const auto d_res = kOldUIPath.deleteFile(); d_res) {
+                    return true;
                 }
             }
-            const auto res = kUIPath.create();
-            return res.wasOk();
         }
-        return false;
+        // no -> create a blank UI preset
+        const auto res = kUIPath.create();
+        return res.wasOk();
     }
 }
