@@ -14,19 +14,17 @@
 #include <cmath>
 #include <algorithm>
 
-#include "follower_base.hpp"
-
 namespace zldsp::compressor {
-    enum PPState { kOff, kPunch, kPump };
+    enum class PPState { kOff, kPunch, kPump };
+
+    enum class SState { kOff, kFull, kMix };
 
     /**
      * a punch-smooth follower
      * @tparam FloatType
-     * @tparam UseSmooth whether to use smooth
-     * @tparam UsePP whether to use pump-punch
      */
-    template <typename FloatType, bool UseSmooth = false, bool UsePP = false>
-    class PSFollower final : public FollowerBase<FloatType> {
+    template <typename FloatType>
+    class PSFollower final {
     public:
         PSFollower() = default;
 
@@ -34,7 +32,7 @@ namespace zldsp::compressor {
          * call before processing starts
          * @param sr sampleRate
          */
-        void prepare(const double sr) override {
+        void prepare(const double sr) {
             exp_factor_ = -2.0 * std::numbers::pi * 1000.0 / sr;
             to_update_.store(true, std::memory_order::release);
         }
@@ -42,7 +40,7 @@ namespace zldsp::compressor {
         /**
          * reset the follower
          */
-        void reset(const FloatType x) override {
+        void reset(const FloatType x) {
             y_ = x;
             state_ = x;
             slope_ = FloatType(0);
@@ -51,7 +49,7 @@ namespace zldsp::compressor {
         /**
          * update values before processing a buffer
          */
-        bool prepareBuffer() override {
+        bool prepareBuffer() {
             if (to_update_.exchange(false, std::memory_order::acquire)) {
                 update();
                 return true;
@@ -65,57 +63,43 @@ namespace zldsp::compressor {
         void copyFrom(PSFollower& other) {
             attack_ = other.attack_;
             release_ = other.release_;
-            if constexpr (UseSmooth) {
-                smooth_ = other.smooth_;
-            }
-            if constexpr (UsePP) {
-                pp_state_ = other.pp_state_;
-                pp_ = other.pp_;
-            }
+            smooth_ = other.smooth_;
+            s_state_ = other.s_state_;
+            pp_state_ = other.pp_state_;
+            pp_ = other.pp_;
         }
 
-        FloatType processSample(const FloatType x) override {
+        template <PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
+        FloatType processSample(const FloatType x) {
             FloatType y0;
-            if constexpr (UseSmooth) {
+            if constexpr (s_state == SState::kOff) {
+                y0 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
+            } else if constexpr (s_state == SState::kFull) {
+                state_ = std::max(x, release_ * (state_ - x) + x);
+                y0 = attack_ * (y_ - state_) + state_;
+            } else {
                 state_ = std::max(x, release_ * (state_ - x) + x);
                 const auto y1 = attack_ * (y_ - state_) + state_;
                 const auto y2 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
                 y0 = smooth_ * (y1 - y2) + y2;
             }
-            else {
-                y0 = x >= y_ ? attack_ * (y_ - x) + x : release_ * (y_ - x) + x;
-            }
-            if constexpr (UsePP) {
+            if constexpr (pp_state == PPState::kPump) {
                 const auto slope0 = y0 - y_;
-                switch (pp_state_) {
-                case PPState::kOff: {
+                if (slope0 < slope_) {
+                    slope_ = pp_ * (slope_ - slope0) + slope0;
+                } else {
                     slope_ = slope0;
-                    y_ = y0;
-                    break;
                 }
-                case PPState::kPump: {
-                    if (slope0 < slope_) {
-                        slope_ = pp_ * (slope_ - slope0) + slope0;
-                    }
-                    else {
-                        slope_ = slope0;
-                    }
-                    y_ += slope_;
-                    break;
+                y_ += slope_;
+            } else if constexpr (pp_state == PPState::kPunch) {
+                const auto slope0 = y0 - y_;
+                if (slope0 > slope_ && slope_ >= FloatType(0)) {
+                    slope_ = pp_ * (slope_ - slope0) + slope0;
+                } else {
+                    slope_ = slope0;
                 }
-                case PPState::kPunch: {
-                    if (slope0 > slope_ && slope_ >= FloatType(0)) {
-                        slope_ = pp_ * (slope_ - slope0) + slope0;
-                    }
-                    else {
-                        slope_ = slope0;
-                    }
-                    y_ += slope_;
-                    break;
-                }
-                }
-            }
-            else {
+                y_ += slope_;
+            } else {
                 y_ = y0;
             }
             return y_;
@@ -141,10 +125,19 @@ namespace zldsp::compressor {
             to_update_.store(true, std::memory_order::release);
         }
 
+        SState getSState() const {
+            return s_state_;
+        }
+
+        PPState getPPState() const {
+            return pp_state_;
+        }
+
     private:
         FloatType y_{}, state_{}, slope_{};
         FloatType attack_{}, release_{};
 
+        SState s_state_{SState::kOff};
         PPState pp_state_{PPState::kOff};
         FloatType pp_{}, smooth_{};
 
@@ -154,46 +147,44 @@ namespace zldsp::compressor {
 
         void update() {
             // cache atomic values
-            const auto current_attack_time = static_cast<double>(attack_time_.load());
-            const auto current_release_time = static_cast<double>(release_time_.load());
-            const auto current_smooth_portion = static_cast<double>(smooth_portion_.load());
-            const auto current_pp_portion = static_cast<double>(pp_portion_.load());
+            const auto current_attack_time = static_cast<double>(attack_time_.load(std::memory_order::relaxed));
+            const auto current_release_time = static_cast<double>(release_time_.load(std::memory_order::relaxed));
+            const auto current_smooth_portion = static_cast<double>(smooth_portion_.load(std::memory_order::relaxed));
+            const auto current_pp_portion = static_cast<double>(pp_portion_.load(std::memory_order::relaxed));
             // update attack
             if (current_attack_time < 0.001) {
                 attack_ = FloatType(0);
-            }
-            else {
-                if constexpr (UsePP) {
+            } else {
+                if (std::abs(current_pp_portion) > 0.0001) {
                     attack_ = static_cast<FloatType>(std::exp(
                         exp_factor_ / current_attack_time / (
                             1. - std::pow(std::abs(current_pp_portion), 2.) * 0.125)));
-                }
-                else {
+                } else {
                     attack_ = static_cast<FloatType>(std::exp(exp_factor_ / current_attack_time));
                 }
             }
             // update release
             if (current_release_time < 0.001) {
                 release_ = FloatType(0);
-            }
-            else {
+            } else {
                 release_ = static_cast<FloatType>(std::exp(exp_factor_ / current_release_time));
             }
-            if constexpr (UseSmooth) {
-                // update smooth
-                smooth_ = static_cast<FloatType>(current_smooth_portion);
+            smooth_ = static_cast<FloatType>(current_smooth_portion);
+            if (smooth_ < 0.0001) {
+                s_state_ = SState::kOff;
+            } else if (smooth_ > 0.9999) {
+                s_state_ = SState::kFull;
+            } else {
+                s_state_ = SState::kMix;
             }
-            if constexpr (UsePP) {
-                // update pump-punch
-                if (current_attack_time < 0.001 || std::abs(current_pp_portion) < 0.001) {
-                    pp_ = FloatType(0);
-                    pp_state_ = PPState::kOff;
-                }
-                else {
-                    pp_state_ = current_pp_portion > 0 ? PPState::kPump : PPState::kPunch;
-                    pp_ = static_cast<FloatType>(std::exp(
-                        exp_factor_ / current_attack_time / std::abs(current_pp_portion)));
-                }
+            if (current_attack_time < 0.0001 || std::abs(current_pp_portion) < 0.0001) {
+                slope_ = FloatType(0);
+                pp_ = FloatType(0);
+                pp_state_ = PPState::kOff;
+            } else {
+                pp_state_ = current_pp_portion > 0 ? PPState::kPump : PPState::kPunch;
+                pp_ = static_cast<FloatType>(std::exp(
+                    exp_factor_ / current_attack_time / std::abs(current_pp_portion)));
             }
         }
     };

@@ -10,8 +10,8 @@
 #include "compress_controller.hpp"
 
 namespace zlp {
-    CompressController::CompressController(juce::AudioProcessor& processor)
-        : processor_ref_(processor) {
+    CompressController::CompressController(juce::AudioProcessor& processor) :
+        processor_ref_(processor) {
     }
 
     void CompressController::prepare(const double sample_rate, const size_t max_num_samples) {
@@ -154,7 +154,8 @@ namespace zlp {
                 vocal_comps_[1].reset();
                 break;
             }
-            default: break;
+            default:
+                break;
             }
         }
         // load stereo link
@@ -192,8 +193,7 @@ namespace zlp {
                 c_rms_mix_ = rms_mix_.load(std::memory_order::relaxed);
                 rms_tracker_[0].prepareBuffer();
                 rms_tracker_[1].prepareBuffer();
-            }
-            else {
+            } else {
                 rms_comps_[0].reset();
                 rms_comps_[1].reset();
             }
@@ -266,8 +266,7 @@ namespace zlp {
         // makeup gain
         if (c_is_on_ && !bypass) {
             output_gain_.template process<false>(main_pointers, num_samples);
-        }
-        else {
+        } else {
             output_gain_.template process<true>(main_pointers, num_samples);
         }
         // mag analyzer
@@ -338,7 +337,8 @@ namespace zlp {
             processSideBufferVocal(side_buffer0, side_buffer1, num_samples);
             break;
         }
-        default: return;
+        default:
+            return;
         }
         // process rms compressors and mix rms
         if (c_use_rms_) {
@@ -366,13 +366,11 @@ namespace zlp {
                 const auto y = side_buffer1[i];
                 if (x < y) {
                     side_buffer1[i] = (y - x) * c_stereo_link_max_ + x;
-                }
-                else {
+                } else {
                     side_buffer0[i] = (x - y) * c_stereo_link_max_ + y;
                 }
             }
-        }
-        else {
+        } else {
             for (size_t i = 0; i < num_samples; ++i) {
                 const auto x = side_buffer0[i];
                 const auto y = side_buffer1[i];
@@ -388,8 +386,7 @@ namespace zlp {
         if (c_stereo_swap_) {
             main_v0 = main_v0 * side_v1;
             main_v1 = main_v1 * side_v0;
-        }
-        else {
+        } else {
             main_v0 = main_v0 * side_v0;
             main_v1 = main_v1 * side_v1;
         }
@@ -401,37 +398,109 @@ namespace zlp {
         }
     }
 
+    template <typename T1, typename T2>
+    void CompressController::dispatchProcess(T1& comp0, T2& comp1,
+                                             float* __restrict buffer0, float* __restrict buffer1,
+                                             const size_t num_samples) {
+        using zldsp::compressor::PPState;
+        using zldsp::compressor::SState;
+        const auto pp_state = follower_[0].getPPState();
+        const auto s_state = follower_[0].getSState();
+        switch (pp_state) {
+        // ================== PPState: kOff ==================
+        case PPState::kOff:
+            switch (s_state) {
+            case SState::kOff: {
+                comp0.template process<false, PPState::kOff, zldsp::compressor::SState::kOff>(buffer0, num_samples);
+                comp1.template process<false, PPState::kOff, zldsp::compressor::SState::kOff>(buffer1, num_samples);
+                break;
+            }
+            case SState::kFull: {
+                comp0.template process<false, PPState::kOff, zldsp::compressor::SState::kFull>(buffer0, num_samples);
+                comp1.template process<false, PPState::kOff, zldsp::compressor::SState::kFull>(buffer1, num_samples);
+                break;
+            }
+            case SState::kMix: {
+                comp0.template process<false, PPState::kOff, zldsp::compressor::SState::kMix>(buffer0, num_samples);
+                comp1.template process<false, PPState::kOff, zldsp::compressor::SState::kMix>(buffer1, num_samples);
+                break;
+            }
+            }
+            break;
+
+        // ================== PPState: kPunch ==================
+        case PPState::kPunch:
+            switch (s_state) {
+            case SState::kOff: {
+                comp0.template process<false, PPState::kPunch, zldsp::compressor::SState::kOff>(buffer0, num_samples);
+                comp1.template process<false, PPState::kPunch, zldsp::compressor::SState::kOff>(buffer1, num_samples);
+                break;
+            }
+            case SState::kFull: {
+                comp0.template process<false, PPState::kPunch, zldsp::compressor::SState::kFull>(buffer0, num_samples);
+                comp1.template process<false, PPState::kPunch, zldsp::compressor::SState::kFull>(buffer1, num_samples);
+                break;
+            }
+            case SState::kMix: {
+                comp0.template process<false, PPState::kPunch, zldsp::compressor::SState::kMix>(buffer0, num_samples);
+                comp1.template process<false, PPState::kPunch, zldsp::compressor::SState::kMix>(buffer1, num_samples);
+                break;
+            }
+            }
+            break;
+
+        // ================== PPState: kPump ==================
+        case PPState::kPump:
+            switch (s_state) {
+            case SState::kOff: {
+                comp0.template process<false, PPState::kPump, zldsp::compressor::SState::kOff>(buffer0, num_samples);
+                comp1.template process<false, PPState::kPump, zldsp::compressor::SState::kOff>(buffer1, num_samples);
+                break;
+            }
+            case SState::kFull: {
+                comp0.template process<false, PPState::kPump, zldsp::compressor::SState::kFull>(buffer0, num_samples);
+                comp1.template process<false, PPState::kPump, zldsp::compressor::SState::kFull>(buffer1, num_samples);
+                break;
+            }
+            case SState::kMix: {
+                comp0.template process<false, PPState::kPump, zldsp::compressor::SState::kMix>(buffer0, num_samples);
+                comp1.template process<false, PPState::kPump, zldsp::compressor::SState::kMix>(buffer1, num_samples);
+                break;
+            }
+            }
+            break;
+        }
+    }
+
     void CompressController::processSideBufferClean(float* __restrict buffer0, float* __restrict buffer1,
                                                     const size_t num_samples) {
-        clean_comps_[0].process(buffer0, num_samples);
-        clean_comps_[1].process(buffer1, num_samples);
+        dispatchProcess(clean_comps_[0], clean_comps_[1], buffer0, buffer1, num_samples);
     }
 
     void CompressController::processSideBufferClassic(float* __restrict buffer0, float* __restrict buffer1,
                                                       const size_t num_samples) {
-        classic_comps_[0].process(buffer0, num_samples);
-        classic_comps_[1].process(buffer1, num_samples);
+        dispatchProcess(classic_comps_[0], classic_comps_[1], buffer0, buffer1, num_samples);
     }
 
     void CompressController::processSideBufferOptical(float* __restrict buffer0, float* __restrict buffer1,
                                                       const size_t num_samples) {
-        optical_comps_[0].process(buffer0, num_samples);
-        optical_comps_[1].process(buffer1, num_samples);
+        dispatchProcess(optical_comps_[0], optical_comps_[1], buffer0, buffer1, num_samples);
     }
 
     void CompressController::processSideBufferVocal(float* __restrict buffer0, float* __restrict buffer1,
                                                     const size_t num_samples) {
-        vocal_comps_[0].process(buffer0, num_samples);
-        vocal_comps_[1].process(buffer1, num_samples);
+        dispatchProcess(vocal_comps_[0], vocal_comps_[1], buffer0, buffer1, num_samples);
     }
 
     void CompressController::processSideBufferRMS(float* __restrict buffer0, float* __restrict buffer1,
                                                   const size_t num_samples) {
-        rms_comps_[0].process < true > (buffer0, num_samples);
-        rms_comps_[1].process < true > (buffer1, num_samples);
+        rms_comps_[0].process<true, zldsp::compressor::PPState::kOff, zldsp::compressor::SState::kOff>(
+            buffer0, num_samples);
+        rms_comps_[1].process<true, zldsp::compressor::PPState::kOff, zldsp::compressor::SState::kOff>(
+            buffer1, num_samples);
     }
 
     void CompressController::handleAsyncUpdate() {
         processor_ref_.setLatencySamples(pdc_.load(std::memory_order::relaxed));
     }
-} // zlDSP
+}

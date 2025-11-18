@@ -18,6 +18,7 @@
 #include "../dsp/loudness/lufs_matcher.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 
 namespace zlp {
     class CompressController final : private juce::AsyncUpdater {
@@ -227,25 +228,10 @@ namespace zlp {
         // pdc
         std::atomic<int> pdc_{0};
         // computer, trackers and followers
-        std::array<zldsp::compressor::KneeComputer < float, true>
-        ,
-        2
-        >
-        computer_ {
-        };
+        std::array<zldsp::compressor::KneeComputer<float, true>, 2> computer_{};
         std::array<zldsp::compressor::RMSTracker<float>, 2> rms_tracker_{};
-        std::array<zldsp::compressor::PSFollower < float, true, true>
-        ,
-        2
-        >
-        follower_ {
-        };
-        std::array<zldsp::compressor::PSFollower < float, false, false>
-        ,
-        2
-        >
-        rms_follower_ {
-        };
+        std::array<zldsp::compressor::PSFollower<float>, 2> follower_{};
+        std::array<zldsp::compressor::PSFollower<float>, 2> rms_follower_{};
         // clean compressors
         std::array<zldsp::compressor::CleanCompressor<float>, 2> clean_comps_ = {
             zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
@@ -302,6 +288,10 @@ namespace zlp {
                            float* __restrict side_buffer0, float* __restrict side_buffer1,
                            size_t num_samples, bool bypass);
 
+        template <typename T1, typename T2>
+        void dispatchProcess(T1& comp0, T2& comp1,
+                             float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
+
         void processSideBufferClean(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
         void processSideBufferClassic(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
@@ -314,4 +304,4 @@ namespace zlp {
 
         void handleAsyncUpdate() override;
     };
-} // zlDSP
+}

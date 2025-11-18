@@ -27,7 +27,7 @@ namespace zlp {
         CompressController& controller_ref_;
 
         zldsp::compressor::KneeComputer<float, true>& computer_ref_;
-        zldsp::compressor::PSFollower<float, true, true>& follower_ref_;
+        zldsp::compressor::PSFollower<float>& follower_ref_;
 
         constexpr static std::array kIDs{
             PCompStyle::kID,

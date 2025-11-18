@@ -21,7 +21,7 @@ namespace zldsp::compressor {
     public:
         CompressorStyleBase(ComputerBase<FloatType>& computer,
                             RMSTracker<FloatType>& tracker,
-                            FollowerBase<FloatType>& follower)
+                            PSFollower<FloatType>& follower)
             : computer_(computer), tracker_(tracker), follower_(follower) {
         }
 
@@ -30,6 +30,6 @@ namespace zldsp::compressor {
     protected:
         ComputerBase<FloatType>& computer_;
         RMSTracker<FloatType>& tracker_;
-        FollowerBase<FloatType>& follower_;
+        PSFollower<FloatType>& follower_;
     };
 }

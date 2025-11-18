@@ -19,18 +19,18 @@ namespace zldsp::compressor {
 
         OpticalCompressor(ComputerBase<FloatType>& computer,
                           RMSTracker<FloatType>& tracker,
-                          FollowerBase<FloatType>& follower)
-            : base(computer, tracker, follower) {
+                          PSFollower<FloatType>& follower) :
+            base(computer, tracker, follower) {
         }
 
         void reset() {
             base::follower_.reset(FloatType(0));
         }
 
-        template <bool UseRMS = false>
+        template <bool use_rms = false, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(FloatType* buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
-            if constexpr (UseRMS) {
+            if constexpr (use_rms) {
                 // pass through the tracker
                 for (size_t i = 0; i < num_samples; ++i) {
                     base::tracker_.processSample(vector[i]);
@@ -38,13 +38,12 @@ namespace zldsp::compressor {
                 }
                 const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
                 vector = kfr::sqrt(vector * mean_scale);
-            }
-            else {
+            } else {
                 vector = kfr::abs(vector);
             }
             // pass through the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = base::follower_.processSample(vector[i]);
+                vector[i] = base::follower_.template processSample<pp_state, s_state>(vector[i]);
             }
             // transfer to db
             vector = FloatType(20) * kfr::log10(kfr::max(vector, FloatType(1e-12)));

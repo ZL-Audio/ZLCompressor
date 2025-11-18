@@ -10,8 +10,8 @@
 #include "equalize_background_panel.hpp"
 
 namespace zlpanel {
-    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIBase& base)
-        : base_(base) {
+    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIBase& base) :
+        base_(base) {
         setInterceptsMouseClicks(false, false);
         setBufferedToImage(true);
     }
@@ -47,8 +47,8 @@ namespace zlpanel {
         }
     }
 
-    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor&, zlgui::UIBase& base)
-        : background1_(base) {
+    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor&, zlgui::UIBase& base) :
+        background1_(base) {
         setInterceptsMouseClicks(false, false);
         addAndMakeVisible(background1_);
     }
@@ -60,4 +60,4 @@ namespace zlpanel {
     void EqualizerBackgroundPanel::setMouseOver(const bool is_mouse_on) {
         setVisible(is_mouse_on);
     }
-} // zlpanel
+}

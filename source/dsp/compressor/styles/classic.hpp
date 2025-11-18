@@ -20,7 +20,7 @@ namespace zldsp::compressor {
 
         ClassicCompressor(ComputerBase<FloatType>& computer,
                           RMSTracker<FloatType>& tracker,
-                          FollowerBase<FloatType>& follower)
+                          PSFollower<FloatType>& follower)
             : base(computer, tracker, follower) {
         }
 
@@ -29,11 +29,11 @@ namespace zldsp::compressor {
             x0_ = FloatType(0);
         }
 
-        template <bool UseRMS = false>
+        template <bool use_rms = false, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(FloatType* buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 FloatType input_db;
-                if constexpr (UseRMS) {
+                if constexpr (use_rms) {
                     // pass the feedback sample through the tracker
                     base::tracker_.processSample(x0_);
                     // get the db from the tracker
@@ -43,7 +43,7 @@ namespace zldsp::compressor {
                     input_db = chore::gainToDecibels(std::abs(x0_));
                 }
                 // pass through the computer and the follower
-                const auto smooth_reduction_db = -base::follower_.processSample(-base::computer_.eval(input_db));
+                const auto smooth_reduction_db = -base::follower_.template processSample<pp_state, s_state>(-base::computer_.eval(input_db));
                 // apply the gain on the current sample and save it as the feedback sample for the next
                 x0_ = buffer[i] * chore::decibelsToGain(smooth_reduction_db);
                 buffer[i] = smooth_reduction_db;

@@ -19,7 +19,7 @@ namespace zldsp::compressor {
 
         CleanCompressor(ComputerBase<FloatType>& computer,
                         RMSTracker<FloatType>& tracker,
-                        FollowerBase<FloatType>& follower)
+                        PSFollower<FloatType>& follower)
             : base(computer, tracker, follower) {
         }
 
@@ -27,10 +27,10 @@ namespace zldsp::compressor {
             base::follower_.reset(FloatType(0));
         }
 
-        template <bool UseRMS = false>
+        template <bool use_rms = false, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(FloatType* buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
-            if constexpr (UseRMS) {
+            if constexpr (use_rms) {
                 // pass through the tracker
                 for (size_t i = 0; i < num_samples; ++i) {
                     base::tracker_.processSample(vector[i]);
@@ -45,7 +45,7 @@ namespace zldsp::compressor {
             }
             // pass through the computer and the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = -base::follower_.processSample(-base::computer_.eval(vector[i]));
+                vector[i] = -base::follower_.template processSample<pp_state, s_state>(-base::computer_.eval(vector[i]));
             }
         }
     };
