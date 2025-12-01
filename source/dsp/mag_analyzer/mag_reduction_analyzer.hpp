@@ -15,7 +15,8 @@ namespace zldsp::analyzer {
     template <typename FloatType, size_t PointNum>
     class MagReductionAnalyzer : public MultipleMagAnalyzer<FloatType, 3, PointNum> {
     public:
-        explicit MagReductionAnalyzer() : MultipleMagAnalyzer<FloatType, 3, PointNum>() {
+        explicit MagReductionAnalyzer() :
+            MultipleMagAnalyzer<FloatType, 3, PointNum>() {
         }
 
         void createReductionPath(std::span<float> xs,

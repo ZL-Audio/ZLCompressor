@@ -100,7 +100,7 @@ namespace zldsp::analyzer {
                             }
                         } else if constexpr (CurrentMagType == MagType::kRMS) {
                             for (size_t i = 0; i < MagNum; ++i) {
-                                mag_fifos_[i][static_cast<size_t>(write_idx)] = 0.5f * zldsp::chore::gainToDecibels(
+                                mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::squareGainToDecibels(
                                     static_cast<float>(
                                         current_mags_[i] / static_cast<FloatType>(current_num_samples_)));
                             }
@@ -121,6 +121,9 @@ namespace zldsp::analyzer {
         template <MagType CurrentMagType>
         void updateMags(std::array<std::span<FloatType*>, MagNum>& buffers,
                         const int start_idx, const int num_samples) {
+            if constexpr (CurrentMagType == MagType::kRMS) {
+                current_num_samples_ += num_samples;
+            }
             for (size_t i = 0; i < MagNum; ++i) {
                 auto& buffer = buffers[i];
                 for (size_t chan = 0; chan < buffer.size(); ++chan) {
@@ -131,7 +134,6 @@ namespace zldsp::analyzer {
                         current_mags_[i] = std::max(current_mags_[i], kfr::absmaxof(v));
                     } else if constexpr (CurrentMagType == MagType::kRMS) {
                         current_mags_[i] += kfr::sumsqr(v);
-                        current_num_samples_ += num_samples;
                     }
                 }
             }

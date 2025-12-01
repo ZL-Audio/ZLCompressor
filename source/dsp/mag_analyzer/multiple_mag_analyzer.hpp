@@ -49,23 +49,24 @@ namespace zldsp::analyzer {
                 return {0, true};
             }
 
-            if (fifo_num_ready <= 0) return {0, true};
+            if (fifo_num_ready <= 0)
+                return {0, true};
 
             const bool to_reset_shift = (fifo_num_ready - num_to_read > tolerance) || (fifo_num_ready < num_to_read);
             int num_ready = 0;
             if (to_reset_shift) {
                 if (fifo_num_ready > num_to_read) {
                     num_ready = fifo_num_ready - tolerance / 2;
-                }
-                else {
+                } else {
                     num_ready = 0;
                 }
-            }
-            else {
+            } else {
                 num_ready = std::min(fifo_num_ready, num_to_read);
             }
 
-            if (num_ready <= 0) return {0, to_reset_shift};
+            if (num_ready <= 0) {
+                return {0, to_reset_shift};
+            }
             const auto num_ready_shift = static_cast<size_t>(num_ready);
             // shift circular buffers
             for (size_t i = 0; i < MagNum; ++i) {

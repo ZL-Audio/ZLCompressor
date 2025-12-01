@@ -48,7 +48,7 @@ namespace zldsp::analyzer {
             }
             this->abstract_fifo_.finishRead(num_ready);
 
-            std::array < float, MagNum > maximum_counts{};
+            std::array<float, MagNum> maximum_counts{};
             for (size_t i = 0; i < MagNum; ++i) {
                 maximum_counts[i] = *std::max_element(cumulative_counts_[i].begin(), cumulative_counts_[i].end());
             }
@@ -79,18 +79,8 @@ namespace zldsp::analyzer {
         }
 
     protected:
-        std::array<std::array < float, BinNum>
-        ,
-        MagNum
-        >
-        cumulative_counts_ {
-        };
-        std::array<std::array < float, BinNum>
-        ,
-        MagNum
-        >
-        avg_counts_ {
-        };
+        std::array<std::array<float, BinNum>, MagNum> cumulative_counts_{};
+        std::array<std::array<float, BinNum>, MagNum> avg_counts_{};
 
         static inline void updateHist(std::array<float, BinNum>& hist, const float x) {
             const auto idx = static_cast<size_t>(std::max(0.f, std::round(-x)));
