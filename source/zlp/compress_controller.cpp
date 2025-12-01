@@ -449,11 +449,21 @@ namespace zlp {
         side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
         // apply stereo swap
         if (c_stereo_swap_) {
-            main_v0 = main_v0 * side_v1;
-            main_v1 = main_v1 * side_v0;
+            if (comp_downward_.load(std::memory_order_relaxed)) {
+                main_v0 = main_v0 * side_v1;
+                main_v1 = main_v1 * side_v0;
+            } else {
+                main_v0 = main_v0 / side_v1;
+                main_v1 = main_v1 / side_v0;
+            }
         } else {
-            main_v0 = main_v0 * side_v0;
-            main_v1 = main_v1 * side_v1;
+            if (comp_downward_.load(std::memory_order_relaxed)) {
+                main_v0 = main_v0 * side_v0;
+                main_v1 = main_v1 * side_v1;
+            } else {
+                main_v0 = main_v0 / side_v0;
+                main_v1 = main_v1 / side_v1;
+            }
         }
         // apply clipper
         clipper_.prepareBuffer();

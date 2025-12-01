@@ -218,6 +218,16 @@ namespace zlp {
         int static constexpr kDefaultI = 0;
     };
 
+    class PCompDirection : public ChoiceParameters<PCompDirection> {
+    public:
+        auto static constexpr kID = "comp_direction";
+        auto static constexpr kName = "Compression Direction";
+        inline auto static const kChoices = juce::StringArray{
+            "Down", "Up"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     class PThreshold : public FloatParameters<PThreshold> {
     public:
         auto static constexpr kID = "threshold";
@@ -544,7 +554,7 @@ namespace zlp {
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
-        layout.add(PCompStyle::get(),
+        layout.add(PCompStyle::get(), PCompDirection::get(),
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
                    PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
                    PHold::get(), PRange::get(), PWet::get(), POutGain::get(),

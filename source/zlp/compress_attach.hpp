@@ -30,7 +30,7 @@ namespace zlp {
         zldsp::compressor::PSFollower<float>& follower_ref_;
 
         constexpr static std::array kIDs{
-            PCompStyle::kID,
+            PCompStyle::kID, PCompDirection::kID,
             PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID,
             PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID,
             PHold::kID, PRange::kID, POutGain::kID, PWet::kID,
@@ -43,6 +43,6 @@ namespace zlp {
             PRMSON::kID, PRMSLength::kID, PRMSSpeed::kID, PRMSMix::kID
         };
 
-        void parameterChanged(const juce::String& parameter_ID, float new_value) override;
+        void parameterChanged(const juce::String& parameter_ID, float value) override;
     };
 }

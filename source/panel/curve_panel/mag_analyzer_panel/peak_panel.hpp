@@ -19,7 +19,7 @@ namespace zlpanel {
     class PeakPanel final : public juce::Component,
                             private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit PeakPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit PeakPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~PeakPanel() override;
 
@@ -32,6 +32,7 @@ namespace zlpanel {
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
+        std::atomic<float>& comp_direction_ref_;
         static constexpr std::array kNAIDs{
             zlstate::PAnalyzerMagType::kID,
             zlstate::PAnalyzerMinDB::kID,

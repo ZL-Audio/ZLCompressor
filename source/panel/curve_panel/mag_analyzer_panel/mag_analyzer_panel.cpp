@@ -10,18 +10,18 @@
 #include "mag_analyzer_panel.hpp"
 
 namespace zlpanel {
-    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base)
-        : base_(base),
-          background_panel_(p, base),
-          peak_panel_(p, base), rms_panel_(p, base),
-          computer_panel_(p, base), separate_panel_(base),
-          updater_(),
-          threshold_slider_(base),
-          threshold_attachment_(threshold_slider_, p.parameters_,
-                                zlp::PThreshold::kID, updater_),
-          ratio_slider_(base),
-          ratio_attachment_(ratio_slider_, p.parameters_,
-                            zlp::PRatio::kID, updater_) {
+    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base) :
+        base_(base),
+        background_panel_(p, base),
+        peak_panel_(p, base), rms_panel_(p, base),
+        computer_panel_(p, base), separate_panel_(base),
+        updater_(),
+        threshold_slider_(base),
+        threshold_attachment_(threshold_slider_, p.parameters_,
+                              zlp::PThreshold::kID, updater_),
+        ratio_slider_(base),
+        ratio_attachment_(ratio_slider_, p.parameters_,
+                          zlp::PRatio::kID, updater_) {
         addAndMakeVisible(background_panel_);
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
@@ -61,8 +61,7 @@ namespace zlpanel {
         }
         if (to_run_rms_.exchange(false, std::memory_order::relaxed)) {
             rms_panel_.run(true);
-        }
-        else {
+        } else {
             rms_panel_.run(false);
         }
     }
@@ -85,9 +84,8 @@ namespace zlpanel {
     void MagAnalyzerPanel::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) {
         if (event.mods.isCommandDown()) {
             ratio_slider_.mouseWheelMove(event, wheel);
-        }
-        else {
+        } else {
             threshold_slider_.mouseWheelMove(event, wheel);
         }
     }
-} // zlpanel
+}

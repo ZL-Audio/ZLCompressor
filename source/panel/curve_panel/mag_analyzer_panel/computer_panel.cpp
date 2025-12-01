@@ -10,13 +10,14 @@
 #include "computer_panel.hpp"
 
 namespace zlpanel {
-    ComputerPanel::ComputerPanel(PluginProcessor& p, zlgui::UIBase& base)
-        : p_ref_(p), base_(base),
-          threshold_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PThreshold::kID)),
-          ratio_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PRatio::kID)),
-          knee_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PKneeW::kID)),
-          curve_ref_(*p_ref_.parameters_.getRawParameterValue(zlp::PCurve::kID)),
-          min_db_ref_(*p_ref_.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
+    ComputerPanel::ComputerPanel(PluginProcessor& p, zlgui::UIBase& base) :
+        p_ref_(p), base_(base),
+        comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
+        threshold_ref_(*p.parameters_.getRawParameterValue(zlp::PThreshold::kID)),
+        ratio_ref_(*p.parameters_.getRawParameterValue(zlp::PRatio::kID)),
+        knee_ref_(*p.parameters_.getRawParameterValue(zlp::PKneeW::kID)),
+        curve_ref_(*p.parameters_.getRawParameterValue(zlp::PCurve::kID)),
+        min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         next_comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         for (auto& ID : kComputerIDs) {
@@ -52,6 +53,7 @@ namespace zlpanel {
 
     void ComputerPanel::run() {
         if (!to_update_.exchange(false, std::memory_order::acquire)) { return; }
+        const auto is_downward = comp_direction_ref_.load(std::memory_order::relaxed) < .5f;
         computer_.setThreshold(threshold_ref_.load(std::memory_order::relaxed));
         computer_.setRatio(ratio_ref_.load(std::memory_order::relaxed));
         computer_.setKneeW(knee_ref_.load(std::memory_order::relaxed));
@@ -72,7 +74,7 @@ namespace zlpanel {
         minimizer.startNewSubPath(x - bound.getHeight(),
                                   computer_.eval(current_min_db * 2.f) * mul + bound.getY());
         for (size_t i = 0; i < kNumPoint; ++i) {
-            const auto db_out = computer_.eval(db_in);
+            const auto db_out = is_downward ? computer_.eval(db_in) : db_in + (db_in - computer_.eval(db_in));
             const auto y = db_out * mul + bound.getY();
             minimizer.lineTo(x, y);
             x += delta_x;
@@ -96,4 +98,4 @@ namespace zlpanel {
     void ComputerPanel::parameterChanged(const juce::String&, float) {
         to_update_.store(true, std::memory_order::release);
     }
-} // zlpanel
+}

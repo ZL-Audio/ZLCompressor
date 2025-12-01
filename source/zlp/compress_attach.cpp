@@ -12,12 +12,12 @@
 namespace zlp {
     CompressAttach::CompressAttach(juce::AudioProcessor& processor,
                                    juce::AudioProcessorValueTreeState& parameters,
-                                   CompressController& controller)
-        : processor_ref_(processor),
-          parameters_ref_(parameters),
-          controller_ref_(controller),
-          computer_ref_(controller.getComputer()[0]),
-          follower_ref_(controller.getFollower()[0]) {
+                                   CompressController& controller) :
+        processor_ref_(processor),
+        parameters_ref_(parameters),
+        controller_ref_(controller),
+        computer_ref_(controller.getComputer()[0]),
+        follower_ref_(controller.getFollower()[0]) {
         juce::ignoreUnused(processor_ref_);
         for (size_t i = 0; i < kIDs.size(); ++i) {
             parameters_ref_.addParameterListener(kIDs[i], this);
@@ -31,87 +31,63 @@ namespace zlp {
         }
     }
 
-    void CompressAttach::parameterChanged(const juce::String& parameter_ID, float new_value) {
+    void CompressAttach::parameterChanged(const juce::String& parameter_ID, float value) {
         if (parameter_ID == PCompStyle::kID) {
-            controller_ref_.setCompStyle(static_cast<zldsp::compressor::Style>(new_value));
-        }
-        else if (parameter_ID == PThreshold::kID) {
-            computer_ref_.setThreshold(new_value);
-        }
-        else if (parameter_ID == PRatio::kID) {
-            computer_ref_.setRatio(new_value);
-        }
-        else if (parameter_ID == PKneeW::kID) {
-            computer_ref_.setKneeW(new_value);
-        }
-        else if (parameter_ID == PCurve::kID) {
-            computer_ref_.setCurve(PCurve::formatV(new_value));
-        }
-        else if (parameter_ID == PAttack::kID) {
-            controller_ref_.setAttack(new_value);
-        }
-        else if (parameter_ID == PRelease::kID) {
-            controller_ref_.setRelease(new_value);
-        }
-        else if (parameter_ID == PPump::kID) {
-            follower_ref_.setPumpPunch(PPump::formatV(new_value));
-        }
-        else if (parameter_ID == PSmooth::kID) {
-            follower_ref_.setSmooth(PSmooth::formatV(new_value));
-        }
-        else if (parameter_ID == PHold::kID) {
-            controller_ref_.setHoldLength(new_value);
-        }
-        else if (parameter_ID == PRange::kID) {
-            controller_ref_.setRange(new_value);
-        }
-        else if (parameter_ID == POutGain::kID) {
-            controller_ref_.setOutputGain(new_value);
-        }
-        else if (parameter_ID == PWet::kID) {
-            controller_ref_.setWet(new_value);
-        }
-        else if (parameter_ID == PSideStereoMode::kID) {
-            controller_ref_.setStereoMode(static_cast<int>(std::round(new_value)));
-        }
-        else if (parameter_ID == PSideStereoSwap::kID) {
-            controller_ref_.setStereoSwap(new_value > .5f);
-        }
-        else if (parameter_ID == PSideStereoLink::kID) {
-            controller_ref_.setStereoLink(new_value);
-        }
-        else if (parameter_ID == PSideStereoWet1::kID) {
-            controller_ref_.setWet1(new_value);
-        }
-        else if (parameter_ID == PSideStereoWet2::kID) {
-            controller_ref_.setWet2(new_value);
-        }
-        else if (parameter_ID == PClipperDrive::kID) {
-            controller_ref_.getClipper().setWet(new_value);
-        }
-        else if (parameter_ID == POversample::kID) {
-            controller_ref_.setOversampleIdx(static_cast<int>(new_value));
-        }
-        else if (parameter_ID == PLookAhead::kID) {
-            controller_ref_.setLookahead(new_value);
-        }
-        else if (parameter_ID == PCompON::kID) {
-            controller_ref_.setIsON(new_value > .5f);
-        }
-        else if (parameter_ID == PCompDelta::kID) {
-            controller_ref_.setIsDelta(new_value > .5f);
-        }
-        else if (parameter_ID == PRMSON::kID) {
-            controller_ref_.setRMSOn(new_value > .5f);
-        }
-        else if (parameter_ID == PRMSLength::kID) {
-            controller_ref_.setRMSLength(new_value);
-        }
-        else if (parameter_ID == PRMSSpeed::kID) {
-            controller_ref_.setRMSSpeed(new_value);
-        }
-        else if (parameter_ID == PRMSMix::kID) {
-            controller_ref_.setRMSMix(new_value);
+            controller_ref_.setCompStyle(static_cast<zldsp::compressor::Style>(value));
+        } else if (parameter_ID == PCompDirection::kID) {
+            controller_ref_.setCompDownward(value < .5f);
+        } else if (parameter_ID == PThreshold::kID) {
+            computer_ref_.setThreshold(value);
+        } else if (parameter_ID == PRatio::kID) {
+            computer_ref_.setRatio(value);
+        } else if (parameter_ID == PKneeW::kID) {
+            computer_ref_.setKneeW(value);
+        } else if (parameter_ID == PCurve::kID) {
+            computer_ref_.setCurve(PCurve::formatV(value));
+        } else if (parameter_ID == PAttack::kID) {
+            controller_ref_.setAttack(value);
+        } else if (parameter_ID == PRelease::kID) {
+            controller_ref_.setRelease(value);
+        } else if (parameter_ID == PPump::kID) {
+            follower_ref_.setPumpPunch(PPump::formatV(value));
+        } else if (parameter_ID == PSmooth::kID) {
+            follower_ref_.setSmooth(PSmooth::formatV(value));
+        } else if (parameter_ID == PHold::kID) {
+            controller_ref_.setHoldLength(value);
+        } else if (parameter_ID == PRange::kID) {
+            controller_ref_.setRange(value);
+        } else if (parameter_ID == POutGain::kID) {
+            controller_ref_.setOutputGain(value);
+        } else if (parameter_ID == PWet::kID) {
+            controller_ref_.setWet(value);
+        } else if (parameter_ID == PSideStereoMode::kID) {
+            controller_ref_.setStereoMode(static_cast<int>(std::round(value)));
+        } else if (parameter_ID == PSideStereoSwap::kID) {
+            controller_ref_.setStereoSwap(value > .5f);
+        } else if (parameter_ID == PSideStereoLink::kID) {
+            controller_ref_.setStereoLink(value);
+        } else if (parameter_ID == PSideStereoWet1::kID) {
+            controller_ref_.setWet1(value);
+        } else if (parameter_ID == PSideStereoWet2::kID) {
+            controller_ref_.setWet2(value);
+        } else if (parameter_ID == PClipperDrive::kID) {
+            controller_ref_.getClipper().setWet(value);
+        } else if (parameter_ID == POversample::kID) {
+            controller_ref_.setOversampleIdx(static_cast<int>(value));
+        } else if (parameter_ID == PLookAhead::kID) {
+            controller_ref_.setLookahead(value);
+        } else if (parameter_ID == PCompON::kID) {
+            controller_ref_.setIsON(value > .5f);
+        } else if (parameter_ID == PCompDelta::kID) {
+            controller_ref_.setIsDelta(value > .5f);
+        } else if (parameter_ID == PRMSON::kID) {
+            controller_ref_.setRMSOn(value > .5f);
+        } else if (parameter_ID == PRMSLength::kID) {
+            controller_ref_.setRMSLength(value);
+        } else if (parameter_ID == PRMSSpeed::kID) {
+            controller_ref_.setRMSSpeed(value);
+        } else if (parameter_ID == PRMSMix::kID) {
+            controller_ref_.setRMSMix(value);
         }
     }
 }

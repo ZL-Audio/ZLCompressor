@@ -33,11 +33,17 @@ namespace zlpanel {
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
         static constexpr std::array kComputerIDs{
+            zlp::PCompDirection::kID,
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID
         };
         static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID};
 
-        std::atomic<float> &threshold_ref_, &ratio_ref_, &knee_ref_, &curve_ref_, &min_db_ref_;
+        std::atomic<float>& comp_direction_ref_;
+        std::atomic<float>& threshold_ref_;
+        std::atomic<float>& ratio_ref_;
+        std::atomic<float>& knee_ref_;
+        std::atomic<float>& curve_ref_;
+        std::atomic<float>& min_db_ref_;
 
         zldsp::compressor::KneeComputer<float> computer_{};
         AtomicBound<float> atomic_bound_;
@@ -50,6 +56,6 @@ namespace zlpanel {
 
         void lookAndFeelChanged() override;
 
-        void parameterChanged(const juce::String& parameterID, float newValue) override;
+        void parameterChanged(const juce::String& parameter_ID, float value) override;
     };
-} // zlpanel
+}

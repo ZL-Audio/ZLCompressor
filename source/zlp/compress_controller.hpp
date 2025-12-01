@@ -180,6 +180,10 @@ namespace zlp {
             mag_analyzer_stereo_.store(x, std::memory_order::relaxed);
         }
 
+        void setCompDownward(const bool f) {
+            comp_downward_.store(f, std::memory_order::relaxed);
+        }
+
     private:
         juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
@@ -216,6 +220,7 @@ namespace zlp {
         // compressor style
         std::atomic<zldsp::compressor::Style> comp_style_{zldsp::compressor::Style::kClean};
         zldsp::compressor::Style c_comp_style_{zldsp::compressor::Style::kClean};
+        std::atomic<bool> comp_downward_{true};
         // wet
         std::atomic<bool> to_update_wet_{true};
         std::atomic<float> wet_{1.0}, wet1_{1.0}, wet2_{1.0};

@@ -62,4 +62,4 @@ namespace zlpanel {
 
         void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
     };
-} // zlpanel
+}
