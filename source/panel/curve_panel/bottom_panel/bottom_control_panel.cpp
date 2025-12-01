@@ -8,43 +8,61 @@
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
 #include "bottom_control_panel.hpp"
+#include "BinaryData.h"
 
 namespace zlpanel {
     BottomControlPanel::BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                           multilingual::TooltipHelper& tooltip_helper)
-        : p_ref_(p), base_(base),
-          side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
-          side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
-          time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base),
-          time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
-                                  zlstate::PAnalyzerTimeLength::kID, updater_),
-          mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base),
-          mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
-                               zlstate::PAnalyzerMagType::kID, updater_),
-          min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base),
-          min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
-                             zlstate::PAnalyzerMinDB::kID, updater_),
-          label_laf_(base),
-          style_box_(zlp::PCompStyle::kChoices, base,
-                     tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
-          style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
-          rms_button_(p, base, tooltip_helper),
-          lufs_button_(p, base, tooltip_helper) {
+                                           multilingual::TooltipHelper& tooltip_helper) :
+        p_ref_(p), base_(base),
+        side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
+        side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
+        analyzer_stereo_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
+        time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base),
+        time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
+                                zlstate::PAnalyzerTimeLength::kID, updater_),
+        mag_stereo_box_([]() -> std::vector<std::unique_ptr<juce::Drawable>> {
+            std::vector<std::unique_ptr<juce::Drawable>> icons;
+            icons.emplace_back(
+                juce::Drawable::createFromImageData(BinaryData::stereo_svg, BinaryData::stereo_svgSize));
+            icons.emplace_back(
+                juce::Drawable::createFromImageData(BinaryData::left_svg, BinaryData::left_svgSize));
+            icons.emplace_back(
+                juce::Drawable::createFromImageData(BinaryData::right_svg, BinaryData::right_svgSize));
+            icons.emplace_back(
+                juce::Drawable::createFromImageData(BinaryData::mid_svg, BinaryData::mid_svgSize));
+            icons.emplace_back(
+                juce::Drawable::createFromImageData(BinaryData::side_svg, BinaryData::side_svgSize));
+            return icons;
+        }(), base, "", {}),
+        mag_stereo_attachment_(mag_stereo_box_.getBox(), p.na_parameters_,
+                               zlstate::PAnalyzerStereo::kID, updater_),
+        mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base),
+        mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
+                             zlstate::PAnalyzerMagType::kID, updater_),
+        min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base),
+        min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
+                           zlstate::PAnalyzerMinDB::kID, updater_),
+        label_laf_(base),
+        style_box_(zlp::PCompStyle::kChoices, base,
+                   tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
+        style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
+        rms_button_(p, base, tooltip_helper),
+        lufs_button_(p, base, tooltip_helper) {
         juce::ignoreUnused(p_ref_, base_);
 
         time_length_box_.getLAF().setLabelJustification(juce::Justification::centredRight);
         time_length_box_.getLAF().setItemJustification(juce::Justification::centredRight);
 
-        mag_type_box_.getLAF().setLabelJustification(juce::Justification::centredBottom);
+        mag_type_box_.getLAF().setLabelJustification(juce::Justification::centred);
         mag_type_box_.getLAF().setItemJustification(juce::Justification::centred);
 
-        min_db_box_.getLAF().setLabelJustification(juce::Justification::bottomRight);
+        min_db_box_.getLAF().setLabelJustification(juce::Justification::centredRight);
         min_db_box_.getLAF().setItemJustification(juce::Justification::centredRight);
 
         const auto popup_option = juce::PopupMenu::Options().withPreferredPopupDirection(
             juce::PopupMenu::Options::PopupDirection::upwards);
 
-        for (auto& box : {&time_length_box_, &mag_type_box_, &min_db_box_}) {
+        for (auto& box : {&time_length_box_, &mag_stereo_box_, &mag_type_box_, &min_db_box_}) {
             box->getLAF().setFontScale(1.f);
             box->getLAF().setOption(popup_option);
             box->setAlpha(.5f);
@@ -90,6 +108,8 @@ namespace zlpanel {
             show_path1_ = f;
             repaint();
         }
+        p_ref_.getCompressController().setMagAnalyzerStereo(static_cast<int>(
+            std::round(analyzer_stereo_ref_.load(std::memory_order::relaxed))));
     }
 
     void BottomControlPanel::resized() {
@@ -149,13 +169,18 @@ namespace zlpanel {
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 min_db_box_.setBounds(box_bound);
             }
-
-            bound.removeFromRight(padding / 2);
             {
                 auto box_bound = bound.removeFromRight(
                     juce::roundToInt(base_.getFontSize() * kSliderScale * 0.4f));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 mag_type_box_.setBounds(box_bound);
+                bound.removeFromLeft(slider_width - slider_width / 2);
+            }
+            {
+                auto box_bound = bound.removeFromRight(
+                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3f));
+                box_bound.removeFromTop(box_bound.getHeight() / 3);
+                mag_stereo_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);
             }
         }

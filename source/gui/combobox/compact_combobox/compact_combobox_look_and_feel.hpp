@@ -31,14 +31,13 @@ namespace zlgui::combobox {
             if (isButtonDown || box.isPopupActive()) {
                 g.setColour(base_.getTextInactiveColour());
                 g.fillRoundedRectangle(box_bound, corner_size);
-            }
-            else if (box_alpha_ > 1e-3f) {
+            } else if (box_alpha_ > 1e-3f) {
                 base_.fillRoundedInnerShadowRectangle(g, box_bound, corner_size,
                                                       {
                                                           .blur_radius = 0.45f, .flip = true,
                                                           .main_colour = base_.getBackgroundColour().
-                                                                               withMultipliedAlpha(
-                                                                                   juce::jlimit(.25f, .5f, box_alpha_)),
+                                                          withMultipliedAlpha(
+                                                              juce::jlimit(.25f, .5f, box_alpha_)),
                                                           .dark_shadow_color = base_.getDarkShadowColour().
                                                           withMultipliedAlpha(box_alpha_),
                                                           .bright_shadow_color = base_.getBrightShadowColour().
@@ -88,11 +87,9 @@ namespace zlgui::combobox {
             float alpha;
             if ((isHighlighted || isTicked) && isActive) {
                 alpha = 1.0;
-            }
-            else if (!isActive) {
+            } else if (!isActive) {
                 alpha = .125f;
-            }
-            else {
+            } else {
                 alpha = .5f;
             }
             if (icon == nullptr) {
@@ -100,8 +97,7 @@ namespace zlgui::combobox {
                 g.setFont(base_.getFontSize() * font_scale_);
                 const auto bound = area.toFloat().reduced(padding_, 0.f);
                 g.drawText(text, bound, item_justification_);
-            }
-            else {
+            } else {
                 const auto fig = icon->createCopy();
                 fig->replaceColour(juce::Colours::black, base_.getTextColour());
                 fig->drawWithin(g, area.toFloat(), juce::RectanglePlacement::centred, alpha);
@@ -118,7 +114,7 @@ namespace zlgui::combobox {
 
         inline void setFontScale(const float x) { font_scale_ = x; }
 
-        float getFontScale() const { return font_scale_; }
+        [[nodiscard]] float getFontScale() const { return font_scale_; }
 
         void setOption(const juce::PopupMenu::Options& x) { option_ = x; }
 
@@ -127,8 +123,7 @@ namespace zlgui::combobox {
             if (option.getParentComponent() == nullptr) {
                 if (juce::JUCEApplicationBase::isStandaloneApp()) {
                     option = option.withParentComponent(box.getTopLevelComponent());
-                }
-                else {
+                } else {
                     option = option.withParentComponent(box.getTopLevelComponent()->getChildComponent(0));
                 }
             }
@@ -136,8 +131,8 @@ namespace zlgui::combobox {
                 option = option.withMinimumWidth(box.getWidth());
             }
             return option.withTargetComponent(&box)
-                         .withInitiallySelectedItem(box.getSelectedId())
-                         .withStandardItemHeight(label.getHeight());
+                .withInitiallySelectedItem(box.getSelectedId())
+                .withStandardItemHeight(label.getHeight());
         }
 
         void drawPopupMenuColumnSeparatorWithOptions(juce::Graphics& g, const juce::Rectangle<int>& bounds,

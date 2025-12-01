@@ -156,6 +156,16 @@ namespace zlstate {
         }
     };
 
+    class PAnalyzerStereo : public ChoiceParameters<PAnalyzerStereo> {
+    public:
+        auto static constexpr kID = "analyzer_stereo";
+        auto static constexpr kName = "Analyzer Stereo";
+        inline auto static const kChoices = juce::StringArray{
+            "Stereo", "Left", "Right", "Mid", "Side"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     class PSideControlDisplay : public ChoiceParameters<PSideControlDisplay> {
     public:
         auto static constexpr kID = "side_control_display";
@@ -210,6 +220,7 @@ namespace zlstate {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PEQMaxDB::get(),
                    PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get(),
+                   PAnalyzerStereo::get(),
                    PSideControlDisplay::get(), PSideEQDisplay::get(),
                    PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get(),
                    PRMSPanelDisplay::get());

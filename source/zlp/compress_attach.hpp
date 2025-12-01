@@ -43,20 +43,6 @@ namespace zlp {
             PRMSON::kID, PRMSLength::kID, PRMSSpeed::kID, PRMSMix::kID
         };
 
-        constexpr static std::array kDefaultVs{
-            static_cast<float>(PCompStyle::kDefaultI),
-            PThreshold::kDefaultV, PRatio::kDefaultV, PKneeW::kDefaultV, PCurve::kDefaultV,
-            PAttack::kDefaultV, PRelease::kDefaultV, PPump::kDefaultV, PSmooth::kDefaultV,
-            PHold::kDefaultV, PRange::kDefaultV, POutGain::kDefaultV, PWet::kDefaultV,
-            static_cast<float>(PSideStereoMode::kDefaultI), static_cast<float>(PSideStereoSwap::kDefaultI),
-            PSideStereoLink::kDefaultV,
-            PSideStereoWet1::kDefaultV, PSideStereoWet2::kDefaultV,
-            PClipperDrive::kDefaultV,
-            static_cast<float>(POversample::kDefaultI), PLookAhead::kDefaultV,
-            static_cast<float>(PCompON::kDefaultI), static_cast<float>(PCompDelta::kDefaultI),
-            static_cast<float>(PRMSON::kDefaultV), PRMSLength::kDefaultV, PRMSSpeed::kDefaultV, PRMSMix::kDefaultV
-        };
-
         void parameterChanged(const juce::String& parameter_ID, float new_value) override;
     };
-} // zlp
+}

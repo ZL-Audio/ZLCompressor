@@ -42,6 +42,7 @@ namespace zldsp::analyzer {
                 break;
             }
             default: {
+                break;
             }
             }
         }
@@ -57,19 +58,9 @@ namespace zldsp::analyzer {
 
     protected:
         std::atomic<double> sample_rate_{48000.0}, max_num_samples_per_block_{0.};
-        std::array<std::array < float, PointNum>
-        ,
-        MagNum
-        >
-        mag_fifos_ {
-        };
+        std::array<std::array<float, PointNum>, MagNum> mag_fifos_{};
         zldsp::container::AbstractFIFO abstract_fifo_{PointNum};
-        std::array<std::array < float, PointNum>
-        ,
-        MagNum
-        >
-        circular_mags_ {
-        };
+        std::array<std::array<float, PointNum>, MagNum> circular_mags_{};
         size_t circular_idx_{0};
 
         std::atomic<float> time_length_{7.f};
@@ -107,8 +98,7 @@ namespace zldsp::analyzer {
                                 mag_fifos_[i][static_cast<size_t>(write_idx)] = zldsp::chore::gainToDecibels(
                                     static_cast<float>(current_mags_[i]));
                             }
-                        }
-                        else if constexpr (CurrentMagType == MagType::kRMS) {
+                        } else if constexpr (CurrentMagType == MagType::kRMS) {
                             for (size_t i = 0; i < MagNum; ++i) {
                                 mag_fifos_[i][static_cast<size_t>(write_idx)] = 0.5f * zldsp::chore::gainToDecibels(
                                     static_cast<float>(
@@ -120,8 +110,7 @@ namespace zldsp::analyzer {
 
                         std::fill(current_mags_.begin(), current_mags_.end(), FloatType(0));
                     }
-                }
-                else {
+                } else {
                     updateMags<CurrentMagType>(buffers, start_idx, num_samples);
                     current_pos_ += static_cast<double>(num_samples);
                     break;
@@ -140,8 +129,7 @@ namespace zldsp::analyzer {
                         static_cast<size_t>(num_samples));
                     if constexpr (CurrentMagType == MagType::kPeak) {
                         current_mags_[i] = std::max(current_mags_[i], kfr::absmaxof(v));
-                    }
-                    else if constexpr (CurrentMagType == MagType::kRMS) {
+                    } else if constexpr (CurrentMagType == MagType::kRMS) {
                         current_mags_[i] += kfr::sumsqr(v);
                         current_num_samples_ += num_samples;
                     }

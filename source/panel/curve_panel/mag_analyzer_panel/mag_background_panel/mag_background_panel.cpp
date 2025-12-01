@@ -29,4 +29,4 @@ namespace zlpanel {
         mag_gridground_panel_.repaintCallBackSlow();
         clipper_panel_.repaintCallBackSlow();
     }
-} // zlpanel
+}

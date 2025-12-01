@@ -19,11 +19,9 @@ namespace zlp {
           computer_ref_(controller.getComputer()[0]),
           follower_ref_(controller.getFollower()[0]) {
         juce::ignoreUnused(processor_ref_);
-        for (auto& ID : kIDs) {
-            parameters_ref_.addParameterListener(ID, this);
-        }
         for (size_t i = 0; i < kIDs.size(); ++i) {
-            parameterChanged(kIDs[i], kDefaultVs[i]);
+            parameters_ref_.addParameterListener(kIDs[i], this);
+            parameterChanged(kIDs[i], parameters.getRawParameterValue(kIDs[i])->load(std::memory_order::relaxed));
         }
     }
 
@@ -116,4 +114,4 @@ namespace zlp {
             controller_ref_.setRMSMix(new_value);
         }
     }
-} // zlp
+}

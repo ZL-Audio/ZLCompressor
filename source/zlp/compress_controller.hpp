@@ -176,6 +176,10 @@ namespace zlp {
             to_update_.store(true, std::memory_order::release);
         }
 
+        void setMagAnalyzerStereo(const int x) {
+            mag_analyzer_stereo_.store(x, std::memory_order::relaxed);
+        }
+
     private:
         juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
@@ -191,6 +195,11 @@ namespace zlp {
         bool c_mag_analyzer_on_{true};
         zldsp::analyzer::MagReductionAnalyzer<float, kAnalyzerPointNum> mag_analyzer_;
         zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
+        std::atomic<int> mag_analyzer_stereo_{0};
+        kfr::univector<float> pre_ms_buffer_, post_ms_buffer_, main_ms_buffer_;
+        float* pre_ms_pointer_{};
+        float* post_ms_pointer_{};
+        float* main_ms_pointer_{};
         // lufs matcher
         std::atomic<bool> lufs_matcher_on_{false};
         bool c_lufs_matcher_on_{false};

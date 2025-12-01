@@ -30,12 +30,16 @@ namespace zlpanel {
         zlgui::attachment::ComponentUpdater updater_;
 
         std::atomic<float> &side_control_show_ref_, &side_eq_show_ref_;
+        std::atomic<float> &analyzer_stereo_ref_;
         bool show_path1_{false};
 
         juce::Path background_path0_, background_path1_;
 
         zlgui::combobox::CompactCombobox time_length_box_;
         zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
+
+        zlgui::combobox::CompactCombobox mag_stereo_box_;
+        zlgui::attachment::ComboBoxAttachment<true> mag_stereo_attachment_;
 
         zlgui::combobox::CompactCombobox mag_type_box_;
         zlgui::attachment::ComboBoxAttachment<true> mag_type_attachment_;
