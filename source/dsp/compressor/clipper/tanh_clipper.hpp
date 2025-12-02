@@ -10,8 +10,9 @@
 #pragma once
 
 #include <cmath>
+#include <atomic>
 
-#include "../../chore/chore.hpp"
+#include "../../chore/decibels.hpp"
 
 namespace zldsp::compressor {
     template <typename FloatType>

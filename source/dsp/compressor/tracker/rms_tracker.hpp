@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "../../container/container.hpp"
+#include "../../chore/decibels.hpp"
 
 namespace zldsp::compressor {
     /**
@@ -111,7 +112,7 @@ namespace zldsp::compressor {
 
         FloatType getMomentaryDB() {
             FloatType mean_square = static_cast<FloatType>(square_sum_) * c_buffer_size_r;
-            return std::log10(std::max(FloatType(1e-10), mean_square)) * FloatType(10);
+            return chore::squareGainToDecibels(mean_square);
         }
 
     private:

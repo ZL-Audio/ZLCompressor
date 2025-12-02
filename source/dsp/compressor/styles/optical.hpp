@@ -9,47 +9,57 @@
 
 #pragma once
 
-#include "style_base.hpp"
+#include "../../chore/decibels.hpp"
+#include "../tracker/tracker.hpp"
+#include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
     template <typename FloatType>
-    class OpticalCompressor final : public CompressorStyleBase<FloatType> {
+    class OpticalCompressor final {
     public:
-        using base = CompressorStyleBase<FloatType>;
+        OpticalCompressor() =  default;
 
-        OpticalCompressor(ComputerBase<FloatType>& computer,
-                          RMSTracker<FloatType>& tracker,
-                          PSFollower<FloatType>& follower) :
-            base(computer, tracker, follower) {
+        template <typename F>
+        static void reset(F& follower, const FloatType v = FloatType(0)) {
+            follower.reset(v);
         }
 
-        void reset() {
-            base::follower_.reset(FloatType(0));
-        }
-
-        template <bool use_rms = false, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
-        void process(FloatType* buffer, const size_t num_samples) {
+        template <typename C, typename F, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
+        static void process(C& computer, F& follower,
+                            FloatType* buffer, const size_t num_samples) {
             auto vector = kfr::make_univector(buffer, num_samples);
-            if constexpr (use_rms) {
-                // pass through the tracker
-                for (size_t i = 0; i < num_samples; ++i) {
-                    base::tracker_.processSample(vector[i]);
-                    vector[i] = base::tracker_.getMomentarySquare();
-                }
-                const auto mean_scale = FloatType(1) / static_cast<FloatType>(base::tracker_.getCurrentBufferSize());
-                vector = kfr::sqrt(vector * mean_scale);
-            } else {
-                vector = kfr::abs(vector);
-            }
             // pass through the follower
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = base::follower_.template processSample<pp_state, s_state>(vector[i]);
+                vector[i] = follower.template processSample<pp_state, s_state>(std::abs(vector[i]));
             }
             // transfer to db
             vector = FloatType(20) * kfr::log10(kfr::max(vector, FloatType(1e-12)));
             // pass through the computer
             for (size_t i = 0; i < num_samples; ++i) {
-                vector[i] = base::computer_.eval(vector[i]);
+                vector[i] = computer.eval(vector[i]);
+            }
+        }
+
+        template <typename C, typename F, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
+        static void process(C& computer, F& follower, RMSTracker<FloatType>& tracker,
+                            FloatType* buffer, const size_t num_samples) {
+            auto vector = kfr::make_univector(buffer, num_samples);
+            // pass through the tracker
+            for (size_t i = 0; i < num_samples; ++i) {
+                tracker.processSample(vector[i]);
+                vector[i] = tracker.getMomentarySquare();
+            }
+            const auto mean_scale = FloatType(1) / static_cast<FloatType>(tracker.getCurrentBufferSize());
+            vector = kfr::sqrt(vector * mean_scale);
+            // pass through the follower
+            for (size_t i = 0; i < num_samples; ++i) {
+                vector[i] = follower.template processSample<pp_state, s_state>(vector[i]);
+            }
+            // transfer to db
+            vector = FloatType(20) * kfr::log10(kfr::max(vector, FloatType(1e-12)));
+            // pass through the computer
+            for (size_t i = 0; i < num_samples; ++i) {
+                vector[i] = computer.eval(vector[i]);
             }
         }
     };

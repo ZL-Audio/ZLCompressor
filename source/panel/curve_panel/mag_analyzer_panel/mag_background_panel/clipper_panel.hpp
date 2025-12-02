@@ -33,7 +33,7 @@ namespace zlpanel {
         std::atomic<float> mag_min_db_{-54.0};
         std::atomic<bool> to_update_path_{false};
 
-        zldsp::compressor::KneeComputer<float, true> computer_{};
+        zldsp::compressor::CompressionComputer<float, true> computer_{};
         zldsp::compressor::TanhClipper<float> clipper_{};
 
         static constexpr std::array kClipperIDs{

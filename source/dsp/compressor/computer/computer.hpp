@@ -9,4 +9,5 @@
 
 #pragma once
 
-#include "knee_computer.hpp"
+#include "compression_computer.hpp"
+#include "expansion_computer.hpp"

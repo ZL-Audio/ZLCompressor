@@ -16,7 +16,7 @@ namespace zlp {
         processor_ref_(processor),
         parameters_ref_(parameters),
         controller_ref_(controller),
-        computer_ref_(controller.getComputer()[0]),
+        computer_ref_(controller.getComputer()),
         follower_ref_(controller.getFollower()[0]) {
         juce::ignoreUnused(processor_ref_);
         for (size_t i = 0; i < kIDs.size(); ++i) {

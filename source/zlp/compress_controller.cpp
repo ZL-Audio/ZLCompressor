@@ -141,23 +141,23 @@ namespace zlp {
             c_comp_style_ = new_comp_style;
             switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
-                clean_comps_[0].reset();
-                clean_comps_[1].reset();
+                clean_comps_[0].reset(follower_[0]);
+                clean_comps_[1].reset(follower_[1]);
                 break;
             }
             case zldsp::compressor::Style::kClassic: {
-                classic_comps_[0].reset();
-                classic_comps_[1].reset();
+                classic_comps_[0].reset(follower_[0]);
+                classic_comps_[1].reset(follower_[1]);
                 break;
             }
             case zldsp::compressor::Style::kOptical: {
-                optical_comps_[0].reset();
-                optical_comps_[1].reset();
+                optical_comps_[0].reset(follower_[0]);
+                optical_comps_[1].reset(follower_[1]);
                 break;
             }
             case zldsp::compressor::Style::kVocal: {
-                vocal_comps_[0].reset();
-                vocal_comps_[1].reset();
+                vocal_comps_[0].reset(follower_[0]);
+                vocal_comps_[1].reset(follower_[1]);
                 break;
             }
             default:
@@ -200,8 +200,8 @@ namespace zlp {
                 rms_tracker_[0].prepareBuffer();
                 rms_tracker_[1].prepareBuffer();
             } else {
-                rms_comps_[0].reset();
-                rms_comps_[1].reset();
+                rms_comps_[0].reset(rms_follower_[0]);
+                rms_comps_[1].reset(rms_follower_[1]);
             }
         }
         if (to_update_pdc) {
@@ -367,9 +367,8 @@ namespace zlp {
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
         // prepare computer, trackers and followers
-        if (computer_[0].prepareBuffer()) {
-            computer_[1].copyFrom(computer_[0]);
-            clipper_.setReductionAtUnit(computer_[0].eval(0.f));
+        if (compression_computer_.prepareBuffer()) {
+            clipper_.setReductionAtUnit(compression_computer_.eval(0.f));
         }
         if (follower_[0].prepareBuffer()) {
             follower_[1].copyFrom(follower_[0]);
@@ -385,29 +384,11 @@ namespace zlp {
             rms_side_v1 = side_v1;
         }
         // process compress style
-        switch (c_comp_style_) {
-        case zldsp::compressor::Style::kClean: {
-            processSideBufferClean(side_buffer0, side_buffer1, num_samples);
-            break;
-        }
-        case zldsp::compressor::Style::kClassic: {
-            processSideBufferClassic(side_buffer0, side_buffer1, num_samples);
-            break;
-        }
-        case zldsp::compressor::Style::kOptical: {
-            processSideBufferOptical(side_buffer0, side_buffer1, num_samples);
-            break;
-        }
-        case zldsp::compressor::Style::kVocal: {
-            processSideBufferVocal(side_buffer0, side_buffer1, num_samples);
-            break;
-        }
-        default:
-            return;
-        }
+        processSideBuffer(compression_computer_, side_buffer0, side_buffer1, num_samples);
         // process rms compressors and mix rms
         if (c_use_rms_) {
-            processSideBufferRMS(rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
+            processSideBufferRMS(compression_computer_, rms_side_buffer0_.data(), rms_side_buffer1_.data(),
+                                 num_samples);
             auto rms_side_v0 = kfr::make_univector(rms_side_buffer0_.data(), num_samples);
             auto rms_side_v1 = kfr::make_univector(rms_side_buffer1_.data(), num_samples);
             side_v0 = side_v0 * (1.f - c_rms_mix_) + rms_side_v0 * c_rms_mix_;
@@ -473,8 +454,34 @@ namespace zlp {
         }
     }
 
-    template <typename T1, typename T2>
-    void CompressController::dispatchProcess(T1& comp0, T2& comp1,
+    template <typename C>
+    void CompressController::processSideBuffer(C& c,
+                                               float* __restrict buffer0, float* __restrict buffer1,
+                                               size_t num_samples) {
+        switch (c_comp_style_) {
+        case zldsp::compressor::Style::kClean: {
+            dispatchProcess(c, clean_comps_[0], clean_comps_[1], buffer0, buffer1, num_samples);
+            break;
+        }
+        case zldsp::compressor::Style::kClassic: {
+            dispatchProcess(c, classic_comps_[0], classic_comps_[1], buffer0, buffer1, num_samples);
+            break;
+        }
+        case zldsp::compressor::Style::kOptical: {
+            dispatchProcess(c, optical_comps_[0], optical_comps_[1], buffer0, buffer1, num_samples);
+            break;
+        }
+        case zldsp::compressor::Style::kVocal: {
+            dispatchProcess(c, vocal_comps_[0], vocal_comps_[1], buffer0, buffer1, num_samples);
+            break;
+        }
+        default:
+            return;
+        }
+    }
+
+    template <typename C, typename Style>
+    void CompressController::dispatchProcess(C& c, Style& comp0, Style& comp1,
                                              float* __restrict buffer0, float* __restrict buffer1,
                                              const size_t num_samples) {
         using zldsp::compressor::PPState;
@@ -486,18 +493,24 @@ namespace zlp {
         case PPState::kOff:
             switch (s_state) {
             case SState::kOff: {
-                comp0.template process<false, PPState::kOff, zldsp::compressor::SState::kOff>(buffer0, num_samples);
-                comp1.template process<false, PPState::kOff, zldsp::compressor::SState::kOff>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kOff, SState::kOff>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kOff, SState::kOff>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             case SState::kFull: {
-                comp0.template process<false, PPState::kOff, zldsp::compressor::SState::kFull>(buffer0, num_samples);
-                comp1.template process<false, PPState::kOff, zldsp::compressor::SState::kFull>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kOff, SState::kFull>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kOff, SState::kFull>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             case SState::kMix: {
-                comp0.template process<false, PPState::kOff, zldsp::compressor::SState::kMix>(buffer0, num_samples);
-                comp1.template process<false, PPState::kOff, zldsp::compressor::SState::kMix>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kOff, SState::kMix>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kOff, SState::kMix>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             }
@@ -507,18 +520,24 @@ namespace zlp {
         case PPState::kPunch:
             switch (s_state) {
             case SState::kOff: {
-                comp0.template process<false, PPState::kPunch, zldsp::compressor::SState::kOff>(buffer0, num_samples);
-                comp1.template process<false, PPState::kPunch, zldsp::compressor::SState::kOff>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPunch, SState::kOff>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPunch, SState::kOff>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             case SState::kFull: {
-                comp0.template process<false, PPState::kPunch, zldsp::compressor::SState::kFull>(buffer0, num_samples);
-                comp1.template process<false, PPState::kPunch, zldsp::compressor::SState::kFull>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPunch, SState::kFull>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPunch, SState::kFull>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             case SState::kMix: {
-                comp0.template process<false, PPState::kPunch, zldsp::compressor::SState::kMix>(buffer0, num_samples);
-                comp1.template process<false, PPState::kPunch, zldsp::compressor::SState::kMix>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPunch, SState::kMix>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPunch, SState::kMix>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             }
@@ -528,18 +547,24 @@ namespace zlp {
         case PPState::kPump:
             switch (s_state) {
             case SState::kOff: {
-                comp0.template process<false, PPState::kPump, zldsp::compressor::SState::kOff>(buffer0, num_samples);
-                comp1.template process<false, PPState::kPump, zldsp::compressor::SState::kOff>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPump, SState::kOff>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPump, SState::kOff>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             case SState::kFull: {
-                comp0.template process<false, PPState::kPump, zldsp::compressor::SState::kFull>(buffer0, num_samples);
-                comp1.template process<false, PPState::kPump, zldsp::compressor::SState::kFull>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPump, SState::kFull>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPump, SState::kFull>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             case SState::kMix: {
-                comp0.template process<false, PPState::kPump, zldsp::compressor::SState::kMix>(buffer0, num_samples);
-                comp1.template process<false, PPState::kPump, zldsp::compressor::SState::kMix>(buffer1, num_samples);
+                comp0.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPump, SState::kMix>(
+                    c, follower_[0], buffer0, num_samples);
+                comp1.template process<C, zldsp::compressor::PSFollower<float>, PPState::kPump, SState::kMix>(
+                    c, follower_[1], buffer1, num_samples);
                 break;
             }
             }
@@ -547,32 +572,16 @@ namespace zlp {
         }
     }
 
-    void CompressController::processSideBufferClean(float* __restrict buffer0, float* __restrict buffer1,
-                                                    const size_t num_samples) {
-        dispatchProcess(clean_comps_[0], clean_comps_[1], buffer0, buffer1, num_samples);
-    }
-
-    void CompressController::processSideBufferClassic(float* __restrict buffer0, float* __restrict buffer1,
-                                                      const size_t num_samples) {
-        dispatchProcess(classic_comps_[0], classic_comps_[1], buffer0, buffer1, num_samples);
-    }
-
-    void CompressController::processSideBufferOptical(float* __restrict buffer0, float* __restrict buffer1,
-                                                      const size_t num_samples) {
-        dispatchProcess(optical_comps_[0], optical_comps_[1], buffer0, buffer1, num_samples);
-    }
-
-    void CompressController::processSideBufferVocal(float* __restrict buffer0, float* __restrict buffer1,
-                                                    const size_t num_samples) {
-        dispatchProcess(vocal_comps_[0], vocal_comps_[1], buffer0, buffer1, num_samples);
-    }
-
-    void CompressController::processSideBufferRMS(float* __restrict buffer0, float* __restrict buffer1,
+    template <typename C>
+    void CompressController::processSideBufferRMS(C& c,
+                                                  float* __restrict buffer0, float* __restrict buffer1,
                                                   const size_t num_samples) {
-        rms_comps_[0].process<true, zldsp::compressor::PPState::kOff, zldsp::compressor::SState::kOff>(
-            buffer0, num_samples);
-        rms_comps_[1].process<true, zldsp::compressor::PPState::kOff, zldsp::compressor::SState::kOff>(
-            buffer1, num_samples);
+        rms_comps_[0].process<C, zldsp::compressor::PSFollower<float>,
+                              zldsp::compressor::PPState::kOff, zldsp::compressor::SState::kOff>(
+            c, rms_follower_[0], rms_tracker_[0], buffer0, num_samples);
+        rms_comps_[1].process<C, zldsp::compressor::PSFollower<float>,
+                              zldsp::compressor::PPState::kOff, zldsp::compressor::SState::kOff>(
+            c, rms_follower_[1], rms_tracker_[1], buffer1, num_samples);
     }
 
     void CompressController::handleAsyncUpdate() {

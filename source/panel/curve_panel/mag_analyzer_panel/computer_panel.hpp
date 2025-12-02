@@ -45,7 +45,7 @@ namespace zlpanel {
         std::atomic<float>& curve_ref_;
         std::atomic<float>& min_db_ref_;
 
-        zldsp::compressor::KneeComputer<float> computer_{};
+        zldsp::compressor::CompressionComputer<float> computer_{};
         AtomicBound<float> atomic_bound_;
 
         float curve_thickness_{0.f};

@@ -37,7 +37,7 @@ namespace zlp {
 
         auto& getMagAvgAnalyzer() { return mag_avg_analyzer_; }
 
-        auto& getComputer() { return computer_; }
+        auto& getComputer() { return compression_computer_; }
 
         auto& getTracker() { return rms_tracker_; }
 
@@ -242,29 +242,30 @@ namespace zlp {
         // pdc
         std::atomic<int> pdc_{0};
         // computer, trackers and followers
-        std::array<zldsp::compressor::KneeComputer<float, true>, 2> computer_{};
+        zldsp::compressor::CompressionComputer<float, true> compression_computer_{};
+        // zldsp::compressor::ExpansionComputer<float, true> expansion_computer_{};
         std::array<zldsp::compressor::RMSTracker<float>, 2> rms_tracker_{};
         std::array<zldsp::compressor::PSFollower<float>, 2> follower_{};
         std::array<zldsp::compressor::PSFollower<float>, 2> rms_follower_{};
         // clean compressors
         std::array<zldsp::compressor::CleanCompressor<float>, 2> clean_comps_ = {
-            zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
-            zldsp::compressor::CleanCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
+            zldsp::compressor::CleanCompressor<float>{},
+            zldsp::compressor::CleanCompressor<float>{}
         };
         // classic compressors
         std::array<zldsp::compressor::ClassicCompressor<float>, 2> classic_comps_ = {
-            zldsp::compressor::ClassicCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
-            zldsp::compressor::ClassicCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
+            zldsp::compressor::ClassicCompressor<float>{},
+            zldsp::compressor::ClassicCompressor<float>{}
         };
         // optical compressors
         std::array<zldsp::compressor::OpticalCompressor<float>, 2> optical_comps_ = {
-            zldsp::compressor::OpticalCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
-            zldsp::compressor::OpticalCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
+            zldsp::compressor::OpticalCompressor<float>{},
+            zldsp::compressor::OpticalCompressor<float>{}
         };
         // vocal compressors
         std::array<zldsp::compressor::VocalCompressor<float>, 2> vocal_comps_ = {
-            zldsp::compressor::VocalCompressor<float>{computer_[0], rms_tracker_[0], follower_[0]},
-            zldsp::compressor::VocalCompressor<float>{computer_[1], rms_tracker_[1], follower_[1]}
+            zldsp::compressor::VocalCompressor<float>{},
+            zldsp::compressor::VocalCompressor<float>{}
         };
         // rms compressors
         std::atomic<bool> to_update_rms_{true};
@@ -275,8 +276,8 @@ namespace zlp {
         std::atomic<float> attack_{0.f}, release_{0.f}, rms_speed_{1.f};
         std::vector<float> rms_side_buffer0_, rms_side_buffer1_;
         std::array<zldsp::compressor::CleanCompressor<float>, 2> rms_comps_ = {
-            zldsp::compressor::CleanCompressor<float>{computer_[0], rms_tracker_[0], rms_follower_[0]},
-            zldsp::compressor::CleanCompressor<float>{computer_[1], rms_tracker_[1], rms_follower_[1]}
+            zldsp::compressor::CleanCompressor<float>{},
+            zldsp::compressor::CleanCompressor<float>{}
         };
         // hold
         std::atomic<bool> to_update_hold_{true};
@@ -302,19 +303,17 @@ namespace zlp {
                            float* __restrict side_buffer0, float* __restrict side_buffer1,
                            size_t num_samples, bool bypass);
 
-        template <typename T1, typename T2>
-        void dispatchProcess(T1& comp0, T2& comp1,
+        template <typename C>
+        void processSideBuffer(C& c,
+                               float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
+
+        template <typename C, typename Style>
+        void dispatchProcess(C& c, Style& comp0, Style& comp1,
                              float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
-        void processSideBufferClean(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
-
-        void processSideBufferClassic(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
-
-        void processSideBufferOptical(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
-
-        void processSideBufferVocal(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
-
-        void processSideBufferRMS(float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
+        template <typename C>
+        void processSideBufferRMS(C& c,
+                                  float* __restrict buffer0, float* __restrict buffer1, size_t num_samples);
 
         void handleAsyncUpdate() override;
     };
