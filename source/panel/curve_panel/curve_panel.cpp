@@ -53,9 +53,9 @@ namespace zlpanel {
 
     void CurvePanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderWidthScale);
         const auto left_padding = (getWidth() - (padding * 11 + slider_width * 7 + small_slider_width * 2)) / 2;
         {
             auto bound = getLocalBounds();

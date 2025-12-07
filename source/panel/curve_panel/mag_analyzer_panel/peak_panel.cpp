@@ -101,7 +101,9 @@ namespace zlpanel {
                                                   current_bound.getWidth(), current_bound.getHeight(),
                                                   static_cast<float>(shift),
                                                   analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
-            if (comp_direction_ref_.load(std::memory_order::relaxed) > .5f) {
+            const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
+                comp_direction_ref_.load(std::memory_order::relaxed)));
+            if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
                 auto v = kfr::make_univector(reduction_ys_);
                 v = v + (current_bound.getHeight() * .5f);
             }

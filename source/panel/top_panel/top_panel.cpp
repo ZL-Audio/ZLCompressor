@@ -25,12 +25,20 @@ namespace zlpanel {
         g.fillAll(base_.getBackgroundColour());
     }
 
-    void TopPanel::resized() {
-        auto bound = getLocalBounds();
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        top_control_panel_.setBounds(bound.removeFromRight(top_control_panel_.getIdealWidth()));
+    int TopPanel::getIdealHeight() const {
+        const auto font_size = base_.getFontSize();
+        return 2 * (getPaddingSize(font_size) / 2) + getButtonSize(font_size);
+    }
 
-        logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 3).reduced(padding / 2, padding / 2));
+    void TopPanel::resized() {
+        const auto font_size = base_.getFontSize();
+        const auto padding = getPaddingSize(font_size);
+        auto bound = getLocalBounds();
+        bound.reduce(padding / 2, padding / 2);
+
+        logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 2 + padding));
+
+        top_control_panel_.setBounds(bound);
     }
 
     void TopPanel::repaintCallBackSlow() {

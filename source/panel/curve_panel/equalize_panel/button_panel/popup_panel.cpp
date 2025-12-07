@@ -65,7 +65,7 @@ namespace zlpanel {
     }
 
     int PopupPanel::getIdealWidth() const {
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale * .75f);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale * .75f);
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale * .75f);
         return slider_width + button_height;
     }

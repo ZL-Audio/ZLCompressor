@@ -95,14 +95,14 @@ namespace zlpanel {
 
     int MidControlPanel::getIdealWidth() const {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         return padding * 8 + slider_width * 7;
     }
 
     void MidControlPanel::resized() {
         auto bound = getLocalBounds();
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
         bound.removeFromTop(padding);

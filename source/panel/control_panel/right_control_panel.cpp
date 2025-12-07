@@ -58,14 +58,14 @@ namespace zlpanel {
 
     int RightControlPanel::getIdealWidth() const {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderWidthScale);
         return padding * 3 + small_slider_width * 2;
     }
 
     void RightControlPanel::resized() {
         auto bound = getLocalBounds();
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderWidthScale);
 
         bound.removeFromBottom(padding);
         const auto label_height = juce::roundToInt(base_.getFontSize() * 1.5f);

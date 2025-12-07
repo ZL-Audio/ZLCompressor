@@ -54,7 +54,7 @@ namespace zlpanel {
     }
 
     int RMSControlPanel::getIdealWidth() const {
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         return slider_width + slider_width / 2;
     }
 
@@ -67,7 +67,7 @@ namespace zlpanel {
     void RMSControlPanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto c_height = juce::roundToInt(base_.getFontSize() * 1.75f);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
 
         auto bound = getLocalBounds();
         bound.removeFromLeft(padding);

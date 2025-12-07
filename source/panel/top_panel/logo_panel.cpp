@@ -28,7 +28,7 @@ namespace zlpanel {
         temp_logo->replaceColour(juce::Colours::black, base_.getTextColour());
         temp_logo->replaceColour(juce::Colours::black.withAlpha(.5f), base_.getTextColour().withMultipliedAlpha(.5f));
 
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
+        const auto padding = getPaddingSize(base_.getFontSize());
 
         auto bound = getLocalBounds();
 

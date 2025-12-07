@@ -110,7 +110,7 @@ namespace zlpanel {
 
     void OtherUISettingPanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
         auto bound = getLocalBounds();

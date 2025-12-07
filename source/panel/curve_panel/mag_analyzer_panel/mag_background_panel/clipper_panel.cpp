@@ -10,8 +10,9 @@
 #include "clipper_panel.hpp"
 
 namespace zlpanel {
-    ClipperPanel::ClipperPanel(PluginProcessor& processor, zlgui::UIBase& base)
-        : p_ref_(processor), base_(base) {
+    ClipperPanel::ClipperPanel(PluginProcessor& p, zlgui::UIBase& base) :
+        p_ref_(p), base_(base),
+        comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)) {
         for (auto& ID : kClipperIDs) {
             p_ref_.parameters_.addParameterListener(ID, this);
         }
@@ -49,14 +50,19 @@ namespace zlpanel {
             return;
         }
 
-        if (computer_.prepareBuffer()) {
-            clipper_.setReductionAtUnit(computer_.eval(0.f));
+        const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
+            comp_direction_ref_.load(std::memory_order::relaxed)));
+        if (direction == zlp::PCompDirection::kCompress) {
+            if (computer_.prepareBuffer()) {
+                clipper_.setReductionAtUnit(computer_.eval(0.f));
+            }
+        } else {
+            clipper_.setReductionAtUnit(-2.360900573208f);
         }
         clipper_.prepareBuffer();
         if (clipper_.getIsON()) {
             setVisible(true);
-        }
-        else {
+        } else {
             setVisible(false);
             return;
         }
@@ -70,22 +76,17 @@ namespace zlpanel {
     void ClipperPanel::parameterChanged(const juce::String& parameter_ID, const float new_value) {
         if (parameter_ID == zlstate::PAnalyzerMinDB::kID) {
             mag_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
-        }
-        else if (parameter_ID == zlp::PThreshold::kID) {
+        } else if (parameter_ID == zlp::PThreshold::kID) {
             computer_.setThreshold(new_value);
-        }
-        else if (parameter_ID == zlp::PRatio::kID) {
+        } else if (parameter_ID == zlp::PRatio::kID) {
             computer_.setRatio(new_value);
-        }
-        else if (parameter_ID == zlp::PKneeW::kID) {
+        } else if (parameter_ID == zlp::PKneeW::kID) {
             computer_.setKneeW(new_value);
-        }
-        else if (parameter_ID == zlp::PCurve::kID) {
+        } else if (parameter_ID == zlp::PCurve::kID) {
             computer_.setCurve(zlp::PCurve::formatV(new_value));
-        }
-        else if (parameter_ID == zlp::PClipperDrive::kID) {
+        } else if (parameter_ID == zlp::PClipperDrive::kID) {
             clipper_.setWet(new_value);
         }
         to_update_path_.store(true, std::memory_order::release);
     }
-} // zlpanel
+}

@@ -110,7 +110,7 @@ namespace zlpanel {
 
     void ControlSettingPanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
         static constexpr int kLabelWidth = 2;
 

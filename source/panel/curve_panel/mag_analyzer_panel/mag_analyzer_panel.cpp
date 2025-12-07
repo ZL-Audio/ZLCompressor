@@ -39,7 +39,7 @@ namespace zlpanel {
     void MagAnalyzerPanel::resized() {
         const auto bound = getLocalBounds();
         background_panel_.setBounds(bound);
-        rms_panel_.setBounds(bound.withWidth(juce::roundToInt(base_.getFontSize() * kSliderScale * .75f)));
+        rms_panel_.setBounds(bound.withWidth(juce::roundToInt(base_.getFontSize() * kSliderWidthScale * .75f)));
         peak_panel_.setBounds(bound);
         const auto r = std::min(bound.getWidth(), bound.getHeight());
         separate_panel_.setBounds(bound.withSize(r, r));

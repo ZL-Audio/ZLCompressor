@@ -131,7 +131,7 @@ namespace zlpanel {
 
     int SideControlPanel::getIdealWidth() const {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         return 2 * padding + slider_width;
     }
 

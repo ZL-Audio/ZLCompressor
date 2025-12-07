@@ -69,8 +69,7 @@ namespace zlpanel {
         const auto controlBound = bound.removeFromBottom(juce::roundToInt(font_size * 7.348f));
         control_panel_.setBounds(controlBound);
 
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        top_panel_.setBounds(bound.removeFromTop(button_height));
+        top_panel_.setBounds(bound.removeFromTop(top_panel_.getIdealHeight()));
 
         curve_panel_.setBounds(bound);
     }

@@ -39,7 +39,7 @@ namespace zlpanel {
 
             selectors_[i] = std::make_unique<zlgui::colour_selector::ColourOpacitySelector>(
                 base, *this, i > 1,
-                12.f, 10.f, kSliderScale, kSliderScale);
+                12.f, 10.f, kSliderWidthScale, kSliderWidthScale);
             addAndMakeVisible(*selectors_[i]);
         }
         c_map1_label_.setText("Colour Map 1", juce::dontSendNotification);
@@ -107,7 +107,7 @@ namespace zlpanel {
     void ColourSettingPanel::resized() {
         auto bound = getLocalBounds();
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
         for (size_t i = 0; i < kNumSelectors; ++i) {

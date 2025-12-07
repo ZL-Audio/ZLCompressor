@@ -20,8 +20,6 @@ namespace zlpanel {
         explicit TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
                                  multilingual::TooltipHelper& tooltip_helper);
 
-        int getIdealWidth() const;
-
         void resized() override;
 
         void repaintCallBackSlow();
@@ -56,10 +54,13 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<false, false, false> clipper_slider_;
         zlgui::attachment::SliderAttachment<true> clipper_attachment_;
 
-        void setLookaheadAlpha(const float alpha);
+        zlgui::combobox::CompactCombobox direction_box_;
+        zlgui::attachment::ComboBoxAttachment<true> direction_attachment_;
 
-        void setOversampleAlpha(const float alpha);
+        void setLookaheadAlpha(float alpha);
 
-        void setClipperAlpha(const float alpha);
+        void setOversampleAlpha(float alpha);
+
+        void setClipperAlpha(float alpha);
     };
 }

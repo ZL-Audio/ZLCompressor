@@ -16,7 +16,9 @@ namespace zlp {
         processor_ref_(processor),
         parameters_ref_(parameters),
         controller_ref_(controller),
-        computer_ref_(controller.getComputer()),
+        compression_computer_ref_(controller.getCompressionComputer()),
+        expansion_computer_ref_(controller.getExpansionComputer()),
+        inflation_computer_ref_(controller.getInflationComputer()),
         follower_ref_(controller.getFollower()[0]) {
         juce::ignoreUnused(processor_ref_);
         for (size_t i = 0; i < kIDs.size(); ++i) {
@@ -35,15 +37,21 @@ namespace zlp {
         if (parameter_ID == PCompStyle::kID) {
             controller_ref_.setCompStyle(static_cast<zldsp::compressor::Style>(value));
         } else if (parameter_ID == PCompDirection::kID) {
-            controller_ref_.setCompDownward(value < .5f);
+            controller_ref_.setCompDirection(static_cast<PCompDirection::Direction>(std::round(value)));
         } else if (parameter_ID == PThreshold::kID) {
-            computer_ref_.setThreshold(value);
+            compression_computer_ref_.setThreshold(value);
+            expansion_computer_ref_.setThreshold(value);
+            inflation_computer_ref_.setThreshold(value);
         } else if (parameter_ID == PRatio::kID) {
-            computer_ref_.setRatio(value);
+            compression_computer_ref_.setRatio(value);
+            expansion_computer_ref_.setRatio(value);
+            inflation_computer_ref_.setRatio(value);
         } else if (parameter_ID == PKneeW::kID) {
-            computer_ref_.setKneeW(value);
+            compression_computer_ref_.setKneeW(value);
+            expansion_computer_ref_.setKneeW(value);
+            inflation_computer_ref_.setKneeW(value);
         } else if (parameter_ID == PCurve::kID) {
-            computer_ref_.setCurve(PCurve::formatV(value));
+            compression_computer_ref_.setCurve(PCurve::formatV(value));
         } else if (parameter_ID == PAttack::kID) {
             controller_ref_.setAttack(value);
         } else if (parameter_ID == PRelease::kID) {

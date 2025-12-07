@@ -11,3 +11,4 @@
 
 #include "compression_computer.hpp"
 #include "expansion_computer.hpp"
+#include "inflation_computer.hpp"

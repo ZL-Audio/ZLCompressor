@@ -17,7 +17,7 @@ namespace zlpanel {
     class ComputerPanel final : public juce::Component,
                                 private juce::AudioProcessorValueTreeState::Listener {
     public:
-        static constexpr size_t kNumPoint = 100;
+        static constexpr size_t kNumPoint = 200;
 
         explicit ComputerPanel(PluginProcessor& p, zlgui::UIBase& base);
 
@@ -39,13 +39,11 @@ namespace zlpanel {
         static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID};
 
         std::atomic<float>& comp_direction_ref_;
-        std::atomic<float>& threshold_ref_;
-        std::atomic<float>& ratio_ref_;
-        std::atomic<float>& knee_ref_;
-        std::atomic<float>& curve_ref_;
         std::atomic<float>& min_db_ref_;
 
-        zldsp::compressor::CompressionComputer<float> computer_{};
+        zldsp::compressor::CompressionComputer<float> compression_computer_{};
+        zldsp::compressor::ExpansionComputer<float> expansion_computer_{};
+        zldsp::compressor::InflationComputer<float> inflation_computer_{};
         AtomicBound<float> atomic_bound_;
 
         float curve_thickness_{0.f};
@@ -57,5 +55,8 @@ namespace zlpanel {
         void lookAndFeelChanged() override;
 
         void parameterChanged(const juce::String& parameter_ID, float value) override;
+
+        template <typename C, bool is_downward>
+        void updateComputerPath(C& c);
     };
 }

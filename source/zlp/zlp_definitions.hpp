@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "compress_controller.hpp"
+#include <juce_audio_processors/juce_audio_processors.h>
 
 namespace zlp {
     inline static constexpr int kVersionHint = 1;
@@ -223,7 +223,10 @@ namespace zlp {
         auto static constexpr kID = "comp_direction";
         auto static constexpr kName = "Compression Direction";
         inline auto static const kChoices = juce::StringArray{
-            "Down", "Up"
+            "Compress", "Inflate", "Expand", "Shape"
+        };
+        enum Direction {
+            kCompress, kInflate, kExpand, kShape
         };
         int static constexpr kDefaultI = 0;
     };
@@ -232,8 +235,8 @@ namespace zlp {
     public:
         auto static constexpr kID = "threshold";
         auto static constexpr kName = "Threshold (dB)";
-        inline auto static const kRange = getLinearMidRange(-80.f, 0.f, -18.f, 0.1f);
-        auto static constexpr kDefaultV = -18.f;
+        inline auto static const kRange = getLinearMidRange(-100.f, 0.f, -32.f, 0.1f);
+        auto static constexpr kDefaultV = -32.f;
     };
 
     class PRatio : public FloatParameters<PRatio> {
@@ -376,7 +379,7 @@ namespace zlp {
         auto static constexpr kID = "side_stereo_swap";
         auto static constexpr kName = "Side Stereo Swap";
         inline auto static const kChoices = juce::StringArray{
-            "OFF", "ON"
+            "Off", "On"
         };
         int static constexpr kDefaultI = 0;
     };
@@ -420,7 +423,7 @@ namespace zlp {
         auto static constexpr kID = "comp_delta";
         auto static constexpr kName = "Compressor Delta";
         inline auto static const kChoices = juce::StringArray{
-            "OFF", "ON"
+            "Off", "On"
         };
         int static constexpr kDefaultI = 0;
     };
@@ -438,7 +441,7 @@ namespace zlp {
         auto static constexpr kID = "oversample";
         auto static constexpr kName = "Oversample";
         inline auto static const kChoices = juce::StringArray{
-            "OFF", "2x", "4x", "8x"
+            "Off", "2x", "4x", "8x"
         };
         int static constexpr kDefaultI = 0;
     };
@@ -487,7 +490,7 @@ namespace zlp {
         auto static constexpr kID = "filter_status";
         auto static constexpr kName = "Filter Status";
         inline auto static const kChoices = juce::StringArray{
-            "OFF", "Bypass", "ON"
+            "Off", "Bypass", "On"
         };
         int static constexpr kDefaultI = 0;
     };

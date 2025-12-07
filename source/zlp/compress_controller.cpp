@@ -136,13 +136,26 @@ namespace zlp {
         c_stereo_mode_is_max = (stereo_mode == 2) || (stereo_mode == 3);
         c_stereo_swap_ = stereo_swap_.load(std::memory_order::relaxed);
         // load compressor style, reset the internal state if different
-        const auto new_comp_style = comp_style_.load(std::memory_order::relaxed);
-        if (c_comp_style_ != new_comp_style) {
-            c_comp_style_ = new_comp_style;
+        if (to_update_style_.exchange(false, std::memory_order::acquire)) {
+            c_comp_style_ = comp_style_.load(std::memory_order::relaxed);
+            c_direction_ = direction_.load(std::memory_order::relaxed);
+            c_is_downward_ = (c_direction_ == PCompDirection::kCompress
+                || c_direction_ == PCompDirection::kExpand);
+            if (c_direction_ == PCompDirection::kCompress) {
+                clipper_.setReductionAtUnit(compression_computer_.eval(0.f));
+            } else {
+                clipper_.setReductionAtUnit(-2.360900573208f);
+            }
+            if (c_direction_ == PCompDirection::kExpand || c_direction_ == PCompDirection::kInflate) {
+                if (c_comp_style_ != zldsp::compressor::Style::kClean &&
+                    c_comp_style_ != zldsp::compressor::Style::kClassic) {
+                    c_comp_style_ = zldsp::compressor::Style::kClean;
+                }
+            }
             switch (c_comp_style_) {
             case zldsp::compressor::Style::kClean: {
-                clean_comps_[0].reset(follower_[0]);
-                clean_comps_[1].reset(follower_[1]);
+                zldsp::compressor::CleanCompressor<float>::reset(follower_[0]);
+                zldsp::compressor::CleanCompressor<float>::reset(follower_[1]);
                 break;
             }
             case zldsp::compressor::Style::kClassic: {
@@ -151,8 +164,8 @@ namespace zlp {
                 break;
             }
             case zldsp::compressor::Style::kOptical: {
-                optical_comps_[0].reset(follower_[0]);
-                optical_comps_[1].reset(follower_[1]);
+                zldsp::compressor::OpticalCompressor<float>::reset(follower_[0]);
+                zldsp::compressor::OpticalCompressor<float>::reset(follower_[1]);
                 break;
             }
             case zldsp::compressor::Style::kVocal: {
@@ -200,8 +213,8 @@ namespace zlp {
                 rms_tracker_[0].prepareBuffer();
                 rms_tracker_[1].prepareBuffer();
             } else {
-                rms_comps_[0].reset(rms_follower_[0]);
-                rms_comps_[1].reset(rms_follower_[1]);
+                zldsp::compressor::CleanCompressor<float>::reset(rms_follower_[0]);
+                zldsp::compressor::CleanCompressor<float>::reset(rms_follower_[1]);
             }
         }
         if (to_update_pdc) {
@@ -366,10 +379,7 @@ namespace zlp {
         auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
         auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
         auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
-        // prepare computer, trackers and followers
-        if (compression_computer_.prepareBuffer()) {
-            clipper_.setReductionAtUnit(compression_computer_.eval(0.f));
-        }
+        // prepare followers
         if (follower_[0].prepareBuffer()) {
             follower_[1].copyFrom(follower_[0]);
         }
@@ -383,12 +393,55 @@ namespace zlp {
             rms_side_v0 = side_v0;
             rms_side_v1 = side_v1;
         }
-        // process compress style
-        processSideBuffer(compression_computer_, side_buffer0, side_buffer1, num_samples);
+        // prepare computer & process
+        switch (c_direction_) {
+        case PCompDirection::kCompress: {
+            if (compression_computer_.prepareBuffer()) {
+                clipper_.setReductionAtUnit(compression_computer_.eval(0.f));
+            }
+            processSideBuffer(compression_computer_,
+                              side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        case PCompDirection::kShape: {
+            compression_computer_.prepareBuffer();
+            processSideBuffer(compression_computer_,
+                              side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        case PCompDirection::kExpand: {
+            expansion_computer_.prepareBuffer();
+            processSideBuffer(expansion_computer_,
+                              side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        case PCompDirection::kInflate: {
+            inflation_computer_.prepareBuffer();
+            processSideBuffer(inflation_computer_,
+                              side_buffer0, side_buffer1, num_samples);
+            break;
+        }
+        }
         // process rms compressors and mix rms
         if (c_use_rms_) {
-            processSideBufferRMS(compression_computer_, rms_side_buffer0_.data(), rms_side_buffer1_.data(),
-                                 num_samples);
+            switch (c_direction_) {
+            case PCompDirection::kCompress:
+                case PCompDirection::kShape: {
+                processSideBufferRMS(compression_computer_,
+                                     rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
+                break;
+            }
+            case PCompDirection::kExpand: {
+                processSideBufferRMS(expansion_computer_,
+                                     rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
+                break;
+            }
+                case PCompDirection::kInflate: {
+                processSideBufferRMS(inflation_computer_,
+                                     rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
+                break;
+            }
+            }
             auto rms_side_v0 = kfr::make_univector(rms_side_buffer0_.data(), num_samples);
             auto rms_side_v1 = kfr::make_univector(rms_side_buffer1_.data(), num_samples);
             side_v0 = side_v0 * (1.f - c_rms_mix_) + rms_side_v0 * c_rms_mix_;
@@ -430,7 +483,7 @@ namespace zlp {
         side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
         // apply stereo swap
         if (c_stereo_swap_) {
-            if (comp_downward_.load(std::memory_order_relaxed)) {
+            if (c_is_downward_) {
                 main_v0 = main_v0 * side_v1;
                 main_v1 = main_v1 * side_v0;
             } else {
@@ -438,7 +491,7 @@ namespace zlp {
                 main_v1 = main_v1 / side_v0;
             }
         } else {
-            if (comp_downward_.load(std::memory_order_relaxed)) {
+            if (c_is_downward_) {
                 main_v0 = main_v0 * side_v0;
                 main_v1 = main_v1 * side_v1;
             } else {

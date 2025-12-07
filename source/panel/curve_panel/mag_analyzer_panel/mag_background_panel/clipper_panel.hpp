@@ -17,7 +17,7 @@ namespace zlpanel {
     class ClipperPanel final : public juce::Component,
                                private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit ClipperPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit ClipperPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         ~ClipperPanel() override;
 
@@ -28,6 +28,8 @@ namespace zlpanel {
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
+        std::atomic<float>& comp_direction_ref_;
+
         float rel_position_{0.f};
 
         std::atomic<float> mag_min_db_{-54.0};
@@ -37,6 +39,7 @@ namespace zlpanel {
         zldsp::compressor::TanhClipper<float> clipper_{};
 
         static constexpr std::array kClipperIDs{
+            zlp::PCompDirection::kID,
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID,
             zlp::PClipperDrive::kID
         };

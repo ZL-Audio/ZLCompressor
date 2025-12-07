@@ -84,8 +84,8 @@ namespace zlpanel {
             const auto band_string = std::to_string(band);
             for (auto& para_ID : kIDs) {
                 filter.setProperty(para_ID,
-                                   p_ref_.parameters_.getRawParameterValue(
-                                       para_ID + band_string)->load(std::memory_order::relaxed),
+                                   p_ref_.parameters_.getParameter(
+                                       para_ID + band_string)->getCurrentValueAsText(),
                                    nullptr);
             }
         }
@@ -121,15 +121,12 @@ namespace zlpanel {
                 if (filter.hasProperty(para_ID)) {
                     auto* para = p_ref_.parameters_.getParameter(para_ID + band_string);
                     para->beginChangeGesture();
-                    para->setValueNotifyingHost(para->convertTo0to1(filter.getProperty(para_ID)));
+                    para->setValueNotifyingHost(para->getValueForText(filter.getProperty(para_ID)));
                     para->endChangeGesture();
-                }
-                else {
-                    return;
                 }
             }
             base_.getSelectedBandSet().addToSelection(band_idx);
             selected_band_idx_ = band_idx;
         }
     }
-} // zlpanel
+}

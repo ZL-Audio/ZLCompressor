@@ -16,6 +16,7 @@
 #include "../dsp/mag_analyzer/mag_analyzer.hpp"
 #include "../dsp/over_sample/over_sample.hpp"
 #include "../dsp/loudness/lufs_matcher.hpp"
+#include "zlp_definitions.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -37,7 +38,11 @@ namespace zlp {
 
         auto& getMagAvgAnalyzer() { return mag_avg_analyzer_; }
 
-        auto& getComputer() { return compression_computer_; }
+        auto& getCompressionComputer() { return compression_computer_; }
+
+        auto& getExpansionComputer() { return expansion_computer_; }
+
+        auto& getInflationComputer() { return inflation_computer_; }
 
         auto& getTracker() { return rms_tracker_; }
 
@@ -45,8 +50,15 @@ namespace zlp {
 
         auto& getClipper() { return clipper_; }
 
+        void setCompDirection(const PCompDirection::Direction direction) {
+            direction_.store(direction, std::memory_order::relaxed);
+            to_update_style_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
+        }
+
         void setCompStyle(const zldsp::compressor::Style style) {
             comp_style_.store(style, std::memory_order::relaxed);
+            to_update_style_.store(true, std::memory_order::release);
             to_update_.store(true, std::memory_order::release);
         }
 
@@ -180,10 +192,6 @@ namespace zlp {
             mag_analyzer_stereo_.store(x, std::memory_order::relaxed);
         }
 
-        void setCompDownward(const bool f) {
-            comp_downward_.store(f, std::memory_order::relaxed);
-        }
-
     private:
         juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
@@ -218,9 +226,12 @@ namespace zlp {
         std::atomic<bool> stereo_swap_{false};
         bool c_stereo_swap_{false};
         // compressor style
+        std::atomic<PCompDirection::Direction> direction_{PCompDirection::kCompress};
+        PCompDirection::Direction c_direction_{PCompDirection::kCompress};
+        bool c_is_downward_{true};
         std::atomic<zldsp::compressor::Style> comp_style_{zldsp::compressor::Style::kClean};
         zldsp::compressor::Style c_comp_style_{zldsp::compressor::Style::kClean};
-        std::atomic<bool> comp_downward_{true};
+        std::atomic<bool> to_update_style_{false};
         // wet
         std::atomic<bool> to_update_wet_{true};
         std::atomic<float> wet_{1.0}, wet1_{1.0}, wet2_{1.0};
@@ -243,7 +254,8 @@ namespace zlp {
         std::atomic<int> pdc_{0};
         // computer, trackers and followers
         zldsp::compressor::CompressionComputer<float, true> compression_computer_{};
-        // zldsp::compressor::ExpansionComputer<float, true> expansion_computer_{};
+        zldsp::compressor::ExpansionComputer<float, true> expansion_computer_{};
+        zldsp::compressor::InflationComputer<float, true> inflation_computer_{};
         std::array<zldsp::compressor::RMSTracker<float>, 2> rms_tracker_{};
         std::array<zldsp::compressor::PSFollower<float>, 2> follower_{};
         std::array<zldsp::compressor::PSFollower<float>, 2> rms_follower_{};

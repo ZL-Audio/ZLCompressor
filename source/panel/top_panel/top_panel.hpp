@@ -23,6 +23,8 @@ namespace zlpanel {
 
         void resized() override;
 
+        int getIdealHeight() const;
+
         void repaintCallBackSlow();
 
     private:

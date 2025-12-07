@@ -123,9 +123,9 @@ namespace zldsp::compressor {
             }
         };
 
-        LinearCurve linear_curve_;
-        DownCurve down_curve_;
-        UpCurve up_curve_;
+        LinearCurve linear_curve_{};
+        DownCurve down_curve_{};
+        UpCurve up_curve_{};
         std::atomic<FloatType> threshold_{-18}, ratio_{2};
         std::atomic<FloatType> knee_w_{FloatType(0.25)}, curve_{0};
         FloatType low_th_{0}, high_th_{0};

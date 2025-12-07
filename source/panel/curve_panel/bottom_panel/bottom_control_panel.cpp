@@ -46,12 +46,6 @@ namespace zlpanel {
         style_box_(zlp::PCompStyle::kChoices, base,
                    tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
         style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
-        down_drawable_(juce::Drawable::createFromImageData(BinaryData::downward_svg,
-                                                           BinaryData::downward_svgSize)),
-        up_drawable_(juce::Drawable::createFromImageData(BinaryData::upward_svg,
-                                                         BinaryData::upward_svgSize)),
-        direction_button_(base, down_drawable_.get(), up_drawable_.get()),
-        direction_attachment_(direction_button_.getButton(), p.parameters_, zlp::PCompDirection::kID, updater_),
         rms_button_(p, base, tooltip_helper),
         lufs_button_(p, base, tooltip_helper) {
         juce::ignoreUnused(p_ref_, base_);
@@ -92,10 +86,6 @@ namespace zlpanel {
         style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
 
-        direction_button_.setImageAlpha(.5f, 1.f, .5f, 1.f);
-        direction_button_.setBufferedToImage(true);
-        addAndMakeVisible(direction_button_);
-
         addAndMakeVisible(rms_button_);
 
         addAndMakeVisible(lufs_button_);
@@ -124,9 +114,9 @@ namespace zlpanel {
 
     void BottomControlPanel::resized() {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderScale);
+        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderScale);
+        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderWidthScale);
         const auto left_padding = (getWidth() - (padding * 11 + slider_width * 7 + small_slider_width * 2)) / 2;
         {
             auto bound = getLocalBounds().toFloat();
@@ -155,9 +145,9 @@ namespace zlpanel {
         }
         {
             auto bound = getLocalBounds();
-            bound.removeFromLeft(slider_width + 2 * padding + left_padding - button_height);
-            direction_button_.setBounds(bound.removeFromLeft(button_height));
-
+            bound.removeFromLeft(padding + left_padding);
+            bound.removeFromLeft(slider_width);
+            bound.removeFromLeft(padding);
             threshold_label_.setBounds(bound.removeFromLeft(slider_width));
 
             bound.removeFromLeft(padding);
@@ -177,20 +167,20 @@ namespace zlpanel {
             bound.removeFromRight(padding / 2);
             {
                 auto box_bound = bound.removeFromRight(
-                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3f));
+                    juce::roundToInt(base_.getFontSize() * kSliderWidthScale * 0.3f));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 min_db_box_.setBounds(box_bound);
             }
             {
                 auto box_bound = bound.removeFromRight(
-                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.4f));
+                    juce::roundToInt(base_.getFontSize() * kSliderWidthScale * 0.4f));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 mag_type_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);
             }
             {
                 auto box_bound = bound.removeFromRight(
-                    juce::roundToInt(base_.getFontSize() * kSliderScale * 0.3f));
+                    juce::roundToInt(base_.getFontSize() * kSliderWidthScale * 0.3f));
                 box_bound.removeFromTop(box_bound.getHeight() / 3);
                 mag_stereo_box_.setBounds(box_bound);
                 bound.removeFromLeft(slider_width - slider_width / 2);

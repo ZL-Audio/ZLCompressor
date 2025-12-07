@@ -53,12 +53,8 @@ namespace zlpanel {
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
 
-        std::unique_ptr<juce::Drawable> down_drawable_, up_drawable_;
-        zlgui::button::ClickButton direction_button_;
-        zlgui::attachment::ButtonAttachment<true> direction_attachment_;
-
         RMSButton rms_button_;
 
         LUFSButton lufs_button_;
     };
-} // zlpanel
+}

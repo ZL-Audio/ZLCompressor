@@ -42,7 +42,7 @@ namespace zlpanel {
     }
 
     int FilterParaPanel::getIdealWidth() const {
-        return juce::roundToInt(base_.getFontSize() * kSliderScale * 1.15f);
+        return juce::roundToInt(base_.getFontSize() * kSliderWidthScale * 1.15f);
     }
 
     int FilterParaPanel::getIdealHeight() const {
@@ -51,7 +51,7 @@ namespace zlpanel {
 
     void FilterParaPanel::resized() {
         auto bound = getLocalBounds();
-        const auto label_width = juce::roundToInt(base_.getFontSize() * kSliderScale * .5f);
+        const auto label_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale * .5f);
         auto t_bound = bound.removeFromTop(bound.getHeight() / 2);
         freq_label_.setBounds(t_bound.removeFromLeft(label_width));
         freq_slider_.setBounds(t_bound);

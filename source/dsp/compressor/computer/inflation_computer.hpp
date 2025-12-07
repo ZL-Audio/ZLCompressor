@@ -23,9 +23,9 @@ namespace zldsp::compressor {
      * @tparam OutputDiff
      */
     template <typename FloatType, bool OutputDiff = false>
-    class ExpansionComputer final : public ComputerBase<FloatType> {
+    class InflationComputer final : public ComputerBase<FloatType> {
     public:
-        ExpansionComputer() = default;
+        InflationComputer() = default;
 
         bool prepareBuffer() override {
             if (to_interpolate_.exchange(false, std::memory_order::acquire)) {
@@ -35,7 +35,7 @@ namespace zldsp::compressor {
             return false;
         }
 
-        void copyFrom(ExpansionComputer& other) {
+        void copyFrom(InflationComputer& other) {
             low_th_ = other.low_th_;
             high_th_ = other.high_th_;
             para_mid_g0_ = other.para_mid_g0_;
@@ -99,7 +99,9 @@ namespace zldsp::compressor {
         void interpolate() {
             const auto current_threshold = threshold_.load(std::memory_order::relaxed);
             const auto current_knee_w = knee_w_.load(std::memory_order::relaxed);
-            const auto current_ratio = ratio_.load(std::memory_order::relaxed);
+            const auto current_ratio = std::clamp(
+                FloatType(2) - FloatType(1) / ratio_.load(std::memory_order::relaxed),
+                FloatType(1), FloatType(2));
             low_th_ = current_threshold - current_knee_w;
             high_th_ = current_threshold + current_knee_w;
             {
