@@ -18,7 +18,7 @@ namespace zlpanel {
     class TopControlPanel final : public juce::Component {
     public:
         explicit TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                 multilingual::TooltipHelper& tooltip_helper);
+                                 const multilingual::TooltipHelper& tooltip_helper);
 
         void resized() override;
 
@@ -55,7 +55,7 @@ namespace zlpanel {
         zlgui::attachment::SliderAttachment<true> clipper_attachment_;
 
         zlgui::combobox::CompactCombobox direction_box_;
-        zlgui::attachment::ComboBoxAttachment<true> direction_attachment_;
+        zlgui::attachment::ComboBoxAttachment<false> direction_attachment_;
 
         void setLookaheadAlpha(float alpha);
 

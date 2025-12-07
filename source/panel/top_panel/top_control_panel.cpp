@@ -12,7 +12,7 @@
 
 namespace zlpanel {
     TopControlPanel::TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                     multilingual::TooltipHelper& tooltip_helper) :
+                                     const multilingual::TooltipHelper& tooltip_helper) :
         p_ref_(p), base_(base), label_laf_(base_),
         on_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
                                                          BinaryData::mode_off_on_svgSize)),
@@ -87,6 +87,16 @@ namespace zlpanel {
 
         direction_box_.setAlpha(.5f);
         direction_box_.setBufferedToImage(true);
+        direction_box_.getBox().onChange = [this]() {
+            const auto direction = static_cast<zlp::PCompDirection::Direction>(
+                direction_box_.getBox().getSelectedItemIndex());
+            if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
+                auto* para = p_ref_.parameters_.getParameter(zlp::PClipperDrive::kID);
+                para->beginChangeGesture();
+                para->setValueNotifyingHost(1.f);
+                para->endChangeGesture();
+            }
+        };
         addAndMakeVisible(direction_box_);
 
         setLookaheadAlpha(.5f);

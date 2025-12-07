@@ -14,6 +14,7 @@ namespace zlpanel {
     BottomControlPanel::BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
                                            multilingual::TooltipHelper& tooltip_helper) :
         p_ref_(p), base_(base),
+        comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
         side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
         side_eq_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
         analyzer_stereo_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
@@ -99,6 +100,18 @@ namespace zlpanel {
     }
 
     void BottomControlPanel::repaintCallBackSlow() {
+        const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
+            comp_direction_ref_.load(std::memory_order::relaxed)));
+        if (direction != c_comp_direction_) {
+            c_comp_direction_ = direction;
+            const auto f = (c_comp_direction_ == zlp::PCompDirection::kCompress
+                || c_comp_direction_ == zlp::PCompDirection::kShape);
+            if (!f && style_box_.getBox().getSelectedId() >= 3) {
+                style_box_.getBox().setSelectedId(1, juce::sendNotificationSync);
+            }
+            style_box_.getBox().setItemEnabled(3, f);
+            style_box_.getBox().setItemEnabled(4, f);
+        }
         updater_.updateComponents();
         rms_button_.repaintCallBackSlow();
 

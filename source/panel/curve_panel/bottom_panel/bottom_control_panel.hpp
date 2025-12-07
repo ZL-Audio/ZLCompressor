@@ -29,6 +29,8 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
+        std::atomic<float>& comp_direction_ref_;
+        zlp::PCompDirection::Direction c_comp_direction_{zlp::PCompDirection::kCompress};
         std::atomic<float> &side_control_show_ref_, &side_eq_show_ref_;
         std::atomic<float> &analyzer_stereo_ref_;
         bool show_path1_{false};
