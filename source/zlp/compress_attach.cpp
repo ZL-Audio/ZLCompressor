@@ -52,6 +52,9 @@ namespace zlp {
             inflation_computer_ref_.setKneeW(value);
         } else if (parameter_ID == PCurve::kID) {
             compression_computer_ref_.setCurve(PCurve::formatV(value));
+        } else if (parameter_ID == PFloor::kID) {
+            expansion_computer_ref_.setFloor(value);
+            inflation_computer_ref_.setFloor(value);
         } else if (parameter_ID == PAttack::kID) {
             controller_ref_.setAttack(value);
         } else if (parameter_ID == PRelease::kID) {

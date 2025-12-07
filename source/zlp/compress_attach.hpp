@@ -33,7 +33,7 @@ namespace zlp {
 
         constexpr static std::array kIDs{
             PCompStyle::kID, PCompDirection::kID,
-            PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID,
+            PThreshold::kID, PRatio::kID, PKneeW::kID, PCurve::kID, PFloor::kID,
             PAttack::kID, PRelease::kID, PPump::kID, PSmooth::kID,
             PHold::kID, PRange::kID, POutGain::kID, PWet::kID,
             PSideStereoMode::kID, PSideStereoSwap::kID,

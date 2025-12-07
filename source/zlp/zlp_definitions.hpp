@@ -268,6 +268,14 @@ namespace zlp {
         }
     };
 
+    class PFloor : public FloatParameters<PFloor> {
+    public:
+        auto static constexpr kID = "floor";
+        auto static constexpr kName = "Floor";
+        inline auto static const kRange = juce::NormalisableRange<float>(-200.f, -80.f, .1f);
+        auto static constexpr kDefaultV = -140.f;
+    };
+
     class PAttack : public FloatParameters<PAttack> {
     public:
         auto static constexpr kID = "attack";
@@ -558,7 +566,7 @@ namespace zlp {
     inline juce::AudioProcessorValueTreeState::ParameterLayout getParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PCompStyle::get(), PCompDirection::get(),
-                   PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(),
+                   PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(), PFloor::get(),
                    PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
                    PHold::get(), PRange::get(), PWet::get(), POutGain::get(),
                    PExtSide::get(), PSideOut::get(), PSideGain::get(),

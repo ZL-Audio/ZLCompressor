@@ -99,6 +99,9 @@ namespace zlpanel {
             inflation_computer_.setKneeW(value);
         } else if (parameter_ID == zlp::PCurve::kID) {
             compression_computer_.setCurve(zlp::PCurve::formatV(value));
+        } else if (parameter_ID == zlp::PFloor::kID) {
+            expansion_computer_.setFloor(value);
+            inflation_computer_.setFloor(value);
         }
         to_update_.store(true, std::memory_order::release);
     }

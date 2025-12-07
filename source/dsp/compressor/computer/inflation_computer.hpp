@@ -51,8 +51,8 @@ namespace zldsp::compressor {
                 }
             } else if (x > low_th_) {
                 return (para_mid_g0_[0] * x + para_mid_g0_[1]) * x + para_mid_g0_[2];
-            } else if (x > FloatType(-140)) {
-                const auto x_s = x + FloatType(140);
+            } else if (x > c_floor_) {
+                const auto x_s = x - c_floor_;
                 if constexpr (OutputDiff) {
                     return (para_low_g0_[0] * x_s + para_low_g0_[1]) * x_s * x_s;
                 } else {
@@ -67,47 +67,54 @@ namespace zldsp::compressor {
             }
         }
 
-        inline void setThreshold(FloatType v) {
+        void setThreshold(const FloatType v) {
             threshold_.store(v, std::memory_order::relaxed);
             to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getThreshold() const { return threshold_.load(std::memory_order::relaxed); }
+        FloatType getThreshold() const { return threshold_.load(std::memory_order::relaxed); }
 
-        inline void setRatio(FloatType v) {
+        void setRatio(const FloatType v) {
             ratio_.store(std::max(FloatType(1), v), std::memory_order::relaxed);
             to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getRatio() const { return ratio_.load(std::memory_order::relaxed); }
+        FloatType getRatio() const { return ratio_.load(std::memory_order::relaxed); }
 
-        inline void setKneeW(FloatType v) {
+        void setKneeW(const FloatType v) {
             knee_w_.store(std::max(v, FloatType(0.01)), std::memory_order::relaxed);
             to_interpolate_.store(true, std::memory_order::release);
         }
 
-        inline FloatType getKneeW() const { return knee_w_.load(std::memory_order::relaxed); }
+        FloatType getKneeW() const { return knee_w_.load(std::memory_order::relaxed); }
+
+        void setFloor(const FloatType v) {
+            floor_.store(v, std::memory_order::relaxed);
+            to_interpolate_.store(true, std::memory_order::release);
+        }
 
     private:
         std::atomic<FloatType> threshold_{-18}, ratio_{2};
         std::atomic<FloatType> knee_w_{FloatType(0.25)};
-        FloatType low_th_{0}, high_th_{0};
+        std::atomic<FloatType> floor_{-140};
+        FloatType low_th_{0}, high_th_{0}, c_floor_{-140};
         std::array<FloatType, 3> para_mid_g0_{};
         std::array<FloatType, 2> para_low_g0_{};
         std::atomic<bool> to_interpolate_{true};
 
         void interpolate() {
-            const auto current_threshold = threshold_.load(std::memory_order::relaxed);
-            const auto current_knee_w = knee_w_.load(std::memory_order::relaxed);
-            const auto current_ratio = std::clamp(
+            const auto t = threshold_.load(std::memory_order::relaxed);
+            const auto w = knee_w_.load(std::memory_order::relaxed);
+            const auto r = std::clamp(
                 FloatType(2) - FloatType(1) / ratio_.load(std::memory_order::relaxed),
                 FloatType(1), FloatType(2));
-            low_th_ = current_threshold - current_knee_w;
-            high_th_ = current_threshold + current_knee_w;
+            low_th_ = t - w;
+            high_th_ = t + w;
+            c_floor_ = std::min(floor_.load(std::memory_order::relaxed), low_th_ - FloatType(1.f));
             {
                 // update mid curve parameters
-                const auto a0 = (1.0 - static_cast<double>(current_ratio)) / (
-                    4.0 * static_cast<double>(current_knee_w));
+                const auto a0 = (1.0 - static_cast<double>(r)) / (
+                    4.0 * static_cast<double>(w));
                 const auto a1 = -static_cast<double>(high_th_);
                 para_mid_g0_[0] = static_cast<FloatType>(a0);
                 const auto a0a1 = a0 * a1;
@@ -119,13 +126,13 @@ namespace zldsp::compressor {
                 para_mid_g0_[2] = static_cast<FloatType>(a0a1 * a1);
             }
             {
-                const auto scale = current_ratio - FloatType(1.0);
-                const auto common_base = FloatType(140) + current_threshold;
-                const auto denom_base = common_base - current_knee_w;
+                const auto scale = r - FloatType(1.0);
+                const auto common_base = -c_floor_ + t;
+                const auto denom_base = common_base - w;
                 const auto inv_denom2 = FloatType(1.0) / (denom_base * denom_base);
                 const auto inv_denom3 = inv_denom2 / denom_base;
-                para_low_g0_[0] = scale * (common_base + current_knee_w) * inv_denom3;
-                para_low_g0_[1] = -scale * (common_base + current_knee_w + current_knee_w) * inv_denom2;
+                para_low_g0_[0] = scale * (common_base + w) * inv_denom3;
+                para_low_g0_[1] = -scale * (common_base + w + w) * inv_denom2;
             }
         }
     };

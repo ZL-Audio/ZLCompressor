@@ -33,11 +33,17 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
+        std::atomic<float>& comp_direction_ref_;
+        zlp::PCompDirection::Direction c_comp_direction_{zlp::PCompDirection::kCompress};
+
         zlgui::slider::CompactLinearSlider<true, true, true> knee_slider_;
         zlgui::attachment::SliderAttachment<true> knee_attachment_;
 
         zlgui::slider::CompactLinearSlider<true, true, true> curve_slider_;
         zlgui::attachment::SliderAttachment<true> curve_attachment_;
+
+        zlgui::slider::CompactLinearSlider<true, true, true> floor_slider_;
+        zlgui::attachment::SliderAttachment<true> floor_attachment_;
 
         zlgui::slider::TwoValueRotarySlider<true, false, false> th_slider_;
         zlgui::attachment::SliderAttachment<true> th_attachment_;

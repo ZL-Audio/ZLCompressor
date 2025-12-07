@@ -34,7 +34,7 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         static constexpr std::array kComputerIDs{
             zlp::PCompDirection::kID,
-            zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID
+            zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID, zlp::PFloor::kID
         };
         static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID};
 
