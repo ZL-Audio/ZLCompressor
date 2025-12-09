@@ -25,7 +25,6 @@ namespace zlpanel {
             if (learn_button_.getButton().getToggleState()) {
                 p_ref_.getCompressController().setLUFSMatcherOn(true);
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, true);
-                setAlpha(1.f);
             } else {
                 p_ref_.getCompressController().setLUFSMatcherOn(false);
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, false);
@@ -43,8 +42,6 @@ namespace zlpanel {
                 para->beginChangeGesture();
                 para->setValueNotifyingHost(para->convertTo0to1(target_gain));
                 para->endChangeGesture();
-
-                setAlpha(mouse_over_ ? 1.f : 0.f);
             }
         };
 

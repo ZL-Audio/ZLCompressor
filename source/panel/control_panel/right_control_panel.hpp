@@ -48,4 +48,4 @@ namespace zlpanel {
 
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& identifier) override;
     };
-} // zlpanel
+}
