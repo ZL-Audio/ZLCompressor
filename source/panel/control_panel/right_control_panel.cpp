@@ -22,6 +22,7 @@ namespace zlpanel {
         juce::ignoreUnused(p_ref_, base_);
         label_laf_.setFontScale(1.5f);
 
+        gain_slider_.setPrecision(3);
         gain_label_.setText("Makeup", juce::dontSendNotification);
         gain_label_.setJustificationType(juce::Justification::centred);
         gain_label_.setInterceptsMouseClicks(false, false);
