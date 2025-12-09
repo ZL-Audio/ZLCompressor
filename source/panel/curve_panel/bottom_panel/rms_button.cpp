@@ -12,22 +12,22 @@
 
 namespace zlpanel {
     RMSButton::RMSButton(PluginProcessor& p, zlgui::UIBase& base,
-                         multilingual::TooltipHelper& tooltip_helper)
-        : p_ref_(p), base_(base),
-          updater_(),
-          rms_drawable_(juce::Drawable::createFromImageData(BinaryData::rms_svg,
-                                                            BinaryData::rms_svgSize)),
-          rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
-                      tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
-          rms_attachment_(rms_button_.getButton(), p.parameters_,
-                          zlp::PRMSON::kID, updater_),
-          rms_open_drawable_(juce::Drawable::createFromImageData(BinaryData::arrow_menu_open_svg,
-                                                                 BinaryData::arrow_menu_open_svgSize)),
-          rms_close_drawable_(juce::Drawable::createFromImageData(BinaryData::arrow_menu_close_svg,
-                                                                  BinaryData::arrow_menu_close_svgSize)),
-          rms_open_close_button_(base, rms_open_drawable_.get(), rms_close_drawable_.get(), ""),
-          rms_open_close_attachment_(rms_open_close_button_.getButton(), p.na_parameters_,
-                                     zlstate::PRMSPanelDisplay::kID, updater_) {
+                         multilingual::TooltipHelper& tooltip_helper) :
+        p_ref_(p), base_(base),
+        updater_(),
+        rms_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_r_svg,
+                                                          BinaryData::dline_r_svgSize)),
+        rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
+                    tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
+        rms_attachment_(rms_button_.getButton(), p.parameters_,
+                        zlp::PRMSON::kID, updater_),
+        rms_open_drawable_(juce::Drawable::createFromImageData(BinaryData::right_arrow_svg,
+                                                               BinaryData::right_arrow_svgSize)),
+        rms_close_drawable_(juce::Drawable::createFromImageData(BinaryData::left_arrow_svg,
+                                                                BinaryData::left_arrow_svgSize)),
+        rms_open_close_button_(base, rms_open_drawable_.get(), rms_close_drawable_.get(), ""),
+        rms_open_close_attachment_(rms_open_close_button_.getButton(), p.na_parameters_,
+                                   zlstate::PRMSPanelDisplay::kID, updater_) {
         juce::ignoreUnused(p);
         rms_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
         addAndMakeVisible(rms_button_);
@@ -54,14 +54,14 @@ namespace zlpanel {
 
     int RMSButton::getIdealWidth() const {
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        return button_height * 2 + button_height / 2;
+        return button_height * 3;
     }
 
     void RMSButton::resized() {
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
         auto bound = getLocalBounds();
         rms_button_.setBounds(bound.removeFromLeft(button_height));
-        rms_open_close_button_.setBounds(bound.removeFromLeft(button_height / 2));
+        rms_open_close_button_.setBounds(bound.removeFromLeft(button_height));
     }
 
     void RMSButton::repaintCallBackSlow() {

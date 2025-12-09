@@ -11,45 +11,38 @@
 
 namespace zlpanel {
     LeftControlPanel::LeftControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                       multilingual::TooltipHelper& tooltip_helper)
-        : base_(base),
-          side_control_show_drawable_(
-              juce::Drawable::createFromImageData(BinaryData::link_svg, BinaryData::link_svgSize)),
-          side_control_show_button_("", base, ""),
-          side_control_show_attachment_(side_control_show_button_.getButton(), p.na_parameters_,
-                                        zlstate::PSideControlDisplay::kID, updater_),
-          equalize_show_drawable_(
-              juce::Drawable::createFromImageData(BinaryData::equalizer_svg, BinaryData::equalizer_svgSize)),
-          equalize_show_button_("", base, ""),
-          equalize_show_attachment_(equalize_show_button_.getButton(), p.na_parameters_,
-                                    zlstate::PSideEQDisplay::kID, updater_),
-          computer_show_drawable_(
-              juce::Drawable::createFromImageData(BinaryData::computer_svg, BinaryData::computer_svgSize)),
-          computer_show_button_("", base, ""),
-          computer_show_attachment_(computer_show_button_.getButton(), p.na_parameters_,
-                                    zlstate::PComputerCurveDisplay::kID, updater_),
-          rms_show_drawable_(
-              juce::Drawable::createFromImageData(BinaryData::rms_analyzer_svg, BinaryData::rms_analyzer_svgSize)),
-          rms_show_button_("", base, ""),
-          rms_show_attachment_(rms_show_button_.getButton(), p.na_parameters_,
-                               zlstate::PRMSAnalyzerDisplay::kID, updater_) {
+                                       multilingual::TooltipHelper& tooltip_helper) :
+        base_(base),
+        side_control_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_link_svg,
+                                                                        BinaryData::dline_link_svgSize)),
+        side_control_show_button_(base, side_control_show_drawable_.get(), side_control_show_drawable_.get()),
+        side_control_show_attachment_(side_control_show_button_.getButton(), p.na_parameters_,
+                                      zlstate::PSideControlDisplay::kID, updater_),
+        equalize_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_eq_svg,
+                                                                    BinaryData::dline_eq_svgSize)),
+        equalize_show_button_(base, equalize_show_drawable_.get(), equalize_show_drawable_.get()),
+        equalize_show_attachment_(equalize_show_button_.getButton(), p.na_parameters_,
+                                  zlstate::PSideEQDisplay::kID, updater_),
+        computer_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_computer_svg,
+                                                                    BinaryData::dline_computer_svgSize)),
+        computer_show_button_(base, computer_show_drawable_.get(), computer_show_drawable_.get()),
+        computer_show_attachment_(computer_show_button_.getButton(), p.na_parameters_,
+                                  zlstate::PComputerCurveDisplay::kID, updater_),
+        rms_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_rms_svg,
+                                                               BinaryData::dline_rms_svgSize)),
+        rms_show_button_(base, rms_show_drawable_.get(), rms_show_drawable_.get()),
+        rms_show_attachment_(rms_show_button_.getButton(), p.na_parameters_,
+                             zlstate::PRMSAnalyzerDisplay::kID, updater_) {
         juce::ignoreUnused(tooltip_helper);
-        side_control_show_button_.setDrawable(side_control_show_drawable_.get());
-        equalize_show_button_.setDrawable(equalize_show_drawable_.get());
-        computer_show_button_.setDrawable(computer_show_drawable_.get());
-        rms_show_button_.setDrawable(rms_show_drawable_.get());
 
         for (auto& b : {
                  &side_control_show_button_, &equalize_show_button_,
                  &computer_show_button_, &rms_show_button_
              }) {
-            b->getLAF().enableShadow(false);
-            b->getLAF().setShrinkScale(.0f);
-            b->getLAF().setScale(1.25f);
+            b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
         }
-
         setBufferedToImage(true);
     }
 

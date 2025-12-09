@@ -32,19 +32,19 @@ namespace zlpanel {
         zlgui::attachment::ComponentUpdater updater_;
 
         const std::unique_ptr<juce::Drawable> side_control_show_drawable_;
-        zlgui::button::CompactButton side_control_show_button_;
+        zlgui::button::ClickButton side_control_show_button_;
         zlgui::attachment::ButtonAttachment<true> side_control_show_attachment_;
 
         const std::unique_ptr<juce::Drawable> equalize_show_drawable_;
-        zlgui::button::CompactButton equalize_show_button_;
+        zlgui::button::ClickButton equalize_show_button_;
         zlgui::attachment::ButtonAttachment<true> equalize_show_attachment_;
 
         const std::unique_ptr<juce::Drawable> computer_show_drawable_;
-        zlgui::button::CompactButton computer_show_button_;
+        zlgui::button::ClickButton computer_show_button_;
         zlgui::attachment::ButtonAttachment<true> computer_show_attachment_;
 
         const std::unique_ptr<juce::Drawable> rms_show_drawable_;
-        zlgui::button::CompactButton rms_show_button_;
+        zlgui::button::ClickButton rms_show_button_;
         zlgui::attachment::ButtonAttachment<true> rms_show_attachment_;
     };
-} // zlpanel
+}

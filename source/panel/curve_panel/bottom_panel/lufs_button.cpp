@@ -12,11 +12,12 @@
 
 namespace zlpanel {
     LUFSButton::LUFSButton(PluginProcessor& p, zlgui::UIBase& base,
-                           multilingual::TooltipHelper& tooltip_helper)
-        : p_ref_(p), base_(base),
-          learn_drawable_(juce::Drawable::createFromImageData(BinaryData::learn_svg, BinaryData::learn_svgSize)),
-          learn_button_(base, learn_drawable_.get(), learn_drawable_.get(),
-                        tooltip_helper.getToolTipText(multilingual::kLoudnessMatch)) {
+                           multilingual::TooltipHelper& tooltip_helper) :
+        p_ref_(p), base_(base),
+        learn_drawable_(
+            juce::Drawable::createFromImageData(BinaryData::dline_l_svg, BinaryData::dline_l_svgSize)),
+        learn_button_(base, learn_drawable_.get(), learn_drawable_.get(),
+                      tooltip_helper.getToolTipText(multilingual::kLoudnessMatch)) {
         learn_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
         learn_button_.addMouseListener(this, true);
 
@@ -25,8 +26,7 @@ namespace zlpanel {
                 p_ref_.getCompressController().setLUFSMatcherOn(true);
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, true);
                 setAlpha(1.f);
-            }
-            else {
+            } else {
                 p_ref_.getCompressController().setLUFSMatcherOn(false);
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kLUFSLearnButton, false);
 

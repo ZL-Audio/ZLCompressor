@@ -11,23 +11,22 @@
 #include "popup_panel.hpp"
 
 namespace zlpanel {
-    PopupPanel::PopupPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx)
-        : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-          bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
-                                                               BinaryData::mode_off_on_svgSize)),
-          bypass_button_(base, bypass_drawable_.get(), bypass_drawable_.get()),
-          close_drawable_(juce::Drawable::createFromImageData(BinaryData::close_svg,
-                                                              BinaryData::close_svgSize)),
-          close_button_(base, close_drawable_.get(), nullptr, ""),
-          ftype_box_(zlp::PFilterType::kChoices, base),
-          slope_box_(zlp::POrder::kChoices, base) {
+    PopupPanel::PopupPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx) :
+        p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
+        bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
+                                                             BinaryData::bypass_svgSize)),
+        bypass_button_(base, bypass_drawable_.get(), bypass_drawable_.get()),
+        close_drawable_(juce::Drawable::createFromImageData(BinaryData::close_svg,
+                                                            BinaryData::close_svgSize)),
+        close_button_(base, close_drawable_.get(), nullptr, ""),
+        ftype_box_(zlp::PFilterType::kChoices, base),
+        slope_box_(zlp::POrder::kChoices, base) {
         bypass_button_.getButton().onClick = [this]() {
             auto* para = p_ref_.parameters_.getParameter(zlp::PFilterStatus::kID + std::to_string(band_));
             para->beginChangeGesture();
             if (bypass_button_.getButton().getToggleState()) {
                 para->setValueNotifyingHost(1.f);
-            }
-            else {
+            } else {
                 para->setValueNotifyingHost(.5f);
             }
             para->endChangeGesture();
@@ -75,33 +74,31 @@ namespace zlpanel {
     }
 
     void PopupPanel::resized() {
+        const auto font_size = base_.getFontSize();
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale * .75f);
         auto bound = getLocalBounds();
         auto t_bound = bound.removeFromTop(bound.getHeight() / 2);
 
-        auto bypass_button_bound = t_bound.removeFromRight(button_height);
-        const auto bypass_button_padding = bypass_button_bound.getHeight() / 32;
-        bypass_button_bound.reduce(bypass_button_padding, bypass_button_padding);
-        bypass_button_.setBounds(bypass_button_bound);
+        bypass_button_.setBounds(t_bound.removeFromRight(button_height));
+        bypass_button_.getButton().setEdgeIndent(static_cast<int>(std::round(font_size * .225f)));
         ftype_box_.setBounds(t_bound);
 
-        auto close_button_bound = bound.removeFromRight(button_height);
-        const auto close_button_padding = close_button_bound.getHeight() / 16;
-        close_button_bound.reduce(close_button_padding, close_button_padding);
-        close_button_.setBounds(close_button_bound);
+        close_button_.setBounds(bound.removeFromRight(button_height));
+        close_button_.getButton().setEdgeIndent(static_cast<int>(std::round(font_size * .225f)));
         slope_box_.setBounds(bound);
 
         const auto popup_option = juce::PopupMenu::Options()
-                                  .withParentComponent(getParentComponent())
-                                  .withMinimumNumColumns(2)
-                                  .withMinimumWidth(ftype_box_.getWidth() * 2);
+            .withParentComponent(getParentComponent())
+            .withMinimumNumColumns(2)
+            .withMinimumWidth(ftype_box_.getWidth() * 2);
         for (auto& box : {&ftype_box_, &slope_box_}) {
             box->getLAF().setOption(popup_option);
         }
     }
 
     void PopupPanel::updateBand() {
-        if (band_ == selected_band_idx_) return;
+        if (band_ == selected_band_idx_)
+            return;
         band_ = selected_band_idx_;
 
         if (selected_band_idx_ == zlp::kBandNum) {
@@ -142,8 +139,7 @@ namespace zlpanel {
             }
             if (ftype_ == 0 || ftype_ == 5 || ftype_ == 6) {
                 slope_box_.getBox().setItemEnabled(1, false);
-            }
-            else {
+            } else {
                 slope_box_.getBox().setItemEnabled(1, true);
             }
         }

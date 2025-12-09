@@ -47,7 +47,7 @@ namespace zlpanel {
         zlgui::attachment::ComboBoxAttachment<true> stereo_mode_attachment_;
 
         const std::unique_ptr<juce::Drawable> stereo_swap_drawable_;
-        zlgui::button::CompactButton stereo_swap_button_;
+        zlgui::button::ClickButton stereo_swap_button_;
         zlgui::attachment::ButtonAttachment<true> stereo_swap_attachment_;
 
         zlgui::slider::CompactLinearSlider<true, true, true> stereo_link_slider_;
@@ -66,11 +66,11 @@ namespace zlpanel {
         zlgui::attachment::SliderAttachment<true> side_gain_attachment_;
 
         const std::unique_ptr<juce::Drawable> ext_side_drawable_;
-        zlgui::button::CompactButton ext_side_button_;
+        zlgui::button::ClickButton ext_side_button_;
         zlgui::attachment::ButtonAttachment<true> ext_side_attachment_;
 
         const std::unique_ptr<juce::Drawable> side_out_drawable_;
-        zlgui::button::CompactButton side_out_button_;
+        zlgui::button::ClickButton side_out_button_;
         zlgui::attachment::ButtonAttachment<true> side_out_attachment_;
 
         void updateLabels();

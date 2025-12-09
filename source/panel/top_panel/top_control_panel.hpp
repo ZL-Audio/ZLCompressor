@@ -32,11 +32,11 @@ namespace zlpanel {
         zlgui::label::NameLookAndFeel label_laf_;
 
         const std::unique_ptr<juce::Drawable> on_drawable_;
-        zlgui::button::CompactButton on_button_;
+        zlgui::button::ClickButton on_button_;
         zlgui::attachment::ButtonAttachment<true> on_attachment_;
 
         const std::unique_ptr<juce::Drawable> delta_drawable_;
-        zlgui::button::CompactButton delta_button_;
+        zlgui::button::ClickButton delta_button_;
         zlgui::attachment::ButtonAttachment<true> delta_attachment_;
 
         double old_lookahead_value_{0.0};

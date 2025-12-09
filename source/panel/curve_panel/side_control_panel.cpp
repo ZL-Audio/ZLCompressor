@@ -39,7 +39,7 @@ namespace zlpanel {
                                 zlp::PSideStereoMode::kID, updater_),
         stereo_swap_drawable_(juce::Drawable::createFromImageData(BinaryData::shuffle_svg,
                                                                   BinaryData::shuffle_svgSize)),
-        stereo_swap_button_("", base_,
+        stereo_swap_button_(base, stereo_swap_drawable_.get(), stereo_swap_drawable_.get(),
                             tooltip_helper.getToolTipText(multilingual::kStereoSwap)),
         stereo_swap_attachment_(stereo_swap_button_.getButton(), p.parameters_,
                                 zlp::PSideStereoSwap::kID, updater_),
@@ -61,30 +61,25 @@ namespace zlpanel {
                           tooltip_helper.getToolTipText(multilingual::kSideGain)),
         side_gain_attachment_(side_gain_slider_.getSlider(), p.parameters_,
                               zlp::PSideGain::kID, updater_),
-        ext_side_drawable_(juce::Drawable::createFromImageData(BinaryData::externalside_svg,
-                                                               BinaryData::externalside_svgSize)),
-        ext_side_button_("", base_,
+        ext_side_drawable_(
+            juce::Drawable::createFromImageData(BinaryData::externalside_svg, BinaryData::externalside_svgSize)),
+        ext_side_button_(base, ext_side_drawable_.get(), ext_side_drawable_.get(),
                          tooltip_helper.getToolTipText(multilingual::kExtSide)),
         ext_side_attachment_(ext_side_button_.getButton(), p.parameters_,
                              zlp::PExtSide::kID, updater_),
-        side_out_drawable_(juce::Drawable::createFromImageData(BinaryData::headphones_svg,
-                                                               BinaryData::headphones_svgSize)),
-        side_out_button_("", base_,
+        side_out_drawable_(
+            juce::Drawable::createFromImageData(BinaryData::solo_svg, BinaryData::solo_svgSize)),
+        side_out_button_(base, side_out_drawable_.get(), side_out_drawable_.get(),
                          tooltip_helper.getToolTipText(multilingual::kSideOut)),
         side_out_attachment_(side_out_button_.getButton(), p.parameters_,
                              zlp::PSideOut::kID, updater_) {
-        stereo_swap_button_.setDrawable(stereo_swap_drawable_.get());
-        ext_side_button_.setDrawable(ext_side_drawable_.get());
-        side_out_button_.setDrawable(side_out_drawable_.get());
         for (auto& b : {&stereo_swap_button_, &ext_side_button_, &side_out_button_}) {
-            b->getLAF().enableShadow(false);
-            b->getLAF().setShrinkScale(.0f);
-            b->getLAF().setScale(1.15f);
+            b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
         }
 
-        stereo_mode_box_.setSizeScale(.8f, .8f);
+        stereo_mode_box_.setSizeScale(.9f, .9f);
         stereo_mode_box_.setBufferedToImage(true);
         addAndMakeVisible(stereo_mode_box_);
 

@@ -11,19 +11,19 @@
 
 namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor& p, zlgui::UIBase& base,
-                           multilingual::TooltipHelper& tooltip_helper)
-        : Thread("curve_panel"), p_ref_(p), base_(base),
-          mag_analyzer_panel_(p, base),
-          separate_panel_(base),
-          equalize_panel_(p, base),
-          bottom_control_panel_(p, base, tooltip_helper),
-          left_control_panel_(p, base, tooltip_helper),
-          side_control_panel_(p, base, tooltip_helper),
-          rms_control_panel_(p, base, tooltip_helper),
-          equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
-          side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
-          computer_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PComputerCurveDisplay::kID)),
-          rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSAnalyzerDisplay::kID)) {
+                           multilingual::TooltipHelper& tooltip_helper) :
+        Thread("curve_panel"), p_ref_(p), base_(base),
+        mag_analyzer_panel_(p, base),
+        separate_panel_(base),
+        equalize_panel_(p, base),
+        bottom_control_panel_(p, base, tooltip_helper),
+        left_control_panel_(p, base, tooltip_helper),
+        side_control_panel_(p, base, tooltip_helper),
+        rms_control_panel_(p, base, tooltip_helper),
+        equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
+        side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
+        computer_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PComputerCurveDisplay::kID)),
+        rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSAnalyzerDisplay::kID)) {
         addAndMakeVisible(mag_analyzer_panel_);
         addChildComponent(separate_panel_);
         addAndMakeVisible(bottom_control_panel_);
@@ -52,10 +52,11 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        const auto small_slider_width = juce::roundToInt(base_.getFontSize() * kSmallSliderWidthScale);
+        const auto font_size = base_.getFontSize();
+        const auto padding = getPaddingSize(font_size);
+        const auto slider_width = getSliderWidth(font_size);
+        const auto button_height = getButtonSize(font_size);
+        const auto small_slider_width = getSmallSliderWidth(font_size);
         const auto left_padding = (getWidth() - (padding * 11 + slider_width * 7 + small_slider_width * 2)) / 2;
         {
             auto bound = getLocalBounds();
@@ -64,17 +65,17 @@ namespace zlpanel {
         }
         {
             auto bound = getLocalBounds();
-            bound = bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bound = bound.removeFromBottom(button_height);
             bottom_control_panel_.setBounds(bound);
         }
         {
             auto bound = getLocalBounds();
-            bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bound.removeFromBottom(button_height);
             left_control_panel_.setBounds(bound.removeFromLeft(button_height));
         }
         {
             auto bound = getLocalBounds();
-            bound.removeFromBottom(juce::roundToInt(base_.getFontSize() * 1.75f));
+            bound.removeFromBottom(button_height);
             bound.removeFromLeft(button_height);
 
             const auto width = side_control_panel_.getIdealWidth();
@@ -90,15 +91,14 @@ namespace zlpanel {
 
             if (side_control_panel_.isVisible()) {
                 equalize_panel_.setBounds(equalize_small_bound_);
-            }
-            else {
+            } else {
                 equalize_panel_.setBounds(equalize_large_bound_);
             }
             separate_panel_.setBounds(getLocalBounds().withWidth(equalize_large_bound_.getWidth()));
         }
         {
             auto bound = getLocalBounds();
-            bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height + button_height / 2);
+            bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height * 2);
             bound = bound.removeFromLeft(rms_control_panel_.getIdealWidth());
             bound = bound.removeFromBottom(rms_control_panel_.getIdealHeight());
             rms_control_panel_.setBounds(bound);

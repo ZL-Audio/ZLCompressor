@@ -14,14 +14,14 @@ namespace zlpanel {
     TopControlPanel::TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
                                      const multilingual::TooltipHelper& tooltip_helper) :
         p_ref_(p), base_(base), label_laf_(base_),
-        on_drawable_(juce::Drawable::createFromImageData(BinaryData::mode_off_on_svg,
-                                                         BinaryData::mode_off_on_svgSize)),
-        on_button_("", base_,
+        on_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
+                                                         BinaryData::bypass_svgSize)),
+        on_button_(base_, on_drawable_.get(), on_drawable_.get(),
                    tooltip_helper.getToolTipText(multilingual::TooltipLabel::kBypass)),
         on_attachment_(on_button_.getButton(), p.parameters_, zlp::PCompON::kID, updater_),
-        delta_drawable_(juce::Drawable::createFromImageData(BinaryData::change_svg,
-                                                            BinaryData::change_svgSize)),
-        delta_button_("", base_,
+        delta_drawable_(juce::Drawable::createFromImageData(BinaryData::delta_svg,
+                                                            BinaryData::delta_svgSize)),
+        delta_button_(base_, delta_drawable_.get(), delta_drawable_.get(),
                       tooltip_helper.getToolTipText(multilingual::TooltipLabel::kDelta)),
         delta_attachment_(delta_button_.getButton(), p.parameters_, zlp::PCompDelta::kID, updater_),
         lookahead_label_("Lookahead", "Lookahead"),
@@ -38,14 +38,9 @@ namespace zlpanel {
         clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperDrive::kID, updater_),
         direction_box_(zlp::PCompDirection::kChoices, base),
         direction_attachment_(direction_box_.getBox(), p.parameters_, zlp::PCompDirection::kID, updater_) {
-        on_button_.setDrawable(on_drawable_.get());
-        on_button_.getLAF().setScale(1.15f);
-        delta_button_.setDrawable(delta_drawable_.get());
-        delta_button_.getLAF().setScale(1.5f);
 
         for (auto& b : {&on_button_, &delta_button_}) {
-            b->getLAF().enableShadow(false);
-            b->getLAF().setShrinkScale(.0f);
+            b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
         }
@@ -112,10 +107,10 @@ namespace zlpanel {
         const auto small_slider_width = juce::roundToInt(font_size * kSmallSliderWidthScale * .75f);
 
         auto bound = getLocalBounds();
-        bound.removeFromRight(padding);
         on_button_.setBounds(bound.removeFromRight(button_height));
         bound.removeFromRight(padding);
         delta_button_.setBounds(bound.removeFromRight(button_height));
+        delta_button_.getButton().setEdgeIndent(static_cast<int>(std::round(font_size * .225f)));
         bound.removeFromRight(padding);
         lookahead_slider_.setBounds(bound.removeFromRight(small_slider_width));
         bound.removeFromRight(padding);
