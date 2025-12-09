@@ -261,7 +261,10 @@ namespace zlgui::slider {
         bool is_shift_pressed_{false};
 
         juce::String getDisplayValue(const juce::Slider& s) const {
-            const auto value = s.getValue();
+            auto value = s.getValue();
+            if (std::abs(value) < 1e-6) {
+                value = 0.0;
+            }
             if (value_formatter_) {
                 return value_formatter_(value);
             }

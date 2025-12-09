@@ -338,7 +338,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "makeup";
         auto static constexpr kName = "Makeup Gain";
-        inline auto static const kRange = getLogMidRangeShift(2.f, 32.f, 12.f, 0.01f, -2.f);
+        inline auto static const kRange = juce::NormalisableRange<float>(-30.f, 30.f, .01f);
         auto static constexpr kDefaultV = 0.f;
     };
 
