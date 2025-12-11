@@ -83,7 +83,7 @@ namespace zlpanel {
             const auto height = std::max(static_cast<int>(static_cast<float>(bound.getHeight()) * .618f), ideal_height);
 
             bound = bound.removeFromBottom(height);
-            bound = bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height / 2);
+            bound = bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height);
 
             equalize_large_bound_ = bound;
             side_control_panel_.setBounds(bound.removeFromLeft(width));
