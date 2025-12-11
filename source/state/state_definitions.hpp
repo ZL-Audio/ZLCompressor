@@ -262,7 +262,7 @@ namespace zlstate {
         static constexpr auto kID = "font_scale";
         static constexpr auto kName = "";
         inline static const auto kRange = juce::NormalisableRange<float>(.5f, 1.f, .01f);
-        static constexpr auto kDefaultV = 1.f;
+        static constexpr auto kDefaultV = .9f;
     };
 
     class PStaticFontSize : public FloatParameters<PStaticFontSize> {
