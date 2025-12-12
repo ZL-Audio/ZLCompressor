@@ -473,8 +473,8 @@ namespace zlp {
     public:
         auto static constexpr kID = "rms_length";
         auto static constexpr kName = "RMS Length";
-        inline auto static const kRange = getLogMidRangeShift(4.f, 44.f, 14.f, 0.01f, -4.f);
-        auto static constexpr kDefaultV = 10.f;
+        inline auto static const kRange = getLogMidRangeShift(4.f, 164.f, 36.f, 0.01f, -4.f);
+        auto static constexpr kDefaultV = 32.f;
     };
 
     class PRMSSpeed : public FloatParameters<PRMSSpeed> {

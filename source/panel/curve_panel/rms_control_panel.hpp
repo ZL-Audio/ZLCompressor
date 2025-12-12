@@ -49,4 +49,4 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<false, false, false> rms_mix_slider_;
         zlgui::attachment::SliderAttachment<true> rms_mix_attachment_;
     };
-} // zlpanel
+}

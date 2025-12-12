@@ -37,9 +37,9 @@ namespace zlp {
         post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to 8x oversampling
         for (auto& t : rms_tracker_) {
-            t.setMaximumMomentarySeconds(0.05f * 8.f);
+            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f * 8.f + 0.001f);
             t.prepare(sample_rate);
-            t.setMaximumMomentarySeconds(0.05f);
+            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f + 0.001f);
         }
         rms_side_buffer0_.resize(max_num_samples * 8);
         rms_side_buffer1_.resize(rms_side_buffer0_.size());

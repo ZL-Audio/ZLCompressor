@@ -11,25 +11,25 @@
 
 namespace zlpanel {
     RMSControlPanel::RMSControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                     const multilingual::TooltipHelper& tooltip_helper)
-        : base_(base), updater_(),
-          rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSPanelDisplay::kID)),
-          label_laf_(base),
-          rms_length_label_("", "RMS Length"),
-          rms_speed_label_("", "RMS Speed"),
-          rms_mix_label_("", "RMS Mix"),
-          rms_length_slider_("", base,
-                             tooltip_helper.getToolTipText(multilingual::kRMSLength)),
-          rms_length_attachment_(rms_length_slider_.getSlider(), p.parameters_,
-                                 zlp::PRMSLength::kID, updater_),
-          rms_speed_slider_("", base,
-                            tooltip_helper.getToolTipText(multilingual::kRMSSpeed)),
-          rms_speed_attachment_(rms_speed_slider_.getSlider(), p.parameters_,
-                                zlp::PRMSSpeed::kID, updater_),
-          rms_mix_slider_("", base,
-                          tooltip_helper.getToolTipText(multilingual::kRMSMix)),
-          rms_mix_attachment_(rms_mix_slider_.getSlider(), p.parameters_,
-                              zlp::PRMSMix::kID, updater_) {
+                                     const multilingual::TooltipHelper& tooltip_helper) :
+        base_(base), updater_(),
+        rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSPanelDisplay::kID)),
+        label_laf_(base),
+        rms_length_label_("", "RMS Length"),
+        rms_speed_label_("", "RMS Speed"),
+        rms_mix_label_("", "RMS Mix"),
+        rms_length_slider_("", base,
+                           tooltip_helper.getToolTipText(multilingual::kRMSLength)),
+        rms_length_attachment_(rms_length_slider_.getSlider(), p.parameters_,
+                               zlp::PRMSLength::kID, updater_),
+        rms_speed_slider_("", base,
+                          tooltip_helper.getToolTipText(multilingual::kRMSSpeed)),
+        rms_speed_attachment_(rms_speed_slider_.getSlider(), p.parameters_,
+                              zlp::PRMSSpeed::kID, updater_),
+        rms_mix_slider_("", base,
+                        tooltip_helper.getToolTipText(multilingual::kRMSMix)),
+        rms_mix_attachment_(rms_mix_slider_.getSlider(), p.parameters_,
+                            zlp::PRMSMix::kID, updater_) {
         label_laf_.setFontScale(1.25f);
         for (auto& l : {&rms_length_label_, &rms_speed_label_, &rms_mix_label_}) {
             l->setLookAndFeel(&label_laf_);
@@ -41,6 +41,7 @@ namespace zlpanel {
 
         rms_mix_slider_.setComponentID(zlp::PRMSMix::kID);
         for (auto& s : {&rms_length_slider_, &rms_speed_slider_, &rms_mix_slider_}) {
+            s->setPrecision(3);
             s->setFontScale(1.25f);
             s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             s->getSlider().setSliderSnapsToMousePosition(false);
@@ -96,4 +97,4 @@ namespace zlpanel {
             updater_.updateComponents();
         }
     }
-} // zlpanel
+}
