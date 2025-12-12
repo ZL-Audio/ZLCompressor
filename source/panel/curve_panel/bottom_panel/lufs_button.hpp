@@ -29,7 +29,6 @@ namespace zlpanel {
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
-        bool mouse_over_{false};
 
         const std::unique_ptr<juce::Drawable> learn_drawable_;
         zlgui::button::ClickButton learn_button_;
