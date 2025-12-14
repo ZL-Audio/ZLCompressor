@@ -4,7 +4,7 @@ LICENSE and CODE are available at [https://github.com/ZL-Audio/ZLCompressor](htt
 
 # Changelog
 
-## 0.3.0
+## 0.3.1
 
 New Features
 
@@ -15,6 +15,8 @@ Bug fixes and Improvements
 
 - fix plugin crashes when it does not have UI preset folder permission
 - fix incorrect rms display
+- fix displayed values when they are close to zero
+- fix incorrect copy/paste from ZL Equalizer 2
 - improve DSP performance
 
 Other Changes
