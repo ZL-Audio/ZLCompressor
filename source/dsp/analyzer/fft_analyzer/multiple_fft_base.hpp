@@ -1,4 +1,4 @@
-// Copyright (C) 2025 - zsliu98
+// Copyright (C) 2026 - zsliu98
 // This file is part of ZLCompressor
 //
 // ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
@@ -12,12 +12,12 @@
 #include <atomic>
 #include <span>
 
-#include "../container/container.hpp"
-#include "../interpolation/interpolation.hpp"
-#include "../fft/fft.hpp"
-#include "../chore/decibels.hpp"
-#include "../lock/spin_lock.hpp"
-#include "../vector/vector.hpp"
+#include "../../container/container.hpp"
+#include "../../interpolation/interpolation.hpp"
+#include "../../fft/fft.hpp"
+#include "../../chore/decibels.hpp"
+#include "../../lock/spin_lock.hpp"
+#include "../../vector/vector.hpp"
 
 namespace zldsp::analyzer {
     /**

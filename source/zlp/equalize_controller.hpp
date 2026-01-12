@@ -1,4 +1,4 @@
-// Copyright (C) 2025 - zsliu98
+// Copyright (C) 2026 - zsliu98
 // This file is part of ZLCompressor
 //
 // ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../dsp/filter/filter.hpp"
-#include "../dsp/fft_analyzer/fft_analyzer.hpp"
+#include "../dsp/analyzer/fft_analyzer/fft_analyzer.hpp"
 #include "../dsp/gain/origin_gain.hpp"
 #include "zlp_definitions.hpp"
 
