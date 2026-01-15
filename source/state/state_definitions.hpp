@@ -150,10 +150,6 @@ namespace zlstate {
         };
         static constexpr std::array kLength = {6.f, 9.f, 12.f, 18.f};
         int static constexpr kDefaultI = 1;
-
-        static float getTimeLengthFromIndex(const float x) {
-            return kLength[static_cast<size_t>(std::round(x))];
-        }
     };
 
     class PAnalyzerStereo : public ChoiceParameters<PAnalyzerStereo> {

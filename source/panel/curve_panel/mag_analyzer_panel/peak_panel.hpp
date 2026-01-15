@@ -14,10 +14,11 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../../dsp/analyzer/mag_analyzer/mag_analyzer_receiver.hpp"
+#include "rms_panel.hpp"
 
 namespace zlpanel {
-    class PeakPanel final : public juce::Component,
-                            private juce::AudioProcessorValueTreeState::Listener {
+    class PeakPanel final : public juce::Component {
     public:
         explicit PeakPanel(PluginProcessor& p, zlgui::UIBase& base);
 
@@ -25,50 +26,49 @@ namespace zlpanel {
 
         void paint(juce::Graphics& g) override;
 
-        void run(double next_time_stamp);
+        void run(double next_time_stamp, RMSPanel& rms_panel);
 
         void resized() override;
 
-    private:
-        PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
-        std::atomic<float>& comp_direction_ref_;
-        static constexpr std::array kNAIDs{
-            zlstate::PAnalyzerMagType::kID,
-            zlstate::PAnalyzerMinDB::kID,
-            zlstate::PAnalyzerTimeLength::kID
-        };
+        std::array<float, 2> getPreOutDBs();
 
-        zldsp::analyzer::MagReductionAnalyzer<float, zlp::CompressController::kAnalyzerPointNum>& mag_analyzer_ref_;
+    private:
+        static constexpr std::array<int, 4> kNumPointsPerSecond{40, 30, 20, 15};
+        zlgui::UIBase& base_;
+
+        std::atomic<float>& comp_direction_ref_;
+        std::atomic<float>& analyzer_stereo_type_ref_;
+        std::atomic<float>& analyzer_mag_type_ref_;
+        std::atomic<float>& analyzer_min_db_ref_;
+        std::atomic<float>& analyzer_time_length_ref_;
+
+        zldsp::analyzer::MagAnalyzerSenderBase<float, 3>& analyzer_sender_;
+        zldsp::analyzer::MagAnalyzerReceiver<3> analyzer_receiver_{};
+
         AtomicBound<float> atomic_bound_;
 
-        std::array<float, zlp::CompressController::kAnalyzerPointNum> xs_{}, in_ys_{}, out_ys_{}, reduction_ys_{};
+        kfr::univector<float> xs_{}, pre_ys_{}, post_ys_{}, out_ys_{};
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         std::mutex mutex_;
 
         float curve_thickness_{0.f};
 
-        std::atomic<bool> to_reset_path_{true};
-        double start_time_{0.0}, current_time{0.0};
-        double current_count_{0.0};
-        std::atomic<double> num_per_second_{50.0};
+        double start_time_{0.0};
 
         bool is_first_point_{true};
 
-        std::atomic<float> analyzer_min_db_{-72.f};
+        double sample_rate_{0.};
+        size_t max_num_samples_{0};
+        float time_length_idx_{0.f}, time_length_{6.f};
 
+        size_t num_points_{0};
+        int num_samples_per_point_{0};
+        double second_per_point_{0};
+
+        template <bool center>
         void updatePaths(juce::Rectangle<float> bound);
 
         void lookAndFeelChanged() override;
-
-        void parameterChanged(const juce::String& parameter_id, float new_value) override;
-
-        void setTimeLength(const float x) {
-            mag_analyzer_ref_.setTimeLength(x);
-            num_per_second_.store(
-                static_cast<double>(zlp::CompressController::kAnalyzerPointNum - 1) / static_cast<double>(x));
-            to_reset_path_.exchange(true, std::memory_order::release);
-        }
     };
-} // zlpanel
+}

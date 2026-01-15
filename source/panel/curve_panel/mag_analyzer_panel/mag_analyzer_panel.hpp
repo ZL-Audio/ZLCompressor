@@ -43,7 +43,6 @@ namespace zlpanel {
         }
 
     private:
-        zlgui::UIBase& base_;
         MagBackgroundPanel background_panel_;
         PeakPanel peak_panel_;
         RMSPanel rms_panel_;
@@ -58,7 +57,8 @@ namespace zlpanel {
 
         std::atomic<double> next_stamp_{0.};
         double rms_previous_stamp_{0.};
-        std::atomic<bool> to_run_rms_{false};
+
+        void mouseDoubleClick(const juce::MouseEvent& event) override;
 
         void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
     };

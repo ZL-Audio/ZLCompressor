@@ -11,29 +11,21 @@
 
 namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor& p, zlgui::UIBase& base) :
-        p_ref_(p), base_(base),
+        base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
-        mag_analyzer_ref_(p.getCompressController().getMagAnalyzer()) {
+        analyzer_stereo_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
+        analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
+        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
+        analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)),
+        analyzer_sender_(p.getCompressController().getMagAnalyzerSender()) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
         for (auto& path : {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
         }
-        mag_analyzer_ref_.setMagType(zldsp::analyzer::MagType::kPeak);
-        mag_analyzer_ref_.setToReset();
-
-        for (auto& ID : kNAIDs) {
-            p_ref_.na_parameters_.addParameterListener(ID, this);
-            parameterChanged(ID, p_ref_.na_parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
-        }
-
         setInterceptsMouseClicks(false, false);
     }
 
-    PeakPanel::~PeakPanel() {
-        for (auto& ID : kNAIDs) {
-            p_ref_.na_parameters_.removeParameterListener(ID, this);
-        }
-    }
+    PeakPanel::~PeakPanel() = default;
 
     void PeakPanel::paint(juce::Graphics& g) {
         const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
@@ -55,61 +47,100 @@ namespace zlpanel {
     }
 
     void PeakPanel::resized() {
-        auto bound = getLocalBounds().toFloat();
-        constexpr auto pad_p = 1.f / static_cast<float>(zlp::CompressController::kAnalyzerPointNum - 1);
-        const auto pad = std::max(bound.getWidth() * pad_p, 1.f);
-        bound = bound.withWidth(bound.getWidth() + pad);
-        atomic_bound_.store(bound);
+        auto bound = getLocalBounds();
+        atomic_bound_.store(bound.toFloat());
         lookAndFeelChanged();
     }
 
-    void PeakPanel::run(const double next_time_stamp) {
-        const auto current_bound = atomic_bound_.load();
-        if (to_reset_path_.exchange(false, std::memory_order::acquire)
-            || next_time_stamp - current_time > 0.5) {
+    void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel) {
+        const auto bound = atomic_bound_.load();
+        const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
+            analyzer_stereo_type_ref_.load(std::memory_order::relaxed)));
+        const auto mag_type = static_cast<zldsp::analyzer::MagType>(std::round(
+            analyzer_mag_type_ref_.load(std::memory_order::relaxed)));
+        const auto min_db = zlstate::PAnalyzerMinDB::kDBs[static_cast<size_t>(std::round(
+            analyzer_min_db_ref_.load(std::memory_order::relaxed)))];
+        const auto time_length_idx = analyzer_time_length_ref_.load(std::memory_order::relaxed);
+
+        analyzer_sender_.getLock().lock();
+        const auto sample_rate = analyzer_sender_.getSampleRate();
+        const auto max_num_samples = analyzer_sender_.getMaxNumSamples();
+
+        if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
+            max_num_samples_ != max_num_samples ||
+            std::abs(time_length_idx_ - time_length_idx) > 0.1) {
+            sample_rate_ = sample_rate;
+            max_num_samples_ = max_num_samples;
+            time_length_idx_ = time_length_idx;
+            const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
+            const auto num_points_per_second = kNumPointsPerSecond[time_idx];
+            num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second;
+            time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
             is_first_point_ = true;
+            num_points_ = static_cast<size_t>(num_points_per_second) * static_cast<size_t>(time_length_);
+            second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
+
+            xs_.resize(num_points_ + 2);
+            pre_ys_.resize(num_points_ + 2);
+            out_ys_.resize(num_points_ + 2);
+            post_ys_.resize(num_points_ + 2);
         }
-        current_time = next_time_stamp;
-        if (is_first_point_) {
-            auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(1, 0);
-            if (actual_delta > 0) {
-                is_first_point_ = false;
-                current_count_ = 0.;
-                start_time_ = next_time_stamp;
-                mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
-                                                      current_bound.getWidth(), current_bound.getHeight(), 0.f,
-                                                      analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
-                updatePaths(current_bound);
+
+        auto& fifo{analyzer_sender_.getAbstractFIFO()};
+        if (!is_first_point_) {
+            // update ys
+            while (next_time_stamp - start_time_ > second_per_point_) {
+                const auto num_ready = fifo.getNumReady();
+                // if not enough samples
+                if (num_ready < num_samples_per_point_) {
+                    is_first_point_ = true;
+                    break;
+                }
+                const auto range = fifo.prepareToRead(num_samples_per_point_);
+                rms_panel.run(sample_rate_, range);
+                analyzer_receiver_.run(range, analyzer_sender_.getSampleFIFOs(),
+                                       mag_type, stereo_type);
+                analyzer_receiver_.updateY(bound.getHeight(), 0.f, min_db,
+                                           {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}});
+                fifo.finishRead(num_samples_per_point_);
+                start_time_ += second_per_point_;
+            }
+            // if too much samples
+            const auto num_ready = fifo.getNumReady();
+            const auto threshold = 2 * (static_cast<int>(max_num_samples_) + num_samples_per_point_);
+            if (num_ready > threshold) {
+                (void)fifo.prepareToRead(num_ready - threshold / 2);
+                fifo.finishRead(num_ready - threshold / 2);
             }
         } else {
-            const auto c_num_per_second = num_per_second_.load(std::memory_order::relaxed);
-            const auto target_count = (next_time_stamp - start_time_) * c_num_per_second;
-            const auto tolerance = std::max(target_count * 1.5, 1.0);
-            const auto target_delta = target_count - current_count_;
-            auto [actual_delta, to_reset_shift] = mag_analyzer_ref_.run(
-                static_cast<int>(std::floor(target_delta)),
-                static_cast<int>(std::round(tolerance)));
-            current_count_ += static_cast<double>(actual_delta);
-
-            if (to_reset_shift) {
+            if (fifo.getNumReady() >= num_samples_per_point_) {
+                is_first_point_ = false;
                 start_time_ = next_time_stamp;
-                current_count_ = 0.;
+                std::ranges::fill(pre_ys_, 100000.f);
+                std::ranges::fill(out_ys_, 100000.f);
+                std::ranges::fill(post_ys_, 100000.f);
             }
+        }
+        analyzer_sender_.getLock().unlock();
+        // update xs
+        if (!is_first_point_) {
+            const auto x_scale = static_cast<double>(bound.getWidth()) / static_cast<double>(time_length_);
+            auto x0 = -(next_time_stamp - start_time_) * x_scale;
+            const auto delta_x = second_per_point_ * x_scale;
+            for (size_t i = 0; i < xs_.size(); ++i) {
+                xs_[i] = static_cast<float>(x0);
+                x0 += delta_x;
+            }
+        }
 
-            const auto shift = to_reset_shift ? 0.0 : target_count - current_count_;
-            mag_analyzer_ref_.createReductionPath(xs_, in_ys_, out_ys_, reduction_ys_,
-                                                  current_bound.getWidth(), current_bound.getHeight(),
-                                                  static_cast<float>(shift),
-                                                  analyzer_min_db_.load(std::memory_order::relaxed), 0.f);
+        if (!is_first_point_) {
             const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
                 comp_direction_ref_.load(std::memory_order::relaxed)));
             if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
-                auto v = kfr::make_univector(reduction_ys_);
-                v = v + (current_bound.getHeight() * .5f);
+                updatePaths<true>(bound);
+            } else {
+                updatePaths<false>(bound);
             }
-            updatePaths(current_bound);
-        }
-        {
             std::lock_guard<std::mutex> lock{mutex_};
             in_path_.swapWithPath(next_in_path_);
             out_path_.swapWithPath(next_out_path_);
@@ -117,34 +148,34 @@ namespace zlpanel {
         }
     }
 
+    std::array<float, 2> PeakPanel::getPreOutDBs() {
+        return {analyzer_receiver_.getLatestDBs()[0], analyzer_receiver_.getLatestDBs()[2]};
+    }
+
+    template <bool center>
     void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
         next_in_path_.clear();
         next_out_path_.clear();
         next_reduction_path_.clear();
 
         next_in_path_.startNewSubPath(xs_[0], bound.getBottom());
-        next_in_path_.lineTo(xs_[0], in_ys_[0]);
+        next_in_path_.lineTo(xs_[0], pre_ys_[0]);
         next_out_path_.startNewSubPath(xs_[0], out_ys_[0]);
-        next_reduction_path_.startNewSubPath(xs_[0], reduction_ys_[0]);
+        next_reduction_path_.startNewSubPath(xs_[0], post_ys_[0] - pre_ys_[0]);
+        const auto center_y = bound.getCentreY();
         for (size_t i = 1; i < xs_.size(); ++i) {
-            next_in_path_.lineTo(xs_[i], in_ys_[i]);
+            next_in_path_.lineTo(xs_[i], pre_ys_[i]);
             next_out_path_.lineTo(xs_[i], out_ys_[i]);
-            next_reduction_path_.lineTo(xs_[i], reduction_ys_[i]);
+            if constexpr (center) {
+                next_reduction_path_.lineTo(xs_[i], post_ys_[i] - pre_ys_[i] + center_y);
+            } else {
+                next_reduction_path_.lineTo(xs_[i], post_ys_[i] - pre_ys_[i]);
+            }
         }
         next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
     }
 
     void PeakPanel::lookAndFeelChanged() {
         curve_thickness_ = base_.getFontSize() * .2f * base_.getMagCurveThickness();
-    }
-
-    void PeakPanel::parameterChanged(const juce::String& parameter_id, const float new_value) {
-        if (parameter_id == zlstate::PAnalyzerMagType::kID) {
-            mag_analyzer_ref_.setMagType(static_cast<zldsp::analyzer::MagType>(std::round(new_value)));
-        } else if (parameter_id == zlstate::PAnalyzerMinDB::kID) {
-            analyzer_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
-        } else if (parameter_id == zlstate::PAnalyzerTimeLength::kID) {
-            setTimeLength(zlstate::PAnalyzerTimeLength::getTimeLengthFromIndex(new_value));
-        }
     }
 }

@@ -13,7 +13,7 @@
 #include "../dsp/gain/gain.hpp"
 #include "../dsp/splitter/splitter.hpp"
 #include "../dsp/delay/delay.hpp"
-#include "../dsp/analyzer/mag_analyzer/mag_analyzer.hpp"
+#include "../dsp/analyzer/mag_analyzer/mag_analyzer_sender_base.hpp"
 #include "../dsp/over_sample/over_sample.hpp"
 #include "../dsp/loudness/lufs_matcher.hpp"
 #include "zlp_definitions.hpp"
@@ -34,9 +34,7 @@ namespace zlp {
         void process(std::array<float*, 2> main_pointers, std::array<float*, 2> side_pointers,
                      size_t num_samples, bool bypass);
 
-        auto& getMagAnalyzer() { return mag_analyzer_; }
-
-        auto& getMagAvgAnalyzer() { return mag_avg_analyzer_; }
+        auto& getMagAnalyzerSender() { return mag_analyzer_sender_; }
 
         auto& getCompressionComputer() { return compression_computer_; }
 
@@ -188,10 +186,6 @@ namespace zlp {
             to_update_.store(true, std::memory_order::release);
         }
 
-        void setMagAnalyzerStereo(const int x) {
-            mag_analyzer_stereo_.store(x, std::memory_order::relaxed);
-        }
-
     private:
         juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
@@ -205,13 +199,7 @@ namespace zlp {
         // magnitude analyzer
         std::atomic<bool> mag_analyzer_on_{true};
         bool c_mag_analyzer_on_{true};
-        zldsp::analyzer::MagReductionAnalyzer<float, kAnalyzerPointNum> mag_analyzer_;
-        zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, kAvgAnalyzerPointNum> mag_avg_analyzer_;
-        std::atomic<int> mag_analyzer_stereo_{0};
-        kfr::univector<float> pre_ms_buffer_, post_ms_buffer_, main_ms_buffer_;
-        float* pre_ms_pointer_{};
-        float* post_ms_pointer_{};
-        float* main_ms_pointer_{};
+        zldsp::analyzer::MagAnalyzerSenderBase<float, 3> mag_analyzer_sender_;
         // lufs matcher
         std::atomic<bool> lufs_matcher_on_{false};
         bool c_lufs_matcher_on_{false};

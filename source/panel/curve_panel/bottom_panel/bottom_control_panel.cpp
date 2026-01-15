@@ -121,8 +121,6 @@ namespace zlpanel {
             show_path1_ = f;
             repaint();
         }
-        p_ref_.getCompressController().setMagAnalyzerStereo(static_cast<int>(
-            std::round(analyzer_stereo_ref_.load(std::memory_order::relaxed))));
     }
 
     void BottomControlPanel::resized() {

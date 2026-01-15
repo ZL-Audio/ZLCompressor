@@ -16,14 +16,10 @@ namespace zlp {
 
     void CompressController::prepare(const double sample_rate, const size_t max_num_samples) {
         sample_rate_ = sample_rate;
-        mag_analyzer_.prepare(sample_rate, max_num_samples);
-        mag_avg_analyzer_.prepare(sample_rate, max_num_samples);
-        pre_ms_buffer_.resize(max_num_samples);
-        pre_ms_pointer_ = pre_ms_buffer_.data();
-        post_ms_buffer_.resize(max_num_samples);
-        post_ms_pointer_ = post_ms_buffer_.data();
-        main_ms_buffer_.resize(max_num_samples);
-        main_ms_pointer_ = main_ms_buffer_.data();
+        mag_analyzer_sender_.prepare(sample_rate, max_num_samples, {2, 2, 2});
+        for (size_t i = 0; i < 3; ++i) {
+            mag_analyzer_sender_.setON(i, true);
+        }
         lufs_matcher_.prepare(sample_rate, 2);
         output_gain_.prepare(sample_rate, max_num_samples, 0.1);
 
@@ -236,14 +232,14 @@ namespace zlp {
         if (c_lufs_matcher_on_) {
             lufs_matcher_.processPre(main_pointers, num_samples);
         }
+        // copy pre buffer
+        if (c_copy_pre) {
+            zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
+        }
         // stereo split the main/side buffer
         if (c_stereo_mode_is_midside) {
             zldsp::splitter::InplaceMSSplitter<float>::split(main_pointers[0], main_pointers[1], num_samples);
             zldsp::splitter::InplaceMSSplitter<float>::split(side_pointers[0], side_pointers[1], num_samples);
-        }
-        // copy pre buffer
-        if (c_copy_pre) {
-            zldsp::vector::copy<float>(pre_pointers_, main_pointers, num_samples);
         }
         // upsample side buffer
         std::array<float*, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
@@ -278,6 +274,10 @@ namespace zlp {
         }
         default: ;
         }
+        // stereo combine the main buffer
+        if (c_stereo_mode_is_midside) {
+            zldsp::splitter::InplaceMSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
+        }
         // copy post buffer
         if (c_copy_post) {
             zldsp::vector::copy<float>(post_pointers_, main_pointers, num_samples);
@@ -290,67 +290,7 @@ namespace zlp {
         }
         // mag analyzer
         if (c_mag_analyzer_on_) {
-            const auto mag_analyzer_stereo = mag_analyzer_stereo_.load(std::memory_order::relaxed);
-            if (mag_analyzer_stereo == 0) {
-                // stereo
-                mag_analyzer_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
-                mag_avg_analyzer_.process({pre_pointers_, main_pointers}, num_samples);
-            } else {
-                if (c_stereo_mode_is_midside) {
-                    if (mag_analyzer_stereo == 1 || mag_analyzer_stereo == 2) {
-                        pre_ms_pointer_ = pre_ms_buffer_.data();
-                        post_ms_pointer_ = post_ms_buffer_.data();
-                        main_ms_pointer_ = main_ms_buffer_.data();
-                        if (mag_analyzer_stereo == 1) {
-                            pre_ms_buffer_ = pre_buffer_[0] + pre_buffer_[1];
-                            post_ms_buffer_ = post_buffer_[0] + post_buffer_[1];
-                            main_ms_buffer_ = kfr::make_univector(main_pointers[0], num_samples)
-                                + kfr::make_univector(main_pointers[1], num_samples);
-                        } else {
-                            pre_ms_buffer_ = pre_buffer_[0] - pre_buffer_[1];
-                            post_ms_buffer_ = post_buffer_[0] - post_buffer_[1];
-                            main_ms_buffer_ = kfr::make_univector(main_pointers[0], num_samples)
-                                - kfr::make_univector(main_pointers[1], num_samples);
-                        }
-                    } else {
-                        const auto stereo_idx = mag_analyzer_stereo == 3
-                            ? static_cast<size_t>(0)
-                            : static_cast<size_t>(1);
-                        pre_ms_pointer_ = pre_pointers_[stereo_idx];
-                        post_ms_pointer_ = post_pointers_[stereo_idx];
-                        main_ms_pointer_ = main_pointers[stereo_idx];
-                    }
-                } else {
-                    if (mag_analyzer_stereo == 3 || mag_analyzer_stereo == 4) {
-                        pre_ms_pointer_ = pre_ms_buffer_.data();
-                        post_ms_pointer_ = post_ms_buffer_.data();
-                        main_ms_pointer_ = main_ms_buffer_.data();
-                        if (mag_analyzer_stereo == 3) {
-                            pre_ms_buffer_ = 0.5f * (pre_buffer_[0] + pre_buffer_[1]);
-                            post_ms_buffer_ = 0.5f * (post_buffer_[0] + post_buffer_[1]);
-                            main_ms_buffer_ = 0.5f * (kfr::make_univector(main_pointers[0], num_samples)
-                                + kfr::make_univector(main_pointers[1], num_samples));
-                        } else {
-                            pre_ms_buffer_ = 0.5f * (pre_buffer_[0] - pre_buffer_[1]);
-                            post_ms_buffer_ = 0.5f * (post_buffer_[0] - post_buffer_[1]);
-                            main_ms_buffer_ = 0.5f * (kfr::make_univector(main_pointers[0], num_samples)
-                                - kfr::make_univector(main_pointers[1], num_samples));
-                        }
-                    } else {
-                        const auto stereo_idx = mag_analyzer_stereo == 1
-                            ? static_cast<size_t>(0)
-                            : static_cast<size_t>(1);
-                        pre_ms_pointer_ = pre_pointers_[stereo_idx];
-                        post_ms_pointer_ = post_pointers_[stereo_idx];
-                        main_ms_pointer_ = main_pointers[stereo_idx];
-                    }
-                }
-                mag_analyzer_.process({std::span{&pre_ms_pointer_, 1},
-                                       std::span{&post_ms_pointer_, 1},
-                                       std::span{&main_ms_pointer_, 1}}, num_samples);
-                mag_avg_analyzer_.process({std::span{&pre_ms_pointer_, 1},
-                                           std::span{&main_ms_pointer_, 1}}, num_samples);
-            }
+            mag_analyzer_sender_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
         }
         // delta
         if (c_is_delta_) {
@@ -360,10 +300,6 @@ namespace zlp {
                 auto main_vector = kfr::make_univector(main_pointers[chan], num_samples);
                 main_vector = pre_vector - post_vector;
             }
-        }
-        // stereo combine the main buffer
-        if (c_stereo_mode_is_midside) {
-            zldsp::splitter::InplaceMSSplitter<float>::combine(main_pointers[0], main_pointers[1], num_samples);
         }
         // process the post lufs matcher
         if (c_lufs_matcher_on_) {

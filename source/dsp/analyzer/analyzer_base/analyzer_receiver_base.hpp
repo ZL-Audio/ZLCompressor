@@ -9,6 +9,12 @@
 
 #pragma once
 
-#include "multiple_mag_analyzer.hpp"
-#include "mag_reduction_analyzer.hpp"
-#include "multiple_mag_avg_analyzer.hpp"
+namespace zldsp::analyzer {
+    enum class MagType {
+        kPeak, kRMS
+    };
+
+    enum class StereoType {
+        kStereo, kLeft, kRight, kMid, kSide
+    };
+}

@@ -14,35 +14,50 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../../dsp/analyzer/mag_analyzer/mag_rms_hist_receiver.hpp"
 
 namespace zlpanel {
     class RMSPanel final : public juce::Component {
     public:
-        explicit RMSPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit RMSPanel(PluginProcessor& p, zlgui::UIBase& base);
 
         void paint(juce::Graphics& g) override;
 
-        void run(bool update_path);
+        void run(double sample_rate, zldsp::container::AbstractFIFO::Range);
 
         void resized() override;
 
-        void mouseDoubleClick(const juce::MouseEvent& event) override;
+        void setToReset() {
+            to_reset_.store(true, std::memory_order::relaxed);
+        }
 
     private:
+        static constexpr size_t kNumPoints = 100;
+
         zlgui::UIBase& base_;
-        zldsp::analyzer::MultipleMagAvgAnalyzer<float, 2, zlp::CompressController::kAvgAnalyzerPointNum>&
-        avg_analyzer_ref_;
-        std::atomic<float>& min_db_ref_;
+
+        std::atomic<float>& analyzer_min_db_ref_;
+
+        zldsp::analyzer::MagAnalyzerSenderBase<float, 3>& analyzer_sender_;
+        zldsp::analyzer::MagRMSHistReceiver in_receiver_{}, out_receiver_{};
 
         AtomicBound<float> atomic_bound_;
 
+        double sample_rate_{0.};
+
         float curve_thickness_{0.f};
 
-        std::array<float, zlp::CompressController::kAvgAnalyzerPointNum> in_xs_{}, out_xs{}, ys_{};
+        float min_db_idx_{0.f};
+
+        float height_{0.f};
+
+        std::array<float, kNumPoints> in_xs_{}, out_xs_{}, ys_{};
         juce::Path in_path_, out_path_;
         juce::Path next_in_path_, next_out_path_;
         std::mutex mutex_;
 
+        std::atomic<bool> to_reset_{false};
+
         void lookAndFeelChanged() override;
     };
-} // zlpanel
+}
