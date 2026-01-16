@@ -16,7 +16,7 @@ namespace zlp {
 
     void CompressController::prepare(const double sample_rate, const size_t max_num_samples) {
         sample_rate_ = sample_rate;
-        mag_analyzer_sender_.prepare(sample_rate, max_num_samples, {2, 2, 2});
+        mag_analyzer_sender_.prepare(sample_rate, max_num_samples, {2, 2, 2}, 1.0 / 7.0);
         for (size_t i = 0; i < 3; ++i) {
             mag_analyzer_sender_.setON(i, true);
         }

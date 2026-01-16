@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "mag_analyzer_sender_base.hpp"
+#include "mag_analyzer_sender.hpp"
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 #include "../../chore/decibels.hpp"
 
@@ -54,10 +54,10 @@ namespace zldsp::analyzer {
                             analyze_expr(vR);
                             break;
                         case StereoType::kMid:
-                            analyze_expr(vL + vR);
+                            analyze_expr(kSqrt2Over2 * (vL + vR));
                             break;
                         case StereoType::kSide:
-                            analyze_expr(vL - vR);
+                            analyze_expr(kSqrt2Over2 * (vL - vR));
                             break;
                         case StereoType::kStereo:
                         default:
@@ -90,10 +90,6 @@ namespace zldsp::analyzer {
                 std::rotate(y.begin(), y.begin() + 1, y.end());
                 y.back() = (dbs_[idx] - max_db) * scale;
             }
-        }
-
-        std::array<float, kNum>& getLatestDBs() {
-            return dbs_;
         }
 
     protected:

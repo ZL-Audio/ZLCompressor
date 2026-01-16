@@ -13,7 +13,7 @@
 #include "../dsp/gain/gain.hpp"
 #include "../dsp/splitter/splitter.hpp"
 #include "../dsp/delay/delay.hpp"
-#include "../dsp/analyzer/mag_analyzer/mag_analyzer_sender_base.hpp"
+#include "../dsp/analyzer/mag_analyzer/mag_analyzer_sender.hpp"
 #include "../dsp/over_sample/over_sample.hpp"
 #include "../dsp/loudness/lufs_matcher.hpp"
 #include "zlp_definitions.hpp"
@@ -199,7 +199,7 @@ namespace zlp {
         // magnitude analyzer
         std::atomic<bool> mag_analyzer_on_{true};
         bool c_mag_analyzer_on_{true};
-        zldsp::analyzer::MagAnalyzerSenderBase<float, 3> mag_analyzer_sender_;
+        zldsp::analyzer::MagAnalyzerSender<float, 3> mag_analyzer_sender_;
         // lufs matcher
         std::atomic<bool> lufs_matcher_on_{false};
         bool c_lufs_matcher_on_{false};

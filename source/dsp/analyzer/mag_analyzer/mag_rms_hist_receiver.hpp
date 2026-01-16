@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "mag_analyzer_sender_base.hpp"
+#include "mag_analyzer_sender.hpp"
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 #include "../../chore/decibels.hpp"
 

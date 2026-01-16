@@ -38,7 +38,7 @@ namespace zlpanel {
 
         std::atomic<float>& analyzer_min_db_ref_;
 
-        zldsp::analyzer::MagAnalyzerSenderBase<float, 3>& analyzer_sender_;
+        zldsp::analyzer::MagAnalyzerSender<float, 3>& analyzer_sender_;
         zldsp::analyzer::MagRMSHistReceiver in_receiver_{}, out_receiver_{};
 
         AtomicBound<float> atomic_bound_;

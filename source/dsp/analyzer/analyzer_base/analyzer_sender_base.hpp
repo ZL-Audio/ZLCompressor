@@ -30,8 +30,6 @@ namespace zldsp::analyzer {
 
         virtual ~AnalyzerSenderBase() = default;
 
-        virtual void prepare(double sample_rate, size_t max_num_samples, std::array<size_t, kNum> num_channels) = 0;
-
         /**
          * push input samples into FIFOs
          * @param buffers
@@ -80,14 +78,6 @@ namespace zldsp::analyzer {
             return lock_;
         }
 
-        double getSampleRate() const {
-            return sample_rate_;
-        }
-
-        size_t getMaxNumSamples() const {
-            return max_num_samples_;
-        }
-
     protected:
         zldsp::lock::SpinLock lock_;
 
@@ -95,10 +85,6 @@ namespace zldsp::analyzer {
         zldsp::container::AbstractFIFO abstract_fifo_{0};
 
         std::array<bool, kNum> is_on_{};
-
-        double sample_rate_{48000.0};
-
-        size_t max_num_samples_{1};
 
         void setFIFOSize(const size_t fifo_size, std::array<size_t, kNum>& num_channels) {
             abstract_fifo_.setCapacity(static_cast<int>(fifo_size));

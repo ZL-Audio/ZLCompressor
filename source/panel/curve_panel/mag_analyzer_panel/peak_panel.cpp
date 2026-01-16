@@ -148,10 +148,6 @@ namespace zlpanel {
         }
     }
 
-    std::array<float, 2> PeakPanel::getPreOutDBs() {
-        return {analyzer_receiver_.getLatestDBs()[0], analyzer_receiver_.getLatestDBs()[2]};
-    }
-
     template <bool center>
     void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
         next_in_path_.clear();

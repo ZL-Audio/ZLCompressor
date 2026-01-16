@@ -30,8 +30,6 @@ namespace zlpanel {
 
         void resized() override;
 
-        std::array<float, 2> getPreOutDBs();
-
     private:
         static constexpr std::array<int, 4> kNumPointsPerSecond{40, 30, 20, 15};
         zlgui::UIBase& base_;
@@ -42,7 +40,7 @@ namespace zlpanel {
         std::atomic<float>& analyzer_min_db_ref_;
         std::atomic<float>& analyzer_time_length_ref_;
 
-        zldsp::analyzer::MagAnalyzerSenderBase<float, 3>& analyzer_sender_;
+        zldsp::analyzer::MagAnalyzerSender<float, 3>& analyzer_sender_;
         zldsp::analyzer::MagAnalyzerReceiver<3> analyzer_receiver_{};
 
         AtomicBound<float> atomic_bound_;

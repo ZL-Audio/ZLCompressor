@@ -14,7 +14,7 @@
 
 #include "../../container/container.hpp"
 #include "../../interpolation/interpolation.hpp"
-#include "../../fft/fft.hpp"
+#include "../../fft/kfr_engine.hpp"
 #include "../../chore/decibels.hpp"
 #include "../../lock/spin_lock.hpp"
 #include "../../vector/vector.hpp"

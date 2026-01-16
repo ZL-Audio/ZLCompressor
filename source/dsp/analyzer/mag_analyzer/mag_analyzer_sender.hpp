@@ -18,14 +18,31 @@ namespace zldsp::analyzer {
      * @tparam kNum the number of analyzers
      */
     template <typename FloatType, size_t kNum>
-    class MagAnalyzerSenderBase : public AnalyzerSenderBase<FloatType, kNum> {
+    class MagAnalyzerSender : public AnalyzerSenderBase<FloatType, kNum> {
     public:
-        void prepare(double sample_rate, size_t max_num_samples, std::array<size_t, kNum> num_channels) override {
-            this->sample_rate_ = sample_rate;
+        void prepare(const double sample_rate, size_t max_num_samples, std::array<size_t, kNum> num_channels,
+                     const double fifo_size_second) {
+            this->lock_.lock();
+            sample_rate_ = sample_rate;
             this->max_num_samples_ = max_num_samples;
 
-            this->setFIFOSize(std::max(max_num_samples, static_cast<size_t>(std::round(sample_rate / 7.0))),
+            this->setFIFOSize(std::max(max_num_samples,
+                                       static_cast<size_t>(std::round(sample_rate * fifo_size_second))),
                               num_channels);
+
+            this->lock_.unlock();
         }
+
+        [[nodiscard]] double getSampleRate() const {
+            return sample_rate_;
+        }
+
+        [[nodiscard]] size_t getMaxNumSamples() const {
+            return max_num_samples_;
+        }
+
+    protected:
+        double sample_rate_{48000.0};
+        size_t max_num_samples_{1};
     };
 }
