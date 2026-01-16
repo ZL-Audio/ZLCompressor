@@ -93,9 +93,14 @@ namespace zlpanel {
                 const auto num_ready = fifo.getNumReady();
                 // if not enough samples
                 if (num_ready < num_samples_per_point_) {
-                    is_first_point_ = true;
+                    if (missing_point_) {
+                        is_first_point_ = true;
+                    } else {
+                        missing_point_ = true;
+                    }
                     break;
                 }
+                missing_point_ = false;
                 const auto range = fifo.prepareToRead(num_samples_per_point_);
                 rms_panel.run(sample_rate_, range);
                 analyzer_receiver_.run(range, analyzer_sender_.getSampleFIFOs(),
