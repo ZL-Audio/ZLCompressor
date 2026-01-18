@@ -16,10 +16,9 @@
 namespace zldsp::analyzer {
     /**
      * a fft analyzer receiver which pulls input samples from FIFOs and runs forward FFT
-     * @tparam FloatType the float type of input audio buffers
      * @tparam kNum the number of FFTs
      */
-    template <typename FloatType, size_t kNum>
+    template <size_t kNum>
     class MultipleFFTBaseReceiver {
     public:
         explicit MultipleFFTBaseReceiver() = default;
@@ -31,9 +30,7 @@ namespace zldsp::analyzer {
          * @param num_channels number of channels
          */
         void prepare(const double sample_rate, const int order, std::array<size_t, kNum> num_channels) {
-            sample_rate_ = sample_rate;
             setOrder(order, num_channels);
-            updateTilt();
         }
 
         /**
@@ -99,18 +96,13 @@ namespace zldsp::analyzer {
                         fft_in_ = kSqrt2Over2 * (circular_buffers_[i][0] - circular_buffers_[i][1]) * window_;
                     }
                     fft_.forward(fft_in_, fft_out_);
-                    abs_sqr_fft_buffers_[i] = kfr::cabssqr(fft_out_) * tilt_shift_;
+                    abs_sqr_fft_buffers_[i] = kfr::cabssqr(fft_out_);
                 }
             }
         }
 
         void setON(std::array<bool, kNum>& is_on) {
             is_on_ = is_on;
-        }
-
-        void setTiltSlope(const float x) {
-            tilt_slope_ = x;
-            updateTilt();
         }
 
         /**
@@ -133,10 +125,6 @@ namespace zldsp::analyzer {
 
         std::array<bool, kNum> is_on_{};
 
-        double sample_rate_{48000.0};
-        float tilt_slope_{4.5f};
-        kfr::univector<float> tilt_shift_{};
-
         void setOrder(const int fft_order, std::array<size_t, kNum>& num_channels) {
             fft_.setOrder(static_cast<size_t>(fft_order));
             const auto fft_size = fft_.getSize();
@@ -151,7 +139,6 @@ namespace zldsp::analyzer {
             for (size_t i = 0; i < kNum; ++i) {
                 abs_sqr_fft_buffers_[i].resize(fft_size / 2 + 1);
             }
-            tilt_shift_.resize(fft_size / 2 + 1);
 
             for (size_t i = 0; i < kNum; ++i) {
                 circular_buffers_[i].resize(num_channels[i]);
@@ -160,16 +147,6 @@ namespace zldsp::analyzer {
                     std::fill(circular_buffers_[i][chan].begin(), circular_buffers_[i][chan].end(), 0.f);
                 }
             }
-        }
-
-        void updateTilt() {
-            const auto delta = sample_rate_ / static_cast<double>(fft_.getSize());
-            const auto exponent = (tilt_slope_ * 0.1) / std::log10(2.0);
-            const auto base_scalar = std::pow(delta * 0.001, exponent);
-            for (size_t i = 1; i < tilt_shift_.size(); ++i) {
-                tilt_shift_[i] = static_cast<float>(base_scalar * std::pow(i, exponent));
-            }
-            tilt_shift_[0] = tilt_shift_[1];
         }
     };
 }
