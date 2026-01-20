@@ -4,6 +4,13 @@ LICENSE and CODE are available at [https://github.com/ZL-Audio/ZLCompressor](htt
 
 # Changelog
 
+# 0.3.2
+
+Bug fixes and Improvements
+
+- improve magnitude analyzer display
+- improve FFT analyzer display
+
 ## 0.3.1
 
 New Features
