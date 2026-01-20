@@ -117,7 +117,6 @@ namespace zlpanel {
         {
             bound.removeFromRight(padding);
             auto t_bound = bound.removeFromRight(slider_width);
-            t_bound.removeFromTop(padding);
             const auto extra_padding = (t_bound.getHeight() - 2 * slider_height) / 4;
             t_bound.removeFromTop(extra_padding);
             t_bound.removeFromBottom(extra_padding);
