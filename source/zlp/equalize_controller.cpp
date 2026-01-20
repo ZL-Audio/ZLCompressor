@@ -15,7 +15,8 @@ namespace zlp {
     }
 
     void EqualizeController::prepare(const double sample_rate, const size_t max_num_samples) {
-        fft_analyzer_.prepare(sample_rate, {2});
+        fft_analyzer_sender_.prepare(sample_rate, {2});
+        fft_analyzer_sender_.setON(0, true);
         for (auto& filter : filters_) {
             filter.prepare(sample_rate, 2);
         }
@@ -65,7 +66,6 @@ namespace zlp {
                 updateSoloFilter();
             }
         }
-        c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
     }
 
     void EqualizeController::process(std::array<double*, 2> pointers, const size_t num_samples) {
@@ -93,8 +93,8 @@ namespace zlp {
             }
             }
         }
-        if (c_fft_analyzer_on_) {
-            fft_analyzer_.process({pointers}, num_samples);
+        if (fft_analyzer_on_.load(std::memory_order::relaxed)) {
+            fft_analyzer_sender_.process({pointers}, num_samples);
         }
     }
 

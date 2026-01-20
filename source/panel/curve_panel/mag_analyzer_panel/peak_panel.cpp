@@ -62,7 +62,9 @@ namespace zlpanel {
             analyzer_min_db_ref_.load(std::memory_order::relaxed)))];
         const auto time_length_idx = analyzer_time_length_ref_.load(std::memory_order::relaxed);
 
-        analyzer_sender_.getLock().lock();
+        if (!analyzer_sender_.getLock().try_lock()) {
+            return;
+        }
         const auto sample_rate = analyzer_sender_.getSampleRate();
         const auto max_num_samples = analyzer_sender_.getMaxNumSamples();
 
@@ -90,17 +92,16 @@ namespace zlpanel {
         if (!is_first_point_) {
             // update ys
             while (next_time_stamp - start_time_ > second_per_point_) {
-                const auto num_ready = fifo.getNumReady();
                 // if not enough samples
-                if (num_ready < num_samples_per_point_) {
-                    if (missing_point_) {
+                if (fifo.getNumReady() < num_samples_per_point_) {
+                    if (not_enough_samples) {
                         is_first_point_ = true;
                     } else {
-                        missing_point_ = true;
+                        not_enough_samples = true;
                     }
                     break;
                 }
-                missing_point_ = false;
+                not_enough_samples = false;
                 const auto range = fifo.prepareToRead(num_samples_per_point_);
                 rms_panel.run(sample_rate_, range);
                 analyzer_receiver_.run(range, analyzer_sender_.getSampleFIFOs(),
@@ -114,14 +115,14 @@ namespace zlpanel {
             const auto num_ready = fifo.getNumReady();
             const auto threshold = 2 * (static_cast<int>(max_num_samples_) + num_samples_per_point_);
             if (num_ready > threshold) {
-                if (too_much_point_) {
+                if (too_much_samples) {
                     (void)fifo.prepareToRead(num_ready - threshold / 2);
                     fifo.finishRead(num_ready - threshold / 2);
                 } else {
-                    too_much_point_ = true;
+                    too_much_samples = true;
                 }
             } else {
-                too_much_point_ = false;
+                too_much_samples = false;
             }
         } else {
             if (fifo.getNumReady() >= num_samples_per_point_) {

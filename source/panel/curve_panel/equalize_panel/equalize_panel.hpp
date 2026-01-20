@@ -34,6 +34,10 @@ namespace zlpanel {
 
         void repaintCallBackAfter();
 
+        auto& getFFTAnalyzerPanel() {
+            return fft_analyzer_panel_;
+        }
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;

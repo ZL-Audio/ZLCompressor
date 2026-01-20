@@ -33,8 +33,7 @@ namespace zlpanel {
         setInterceptsMouseClicks(true, false);
     }
 
-    MagAnalyzerPanel::~MagAnalyzerPanel() {
-    }
+    MagAnalyzerPanel::~MagAnalyzerPanel() = default;
 
     void MagAnalyzerPanel::resized() {
         const auto bound = getLocalBounds();

@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../dsp/filter/filter.hpp"
-#include "../dsp/analyzer/fft_analyzer/fft_analyzer.hpp"
+#include "../dsp/analyzer/fft_analyzer/fft_analyzer_sender.hpp"
 #include "../dsp/gain/origin_gain.hpp"
 #include "zlp_definitions.hpp"
 
@@ -45,13 +45,12 @@ namespace zlp {
             return filters_[idx];
         }
 
-        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, 100>& getFFTAnalyzer() {
-            return fft_analyzer_;
+        auto& getFFTAnalyzerSender() {
+            return fft_analyzer_sender_;
         }
 
         void setFFTAnalyzerON(const bool f) {
             fft_analyzer_on_.store(f, std::memory_order::relaxed);
-            fft_analyzer_.setON({f});
         }
 
         [[nodiscard]] bool getFFTAnalyzerON() const {
@@ -80,20 +79,14 @@ namespace zlp {
         zldsp::gain::Gain<double> gain_{};
         bool c_gain_equal_zero_{true};
 
-        std::array<zldsp::filter::IIR < double, 16>
-        ,
-        kBandNum
-        >
-        filters_ {
-        };
+        std::array<zldsp::filter::IIR<double, 16> ,kBandNum> filters_{};
         std::atomic<bool> to_update_filter_status_{true};
         std::array<std::atomic<FilterStatus>, kBandNum> filter_status_;
         std::array<FilterStatus, kBandNum> c_filter_status_{};
         std::vector<size_t> on_indices_{};
 
         std::atomic<bool> fft_analyzer_on_{false};
-        bool c_fft_analyzer_on_{false};
-        zldsp::analyzer::MultipleFFTAnalyzer<double, 1, kAnalyzerPointNum> fft_analyzer_;
+        zldsp::analyzer::FFTAnalyzerSender<double, 1> fft_analyzer_sender_;
 
         zldsp::filter::IIR<double, 16> solo_filter_{};
         std::atomic<size_t> solo_band_{kBandNum};

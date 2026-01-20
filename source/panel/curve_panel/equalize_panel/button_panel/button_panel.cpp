@@ -11,24 +11,24 @@
 
 namespace zlpanel {
     ButtonPanel::ButtonPanel(PluginProcessor& p, zlgui::UIBase& base,
-                             size_t& selected_band_idx)
-        : p_ref_(p), base_(base), selected_band_idx_(selected_band_idx),
-          eq_max_db_id_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
-          q_slider_(base), slope_slider_(base),
-          eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
-          eq_db_box_attachment_(eq_db_box_.getBox(), p.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
-          para_panel_(p, base, selected_band_idx),
-          popup_panel_(p, base, selected_band_idx),
-          right_click_panel_(p, base, selected_band_idx),
-          solo_panel_(p, base, selected_band_idx, dragger_panels_),
-          items_set_(base.getSelectedBandSet()) {
+                             size_t& selected_band_idx) :
+        p_ref_(p), base_(base), selected_band_idx_(selected_band_idx),
+        eq_max_db_id_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
+        q_slider_(base), slope_slider_(base),
+        eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
+        eq_db_box_attachment_(eq_db_box_.getBox(), p.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
+        para_panel_(p, base, selected_band_idx),
+        popup_panel_(p, base, selected_band_idx),
+        right_click_panel_(p, base, selected_band_idx),
+        solo_panel_(p, base, selected_band_idx, dragger_panels_),
+        items_set_(base.getSelectedBandSet()) {
         addChildComponent(q_slider_);
         slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         addChildComponent(slope_slider_);
 
         const auto popup_option = juce::PopupMenu::Options()
-                                  .withParentComponent(this)
-                                  .withPreferredPopupDirection(juce::PopupMenu::Options::PopupDirection::downwards);
+            .withParentComponent(this)
+            .withPreferredPopupDirection(juce::PopupMenu::Options::PopupDirection::downwards);
         for (auto& box : {&eq_db_box_}) {
             box->getLAF().setFontScale(1.f);
             box->getLAF().setOption(popup_option);
@@ -68,7 +68,6 @@ namespace zlpanel {
 
     ButtonPanel::~ButtonPanel() {
         turnOffSolo();
-        p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
     }
 
     void ButtonPanel::resized() {
@@ -121,12 +120,7 @@ namespace zlpanel {
         }
         para_panel_.repaintCallBackSlow();
         popup_panel_.repaintCallBackSlow();
-        if (filter_type_ref_&& selected_band_idx_
-        
-        !=
-        zlp::kBandNum
-        )
-        {
+        if (filter_type_ref_ && selected_band_idx_ != zlp::kBandNum) {
             if (std::abs(filter_type_ref_->load(std::memory_order::relaxed) - c_filter_type_) > .1f) {
                 c_filter_type_ = filter_type_ref_->load(std::memory_order::relaxed);
                 const auto filter_type = static_cast<int>(std::round(c_filter_type_));
@@ -157,8 +151,7 @@ namespace zlpanel {
                     q_slider_,
                     p_ref_.parameters_, zlp::PQ::kID + std::to_string(selected_band_idx_),
                     updater_);
-            }
-            else {
+            } else {
                 filter_type_ref_ = nullptr;
             }
             para_panel_.updateBand();
@@ -166,8 +159,7 @@ namespace zlpanel {
 
             if (!items_set_.isSelected(selected_band_idx_)) {
                 items_set_.deselectAll();
-            }
-            else {
+            } else {
                 previous_paras_ = {-99.f, -99.f, -99.f};
                 loadSelectedParas();
             }
@@ -192,8 +184,7 @@ namespace zlpanel {
                 target_point.x += event.position.x;
                 target_point.y += event.position.y;
                 right_click_panel_.updateCopyVisibility(false);
-            }
-            else {
+            } else {
                 for (size_t i = 0; i < zlp::kBandNum; ++i) {
                     if (dragger_panels_[i]->isParentOf(event.originalComponent)) {
                         target_point.applyTransform(dragger_panels_[i]->getDragger().getButton().getTransform());
@@ -209,8 +200,7 @@ namespace zlpanel {
             }
             right_click_panel_.setTransform(juce::AffineTransform::translation(target_point.x, target_point.y));
             right_click_panel_.setVisible(true);
-        }
-        else {
+        } else {
             right_click_panel_.setVisible(false);
             if (event.originalComponent == this) {
                 turnOffSolo();
@@ -282,20 +272,16 @@ namespace zlpanel {
         if (freq < 20.f) {
             init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kHighPass));
             init_values.emplace_back(zlp::PGain::convertTo01(0.f));
-        }
-        else if (freq < 50.f) {
+        } else if (freq < 50.f) {
             init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kLowShelf));
             init_values.emplace_back(zlp::PGain::convertTo01(2 * gain));
-        }
-        else if (freq < 5000.f) {
+        } else if (freq < 5000.f) {
             init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kPeak));
             init_values.emplace_back(zlp::PGain::convertTo01(gain));
-        }
-        else if (freq < 15000.f) {
+        } else if (freq < 15000.f) {
             init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kHighShelf));
             init_values.emplace_back(zlp::PGain::convertTo01(2 * gain));
-        }
-        else {
+        } else {
             init_values.emplace_back(zlp::PFilterType::convertTo01(zldsp::filter::FilterType::kLowPass));
             init_values.emplace_back(zlp::PGain::convertTo01(0.f));
         }
@@ -329,8 +315,7 @@ namespace zlpanel {
 
         if (e.mods.isCommandDown()) {
             slope_slider_.mouseWheelMove(e, wheel);
-        }
-        else {
+        } else {
             q_slider_.mouseWheelMove(e, wheel);
         }
     }
@@ -354,7 +339,7 @@ namespace zlpanel {
     void ButtonPanel::mouseMove(const juce::MouseEvent& event) {
         if (event.originalComponent == this) {
             stopTimer();
-            p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
+            base_.setPanelProperty(zlgui::PanelSettingIdx::kFFTFrozen, 0.f);
             startTimer(2000);
         }
     }
@@ -362,12 +347,12 @@ namespace zlpanel {
     void ButtonPanel::mouseExit(const juce::MouseEvent& event) {
         if (event.originalComponent == this) {
             stopTimer();
-            p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, false);
+            base_.setPanelProperty(zlgui::PanelSettingIdx::kFFTFrozen, 0.f);
         }
     }
 
     void ButtonPanel::timerCallback() {
-        p_ref_.getEqualizeController().getFFTAnalyzer().setFrozen(0, true);
+        base_.setPanelProperty(zlgui::PanelSettingIdx::kFFTFrozen, 1.f);
         stopTimer();
     }
 
@@ -422,7 +407,7 @@ namespace zlpanel {
             gain_updaters_[selected_band_idx_]->getRawParaValue(),
             q_updaters_[selected_band_idx_]->getRawParaValue(),
         };
-        std::array < bool, 4 > to_update;
+        std::array<bool, 4> to_update;
         for (size_t i = 0; i < 4; ++i) {
             to_update[i] = std::abs(new_paras[i] - previous_paras_[i]) > 1e-5;
         }
@@ -465,4 +450,4 @@ namespace zlpanel {
             }
         }
     }
-} // zlpanel
+}

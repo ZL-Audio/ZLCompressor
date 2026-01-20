@@ -55,8 +55,8 @@ namespace zlpanel {
         double start_time_{0.0};
 
         bool is_first_point_{true};
-        bool missing_point_{false};
-        bool too_much_point_{false};
+        bool not_enough_samples{false};
+        bool too_much_samples{false};
 
         double sample_rate_{0.};
         size_t max_num_samples_{0};

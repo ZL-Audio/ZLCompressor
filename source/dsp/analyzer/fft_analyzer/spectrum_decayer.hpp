@@ -14,30 +14,32 @@
 #include "../../vector/kfr_import.hpp"
 
 namespace zldsp::analyzer {
-    class SpectrumTilter {
+    class SpectrumDecayer {
     public:
-        explicit SpectrumTilter() = default;
+        explicit SpectrumDecayer() = default;
 
         void prepare(const size_t fft_size) {
-            tilt_shift_.resize(fft_size / 2 + 1);
+            state_.resize(fft_size / 2 + 1);
+            std::ranges::fill(state_.begin(), state_.end(), -240.f);
         }
 
-        void setTiltSlope(const double sample_rate, const double slope_per_oct) {
-            const auto delta = sample_rate * 0.5 / static_cast<double>(tilt_shift_.size() - 1);
-            for (size_t i = 1; i < tilt_shift_.size(); ++i) {
-                const auto freq = static_cast<double>(i) * delta;
-                tilt_shift_[i] = static_cast<float>(std::log2(freq / 1000.0) * slope_per_oct);
-            }
-            tilt_shift_[0] = tilt_shift_[1];
+        void setDecaySpeed(const float refresh_rate, const float decay_per_second) {
+            decay_per_call_ = decay_per_second / refresh_rate;
         }
 
-        void tilt(std::span<float> spectrum_db) {
+        void decay(std::span<float> spectrum_db, const bool frozen = false) {
             auto v = kfr::make_univector(spectrum_db);
-            auto shift = tilt_shift_.slice(0, v.size());
-            v = v + shift;
+            auto s = state_.slice(0, v.size());
+            if (frozen) {
+                v = kfr::max(s, v);
+            } else {
+                v = kfr::max(s + decay_per_call_, v);
+            }
+            s = v;
         }
 
     private:
-        kfr::univector<float> tilt_shift_{};
+        kfr::univector<float> state_{};
+        float decay_per_call_{0.};
     };
 }

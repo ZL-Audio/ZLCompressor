@@ -19,17 +19,16 @@ namespace zldsp::analyzer {
      * @tparam kNum the number of FFTs
      */
     template <size_t kNum>
-    class MultipleFFTBaseReceiver {
+    class FFTAnalyzerReceiver {
     public:
-        explicit MultipleFFTBaseReceiver() = default;
+        explicit FFTAnalyzerReceiver() = default;
 
         /**
          *
-         * @param sample_rate sample rate
          * @param order FFT order
          * @param num_channels number of channels
          */
-        void prepare(const double sample_rate, const int order, std::array<size_t, kNum> num_channels) {
+        void prepare(const int order, std::array<size_t, kNum> num_channels) {
             setOrder(order, num_channels);
         }
 
@@ -40,7 +39,8 @@ namespace zldsp::analyzer {
          */
         void pull(const zldsp::container::AbstractFIFO::Range range,
                   std::array<std::vector<std::vector<float>>, kNum>& sample_fifos) {
-            const auto num_replace = static_cast<int>(fft_.getSize()) - (range.block_size1 + range.block_size2);
+            const auto num_ready = range.block_size1 + range.block_size2;
+            const auto num_replace = static_cast<int>(fft_.getSize()) - num_ready;
             for (size_t i = 0; i < kNum; ++i) {
                 if (!is_on_[i]) { continue; }
                 for (size_t chan = 0; chan < circular_buffers_[i].size(); ++chan) {
@@ -84,7 +84,6 @@ namespace zldsp::analyzer {
                             abs_sqr_fft_buffers_[i] = abs_sqr_fft_buffers_[i] + kfr::cabssqr(fft_out_);
                         }
                     }
-                    abs_sqr_fft_buffers_[i] = abs_sqr_fft_buffers_[i] * tilt_shift_;
                 } else {
                     if (stereo_type == StereoType::kLeft) {
                         fft_in_ = circular_buffers_[i][0] * window_;
@@ -101,7 +100,7 @@ namespace zldsp::analyzer {
             }
         }
 
-        void setON(std::array<bool, kNum>& is_on) {
+        void setON(std::array<bool, kNum> is_on) {
             is_on_ = is_on;
         }
 

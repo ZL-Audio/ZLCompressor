@@ -14,9 +14,14 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../../dsp/analyzer/fft_analyzer/fft_analyzer_receiver.hpp"
+#include "../../../dsp/analyzer/fft_analyzer/spectrum_smoother.hpp"
+#include "../../../dsp/analyzer/fft_analyzer/spectrum_tilter.hpp"
+#include "../../../dsp/analyzer/fft_analyzer/spectrum_decayer.hpp"
 
 namespace zlpanel {
-    class FFTAnalyzerPanel final : public juce::Component {
+    class FFTAnalyzerPanel final : public juce::Component,
+                                   private juce::ValueTree::Listener {
     public:
         explicit FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIBase& base);
 
@@ -28,16 +33,40 @@ namespace zlpanel {
 
         void resized() override;
 
+        void setRefreshRate(double refresh_rate);
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
 
         bool skip_next_repaint_{false};
         AtomicBound<float> atomic_bound_;
-        float width_{-.1f};
 
         std::vector<float> xs_{}, ys_{};
         juce::Path out_path_, next_out_path_;
         std::mutex mutex_;
+
+        double c_sample_rate_{};
+        size_t c_fft_order_{};
+        float c_width_{};
+        size_t num_point_{0};
+
+        std::atomic<float> refresh_rate_{30.0};
+        std::atomic<float> spectrum_decay_speed_{-20.f};
+        std::atomic<bool> to_update_decay_{false};
+
+        std::atomic<float> spectrum_tilt_slope_{4.5f};
+        std::atomic<bool> to_update_tilt_{false};
+
+        std::atomic<bool> is_fft_frozen_{false};
+
+        zldsp::analyzer::FFTAnalyzerReceiver<1> receiver_;
+        zldsp::analyzer::SpectrumSmoother spectrum_smoother_;
+        zldsp::analyzer::SpectrumTilter spectrum_tilter_;
+        zldsp::analyzer::SpectrumDecayer spectrum_decayer_;
+
+        void lookAndFeelChanged() override;
+
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) override;
     };
-} // zlpanel
+}

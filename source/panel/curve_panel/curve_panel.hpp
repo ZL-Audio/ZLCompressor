@@ -35,6 +35,10 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
+        auto& getFFTAnalyzerPanel() {
+            return equalize_panel_.getFFTAnalyzerPanel();
+        }
+
         SideControlPanel& getSideControlPanel() {
             return side_control_panel_;
         }

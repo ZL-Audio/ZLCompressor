@@ -27,7 +27,7 @@ namespace zldsp::analyzer {
 
         void prepare(double sample_rate, std::array<size_t, kNum> num_channels) {
             this->lock_.lock();
-            this->sample_rate_ = sample_rate;
+            sample_rate_ = sample_rate;
             num_channels_ = num_channels;
 
             if (sample_rate <= 50000) {
@@ -44,8 +44,12 @@ namespace zldsp::analyzer {
             this->lock_.unlock();
         }
 
-        size_t getFFTOrder() const {
+        [[nodiscard]] size_t getFFTOrder() const {
             return fft_order_;
+        }
+
+        [[nodiscard]] double getSampleRate() const {
+            return sample_rate_;
         }
 
         std::array<size_t, kNum>& getNumChannels() {
@@ -55,6 +59,7 @@ namespace zldsp::analyzer {
     protected:
         size_t default_fft_order_{12};
         size_t fft_order_{12};
+        double sample_rate_{50000};
         std::array<size_t, kNum> num_channels_;
     };
 }

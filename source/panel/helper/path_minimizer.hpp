@@ -12,19 +12,25 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace zlpanel {
+    template <int kIntTol = 1>
     class PathMinimizer {
     public:
-        static constexpr float kTol = 0.01f;
+        static constexpr float kTol = 0.01f * static_cast<float>(kIntTol);
 
         explicit PathMinimizer(juce::Path& path) : path_ref_(path) {
         }
 
+        /**
+         *
+         * @tparam start whether it is the first point in the path
+         * @param x
+         * @param y
+         */
         template <bool start = true>
         void startNewSubPath(const float x, const float y) {
-            if (start) {
+            if constexpr (start) {
                 path_ref_.startNewSubPath(x, y);
-            }
-            else {
+            } else {
                 path_ref_.lineTo(x, y);
             }
             start_x_ = x;
