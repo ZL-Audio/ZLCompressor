@@ -83,12 +83,14 @@ namespace zlpanel {
         direction_box_.setAlpha(.5f);
         direction_box_.setBufferedToImage(true);
         direction_box_.getBox().onChange = [this]() {
-            const auto direction = static_cast<zlp::PCompDirection::Direction>(
-                direction_box_.getBox().getSelectedItemIndex());
-            if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
+            if (direction_box_.getBox().getSelectedItemIndex() >= 0) {
+                const auto direction = static_cast<zlp::PCompDirection::Direction>(
+                    direction_box_.getBox().getSelectedItemIndex());
                 auto* para = p_ref_.parameters_.getParameter(zlp::PClipperDrive::kID);
+                previous_clipper_value_[previous_direction_idx_] = para->getValue();
+                previous_direction_idx_ = static_cast<size_t>(direction);
                 para->beginChangeGesture();
-                para->setValueNotifyingHost(1.f);
+                para->setValueNotifyingHost(previous_clipper_value_[previous_direction_idx_]);
                 para->endChangeGesture();
             }
         };
@@ -97,6 +99,8 @@ namespace zlpanel {
         setLookaheadAlpha(.5f);
         setOversampleAlpha(.5f);
         setClipperAlpha(.5f);
+
+        startTimer(1000);
     }
 
     void TopControlPanel::resized() {
@@ -141,20 +145,20 @@ namespace zlpanel {
         }
 
         const auto new_oversample_id = oversample_box_.getBox().getSelectedItemIndex();
-        if (new_oversample_id != old_oversample_id_) {
+        if (new_oversample_id != oversample_id_) {
             setOversampleAlpha(new_oversample_id > 0 ? 1.f : .5f);
-            old_oversample_id_ = new_oversample_id;
+            oversample_id_ = new_oversample_id;
         }
 
         const auto new_clipper_value = clipper_slider_.getSlider().getValue();
-        if (std::abs(new_clipper_value - old_clipper_value_) > 1e-4) {
-            if (new_clipper_value < 1e-4 && old_clipper_value_ > 1e-4) {
+        if (std::abs(new_clipper_value - clipper_value_) > 1e-4) {
+            if (new_clipper_value < 1e-4 && clipper_value_ > 1e-4) {
                 setClipperAlpha(.5f);
             }
-            if (new_clipper_value > 1e-4 && old_clipper_value_ < 1e-4) {
+            if (new_clipper_value > 1e-4 && clipper_value_ < 1e-4) {
                 setClipperAlpha(1.f);
             }
-            old_clipper_value_ = new_clipper_value;
+            clipper_value_ = new_clipper_value;
         }
     }
 
@@ -171,5 +175,11 @@ namespace zlpanel {
     void TopControlPanel::setClipperAlpha(const float alpha) {
         clipper_slider_.setAlpha(alpha);
         clipper_label_.setAlpha(alpha);
+    }
+
+    void TopControlPanel::timerCallback() {
+        previous_direction_idx_ = static_cast<size_t>(std::round(p_ref_.parameters_.getRawParameterValue(
+            zlp::PCompDirection::kID)->load(std::memory_order::relaxed)));
+        stopTimer();
     }
 }

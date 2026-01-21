@@ -50,4 +50,4 @@ namespace zlpanel {
 
         void parameterChanged(const juce::String& parameter_ID, float new_value) override;
     };
-} // zlpanel
+}

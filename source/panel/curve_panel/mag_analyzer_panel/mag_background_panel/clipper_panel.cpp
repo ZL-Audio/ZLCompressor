@@ -53,9 +53,8 @@ namespace zlpanel {
         const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
             comp_direction_ref_.load(std::memory_order::relaxed)));
         if (direction == zlp::PCompDirection::kCompress) {
-            if (computer_.prepareBuffer()) {
-                clipper_.setReductionAtUnit(computer_.eval(0.f));
-            }
+            computer_.prepareBuffer();
+            clipper_.setReductionAtUnit(computer_.eval(0.f));
         } else {
             clipper_.setReductionAtUnit(-2.360900573208f);
         }

@@ -15,7 +15,8 @@
 #include "../multilingual/tooltip_helper.hpp"
 
 namespace zlpanel {
-    class TopControlPanel final : public juce::Component {
+    class TopControlPanel final : public juce::Component,
+                                  private juce::Timer {
     public:
         explicit TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
                                  const multilingual::TooltipHelper& tooltip_helper);
@@ -44,16 +45,18 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<false, false, false> lookahead_slider_;
         zlgui::attachment::SliderAttachment<true> lookahead_attachment_;
 
-        int old_oversample_id_{0};
+        int oversample_id_{0};
         juce::Label oversample_label_;
         zlgui::combobox::CompactCombobox oversample_box_;
         zlgui::attachment::ComboBoxAttachment<true> oversample_attachment_;
 
-        double old_clipper_value_{0.0};
+        double clipper_value_{0.0};
         juce::Label clipper_label_;
         zlgui::slider::CompactLinearSlider<false, false, false> clipper_slider_;
         zlgui::attachment::SliderAttachment<true> clipper_attachment_;
 
+        std::array<float, 4> previous_clipper_value_{0.f, 1.f, 0.f, 1.f};
+        size_t previous_direction_idx_{0};
         zlgui::combobox::CompactCombobox direction_box_;
         zlgui::attachment::ComboBoxAttachment<false> direction_attachment_;
 
@@ -62,5 +65,7 @@ namespace zlpanel {
         void setOversampleAlpha(float alpha);
 
         void setClipperAlpha(float alpha);
+
+        void timerCallback() override;
     };
 }
