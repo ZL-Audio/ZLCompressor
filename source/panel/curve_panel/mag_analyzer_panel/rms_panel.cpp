@@ -74,12 +74,14 @@ namespace zlpanel {
 
             next_in_path_.clear();
             next_out_path_.clear();
-            next_in_path_.startNewSubPath(in_xs_[0], ys_[0]);
-            next_out_path_.startNewSubPath(out_xs_[0], ys_[0]);
+            next_in_path_.startNewSubPath(0.f, ys_.front());
+            next_in_path_.lineTo(in_xs_.front(), ys_.front());
+            next_out_path_.startNewSubPath(out_xs_.front(), ys_.front());
             for (size_t i = 1; i < kNumPoints; ++i) {
                 next_in_path_.lineTo(in_xs_[i], ys_[i]);
                 next_out_path_.lineTo(out_xs_[i], ys_[i]);
             }
+            next_in_path_.lineTo(0.f, ys_.back());
             next_in_path_.closeSubPath();
             std::lock_guard<std::mutex> lock{mutex_};
             in_path_ = next_in_path_;
