@@ -75,11 +75,11 @@ namespace zlpanel {
             max_num_samples_ = max_num_samples;
             time_length_idx_ = time_length_idx;
             const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
-            const auto num_points_per_second = kNumPointsPerSecond[time_idx];
-            num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second;
+            num_points_per_second_ = kNumPointsPerSecond[time_idx];
+            num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second_;
             time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
             is_first_point_ = true;
-            num_points_ = static_cast<size_t>(num_points_per_second) * static_cast<size_t>(time_length_);
+            num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
             second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
 
             xs_.resize(num_points_ + 2);
@@ -94,14 +94,14 @@ namespace zlpanel {
             while (next_time_stamp - start_time_ > second_per_point_) {
                 // if not enough samples
                 if (fifo.getNumReady() < num_samples_per_point_) {
-                    if (not_enough_samples) {
+                    if (not_enough_samples_ > 3) {
                         is_first_point_ = true;
                     } else {
-                        not_enough_samples = true;
+                        not_enough_samples_ += 1;
                     }
                     break;
                 }
-                not_enough_samples = false;
+                not_enough_samples_ = 0;
                 const auto range = fifo.prepareToRead(num_samples_per_point_);
                 rms_panel.run(sample_rate_, range);
                 analyzer_receiver_.run(range, analyzer_sender_.getSampleFIFOs(),
@@ -115,14 +115,14 @@ namespace zlpanel {
             const auto num_ready = fifo.getNumReady();
             const auto threshold = 2 * (static_cast<int>(max_num_samples_) + num_samples_per_point_);
             if (num_ready > threshold) {
-                if (too_much_samples) {
-                    (void)fifo.prepareToRead(num_ready - threshold / 2);
-                    fifo.finishRead(num_ready - threshold / 2);
+                if (too_much_samples_ > 3) {
+                    (void)fifo.prepareToRead(num_ready / 2);
+                    fifo.finishRead(num_ready / 2);
                 } else {
-                    too_much_samples = true;
+                    too_much_samples_ += 1;
                 }
             } else {
-                too_much_samples = false;
+                too_much_samples_ = 0;
             }
         } else {
             if (fifo.getNumReady() >= num_samples_per_point_) {

@@ -55,8 +55,8 @@ namespace zlpanel {
         double start_time_{0.0};
 
         bool is_first_point_{true};
-        bool not_enough_samples{false};
-        bool too_much_samples{false};
+        int not_enough_samples_{0};
+        int too_much_samples_{0};
 
         double sample_rate_{0.};
         size_t max_num_samples_{0};
@@ -64,6 +64,7 @@ namespace zlpanel {
 
         size_t num_points_{0};
         int num_samples_per_point_{0};
+        int num_points_per_second_{0};
         double second_per_point_{0};
 
         template <bool center>
