@@ -68,24 +68,26 @@ namespace zlpanel {
         const auto sample_rate = analyzer_sender_.getSampleRate();
         const auto max_num_samples = analyzer_sender_.getMaxNumSamples();
 
-        if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
-            max_num_samples_ != max_num_samples ||
-            std::abs(time_length_idx_ - time_length_idx) > 0.1) {
-            sample_rate_ = sample_rate;
-            max_num_samples_ = max_num_samples;
-            time_length_idx_ = time_length_idx;
-            const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
-            num_points_per_second_ = kNumPointsPerSecond[time_idx];
-            num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second_;
-            time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
-            is_first_point_ = true;
-            num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
-            second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
+        if (sample_rate > 20000.0 && max_num_samples > 0) {
+            if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
+                max_num_samples_ != max_num_samples ||
+                std::abs(time_length_idx_ - time_length_idx) > 0.1) {
+                sample_rate_ = sample_rate;
+                max_num_samples_ = max_num_samples;
+                time_length_idx_ = time_length_idx;
+                const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
+                num_points_per_second_ = kNumPointsPerSecond[time_idx];
+                num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second_;
+                time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
+                is_first_point_ = true;
+                num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
+                second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
 
-            xs_.resize(num_points_ + 2);
-            pre_ys_.resize(num_points_ + 2);
-            out_ys_.resize(num_points_ + 2);
-            post_ys_.resize(num_points_ + 2);
+                xs_.resize(num_points_ + 2);
+                pre_ys_.resize(num_points_ + 2);
+                out_ys_.resize(num_points_ + 2);
+                post_ys_.resize(num_points_ + 2);
+            }
         }
 
         auto& fifo{analyzer_sender_.getAbstractFIFO()};
@@ -94,10 +96,11 @@ namespace zlpanel {
             while (next_time_stamp - start_time_ > second_per_point_) {
                 // if not enough samples
                 if (fifo.getNumReady() < num_samples_per_point_) {
-                    if (not_enough_samples_ > 3) {
+                    not_enough_samples_ += static_cast<int>(std::floor((
+                        next_time_stamp - start_time_) / second_per_point_));
+                    if (not_enough_samples_ > kNotEnoughResetThreshold) {
                         is_first_point_ = true;
-                    } else {
-                        not_enough_samples_ += 1;
+                        not_enough_samples_ = 0;
                     }
                     break;
                 }
@@ -115,7 +118,7 @@ namespace zlpanel {
             const auto num_ready = fifo.getNumReady();
             const auto threshold = 2 * (static_cast<int>(max_num_samples_) + num_samples_per_point_);
             if (num_ready > threshold) {
-                if (too_much_samples_ > 3) {
+                if (too_much_samples_ > kTooMuchResetThreshold) {
                     (void)fifo.prepareToRead(num_ready / 2);
                     fifo.finishRead(num_ready / 2);
                 } else {
@@ -125,7 +128,7 @@ namespace zlpanel {
                 too_much_samples_ = 0;
             }
         } else {
-            if (fifo.getNumReady() >= num_samples_per_point_) {
+            if (num_samples_per_point_ > 0 && fifo.getNumReady() >= num_samples_per_point_) {
                 is_first_point_ = false;
                 start_time_ = next_time_stamp;
                 std::ranges::fill(pre_ys_, 100000.f);

@@ -32,6 +32,8 @@ namespace zlpanel {
 
     private:
         static constexpr std::array<int, 4> kNumPointsPerSecond{40, 30, 20, 15};
+        static constexpr int kNotEnoughResetThreshold = 6;
+        static constexpr int kTooMuchResetThreshold = 2;
         zlgui::UIBase& base_;
 
         std::atomic<float>& comp_direction_ref_;
