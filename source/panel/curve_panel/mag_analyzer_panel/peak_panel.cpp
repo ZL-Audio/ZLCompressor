@@ -118,11 +118,11 @@ namespace zlpanel {
             const auto num_ready = fifo.getNumReady();
             const auto threshold = 2 * (static_cast<int>(max_num_samples_) + num_samples_per_point_);
             if (num_ready > threshold) {
+                too_much_samples_ += (num_ready / 2) / num_samples_per_point_;
                 if (too_much_samples_ > kTooMuchResetThreshold) {
                     (void)fifo.prepareToRead(num_ready / 2);
                     fifo.finishRead(num_ready / 2);
-                } else {
-                    too_much_samples_ += 1;
+                    too_much_samples_ = 0;
                 }
             } else {
                 too_much_samples_ = 0;
