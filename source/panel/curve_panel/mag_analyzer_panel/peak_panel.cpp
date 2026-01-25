@@ -101,9 +101,28 @@ namespace zlpanel {
                     analyzer_receiver_.run(range, analyzer_sender_.getSampleFIFOs(),
                                            mag_type, stereo_type);
                     fifo.finishRead(num_samples_per_point_);
+                    num_missing_points_ = 0;
+                } else {
+                    if (num_missing_points_ < kPausedThreshold) {
+                        num_missing_points_ += 1;
+                    } else if (num_missing_points_ == kPausedThreshold) {
+                        for (auto y: {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
+                            const auto start_idx = y.size() - static_cast<size_t>(kPausedThreshold);
+                            for (size_t idx = start_idx; idx < y.size(); ++idx) {
+                                y[idx] = 100000.f;
+                            }
+                        }
+                    }
                 }
-                analyzer_receiver_.updateY(bound.getHeight(), 0.f, min_db,
-                                           {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}});
+                if (num_missing_points_ < kPausedThreshold) {
+                    analyzer_receiver_.updateY(bound.getHeight(), 0.f, min_db,
+                                               {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}});
+                } else {
+                    for (auto y: {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
+                        std::ranges::rotate(y, y.begin() + 1);
+                        y.back() = 100000.f;
+                    }
+                }
                 start_time_ += second_per_point_;
             }
             // if too much samples

@@ -87,7 +87,7 @@ namespace zldsp::analyzer {
             const auto scale = height / (min_db - max_db);
             for (size_t idx = 0; idx < kNum; ++idx) {
                 auto y = ys[idx];
-                std::rotate(y.begin(), y.begin() + 1, y.end());
+                std::ranges::rotate(y, y.begin() + 1);
                 y.back() = (dbs_[idx] - max_db) * scale;
             }
         }
