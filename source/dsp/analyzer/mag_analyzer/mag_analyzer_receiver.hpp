@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "mag_analyzer_sender.hpp"
+#include "../../container/fifo/fifo_base.hpp"
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 #include "../../chore/decibels.hpp"
 
@@ -19,7 +19,7 @@ namespace zldsp::analyzer {
     public:
         explicit MagAnalyzerReceiver() = default;
 
-        void run(const zldsp::container::AbstractFIFO::Range range,
+        void run(const zldsp::container::FIFORange range,
                  std::array<std::vector<std::vector<float>>, kNum>& sample_fifo,
                  const MagType mag_type,
                  const StereoType stereo_type) {

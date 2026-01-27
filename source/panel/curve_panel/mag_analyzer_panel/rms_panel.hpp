@@ -14,6 +14,7 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_rms_hist_receiver.hpp"
 
 namespace zlpanel {
@@ -23,7 +24,8 @@ namespace zlpanel {
 
         void paint(juce::Graphics& g) override;
 
-        void run(double sample_rate, zldsp::container::AbstractFIFO::Range);
+        void run(double sample_rate, zldsp::container::FIFORange range,
+                 zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer);
 
         void resized() override;
 
@@ -38,7 +40,6 @@ namespace zlpanel {
 
         std::atomic<float>& analyzer_min_db_ref_;
 
-        zldsp::analyzer::MagAnalyzerSender<float, 3>& analyzer_sender_;
         zldsp::analyzer::MagRMSHistReceiver in_receiver_{}, out_receiver_{};
 
         AtomicBound<float> atomic_bound_;

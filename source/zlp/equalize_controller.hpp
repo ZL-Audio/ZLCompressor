@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../dsp/filter/filter.hpp"
-#include "../dsp/analyzer/fft_analyzer/fft_analyzer_sender.hpp"
+#include "../dsp/analyzer/analyzer_base/analyzer_sender_base.hpp"
 #include "../dsp/gain/origin_gain.hpp"
 #include "zlp_definitions.hpp"
 
@@ -86,7 +86,7 @@ namespace zlp {
         std::vector<size_t> on_indices_{};
 
         std::atomic<bool> fft_analyzer_on_{false};
-        zldsp::analyzer::FFTAnalyzerSender<double, 1> fft_analyzer_sender_;
+        zldsp::analyzer::AnalyzerSenderBase<double, 1> fft_analyzer_sender_{};
 
         zldsp::filter::IIR<double, 16> solo_filter_{};
         std::atomic<size_t> solo_band_{kBandNum};

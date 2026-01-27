@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "mag_analyzer_sender.hpp"
+#include "../../container/fifo/fifo_base.hpp"
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 #include "../../chore/decibels.hpp"
 
@@ -24,7 +24,7 @@ namespace zldsp::analyzer {
          * @param fifo
          * @return whether the hist has been updated
          */
-        bool run(const zldsp::container::AbstractFIFO::Range range,
+        bool run(const zldsp::container::FIFORange range,
                  std::vector<std::vector<float>>& fifo) {
             bool update_flag = false;
             auto process_segment = [&](size_t start, size_t size) {

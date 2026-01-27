@@ -43,6 +43,11 @@ namespace zlpanel {
         }
 
     private:
+        PluginProcessor& p_ref_;
+        zldsp::analyzer::FIFOTransferBuffer<3> transfer_buffer_{};
+
+        size_t peak_consumer_id_{0};
+
         MagBackgroundPanel background_panel_;
         PeakPanel peak_panel_;
         RMSPanel rms_panel_;
@@ -57,6 +62,9 @@ namespace zlpanel {
 
         std::atomic<double> next_stamp_{0.};
         double rms_previous_stamp_{0.};
+
+        double sample_rate_{0.0};
+        size_t max_sum_samples_{0};
 
         void mouseDoubleClick(const juce::MouseEvent& event) override;
 

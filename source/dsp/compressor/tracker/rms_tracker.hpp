@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "../../container/container.hpp"
+#include "../../container/circular_buffer.hpp"
 #include "../../chore/decibels.hpp"
 
 namespace zldsp::compressor {

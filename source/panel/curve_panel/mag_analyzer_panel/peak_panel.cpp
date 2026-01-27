@@ -16,8 +16,7 @@ namespace zlpanel {
         analyzer_stereo_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
-        analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)),
-        analyzer_sender_(p.getCompressController().getMagAnalyzerSender()) {
+        analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
         for (auto& path : {&in_path_, &out_path_, &reduction_path_}) {
             path->preallocateSpace(preallocateSpace);
@@ -52,7 +51,9 @@ namespace zlpanel {
         lookAndFeelChanged();
     }
 
-    void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel) {
+    void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel,
+                        zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+                        size_t consumer_id) {
         const auto bound = atomic_bound_.load();
         const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
             analyzer_stereo_type_ref_.load(std::memory_order::relaxed)));
@@ -62,11 +63,8 @@ namespace zlpanel {
             analyzer_min_db_ref_.load(std::memory_order::relaxed)))];
         const auto time_length_idx = analyzer_time_length_ref_.load(std::memory_order::relaxed);
 
-        if (!analyzer_sender_.getLock().try_lock()) {
-            return;
-        }
-        const auto sample_rate = analyzer_sender_.getSampleRate();
-        const auto max_num_samples = analyzer_sender_.getMaxNumSamples();
+        const auto sample_rate = transfer_buffer.getSampleRate();
+        const auto max_num_samples = transfer_buffer.getMaxNumSamples();
 
         if (sample_rate > 20000.0 && max_num_samples > 0) {
             if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
@@ -90,23 +88,23 @@ namespace zlpanel {
             }
         }
 
-        auto& fifo{analyzer_sender_.getAbstractFIFO()};
+        auto& fifo{transfer_buffer.getMulticastFIFO()};
         if (!is_first_point_) {
             // update ys
             while (next_time_stamp - start_time_ > second_per_point_) {
                 // if not enough samples
-                if (fifo.getNumReady() >= num_samples_per_point_) {
-                    const auto range = fifo.prepareToRead(num_samples_per_point_);
-                    rms_panel.run(sample_rate_, range);
-                    analyzer_receiver_.run(range, analyzer_sender_.getSampleFIFOs(),
+                if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
+                    const auto range = fifo.prepareToRead(consumer_id, num_samples_per_point_);
+                    rms_panel.run(sample_rate_, range, transfer_buffer);
+                    analyzer_receiver_.run(range, transfer_buffer.getSampleFIFOs(),
                                            mag_type, stereo_type);
-                    fifo.finishRead(num_samples_per_point_);
+                    fifo.finishRead(consumer_id, num_samples_per_point_);
                     num_missing_points_ = 0;
                 } else {
                     if (num_missing_points_ < kPausedThreshold) {
                         num_missing_points_ += 1;
                     } else if (num_missing_points_ == kPausedThreshold) {
-                        for (auto y: {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
+                        for (auto y : {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
                             const auto start_idx = y.size() - static_cast<size_t>(kPausedThreshold);
                             for (size_t idx = start_idx; idx < y.size(); ++idx) {
                                 y[idx] = 100000.f;
@@ -118,7 +116,7 @@ namespace zlpanel {
                     analyzer_receiver_.updateY(bound.getHeight(), 0.f, min_db,
                                                {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}});
                 } else {
-                    for (auto y: {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
+                    for (auto y : {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
                         std::ranges::rotate(y, y.begin() + 1);
                         y.back() = 100000.f;
                     }
@@ -126,20 +124,20 @@ namespace zlpanel {
                 start_time_ += second_per_point_;
             }
             // if too much samples
-            const auto num_ready = fifo.getNumReady();
+            const auto num_ready = fifo.getNumReady(consumer_id);
             const auto threshold = 2 * std::max(static_cast<int>(max_num_samples_), num_samples_per_point_);
             if (num_ready > threshold) {
                 too_much_samples_ += (num_ready - threshold) / num_samples_per_point_;
                 if (too_much_samples_ > kTooMuchResetThreshold) {
-                    (void)fifo.prepareToRead(num_ready - threshold);
-                    fifo.finishRead(num_ready - threshold);
+                    (void)fifo.prepareToRead(consumer_id, num_ready - threshold);
+                    fifo.finishRead(consumer_id, num_ready - threshold);
                     too_much_samples_ = 0;
                 }
             } else {
                 too_much_samples_ = 0;
             }
         } else {
-            if (num_samples_per_point_ > 0 && fifo.getNumReady() >= num_samples_per_point_) {
+            if (num_samples_per_point_ > 0 && fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                 is_first_point_ = false;
                 start_time_ = next_time_stamp;
                 std::ranges::fill(pre_ys_, 100000.f);
@@ -147,7 +145,7 @@ namespace zlpanel {
                 std::ranges::fill(post_ys_, 100000.f);
             }
         }
-        analyzer_sender_.getLock().unlock();
+
         // update xs
         if (!is_first_point_) {
             const auto x_scale = static_cast<double>(bound.getWidth()) / static_cast<double>(time_length_);

@@ -54,30 +54,46 @@ namespace zlpanel {
             return;
         }
         const auto sample_rate = sender.getSampleRate();
-        const auto fft_order = sender.getFFTOrder();
-        const auto fft_size = static_cast<size_t>(1) << fft_order;
-        if (c_fft_order_ != fft_order) {
-            c_fft_order_ = fft_order;
-            receiver_.prepare(static_cast<int>(fft_order), {1});
-            spectrum_smoother_.prepare(fft_size);
-            spectrum_smoother_.setSmooth(0.1);
-            spectrum_tilter_.prepare(fft_size);
-            spectrum_decayer_.prepare(fft_size);
+        if (std::abs(c_sample_rate_ - sample_rate) > 0.1) {
+            c_sample_rate_ = sample_rate;
+            to_update_tilt_.store(true, std::memory_order::relaxed);
 
-            xs_.resize(fft_size / 2 + 1);
-            ys_.resize(fft_size / 2 + 1);
+            int fft_order;
+            if (sample_rate <= 50000) {
+                fft_order = 12;
+            } else if (sample_rate <= 100000) {
+                fft_order = 13;
+            } else if (sample_rate <= 200000) {
+                fft_order = 14;
+            } else {
+                fft_order = 15;
+            }
+            fft_size_ = 1 << fft_order;
+            receiver_.prepare(static_cast<int>(fft_order), {1});
+            spectrum_smoother_.prepare(static_cast<size_t>(fft_size_));
+            spectrum_smoother_.setSmooth(0.1);
+            spectrum_tilter_.prepare(static_cast<size_t>(fft_size_));
+            spectrum_decayer_.prepare(static_cast<size_t>(fft_size_));
+
+            xs_.resize(static_cast<size_t>(fft_size_) / 2 + 1);
+            ys_.resize(static_cast<size_t>(fft_size_) / 2 + 1);
 
             to_update_xs_ = true;
         }
 
         auto& fifo{sender.getAbstractFIFO()};
-        const auto num_read = fifo.getNumReady();
+        auto num_read = fifo.getNumReady();
+        if (num_read > static_cast<int>(receiver_.getFFTSize())) {
+            (void)fifo.prepareToRead(num_read - static_cast<int>(receiver_.getFFTSize()));
+            fifo.finishRead(num_read - static_cast<int>(receiver_.getFFTSize()));
+            num_read = static_cast<int>(receiver_.getFFTSize());
+        }
         const auto range = fifo.prepareToRead(num_read);
         receiver_.pull(range, sender.getSampleFIFOs());
         fifo.finishRead(num_read);
         sender.getLock().unlock();
 
-        if (fft_size == 0) {
+        if (fft_size_ <= 0) {
             return;
         }
         receiver_.forward(zldsp::analyzer::StereoType::kStereo);
@@ -85,18 +101,13 @@ namespace zlpanel {
         auto& spectrum{receiver_.getAbsSqrFFTBuffers()[0]};
         spectrum_smoother_.smooth(spectrum);
 
-        if (std::abs(c_sample_rate_ - sample_rate) > 0.1) {
-            c_sample_rate_ = sample_rate;
-            to_update_tilt_.store(true, std::memory_order::relaxed);
-            to_update_xs_ = true;
-        }
         if (to_update_tilt_.exchange(false, std::memory_order::acquire)) {
             spectrum_tilter_.setTiltSlope(sample_rate,
                                           spectrum_tilt_slope_.load(std::memory_order::relaxed));
         }
         if (to_update_xs_ || std::abs(bound.getWidth() - c_width_) > 0.01f) {
             c_width_ = bound.getWidth();
-            const auto delta_freq = static_cast<float>(sample_rate / static_cast<double>(fft_size));
+            const auto delta_freq = static_cast<float>(sample_rate / static_cast<double>(fft_size_));
             const auto temp_scale = static_cast<float>(1.0 / std::log(22000.0 / 10.0)) * bound.getWidth();
             const auto temp_bias = std::log(static_cast<float>(10.0)) * temp_scale;
             for (size_t i = 1; i < xs_.size(); ++i) {

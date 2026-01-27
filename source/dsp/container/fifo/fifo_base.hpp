@@ -9,7 +9,11 @@
 
 #pragma once
 
-#include "array.hpp"
-#include "circular_buffer.hpp"
-#include "circular_minmax_buffer.hpp"
-#include "abstract_fifo.hpp"
+namespace zldsp::container {
+    struct FIFORange {
+        int start_index1;
+        int block_size1;
+        int start_index2;
+        int block_size2;
+    };
+}

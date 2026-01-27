@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../../container/abstract_fifo.hpp"
+#include "../../container/fifo/fifo_base.hpp"
 #include "../../fft/kfr_engine.hpp"
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 
@@ -37,7 +37,7 @@ namespace zldsp::analyzer {
          * @param range
          * @param sample_fifos
          */
-        void pull(const zldsp::container::AbstractFIFO::Range range,
+        void pull(const zldsp::container::FIFORange range,
                   std::array<std::vector<std::vector<float>>, kNum>& sample_fifos) {
             const auto num_ready = range.block_size1 + range.block_size2;
             const auto num_replace = static_cast<int>(fft_.getSize()) - num_ready;
@@ -102,6 +102,10 @@ namespace zldsp::analyzer {
 
         void setON(std::array<bool, kNum> is_on) {
             is_on_ = is_on;
+        }
+
+        [[nodiscard]] size_t getFFTSize() const {
+            return fft_.getSize();
         }
 
         /**

@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <algorithm>
+#include "fifo_base.hpp"
 
 namespace zldsp::container {
     /**
@@ -18,13 +19,6 @@ namespace zldsp::container {
      */
     class AbstractFIFO {
     public:
-        struct Range {
-            int start_index1;
-            int block_size1;
-            int start_index2;
-            int block_size2;
-        };
-
         explicit AbstractFIFO(const int capacity = 0)
             : capacity_(capacity),
               head_(0),
@@ -67,8 +61,8 @@ namespace zldsp::container {
             return capacity_ - current_tail + current_head - 1;
         }
 
-        Range prepareToWrite(const int num_to_write) const {
-            Range range;
+        FIFORange prepareToWrite(const int num_to_write) const {
+            FIFORange range;
             const int current_tail = tail_.load(std::memory_order::relaxed);
 
             range.block_size1 = std::min(num_to_write, capacity_ - current_tail);
@@ -93,8 +87,8 @@ namespace zldsp::container {
             }
         }
 
-        Range prepareToRead(const int num_to_read) const {
-            Range range;
+        FIFORange prepareToRead(const int num_to_read) const {
+            FIFORange range;
             const int current_head = head_.load(std::memory_order::relaxed);
 
             range.block_size1 = std::min(num_to_read, capacity_ - current_head);

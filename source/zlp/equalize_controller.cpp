@@ -15,7 +15,7 @@ namespace zlp {
     }
 
     void EqualizeController::prepare(const double sample_rate, const size_t max_num_samples) {
-        fft_analyzer_sender_.prepare(sample_rate, {2});
+        fft_analyzer_sender_.prepare(sample_rate, max_num_samples, {2}, 0.1);
         fft_analyzer_sender_.setON(0, true);
         for (auto& filter : filters_) {
             filter.prepare(sample_rate, 2);

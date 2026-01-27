@@ -14,7 +14,9 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_analyzer_receiver.hpp"
+
 #include "rms_panel.hpp"
 
 namespace zlpanel {
@@ -26,7 +28,9 @@ namespace zlpanel {
 
         void paint(juce::Graphics& g) override;
 
-        void run(double next_time_stamp, RMSPanel& rms_panel);
+        void run(double next_time_stamp, RMSPanel& rms_panel,
+            zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+            size_t consumer_id);
 
         void resized() override;
 
@@ -42,7 +46,6 @@ namespace zlpanel {
         std::atomic<float>& analyzer_min_db_ref_;
         std::atomic<float>& analyzer_time_length_ref_;
 
-        zldsp::analyzer::MagAnalyzerSender<float, 3>& analyzer_sender_;
         zldsp::analyzer::MagAnalyzerReceiver<3> analyzer_receiver_{};
 
         AtomicBound<float> atomic_bound_;

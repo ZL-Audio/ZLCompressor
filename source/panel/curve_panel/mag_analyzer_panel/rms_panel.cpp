@@ -12,8 +12,7 @@
 namespace zlpanel {
     RMSPanel::RMSPanel(PluginProcessor& p, zlgui::UIBase& base) :
         base_(base),
-        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
-        analyzer_sender_(p.getCompressController().getMagAnalyzerSender()) {
+        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
         for (auto& receiver : {&in_receiver_, &out_receiver_}) {
             receiver->setHistSize(kNumPoints);
         }
@@ -36,7 +35,8 @@ namespace zlpanel {
                                           juce::PathStrokeType::rounded));
     }
 
-    void RMSPanel::run(const double sample_rate, const zldsp::container::AbstractFIFO::Range range) {
+    void RMSPanel::run(const double sample_rate, const zldsp::container::FIFORange range,
+                       zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer) {
         const auto bound = atomic_bound_.load();
         if (std::abs(bound.getHeight() - height_) > .1f) {
             height_ = bound.getHeight();
@@ -67,8 +67,8 @@ namespace zlpanel {
                 receiver->reset();
             }
         }
-        in_receiver_.run(range, analyzer_sender_.getSampleFIFOs()[0]);
-        if (out_receiver_.run(range, analyzer_sender_.getSampleFIFOs()[2])) {
+        in_receiver_.run(range, transfer_buffer.getSampleFIFOs()[0]);
+        if (out_receiver_.run(range, transfer_buffer.getSampleFIFOs()[2])) {
             in_receiver_.updateHeight(bound.getWidth(), in_xs_);
             out_receiver_.updateHeight(bound.getWidth(), out_xs_);
 

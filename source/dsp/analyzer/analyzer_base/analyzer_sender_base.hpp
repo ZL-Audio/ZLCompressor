@@ -13,7 +13,7 @@
 #include <array>
 #include <span>
 
-#include "../../container/abstract_fifo.hpp"
+#include "../../container/fifo/abstract_fifo.hpp"
 #include "../../lock/spin_lock.hpp"
 #include "../../vector/vector.hpp"
 
@@ -28,7 +28,20 @@ namespace zldsp::analyzer {
     public:
         explicit AnalyzerSenderBase() = default;
 
-        virtual ~AnalyzerSenderBase() = default;
+        void prepare(const double sample_rate,
+                     const size_t max_num_samples,
+                     const std::array<size_t, kNum> num_channels,
+                     const double fifo_size_second) {
+            lock_.lock();
+            sample_rate_ = sample_rate;
+            max_num_samples_ = max_num_samples;
+            num_channels_ = num_channels;
+
+            setFIFOSize(std::max(max_num_samples,
+                                 static_cast<size_t>(std::round(sample_rate * fifo_size_second))),
+                        num_channels);
+            lock_.unlock();
+        }
 
         /**
          * push input samples into FIFOs
@@ -78,15 +91,31 @@ namespace zldsp::analyzer {
             return lock_;
         }
 
+        double getSampleRate() const {
+            return sample_rate_;
+        }
+
+        std::array<size_t, kNum> getNumChannels() const {
+            return num_channels_;
+        }
+
+        size_t getMaxNumSamples() const {
+            return max_num_samples_;
+        }
+
     protected:
         zldsp::lock::SpinLock lock_;
+
+        double sample_rate_{48000};
+        std::array<size_t, kNum> num_channels_;
+        size_t max_num_samples_{1};
 
         std::array<std::vector<std::vector<float>>, kNum> sample_fifos_;
         zldsp::container::AbstractFIFO abstract_fifo_{0};
 
         std::array<bool, kNum> is_on_{};
 
-        void setFIFOSize(const size_t fifo_size, std::array<size_t, kNum>& num_channels) {
+        void setFIFOSize(const size_t fifo_size, const std::array<size_t, kNum> num_channels) {
             abstract_fifo_.setCapacity(static_cast<int>(fifo_size));
             for (size_t i = 0; i < kNum; ++i) {
                 sample_fifos_[i].resize(num_channels[i]);

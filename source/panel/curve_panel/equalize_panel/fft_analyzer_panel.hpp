@@ -47,7 +47,7 @@ namespace zlpanel {
         std::mutex mutex_;
 
         double c_sample_rate_{};
-        size_t c_fft_order_{};
+        int fft_size_{0};
         float c_width_{};
         size_t num_point_{0};
 

@@ -11,6 +11,7 @@
 
 namespace zlpanel {
     MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base) :
+        p_ref_(p),
         background_panel_(p, base),
         peak_panel_(p, base),
         rms_panel_(p, base),
@@ -31,6 +32,8 @@ namespace zlpanel {
         addChildComponent(ratio_slider_);
 
         setInterceptsMouseClicks(true, false);
+
+        peak_consumer_id_ = transfer_buffer_.getMulticastFIFO().addConsumer();
     }
 
     MagAnalyzerPanel::~MagAnalyzerPanel() = default;
@@ -50,7 +53,18 @@ namespace zlpanel {
     void MagAnalyzerPanel::run(const juce::Thread& thread) {
         juce::ScopedNoDenormals no_denormals;
         const auto time_stamp = next_stamp_.load(std::memory_order::relaxed);
-        peak_panel_.run(time_stamp, rms_panel_);
+        auto& sender{p_ref_.getCompressController().getMagAnalyzerSender()};
+        sender.getLock().lock();
+
+        if (std::abs(sample_rate_ - sender.getSampleRate()) > 1.0 ||
+            max_sum_samples_ != sender.getMaxNumSamples()) {
+            sample_rate_ = sender.getSampleRate();
+            max_sum_samples_ = sender.getMaxNumSamples();
+            transfer_buffer_.prepare(sample_rate_, max_sum_samples_, {2, 2, 2}, 1.0);
+        }
+        transfer_buffer_.processTransfer(sender.getAbstractFIFO(), sender.getSampleFIFOs());
+        sender.getLock().unlock();
+        peak_panel_.run(time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_);
         if (thread.threadShouldExit()) {
             return;
         }
