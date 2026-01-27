@@ -26,7 +26,7 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        constexpr static int kButtonNum = 4;
+        constexpr static int kButtonNum = 5;
 
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
@@ -46,5 +46,9 @@ namespace zlpanel {
         const std::unique_ptr<juce::Drawable> rms_show_drawable_;
         zlgui::button::ClickButton rms_show_button_;
         zlgui::attachment::ButtonAttachment<true> rms_show_attachment_;
+
+        const std::unique_ptr<juce::Drawable> meter_show_drawable_;
+        zlgui::button::ClickButton meter_show_button_;
+        zlgui::attachment::ButtonAttachment<true> meter_show_attachment_;
     };
 }

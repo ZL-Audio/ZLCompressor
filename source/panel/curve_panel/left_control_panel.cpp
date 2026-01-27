@@ -32,12 +32,17 @@ namespace zlpanel {
                                                                BinaryData::dline_rms_svgSize)),
         rms_show_button_(base, rms_show_drawable_.get(), rms_show_drawable_.get()),
         rms_show_attachment_(rms_show_button_.getButton(), p.na_parameters_,
-                             zlstate::PRMSAnalyzerDisplay::kID, updater_) {
+                             zlstate::PRMSAnalyzerDisplay::kID, updater_),
+        meter_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_meter_svg,
+                                                                 BinaryData::dline_meter_svgSize)),
+        meter_show_button_(base, meter_show_drawable_.get(), meter_show_drawable_.get()),
+        meter_show_attachment_(meter_show_button_.getButton(), p.na_parameters_,
+                               zlstate::PMeterDisplay::kID, updater_) {
         juce::ignoreUnused(tooltip_helper);
 
         for (auto& b : {
                  &side_control_show_button_, &equalize_show_button_,
-                 &computer_show_button_, &rms_show_button_
+                 &computer_show_button_, &rms_show_button_, &meter_show_button_
              }) {
             b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
@@ -58,9 +63,11 @@ namespace zlpanel {
         computer_show_button_.setBounds(bound.removeFromBottom(button_height));
         bound.removeFromBottom(height);
         rms_show_button_.setBounds(bound.removeFromBottom(button_height));
+        bound.removeFromBottom(height);
+        meter_show_button_.setBounds(bound.removeFromBottom(button_height));
     }
 
     void LeftControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
     }
-} // zlpanel
+}

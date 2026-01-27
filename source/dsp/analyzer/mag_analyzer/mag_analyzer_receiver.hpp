@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include <span>
+
+#include "../../vector/kfr_import.hpp"
 #include "../../container/fifo/fifo_base.hpp"
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 #include "../../chore/decibels.hpp"

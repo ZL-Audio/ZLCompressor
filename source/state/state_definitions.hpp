@@ -202,6 +202,16 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
+    class PMeterDisplay : public ChoiceParameters<PMeterDisplay> {
+    public:
+        auto static constexpr kID = "meter_display";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "OFF", "ON"
+        };
+        int static constexpr kDefaultI = 1;
+    };
+
     class PRMSPanelDisplay : public ChoiceParameters<PRMSPanelDisplay> {
     public:
         auto static constexpr kID = "rms_panel_display";
@@ -218,7 +228,7 @@ namespace zlstate {
                    PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get(),
                    PAnalyzerStereo::get(),
                    PSideControlDisplay::get(), PSideEQDisplay::get(),
-                   PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get(),
+                   PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get(), PMeterDisplay::get(),
                    PRMSPanelDisplay::get());
         return layout;
     }

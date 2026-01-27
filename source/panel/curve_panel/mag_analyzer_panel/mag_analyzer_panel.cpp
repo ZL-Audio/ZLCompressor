@@ -60,7 +60,7 @@ namespace zlpanel {
             max_sum_samples_ != sender.getMaxNumSamples()) {
             sample_rate_ = sender.getSampleRate();
             max_sum_samples_ = sender.getMaxNumSamples();
-            transfer_buffer_.prepare(sample_rate_, max_sum_samples_, {2, 2, 2}, 1.0);
+            transfer_buffer_.prepare(sample_rate_, max_sum_samples_, {2, 2, 2}, 0.5);
         }
         transfer_buffer_.processTransfer(sender.getAbstractFIFO(), sender.getSampleFIFOs());
         sender.getLock().unlock();
