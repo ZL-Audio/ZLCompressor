@@ -21,7 +21,7 @@ namespace zlpanel {
         g.setFont(base_.getFontSize());
         g.setColour(base_.getTextColour().withAlpha(.375f));
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
-            g.drawText(kBackgroundFreqsNames[i], text_bounds_[i], juce::Justification::bottomRight);
+            g.drawText(std::string(kBackgroundFreqsNames[i]), text_bounds_[i], juce::Justification::bottomRight);
         }
         g.setColour(base_.getTextColour().withAlpha(.1f));
         g.fillRectList(rect_list_);

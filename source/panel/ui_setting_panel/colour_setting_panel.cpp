@@ -29,7 +29,7 @@ namespace zlpanel {
         }
         name_laf_.setFontScale(zlgui::kFontHuge);
         for (size_t i = 0; i < kNumSelectors; ++i) {
-            auto label = zlgui::kColourNames[i];
+            auto label = std::string(zlgui::kColourNames[i]);
             label[0] = static_cast<char>(std::toupper(label[0]));
             label += " Colour";
             selector_labels_[i].setText(label, juce::dontSendNotification);
@@ -152,7 +152,8 @@ namespace zlpanel {
                 const juce::File settingFile(chooser.getResult());
                 if (const auto xml_input = juce::XmlDocument::parse(settingFile)) {
                     for (size_t i = 0; i < 4; ++i) {
-                        if (const auto* xml_colour = xml_input->getChildByName(zlgui::kColourNames[i])) {
+                        if (const auto* xml_colour = xml_input->getChildByName(
+                            std::string(zlgui::kColourNames[i]))) {
                             const juce::Colour colour = getIntColour(
                                 xml_colour->getIntAttribute("r"),
                                 xml_colour->getIntAttribute("g"),
@@ -178,7 +179,8 @@ namespace zlpanel {
                 if (setting_file.create()) {
                     juce::XmlElement xml_output{"colour_setting"};
                     for (size_t i = 0; i < 4; ++i) {
-                        auto* xml_colour = xml_output.createNewChildElement(zlgui::kColourNames[i]);
+                        auto* xml_colour = xml_output.createNewChildElement(
+                            std::string(zlgui::kColourNames[i]));
                         juce::Colour colour = selectors_[i]->getColour();
                         xml_colour->setAttribute("r", colour.getRed());
                         xml_colour->setAttribute("g", colour.getGreen());

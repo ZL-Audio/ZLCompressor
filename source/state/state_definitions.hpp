@@ -464,7 +464,7 @@ namespace zlstate {
         }
     }
 
-    static constexpr std::array<std::string, 9> kColourNames{
+    static constexpr std::array<std::string_view, 9> kColourNames{
         "text", "background",
         "shadow", "glow",
         "pre", "post", "reduction",
@@ -503,7 +503,7 @@ namespace zlstate {
                    PTooltipLang::get());
 
         for (size_t i = 0; i < kColourNames.size(); ++i) {
-            const auto& name = kColourNames[i];
+            const auto name = std::string(kColourNames[i]);
             const auto& dv = kColourDefaults[i];
             addOneColour(layout, name, dv.r, dv.g, dv.b, dv.has_opacity, dv.opacity);
         }

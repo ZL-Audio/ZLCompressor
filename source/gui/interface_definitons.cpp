@@ -288,10 +288,10 @@ namespace zlgui {
                 custom_colours_[i].getFloatAlpha()
             };
             const std::array<std::string, 4> ID{
-                kColourNames[i] + "_r",
-                kColourNames[i] + "_g",
-                kColourNames[i] + "_b",
-                kColourNames[i] + "_o"
+                std::string(kColourNames[i]) + "_r",
+                std::string(kColourNames[i]) + "_g",
+                std::string(kColourNames[i]) + "_b",
+                std::string(kColourNames[i]) + "_o"
             };
             for (size_t j = 0; j < 4; ++j) {
                 savePara(ID[j], rgbo[j]);
