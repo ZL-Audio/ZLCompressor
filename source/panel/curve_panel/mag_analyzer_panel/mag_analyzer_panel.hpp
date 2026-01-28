@@ -14,6 +14,7 @@
 #include "peak_panel.hpp"
 #include "rms_panel.hpp"
 #include "separate_panel.hpp"
+#include "meter_panel.hpp"
 
 namespace zlpanel {
     class MagAnalyzerPanel final : public juce::Component {
@@ -44,15 +45,19 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
+        zlgui::UIBase& base_;
+        std::atomic<float>& meter_display_ref_;
+
         zldsp::analyzer::FIFOTransferBuffer<3> transfer_buffer_{};
 
-        size_t peak_consumer_id_{0};
+        size_t peak_consumer_id_{0}, meter_consumer_id_{1};
 
         MagBackgroundPanel background_panel_;
         PeakPanel peak_panel_;
         RMSPanel rms_panel_;
         ComputerPanel computer_panel_;
         SeparatePanel separate_panel_;
+        MeterPanel meter_panel_;
 
         zlgui::attachment::ComponentUpdater updater_;
         zlgui::slider::SnappingSlider threshold_slider_;
@@ -69,5 +74,7 @@ namespace zlpanel {
         void mouseDoubleClick(const juce::MouseEvent& event) override;
 
         void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+
+        void updateBounds();
     };
 }

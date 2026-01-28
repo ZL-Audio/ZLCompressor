@@ -212,24 +212,13 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
-    class PRMSPanelDisplay : public ChoiceParameters<PRMSPanelDisplay> {
-    public:
-        auto static constexpr kID = "rms_panel_display";
-        auto static constexpr kName = "";
-        inline auto static const kChoices = juce::StringArray{
-            "OFF", "ON"
-        };
-        int static constexpr kDefaultI = 0;
-    };
-
     inline juce::AudioProcessorValueTreeState::ParameterLayout getNAParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PEQMaxDB::get(),
                    PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get(),
                    PAnalyzerStereo::get(),
                    PSideControlDisplay::get(), PSideEQDisplay::get(),
-                   PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get(), PMeterDisplay::get(),
-                   PRMSPanelDisplay::get());
+                   PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get(), PMeterDisplay::get());
         return layout;
     }
 

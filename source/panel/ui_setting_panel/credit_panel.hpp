@@ -19,7 +19,7 @@ namespace zlpanel {
 
         void paint(juce::Graphics& g) override;
 
-        int getIdeatlHeight() const;
+        int getIdealHeight() const;
 
     private:
         zlgui::UIBase& base_;
@@ -32,7 +32,7 @@ namespace zlpanel {
             "[kfr](https://github.com/kfrlib/kfr) by [KFR](https://github.com/kfrlib)\n\n"
             "[Material Symbols](https://github.com/google/material-design-icons) by [Google](https://github.com/google)\n\n"
             "[inter](https://github.com/rsms/inter) by [The Inter Project Authors](https://github.com/rsms/inter)\n\n"
-            "Dimitrios Giannoulis, Michael Massberg, and Joshua D. Reiss. Digital dynamic range compressor design—A tutorial and analysis. Journal of the Audio Engineering Society. (2012).\n\n"
+            "Dimitrios Giannoulis, Michael Massberg, and Joshua D. Reiss. Digital dynamic range compressor design. A tutorial and analysis. Journal of the Audio Engineering Society. (2012).\n\n"
             "Vicanek, Martin. Matched One-Pole Digital Shelving Filters. (2019).\n\n"
             "Vicanek, Martin. Matched Second Order Digital Filters. (2016).\n\n"
             "Redmon, Nigel. Cascading filters. (2016).\n\n"

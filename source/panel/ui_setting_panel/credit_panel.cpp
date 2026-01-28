@@ -22,7 +22,7 @@ namespace zlpanel {
         tl.draw(g, bound);
     }
 
-    int CreditPanel::getIdeatlHeight() const {
+    int CreditPanel::getIdealHeight() const {
         return static_cast<int>(std::ceil(base_.getFontSize() * 1.5f * 33));
     }
 }
