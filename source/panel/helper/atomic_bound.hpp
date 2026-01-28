@@ -29,13 +29,21 @@ namespace zlpanel {
             return {x_.load(order), y_.load(order), width_.load(order), height_.load(order)};
         }
 
-        FloatType getX() const { return x_.load(); }
+        FloatType getX() const { return x_.load(std::memory_order::relaxed); }
 
-        FloatType getY() const { return y_.load(); }
+        void setX(FloatType x) { x_.store(x, std::memory_order::relaxed); }
 
-        FloatType getWidth() const { return width_.load(); }
+        FloatType getY() const { return y_.load(std::memory_order::relaxed); }
 
-        FloatType getHeight() const { return height_.load(); }
+        void setY(FloatType y) { y_.store(y, std::memory_order::relaxed); }
+
+        FloatType getWidth() const { return width_.load(std::memory_order::relaxed); }
+
+        void setWidth(FloatType w) { width_.store(w, std::memory_order::relaxed); }
+
+        FloatType getHeight() const { return height_.load(std::memory_order::relaxed); }
+
+        void setHeight(FloatType h) { height_.store(h, std::memory_order::relaxed); }
 
     private:
         std::atomic<FloatType> x_{}, y_{}, width_{}, height_{};
@@ -55,9 +63,9 @@ namespace zlpanel {
             return {x_.load(order), y_.load(order)};
         }
 
-        FloatType getX() const { return x_.load(); }
+        FloatType getX() const { return x_.load(std::memory_order::relaxed); }
 
-        FloatType getY() const { return y_.load(); }
+        FloatType getY() const { return y_.load(std::memory_order::relaxed); }
 
     private:
         std::atomic<FloatType> x_{}, y_{};

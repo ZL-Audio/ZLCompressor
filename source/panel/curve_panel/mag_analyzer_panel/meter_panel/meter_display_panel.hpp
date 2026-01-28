@@ -32,7 +32,7 @@ namespace zlpanel {
 
     private:
         static constexpr float kReductionDecayPerSecond = 16.f;
-        static constexpr float kMeterDecayPerSecond = 12.f;
+        static constexpr float kMeterDecayPerSecond = 8.f;
         zlgui::UIBase& base_;
 
         std::atomic<float>& comp_direction_ref_;
@@ -42,12 +42,17 @@ namespace zlpanel {
         AtomicBound<float> bound_;
         std::array<float, 2> previous_reduction_{0.f, 0.f};
         std::array<float, 2> previous_pre_{-240.f, -240.f};
+        std::array<float, 2> pre_decay_mul_{1.f, 1.f};
         std::array<AtomicBound<float>, 2> reduction_rect_{};
         std::array<AtomicBound<float>, 2> pre_rect_{};
         std::array<AtomicBound<float>, 2> out_rect_{};
 
         double start_time_{0.0};
         bool is_first_point_{true};
+
+        zldsp::container::CircularMinMaxBuffer<float, zldsp::container::kFindMax> circular_min_max_;
+        AtomicBound<float> reduction_max_rect_{};
+        std::atomic<float> reduction_max_value_{0.f};
 
         zldsp::analyzer::MagMeterReceiver<3> meter_receiver_{};
 
