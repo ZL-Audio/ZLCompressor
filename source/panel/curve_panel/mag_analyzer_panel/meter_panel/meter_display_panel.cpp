@@ -34,13 +34,17 @@ namespace zlpanel {
             g.fillRect(a_bound.load());
         }
         const auto reduction_max_rect = reduction_max_rect_.load();
-        if (reduction_max_rect.getY() > 1.5f * text_height) {
+        if (reduction_max_rect.getY() > .5f * text_height) {
             g.fillRect(reduction_max_rect);
 
             const auto reduction_max = reduction_max_value_.load(std::memory_order::relaxed);
+            const auto is_upwards = a_is_upwards_.load(std::memory_order::relaxed);
             g.setColour(base_.getTextColour());
             g.drawText(formatValue(std::abs(reduction_max)),
-                       juce::Rectangle<float>{reduction_max_rect.getX(), reduction_max_rect.getY() - text_height,
+                       juce::Rectangle<float>{reduction_max_rect.getX(),
+                                              is_upwards
+                                              ? reduction_max_rect.getY() - text_height
+                                              : reduction_max_rect.getY(),
                                               reduction_max_rect.getWidth(), text_height},
                        juce::Justification::centred, false);
         }
@@ -146,8 +150,10 @@ namespace zlpanel {
         const auto bound = bound_.load();
         const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
             comp_direction_ref_.load(std::memory_order::relaxed)));
+        is_upwards_ = (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape);
+        a_is_upwards_.store(is_upwards_, std::memory_order::relaxed);
         // update reduction peak
-        if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
+        if (is_upwards_) {
             const auto reduction_peak = std::max(dbs[1][0] - dbs[0][0], dbs[1][1] - dbs[0][1]);
             reduction_peak_.store(std::max(reduction_peak, reduction_peak_.load(std::memory_order::relaxed)),
                                   std::memory_order::relaxed);
@@ -160,7 +166,7 @@ namespace zlpanel {
         for (size_t chan = 0; chan < 2; ++chan) {
             const auto current_reduction = dbs[1][chan] - dbs[0][chan];
             const auto previous_reduction = previous_reduction_[chan];
-            if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
+            if (is_upwards_) {
                 if (current_reduction < previous_reduction) {
                     previous_reduction_[chan] = std::max(
                         previous_reduction - static_cast<float>(delta_time) * kReductionDecayPerSecond,
@@ -198,7 +204,7 @@ namespace zlpanel {
                                             std::abs(dbs[1][1] - dbs[0][1]));
         reduction_max_value = circular_min_max_.push(reduction_max_value);
         float reduction_max_pos;
-        if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
+        if (is_upwards_) {
             reduction_max_pos = (.5f - std::abs(reduction_max_value / min_db)) * bound.getHeight();
         } else {
             reduction_max_pos = std::abs(reduction_max_value / min_db) * bound.getHeight();

@@ -59,6 +59,9 @@ namespace zlpanel {
         std::atomic<float> reduction_peak_{0.f};
         std::atomic<float> out_peak_{-240.f};
 
+        bool is_upwards_{false};
+        std::atomic<bool> a_is_upwards_{false};
+
         void mouseDoubleClick(const juce::MouseEvent& event) override;
 
         static std::string formatValue(float value);
