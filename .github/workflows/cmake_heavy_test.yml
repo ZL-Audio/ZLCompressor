@@ -28,15 +28,15 @@ jobs:
       matrix:
         include:
           - name: Linux
-            os: ubuntu-22.04
+            os: ubuntu-latest
             pluginval-binary: ./pluginval
             cmake_extra_flags: -DCMAKE_C_COMPILER=clang-21 -DCMAKE_CXX_COMPILER=clang++-21 -DKFR_ENABLE_MULTIARCH=OFF -DZL_JUCE_FORMATS="VST3"
           - name: macOS
-            os: macos-15
+            os: macos-latest
             pluginval-binary: pluginval.app/Contents/MacOS/pluginval
             cmake_extra_flags: -DZL_JUCE_FORMATS="AU"
           - name: Windows
-            os: windows-2022
+            os: windows-latest
             vcvars64_path: '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"'
             pluginval-binary: ./pluginval.exe
             cmake_extra_flags: -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DKFR_ENABLE_MULTIARCH=OFF -DZL_JUCE_FORMATS="VST3"
