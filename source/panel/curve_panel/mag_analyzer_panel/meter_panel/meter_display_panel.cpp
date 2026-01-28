@@ -7,20 +7,19 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "meter_panel.hpp"
+#include "meter_display_panel.hpp"
 
 namespace zlpanel {
-    MeterPanel::MeterPanel(PluginProcessor& p, zlgui::UIBase& base) :
+    MeterDisplayPanel::MeterDisplayPanel(PluginProcessor& p, zlgui::UIBase& base) :
         base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
     }
 
-    MeterPanel::~MeterPanel() = default;
+    MeterDisplayPanel::~MeterDisplayPanel() = default;
 
-    void MeterPanel::paint(juce::Graphics& g) {
-        g.fillAll(base_.getBackgroundColour());
+    void MeterDisplayPanel::paint(juce::Graphics& g) {
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
         for (auto& a_bound : reduction_rect_) {
             g.fillRect(a_bound.load());
@@ -63,14 +62,14 @@ namespace zlpanel {
         g.setColour(out_peak < 0.f ? base_.getTextColour() : base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
         if (out_peak < -120.f) {
             g.drawText("inf", bound.removeFromRight(meter_width),
-                   juce::Justification::centred, false);
+                       juce::Justification::centred, false);
         } else {
             g.drawText(formatValue(out_peak), bound.removeFromRight(meter_width),
                        juce::Justification::centred, false);
         }
     }
 
-    void MeterPanel::resized() {
+    void MeterDisplayPanel::resized() {
         auto bound = getLocalBounds().toFloat();
         bound_.store(bound);
         const auto meter_width = bound.getWidth() * .2f;
@@ -92,9 +91,9 @@ namespace zlpanel {
         out_rect_[1].store({x4, 0.f, meter_width, 0.f});
     }
 
-    void MeterPanel::run(const double next_time_stamp,
-                         zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
-                         const size_t consumer_id) {
+    void MeterDisplayPanel::run(const double next_time_stamp,
+                                zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+                                const size_t consumer_id) {
         if (!is_first_point_) {
             const auto mag_type = static_cast<zldsp::analyzer::MagType>(std::round(
                 analyzer_mag_type_ref_.load(std::memory_order::relaxed)));
@@ -185,7 +184,8 @@ namespace zlpanel {
             out_peak_.store(std::max(out_peak, out_peak_.load(std::memory_order::relaxed)),
                             std::memory_order::relaxed);
             for (size_t chan = 0; chan < 2; ++chan) {
-                const auto current_out = previous_pre_[chan] + previous_reduction_[chan] + dbs[2][chan] - dbs[1][chan];
+                const auto current_shift = previous_pre_[chan] + previous_reduction_[chan] - dbs[1][chan];
+                const auto current_out = std::max(dbs[2][chan], dbs[2][chan] + current_shift);
                 const auto pre_rect = out_rect_[chan].load();
                 const auto pre_height = (1.f - current_out / min_db) * bound.getHeight();
                 out_rect_[chan].store({pre_rect.getX(), bound.getHeight() - pre_height,
@@ -197,12 +197,12 @@ namespace zlpanel {
         }
     }
 
-    void MeterPanel::mouseDoubleClick(const juce::MouseEvent&) {
+    void MeterDisplayPanel::mouseDoubleClick(const juce::MouseEvent&) {
         reduction_peak_.store(0.f, std::memory_order::relaxed);
         out_peak_.store(-240.f, std::memory_order::relaxed);
     }
 
-    std::string MeterPanel::formatValue(const float value) {
+    std::string MeterDisplayPanel::formatValue(const float value) {
         std::stringstream ss;
         if (std::abs(value) < 10.f) {
             ss << std::fixed << std::setprecision(1) << value;

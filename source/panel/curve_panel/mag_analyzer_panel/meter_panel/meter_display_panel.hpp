@@ -9,20 +9,18 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#include "../../../PluginProcessor.hpp"
-#include "../../../gui/gui.hpp"
-#include "../../helper/helper.hpp"
-#include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
-#include "../../../dsp/analyzer/mag_analyzer/mag_meter_receiver.hpp"
+#include "../../../../PluginProcessor.hpp"
+#include "../../../../gui/gui.hpp"
+#include "../../../helper/helper.hpp"
+#include "../../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
+#include "../../../../dsp/analyzer/mag_analyzer/mag_meter_receiver.hpp"
 
 namespace zlpanel {
-    class MeterPanel final : public juce::Component {
+    class MeterDisplayPanel final : public juce::Component {
     public:
-        explicit MeterPanel(PluginProcessor& p, zlgui::UIBase& base);
+        explicit MeterDisplayPanel(PluginProcessor& p, zlgui::UIBase& base);
 
-        ~MeterPanel() override;
+        ~MeterDisplayPanel() override;
 
         void paint(juce::Graphics& g) override;
 
@@ -33,7 +31,7 @@ namespace zlpanel {
         void resized() override;
 
     private:
-        static constexpr float kReductionDecayPerSecond = 12.f;
+        static constexpr float kReductionDecayPerSecond = 16.f;
         static constexpr float kMeterDecayPerSecond = 12.f;
         zlgui::UIBase& base_;
 
@@ -58,6 +56,6 @@ namespace zlpanel {
 
         void mouseDoubleClick(const juce::MouseEvent& event) override;
 
-        std::string formatValue(float value);
+        static std::string formatValue(float value);
     };
 }

@@ -14,7 +14,7 @@
 #include "peak_panel.hpp"
 #include "rms_panel.hpp"
 #include "separate_panel.hpp"
-#include "meter_panel.hpp"
+#include "meter_panel/meter_panel.hpp"
 
 namespace zlpanel {
     class MagAnalyzerPanel final : public juce::Component {

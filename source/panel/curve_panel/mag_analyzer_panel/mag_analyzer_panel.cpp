@@ -69,7 +69,7 @@ namespace zlpanel {
             if (thread.threadShouldExit()) {
                 return;
             }
-            meter_panel_.run(time_stamp, transfer_buffer_, meter_consumer_id_);
+            meter_panel_.getDisplayPanel().run(time_stamp, transfer_buffer_, meter_consumer_id_);
         }
         if (thread.threadShouldExit()) {
             return;
@@ -112,7 +112,7 @@ namespace zlpanel {
     void MagAnalyzerPanel::updateBounds() {
         auto bound = getLocalBounds();
         if (meter_panel_.isVisible()) {
-            meter_panel_.setBounds(bound.removeFromRight(static_cast<int>(std::round(base_.getFontSize() * 4.f))));
+            meter_panel_.setBounds(bound.removeFromRight(static_cast<int>(std::round(base_.getFontSize() * 5.f))));
         }
         background_panel_.setBounds(bound);
         peak_panel_.setBounds(bound);

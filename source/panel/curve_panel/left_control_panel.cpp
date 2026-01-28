@@ -65,9 +65,8 @@ namespace zlpanel {
                            zlstate::PAnalyzerMinDB::kID, updater_) {
         juce::ignoreUnused(tooltip_helper);
 
-        for (auto& b : {
-                 &side_control_show_button_, &equalize_show_button_,
-                 &computer_show_button_, &rms_show_button_, &meter_show_button_
+        for (auto& b : {&side_control_show_button_, &equalize_show_button_,
+                        &computer_show_button_, &rms_show_button_, &meter_show_button_
              }) {
             b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
