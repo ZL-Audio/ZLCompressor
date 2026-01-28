@@ -9,14 +9,16 @@
 
 #pragma once
 
+#include "control_background.hpp"
 #include "mid_control_panel.hpp"
 #include "right_control_panel.hpp"
+#include "bottom_control_panel.hpp"
 
 namespace zlpanel {
     class ControlPanel : public juce::Component {
     public:
         explicit ControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                              multilingual::TooltipHelper& tooltip_helper);
+                              const multilingual::TooltipHelper& tooltip_helper);
 
         void paint(juce::Graphics& g) override;
 
@@ -24,9 +26,16 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
+        int getIdealWidth() const;
+
+        int getIdealHeight() const;
+
     private:
         zlgui::UIBase& base_;
+
+        ControlBackground control_background_;
         MidControlPanel mid_control_panel_;
         RightControlPanel right_control_panel_;
+        BottomControlPanel bottom_control_panel_;
     };
-} // zlpanel
+}

@@ -50,5 +50,17 @@ namespace zlpanel {
         const std::unique_ptr<juce::Drawable> meter_show_drawable_;
         zlgui::button::ClickButton meter_show_button_;
         zlgui::attachment::ButtonAttachment<true> meter_show_attachment_;
+
+        zlgui::combobox::CompactCombobox time_length_box_;
+        zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
+
+        zlgui::combobox::CompactCombobox mag_stereo_box_;
+        zlgui::attachment::ComboBoxAttachment<true> mag_stereo_attachment_;
+
+        zlgui::combobox::CompactCombobox mag_type_box_;
+        zlgui::attachment::ComboBoxAttachment<true> mag_type_attachment_;
+
+        zlgui::combobox::CompactCombobox min_db_box_;
+        zlgui::attachment::ComboBoxAttachment<true> min_db_attachment_;
     };
 }

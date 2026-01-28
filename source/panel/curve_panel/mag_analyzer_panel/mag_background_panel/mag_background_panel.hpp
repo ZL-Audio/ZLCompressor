@@ -22,7 +22,7 @@ namespace zlpanel {
         void resized() override;
 
     private:
-        MagGridgroundPanel mag_gridground_panel_;
+        MagGridPanel mag_gridground_panel_;
         ClipperPanel clipper_panel_;
     };
 } // zlpanel

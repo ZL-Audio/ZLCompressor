@@ -19,7 +19,7 @@ namespace zlpanel {
                                     private juce::ValueTree::Listener {
     public:
         explicit RightControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                   multilingual::TooltipHelper& tooltip_helper);
+                                   const multilingual::TooltipHelper& tooltip_helper);
 
         ~RightControlPanel() override;
 
@@ -45,6 +45,13 @@ namespace zlpanel {
         juce::Label wet_label_;
         zlgui::slider::TwoValueRotarySlider<false, false, false> wet_slider_;
         zlgui::attachment::SliderAttachment<true> wet_attachment_;
+
+        const std::unique_ptr<juce::Drawable> rms_drawable_;
+        zlgui::button::ClickButton rms_button_;
+        zlgui::attachment::ButtonAttachment<true> rms_attachment_;
+
+        const std::unique_ptr<juce::Drawable> learn_drawable_;
+        zlgui::button::ClickButton learn_button_;
 
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& identifier) override;
     };

@@ -16,22 +16,18 @@ namespace zlpanel {
         mag_analyzer_panel_(p, base),
         separate_panel_(base),
         equalize_panel_(p, base),
-        bottom_control_panel_(p, base, tooltip_helper),
         left_control_panel_(p, base, tooltip_helper),
         side_control_panel_(p, base, tooltip_helper),
-        rms_control_panel_(p, base, tooltip_helper),
         equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
         side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
         computer_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PComputerCurveDisplay::kID)),
         rms_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PRMSAnalyzerDisplay::kID)) {
         addAndMakeVisible(mag_analyzer_panel_);
         addChildComponent(separate_panel_);
-        addAndMakeVisible(bottom_control_panel_);
         addAndMakeVisible(left_control_panel_);
 
         addChildComponent(equalize_panel_);
         addChildComponent(side_control_panel_);
-        addChildComponent(rms_control_panel_);
         startThread(juce::Thread::Priority::low);
     }
 
@@ -55,35 +51,29 @@ namespace zlpanel {
         const auto font_size = base_.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto slider_width = getSliderWidth(font_size);
-        const auto button_height = getButtonSize(font_size);
+        const auto button_size = getButtonSize(font_size);
         const auto small_slider_width = getSmallSliderWidth(font_size);
         const auto left_padding = (getWidth() - (padding * 11 + slider_width * 7 + small_slider_width * 2)) / 2;
         {
             auto bound = getLocalBounds();
-            bound.removeFromLeft(button_height);
+            bound.removeFromLeft(button_size);
             mag_analyzer_panel_.setBounds(bound);
         }
         {
             auto bound = getLocalBounds();
-            bound = bound.removeFromBottom(button_height);
-            bottom_control_panel_.setBounds(bound);
+            left_control_panel_.setBounds(bound.removeFromLeft(button_size));
         }
         {
             auto bound = getLocalBounds();
-            bound.removeFromBottom(button_height);
-            left_control_panel_.setBounds(bound.removeFromLeft(button_height));
-        }
-        {
-            auto bound = getLocalBounds();
-            bound.removeFromBottom(button_height);
-            bound.removeFromLeft(button_height);
+            bound.removeFromBottom(getControlPanelHeight(font_size) - padding);
+            bound.removeFromLeft(button_size);
 
             const auto width = side_control_panel_.getIdealWidth();
             const auto ideal_height = std::min(side_control_panel_.getIdealHeight(), bound.getHeight());
             const auto height = std::max(static_cast<int>(static_cast<float>(bound.getHeight()) * .618f), ideal_height);
 
             bound = bound.removeFromBottom(height);
-            bound = bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height);
+            bound = bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_size);
 
             equalize_large_bound_ = bound;
             side_control_panel_.setBounds(bound.removeFromLeft(width));
@@ -95,13 +85,6 @@ namespace zlpanel {
                 equalize_panel_.setBounds(equalize_large_bound_);
             }
             separate_panel_.setBounds(getLocalBounds().withWidth(equalize_large_bound_.getWidth()));
-        }
-        {
-            auto bound = getLocalBounds();
-            bound.removeFromLeft(left_padding + (padding + slider_width) * 6 + button_height * 2);
-            bound = bound.removeFromLeft(rms_control_panel_.getIdealWidth());
-            bound = bound.removeFromBottom(rms_control_panel_.getIdealHeight());
-            rms_control_panel_.setBounds(bound);
         }
     }
 
@@ -143,10 +126,8 @@ namespace zlpanel {
 
         left_control_panel_.repaintCallBackSlow();
         side_control_panel_.repaintCallBackSlow();
-        bottom_control_panel_.repaintCallBackSlow();
         mag_analyzer_panel_.repaintCallBackSlow();
         equalize_panel_.repaintCallBackSlow();
-        rms_control_panel_.repaintCallBackSlow();
     }
 
     void CurvePanel::repaintCallBack(const double time_stamp) {

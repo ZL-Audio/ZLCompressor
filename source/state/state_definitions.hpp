@@ -121,7 +121,7 @@ namespace zlstate {
         auto static constexpr kID = "analyzer_mag_type";
         auto static constexpr kName = "";
         inline auto static const kChoices = juce::StringArray{
-            "Peak", "RMS"
+            "PK", "RMS"
         };
         int static constexpr kDefaultI = 0;
     };
@@ -146,7 +146,7 @@ namespace zlstate {
         auto static constexpr kID = "analyzer_time_length";
         auto static constexpr kName = "";
         inline auto static const kChoices = juce::StringArray{
-            "6 s ", "9 s ", "12 s ", "18 s "
+            "6 s", "9 s", "12 s", "18 s"
         };
         static constexpr std::array kLength = {6.f, 9.f, 12.f, 18.f};
         int static constexpr kDefaultI = 1;

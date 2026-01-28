@@ -9,14 +9,17 @@
 
 #pragma once
 
-#include "rms_button.hpp"
-#include "lufs_button.hpp"
+#include "../../PluginProcessor.hpp"
+#include "../../gui/gui.hpp"
+#include "../helper/helper.hpp"
+#include "../multilingual/tooltip_helper.hpp"
+#include "rms_control_panel.hpp"
 
 namespace zlpanel {
     class BottomControlPanel final : public juce::Component {
     public:
         explicit BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                    multilingual::TooltipHelper& tooltip_helper);
+                                    const multilingual::TooltipHelper& tooltip_helper);
 
         void paint(juce::Graphics& g) override;
 
@@ -24,39 +27,24 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
+        int getIdealHeight() const;
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
+        RMSControlPanel rms_control_panel_;
+
+        std::atomic<float>& rms_on_ref_;
+
         std::atomic<float>& comp_direction_ref_;
         zlp::PCompDirection::Direction c_comp_direction_{zlp::PCompDirection::kCompress};
-        std::atomic<float> &side_control_show_ref_, &side_eq_show_ref_;
-        std::atomic<float> &analyzer_stereo_ref_;
-        bool show_path1_{false};
-
-        juce::Path background_path0_, background_path1_;
-
-        zlgui::combobox::CompactCombobox time_length_box_;
-        zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
-
-        zlgui::combobox::CompactCombobox mag_stereo_box_;
-        zlgui::attachment::ComboBoxAttachment<true> mag_stereo_attachment_;
-
-        zlgui::combobox::CompactCombobox mag_type_box_;
-        zlgui::attachment::ComboBoxAttachment<true> mag_type_attachment_;
-
-        zlgui::combobox::CompactCombobox min_db_box_;
-        zlgui::attachment::ComboBoxAttachment<true> min_db_attachment_;
 
         zlgui::label::NameLookAndFeel label_laf_;
         juce::Label threshold_label_, ratio_label_, attack_label_, release_label_;
 
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
-
-        RMSButton rms_button_;
-
-        LUFSButton lufs_button_;
     };
 }

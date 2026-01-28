@@ -9,28 +9,27 @@
 
 #pragma once
 
-#include "../../../PluginProcessor.hpp"
-#include "../../../gui/gui.hpp"
-#include "../../helper/helper.hpp"
-#include "../../multilingual/tooltip_helper.hpp"
+#include "../../gui/gui.hpp"
+#include "../helper/helper.hpp"
 
 namespace zlpanel {
-    class LUFSButton final : public juce::Component {
+    class ControlBackground final : public juce::Component {
     public:
-        explicit LUFSButton(PluginProcessor& p, zlgui::UIBase& base,
-                            multilingual::TooltipHelper& tooltip_helper);
-
-        ~LUFSButton() override;
+        /**
+         *
+         * @param base
+         * @param alpha shadow colour alpha
+         * @param hide_shadow hide left/top/right/bottom shadow edge
+         */
+        explicit ControlBackground(zlgui::UIBase& base, float alpha = .5f,
+                                   std::array<bool, 4> hide_shadow = {false, false, false, false});
 
         void paint(juce::Graphics& g) override;
 
-        void resized() override;
-
     private:
-        PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
-
-        const std::unique_ptr<juce::Drawable> learn_drawable_;
-        zlgui::button::ClickButton learn_button_;
+        const float alpha_;
+        // left, top, right, bottom
+        std::array<bool, 4> hide_shadow_{false, false, false, false};
     };
-} // zlpanel
+}

@@ -1,0 +1,52 @@
+// Copyright (C) 2026 - zsliu98
+// This file is part of ZLCompressor
+//
+// ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
+//
+// ZLCompressor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
+#include "../../../PluginProcessor.hpp"
+#include "../../../gui/gui.hpp"
+#include "../../helper/helper.hpp"
+#include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
+#include "../../../dsp/analyzer/mag_analyzer/mag_meter_receiver.hpp"
+
+namespace zlpanel {
+    class MeterPanel final : public juce::Component {
+    public:
+        explicit MeterPanel(PluginProcessor& p, zlgui::UIBase& base);
+
+        ~MeterPanel() override;
+
+        void paint(juce::Graphics& g) override;
+
+        void run(double next_time_stamp,
+                 zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+                 size_t consumer_id);
+
+        void resized() override;
+
+    private:
+        zlgui::UIBase& base_;
+
+        std::atomic<float>& comp_direction_ref_;
+        std::atomic<float>& analyzer_mag_type_ref_;
+        std::atomic<float>& analyzer_min_db_ref_;
+
+        AtomicBound<float> bound_;
+        std::array<AtomicBound<float>, 2> reduction_rect_{};
+        std::array<AtomicBound<float>, 2> pre_rect_{};
+        std::array<AtomicBound<float>, 2> out_rect_{};
+
+        double start_time_{0.0};
+        bool is_first_point_{true};
+
+        zldsp::analyzer::MagMeterReceiver<3> meter_receiver_{};
+    };
+}

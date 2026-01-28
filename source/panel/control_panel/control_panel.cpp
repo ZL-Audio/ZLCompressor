@@ -11,23 +11,40 @@
 
 namespace zlpanel {
     ControlPanel::ControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                               multilingual::TooltipHelper& tooltip_helper)
-        : base_(base),
-          mid_control_panel_(p, base_, tooltip_helper),
-          right_control_panel_(p, base_, tooltip_helper) {
+                               const multilingual::TooltipHelper& tooltip_helper) :
+        base_(base),
+        control_background_(base_, .5f, {true, false, false, true}),
+        mid_control_panel_(p, base_, tooltip_helper),
+        right_control_panel_(p, base_, tooltip_helper),
+        bottom_control_panel_(p, base_, tooltip_helper) {
+        addAndMakeVisible(control_background_);
         addAndMakeVisible(mid_control_panel_);
         addAndMakeVisible(right_control_panel_);
 
-        setOpaque(true);
+        addAndMakeVisible(bottom_control_panel_);
+        bottom_control_panel_.setBufferedToImage(true);
+
+        control_background_.setBufferedToImage(true);
+
+        setBufferedToImage(true);
+
+        setInterceptsMouseClicks(false, true);
     }
 
-    void ControlPanel::paint(juce::Graphics& g) {
-        g.setColour(base_.getBackgroundColour());
-        g.fillRect(getLocalBounds());
+    void ControlPanel::paint(juce::Graphics&) {
     }
 
     void ControlPanel::resized() {
         auto bound = getLocalBounds();
+        control_background_.setBounds(bound);
+
+        const auto font_size = base_.getFontSize();
+        const auto padding = getPaddingSize(font_size);
+        bound.removeFromTop(padding);
+        bound.removeFromRight(padding);
+
+        bottom_control_panel_.setBounds(bound.removeFromTop(bottom_control_panel_.getIdealHeight()));
+
         const auto right_width = right_control_panel_.getIdealWidth();
         const auto mid_width = mid_control_panel_.getIdealWidth();
         right_control_panel_.setBounds(bound.removeFromRight(right_width));
@@ -38,5 +55,17 @@ namespace zlpanel {
     void ControlPanel::repaintCallBackSlow() {
         mid_control_panel_.repaintCallBackSlow();
         right_control_panel_.repaintCallBackSlow();
+        bottom_control_panel_.repaintCallBackSlow();
+    }
+
+    int ControlPanel::getIdealWidth() const {
+        const auto font_size = base_.getFontSize();
+        const auto padding = getPaddingSize(font_size);
+        return padding + right_control_panel_.getIdealWidth() + mid_control_panel_.getIdealWidth();
+    }
+
+    int ControlPanel::getIdealHeight() const {
+        const auto font_size = base_.getFontSize();
+        return getControlPanelHeight(font_size);
     }
 }

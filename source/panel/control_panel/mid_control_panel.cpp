@@ -91,13 +91,9 @@ namespace zlpanel {
         hold_slider_.setComponentID(zlp::PHold::kID);
         hold_slider_.setBufferedToImage(true);
         addAndMakeVisible(hold_slider_);
-
-        setOpaque(true);
     }
 
-    void MidControlPanel::paint(juce::Graphics& g) {
-        g.setColour(base_.getBackgroundColour());
-        g.fillRect(getLocalBounds());
+    void MidControlPanel::paint(juce::Graphics&) {
     }
 
     int MidControlPanel::getIdealWidth() const {

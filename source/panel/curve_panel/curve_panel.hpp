@@ -11,10 +11,8 @@
 
 #include "mag_analyzer_panel/mag_analyzer_panel.hpp"
 #include "equalize_panel/equalize_panel.hpp"
-#include "bottom_panel/bottom_control_panel.hpp"
 #include "left_control_panel.hpp"
 #include "side_control_panel.hpp"
-#include "rms_control_panel.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -43,20 +41,14 @@ namespace zlpanel {
             return side_control_panel_;
         }
 
-        RMSControlPanel& getRMSControlPanel() {
-            return rms_control_panel_;
-        }
-
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
         MagAnalyzerPanel mag_analyzer_panel_;
         SeparatePanel separate_panel_;
         EqualizePanel equalize_panel_;
-        BottomControlPanel bottom_control_panel_;
         LeftControlPanel left_control_panel_;
         SideControlPanel side_control_panel_;
-        RMSControlPanel rms_control_panel_;
 
         juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
 

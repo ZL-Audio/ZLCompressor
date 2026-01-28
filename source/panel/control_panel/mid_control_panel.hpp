@@ -45,16 +45,16 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<true, true, true> floor_slider_;
         zlgui::attachment::SliderAttachment<true> floor_attachment_;
 
-        zlgui::slider::TwoValueRotarySlider<true, false, false> th_slider_;
+        zlgui::slider::TwoValueRotarySlider<false, false, false> th_slider_;
         zlgui::attachment::SliderAttachment<true> th_attachment_;
 
-        zlgui::slider::TwoValueRotarySlider<true, false, false> ratio_slider_;
+        zlgui::slider::TwoValueRotarySlider<false, false, false> ratio_slider_;
         zlgui::attachment::SliderAttachment<true> ratio_attachment_;
 
-        zlgui::slider::TwoValueRotarySlider<true, false, false> attack_slider_;
+        zlgui::slider::TwoValueRotarySlider<false, false, false> attack_slider_;
         zlgui::attachment::SliderAttachment<true> attack_attachment_;
 
-        zlgui::slider::TwoValueRotarySlider<true, false, false> release_slider_;
+        zlgui::slider::TwoValueRotarySlider<false, false, false> release_slider_;
         zlgui::attachment::SliderAttachment<true> release_attachment_;
 
         zlgui::slider::CompactLinearSlider<true, true, true> pump_slider_;

@@ -10,18 +10,18 @@
 #include "main_panel.hpp"
 
 namespace zlpanel {
-    MainPanel::MainPanel(PluginProcessor& processor, zlgui::UIBase& base)
-        : p_ref_(processor), base_(base),
-          tooltip_helper_(
-              static_cast<multilingual::TooltipLanguage>(std::round(
-                  p_ref_.state_.getRawParameterValue(zlstate::PTooltipLang::kID)->load(std::memory_order::relaxed)))
-          ),
-          curve_panel_(processor, base_, tooltip_helper_),
-          control_panel_(processor, base_, tooltip_helper_),
-          top_panel_(processor, base_, tooltip_helper_),
-          ui_setting_panel_(processor, base_),
-          tooltipLAF(base_), tooltipWindow(&curve_panel_),
-          refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
+    MainPanel::MainPanel(PluginProcessor& processor, zlgui::UIBase& base) :
+        p_ref_(processor), base_(base),
+        tooltip_helper_(
+            static_cast<multilingual::TooltipLanguage>(std::round(
+                p_ref_.state_.getRawParameterValue(zlstate::PTooltipLang::kID)->load(std::memory_order::relaxed)))
+            ),
+        curve_panel_(processor, base_, tooltip_helper_),
+        control_panel_(processor, base_, tooltip_helper_),
+        top_panel_(processor, base_, tooltip_helper_),
+        ui_setting_panel_(processor, base_),
+        tooltipLAF(base_), tooltipWindow(&curve_panel_),
+        refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
         juce::ignoreUnused(base_);
         addAndMakeVisible(curve_panel_);
         addAndMakeVisible(control_panel_);
@@ -51,23 +51,23 @@ namespace zlpanel {
             const auto width = static_cast<float>(bound.getWidth());
             if (height < width * 0.47f) {
                 bound.setHeight(juce::roundToInt(width * .47f));
-            }
-            else if (height > width * 1.f) {
+            } else if (height > width * 1.f) {
                 bound.setWidth(juce::roundToInt(height * 1.f));
             }
         }
 
         const auto max_font_size = static_cast<float>(bound.getWidth()) * kFontSizeOverWidth;
-        const auto min_font_size = max_font_size * .25f;
         const auto font_size = base_.getFontMode() == 0
-                                   ? max_font_size * base_.getFontScale()
-                                   : std::clamp(base_.getStaticFontSize(), min_font_size, max_font_size);
+            ? max_font_size * std::clamp(base_.getFontScale(), 0.25f, 0.9f)
+            : std::clamp(base_.getStaticFontSize(), max_font_size * .25f, max_font_size * 0.9f);
         base_.setFontSize(font_size);
 
         ui_setting_panel_.setBounds(bound);
 
-        const auto controlBound = bound.removeFromBottom(juce::roundToInt(font_size * 7.348f));
-        control_panel_.setBounds(controlBound);
+        // set control panel bound
+        const auto button_size = getButtonSize(font_size);
+        control_panel_.setBounds({button_size, bound.getBottom() - control_panel_.getIdealHeight(),
+                                  control_panel_.getIdealWidth(), control_panel_.getIdealHeight()});
 
         top_panel_.setBounds(bound.removeFromTop(top_panel_.getIdealHeight()));
 
@@ -110,4 +110,4 @@ namespace zlpanel {
             stopTimer();
         }
     }
-} // zlpanel
+}

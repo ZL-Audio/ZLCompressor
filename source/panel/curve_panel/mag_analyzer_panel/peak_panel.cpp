@@ -66,26 +66,24 @@ namespace zlpanel {
         const auto sample_rate = transfer_buffer.getSampleRate();
         const auto max_num_samples = transfer_buffer.getMaxNumSamples();
 
-        if (sample_rate > 20000.0 && max_num_samples > 0) {
-            if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
-                max_num_samples_ != max_num_samples ||
-                std::abs(time_length_idx_ - time_length_idx) > 0.1) {
-                sample_rate_ = sample_rate;
-                max_num_samples_ = max_num_samples;
-                time_length_idx_ = time_length_idx;
-                const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
-                num_points_per_second_ = kNumPointsPerSecond[time_idx];
-                num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second_;
-                time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
-                is_first_point_ = true;
-                num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
-                second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
+        if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
+            max_num_samples_ != max_num_samples ||
+            std::abs(time_length_idx_ - time_length_idx) > 0.1) {
+            sample_rate_ = sample_rate;
+            max_num_samples_ = max_num_samples;
+            time_length_idx_ = time_length_idx;
+            const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
+            num_points_per_second_ = kNumPointsPerSecond[time_idx];
+            num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second_;
+            time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
+            is_first_point_ = true;
+            num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
+            second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
 
-                xs_.resize(num_points_ + 2);
-                pre_ys_.resize(num_points_ + 2);
-                out_ys_.resize(num_points_ + 2);
-                post_ys_.resize(num_points_ + 2);
-            }
+            xs_.resize(num_points_ + 2);
+            pre_ys_.resize(num_points_ + 2);
+            out_ys_.resize(num_points_ + 2);
+            post_ys_.resize(num_points_ + 2);
         }
 
         auto& fifo{transfer_buffer.getMulticastFIFO()};
@@ -137,7 +135,7 @@ namespace zlpanel {
                 too_much_samples_ = 0;
             }
         } else {
-            if (num_samples_per_point_ > 0 && fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
+            if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                 is_first_point_ = false;
                 start_time_ = next_time_stamp;
                 std::ranges::fill(pre_ys_, 100000.f);

@@ -64,7 +64,9 @@ namespace zlpanel {
         }
         transfer_buffer_.processTransfer(sender.getAbstractFIFO(), sender.getSampleFIFOs());
         sender.getLock().unlock();
-        peak_panel_.run(time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_);
+        if (sample_rate_ > 20000.0 && max_sum_samples_ > 0) {
+            peak_panel_.run(time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_);
+        }
         if (thread.threadShouldExit()) {
             return;
         }

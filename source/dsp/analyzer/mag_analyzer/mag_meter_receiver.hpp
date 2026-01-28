@@ -57,6 +57,10 @@ namespace zldsp::analyzer {
             }
         }
 
+        std::array<std::vector<float>, kNum>& getDBs() {
+            return dbs_;
+        }
+
     protected:
         std::array<std::vector<float>, kNum> dbs_;
     };

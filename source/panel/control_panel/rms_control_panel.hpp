@@ -20,12 +20,6 @@ namespace zlpanel {
         explicit RMSControlPanel(PluginProcessor& p, zlgui::UIBase& base,
                                  const multilingual::TooltipHelper& tooltip_helper);
 
-        void paint(juce::Graphics& g) override;
-
-        int getIdealWidth() const;
-
-        int getIdealHeight() const;
-
         void resized() override;
 
         void repaintCallBackSlow();
@@ -33,8 +27,6 @@ namespace zlpanel {
     private:
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
-
-        std::atomic<float>& rms_show_ref_;
 
         zlgui::label::NameLookAndFeel label_laf_;
 

@@ -30,7 +30,6 @@ PluginEditor::PluginEditor(PluginProcessor& p) :
     addAndMakeVisible(main_panel_);
     main_panel_.getControlPanel().addMouseListener(this, true);
     main_panel_.getSideControlPanel().addMouseListener(this, true);
-    main_panel_.getRMSControlPanel().addMouseListener(this, true);
 
     // set size & size listener
     setResizeLimits(static_cast<int>(zlstate::PWindowW::minV),

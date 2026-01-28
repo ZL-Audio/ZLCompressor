@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <cmath>
+
 namespace zlpanel {
     inline constexpr float kFontSizeOverWidth = 0.016f;
     inline constexpr float kPaddingScale = .5f;
@@ -45,5 +47,9 @@ namespace zlpanel {
 
     inline int getSmallSliderWidth(const float font_size) {
         return static_cast<int>(std::round(font_size * kSmallSliderWidthScale));
+    }
+
+    inline int getControlPanelHeight(const float font_size) {
+        return static_cast<int>(std::round(font_size * 7.348f)) + getPaddingSize(font_size) + getButtonSize(font_size);
     }
 }

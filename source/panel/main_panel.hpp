@@ -42,10 +42,6 @@ namespace zlpanel {
             return curve_panel_.getSideControlPanel();
         }
 
-        RMSControlPanel& getRMSControlPanel() {
-            return curve_panel_.getRMSControlPanel();
-        }
-
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
@@ -67,4 +63,4 @@ namespace zlpanel {
 
         void timerCallback() override;
     };
-} // zlpanel
+}
