@@ -12,6 +12,7 @@
 namespace zlpanel {
     MeterDisplayPanel::MeterDisplayPanel(PluginProcessor& p, zlgui::UIBase& base) :
         base_(base),
+        meter_top_panel_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
@@ -22,6 +23,9 @@ namespace zlpanel {
             zlstate::PTargetRefreshSpeed::kRates[static_cast<size_t>(std::round(target_refresh_id))]);
         circular_min_max_.setCapacity(circular_capacity);
         circular_min_max_.setSize(circular_capacity);
+
+        meter_top_panel_.setBufferedToImage(true);
+        addAndMakeVisible(meter_top_panel_);
     }
 
     MeterDisplayPanel::~MeterDisplayPanel() = default;
@@ -69,35 +73,14 @@ namespace zlpanel {
                 g.fillRect(a_bound.load());
             }
         }
-
-        auto bound = getLocalBounds().toFloat();
-        bound = bound.removeFromTop(text_height);
-        g.setColour(base_.getBackgroundColour().withAlpha(.5f));
-        g.fillRect(bound);
-
-        const auto meter_width = bound.getWidth() * .45f;
-        const auto reduction_peak = reduction_peak_.load(std::memory_order::relaxed);
-        g.setColour(base_.getTextColour());
-        g.drawText(formatValue(std::abs(reduction_peak)), bound.removeFromLeft(meter_width),
-                   juce::Justification::centred, false);
-
-        const auto out_peak = out_peak_.load(std::memory_order::relaxed);
-        g.setColour(out_peak < 0.f ? base_.getTextColour() : base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
-        if (out_peak < -120.f) {
-            g.drawText("inf", bound.removeFromRight(meter_width),
-                       juce::Justification::centred, false);
-        } else {
-            g.drawText(formatValue(out_peak), bound.removeFromRight(meter_width),
-                       juce::Justification::centred, false);
-        }
     }
 
     void MeterDisplayPanel::resized() {
-        auto bound = getLocalBounds().toFloat();
-        bound_.store(bound);
-        const auto meter_width = bound.getWidth() * .2f;
+        const auto bound = getLocalBounds();
+        bound_.store(bound.toFloat());
+        const auto meter_width = static_cast<float>(bound.getWidth()) * .2f;
         const auto meter_padding = meter_width * .5f;
-        bound.removeFromLeft(meter_padding);
+        meter_top_panel_.setBounds(bound.withHeight(juce::roundToInt(base_.getFontSize() * 1.25f)));
 
         constexpr auto x1 = 0.f;
         const auto x2 = x1 + meter_width + meter_padding * .5f;
@@ -114,6 +97,11 @@ namespace zlpanel {
         out_rect_[1].store({x4, 0.f, meter_width, 0.f});
 
         reduction_max_rect_.store({x1, 0.f, x2 + meter_width, base_.getFontSize() * .25f});
+    }
+
+    void MeterDisplayPanel::repaintCallBackSlow() {
+        meter_top_panel_.updateValue(reduction_peak_.load(std::memory_order::relaxed),
+                                     out_peak_.load(std::memory_order::relaxed));
     }
 
     void MeterDisplayPanel::run(const double next_time_stamp,
@@ -167,13 +155,9 @@ namespace zlpanel {
             const auto current_reduction = dbs[1][chan] - dbs[0][chan];
             const auto previous_reduction = previous_reduction_[chan];
             if (is_upwards_) {
-                if (current_reduction < previous_reduction) {
-                    previous_reduction_[chan] = std::max(
-                        previous_reduction - static_cast<float>(delta_time) * kReductionDecayPerSecond,
-                        current_reduction);
-                } else {
-                    previous_reduction_[chan] = current_reduction;
-                }
+                previous_reduction_[chan] = std::max(
+                    previous_reduction - static_cast<float>(delta_time) * kReductionDecayPerSecond,
+                    current_reduction);
                 const auto reduction_rect = reduction_rect_[chan].load();
                 const auto reduction_height = std::abs(previous_reduction_[chan] / min_db) * bound.getHeight();
                 if (previous_reduction_[chan] > 0.f) {
@@ -186,13 +170,9 @@ namespace zlpanel {
                         reduction_rect.getWidth(), reduction_height});
                 }
             } else {
-                if (current_reduction < previous_reduction) {
-                    previous_reduction_[chan] = current_reduction;
-                } else {
-                    previous_reduction_[chan] = std::min(
-                        previous_reduction + static_cast<float>(delta_time) * kReductionDecayPerSecond,
-                        current_reduction);
-                }
+                previous_reduction_[chan] = std::min(
+                    previous_reduction + static_cast<float>(delta_time) * kReductionDecayPerSecond,
+                    current_reduction);
                 const auto reduction_rect = reduction_rect_[chan].load();
                 reduction_rect_[chan].store({
                     reduction_rect.getX(), 0.f,
@@ -209,7 +189,7 @@ namespace zlpanel {
         } else {
             reduction_max_pos = std::abs(reduction_max_value / min_db) * bound.getHeight();
         }
-        reduction_max_rect_.setY(reduction_max_pos - reduction_max_rect_.getWidth() * .5f);
+        reduction_max_rect_.setY(reduction_max_pos - reduction_max_rect_.getHeight() * .5f);
         reduction_max_value_.store(reduction_max_value, std::memory_order::relaxed);
         // update pre meter
         for (size_t chan = 0; chan < 2; ++chan) {
@@ -251,7 +231,7 @@ namespace zlpanel {
 
     std::string MeterDisplayPanel::formatValue(const float value) {
         std::stringstream ss;
-        if (std::abs(value) < 10.f) {
+        if (std::abs(value) < 100.f) {
             ss << std::fixed << std::setprecision(1) << value;
         } else {
             ss << std::fixed << std::setprecision(0) << value;

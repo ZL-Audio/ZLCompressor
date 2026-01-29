@@ -7,27 +7,26 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-#include "meter_panel.hpp"
+#pragma once
+
+#include "../../../../gui/gui.hpp"
 
 namespace zlpanel {
-    MeterPanel::MeterPanel(PluginProcessor& p, zlgui::UIBase& base) :
-        meter_background_panel_(p, base),
-        meter_display_panel_(p, base) {
+    class MeterTopPanel final : public juce::Component {
+    public:
+        explicit MeterTopPanel(zlgui::UIBase& base);
 
-        meter_background_panel_.setBufferedToImage(true);
-        addAndMakeVisible(meter_background_panel_);
+        void paint(juce::Graphics& g) override;
 
-        addAndMakeVisible(meter_display_panel_);
-    }
+        void updateValue(float reduction_value, float out_value);
 
-    MeterPanel::~MeterPanel() = default;
+    private:
+        zlgui::UIBase& base_;
 
-    void MeterPanel::resized() {
-        meter_background_panel_.setBounds(getLocalBounds());
-        meter_display_panel_.setBounds(getLocalBounds());
-    }
+        float reduction_value_{0.f};
+        float out_value_{-240.f};
 
-    void MeterPanel::repaintCallBackSlow() {
-        meter_display_panel_.repaintCallBackSlow();
-    }
+        static std::string formatValue(float value);
+
+    };
 }

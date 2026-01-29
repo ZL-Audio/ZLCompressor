@@ -80,11 +80,13 @@ namespace zlpanel {
     void MagAnalyzerPanel::repaintCallBackSlow() {
         updater_.updateComponents();
         background_panel_.repaintCallBackSlow();
-
         const auto meter_visible = meter_display_ref_.load(std::memory_order::relaxed) > .5f;
         if (meter_visible != meter_panel_.isVisible()) {
             meter_panel_.setVisible(meter_visible);
             updateBounds();
+        }
+        if (meter_visible) {
+            meter_panel_.repaintCallBackSlow();
         }
     }
 
@@ -112,7 +114,7 @@ namespace zlpanel {
     void MagAnalyzerPanel::updateBounds() {
         auto bound = getLocalBounds();
         if (meter_panel_.isVisible()) {
-            meter_panel_.setBounds(bound.removeFromRight(static_cast<int>(std::round(base_.getFontSize() * 5.f))));
+            meter_panel_.setBounds(bound.removeFromRight(static_cast<int>(std::round(base_.getFontSize() * 6.f))));
         }
         background_panel_.setBounds(bound);
         peak_panel_.setBounds(bound);

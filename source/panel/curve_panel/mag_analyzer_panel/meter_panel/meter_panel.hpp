@@ -25,6 +25,8 @@ namespace zlpanel {
 
         void resized() override;
 
+        void repaintCallBackSlow();
+
     private:
         MeterBackgroundPanel meter_background_panel_;
         MeterDisplayPanel meter_display_panel_;

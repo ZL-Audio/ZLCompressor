@@ -14,6 +14,7 @@
 #include "../../../helper/helper.hpp"
 #include "../../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../../dsp/analyzer/mag_analyzer/mag_meter_receiver.hpp"
+#include "meter_top_panel.hpp"
 
 namespace zlpanel {
     class MeterDisplayPanel final : public juce::Component {
@@ -30,10 +31,13 @@ namespace zlpanel {
 
         void resized() override;
 
+        void repaintCallBackSlow();
+
     private:
         static constexpr float kReductionDecayPerSecond = 16.f;
         static constexpr float kMeterDecayPerSecond = 8.f;
         zlgui::UIBase& base_;
+        MeterTopPanel meter_top_panel_;
 
         std::atomic<float>& comp_direction_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
