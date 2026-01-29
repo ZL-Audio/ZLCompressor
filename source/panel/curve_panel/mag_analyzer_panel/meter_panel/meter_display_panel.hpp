@@ -14,6 +14,7 @@
 #include "../../../helper/helper.hpp"
 #include "../../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../../dsp/analyzer/mag_analyzer/mag_meter_receiver.hpp"
+#include "../../../../dsp/analyzer/mag_analyzer/mag_reduction_receiver.hpp"
 #include "meter_top_panel.hpp"
 
 namespace zlpanel {
@@ -47,6 +48,8 @@ namespace zlpanel {
         std::array<float, 2> previous_reduction_{0.f, 0.f};
         std::array<float, 2> previous_pre_{-240.f, -240.f};
         std::array<float, 2> pre_decay_mul_{1.f, 1.f};
+        std::array<float, 2> previous_out_{-240.f, -240.f};
+        std::array<float, 2> out_decay_mul_{1.f, 1.f};
         std::array<AtomicBound<float>, 2> reduction_rect_{};
         std::array<AtomicBound<float>, 2> pre_rect_{};
         std::array<AtomicBound<float>, 2> out_rect_{};
@@ -58,7 +61,9 @@ namespace zlpanel {
         AtomicBound<float> reduction_max_rect_{};
         std::atomic<float> reduction_max_value_{0.f};
 
-        zldsp::analyzer::MagMeterReceiver<3> meter_receiver_{};
+        zldsp::analyzer::MagReductionReceiver reduction_receiver_{};
+        zldsp::analyzer::MagMeterReceiver pre_receiver_{};
+        zldsp::analyzer::MagMeterReceiver out_receiver_{};
 
         std::atomic<float> reduction_peak_{0.f};
         std::atomic<float> out_peak_{-240.f};

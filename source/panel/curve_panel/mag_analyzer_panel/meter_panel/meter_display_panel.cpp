@@ -130,10 +130,14 @@ namespace zlpanel {
             : std::min(num_ready, delta_num_samples);
 
         const auto range = fifo.prepareToRead(consumer_id, num_to_read);
-        meter_receiver_.run(range, transfer_buffer.getSampleFIFOs(), mag_type);
+        reduction_receiver_.run(range, transfer_buffer.getSampleFIFOs()[0], transfer_buffer.getSampleFIFOs()[1]);
+        pre_receiver_.run(range, transfer_buffer.getSampleFIFOs()[0], mag_type);
+        out_receiver_.run(range, transfer_buffer.getSampleFIFOs()[2], mag_type);
         fifo.finishRead(consumer_id, num_to_read);
 
-        const auto& dbs{meter_receiver_.getDBs()};
+        const auto& reduction_dbs{reduction_receiver_.getReductions()};
+        const auto& pre_dbs{pre_receiver_.getDBs()};
+        const auto& out_dbs{out_receiver_.getDBs()};
 
         const auto bound = bound_.load();
         const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
@@ -142,17 +146,17 @@ namespace zlpanel {
         a_is_upwards_.store(is_upwards_, std::memory_order::relaxed);
         // update reduction peak
         if (is_upwards_) {
-            const auto reduction_peak = std::max(dbs[1][0] - dbs[0][0], dbs[1][1] - dbs[0][1]);
+            const auto reduction_peak = std::max(reduction_dbs[0], reduction_dbs[1]);
             reduction_peak_.store(std::max(reduction_peak, reduction_peak_.load(std::memory_order::relaxed)),
                                   std::memory_order::relaxed);
         } else {
-            const auto reduction_peak = std::min(dbs[1][0] - dbs[0][0], dbs[1][1] - dbs[0][1]);
+            const auto reduction_peak = std::min(reduction_dbs[0], reduction_dbs[1]);
             reduction_peak_.store(std::min(reduction_peak, reduction_peak_.load(std::memory_order::relaxed)),
                                   std::memory_order::relaxed);
         }
         // update reduction meter
         for (size_t chan = 0; chan < 2; ++chan) {
-            const auto current_reduction = dbs[1][chan] - dbs[0][chan];
+            const auto current_reduction = reduction_dbs[chan];
             const auto previous_reduction = previous_reduction_[chan];
             if (is_upwards_) {
                 previous_reduction_[chan] = std::max(
@@ -180,8 +184,7 @@ namespace zlpanel {
             }
         }
         // update reduction short-term max display
-        auto reduction_max_value = std::max(std::abs(dbs[1][0] - dbs[0][0]),
-                                            std::abs(dbs[1][1] - dbs[0][1]));
+        auto reduction_max_value = std::max(std::abs(reduction_dbs[0]), std::abs(reduction_dbs[1]));
         reduction_max_value = circular_min_max_.push(reduction_max_value);
         float reduction_max_pos;
         if (is_upwards_) {
@@ -193,7 +196,7 @@ namespace zlpanel {
         reduction_max_value_.store(reduction_max_value, std::memory_order::relaxed);
         // update pre meter
         for (size_t chan = 0; chan < 2; ++chan) {
-            const auto current_pre = dbs[0][chan];
+            const auto current_pre = pre_dbs[chan];
             const auto previous_pre = previous_pre_[chan];
             if (current_pre > previous_pre) {
                 previous_pre_[chan] = current_pre;
@@ -202,25 +205,32 @@ namespace zlpanel {
                 previous_pre_[chan] = std::max(
                     previous_pre - pre_decay_mul_[chan] * static_cast<float>(delta_time) * kMeterDecayPerSecond,
                     current_pre);
-                pre_decay_mul_[chan] = std::min(pre_decay_mul_[chan] + 4.f * static_cast<float>(delta_time), 10.f);
+                pre_decay_mul_[chan] = std::min(pre_decay_mul_[chan] * (1.f + 3.f * static_cast<float>(delta_time)), 10.f);
             }
-            const auto pre_rect = pre_rect_[chan].load();
             const auto pre_height = (1.f - previous_pre_[chan] / min_db) * bound.getHeight();
-            pre_rect_[chan].store({pre_rect.getX(), bound.getHeight() - pre_height,
-                                   pre_rect.getWidth(), pre_height});
+            pre_rect_[chan].setY(bound.getHeight() - pre_height);
+            pre_rect_[chan].setHeight(pre_height);
         }
         // update out peak
-        const auto out_peak = std::max(dbs[2][0], dbs[2][1]);
+        const auto out_peak = std::max(out_dbs[0], out_dbs[1]);
         out_peak_.store(std::max(out_peak, out_peak_.load(std::memory_order::relaxed)),
                         std::memory_order::relaxed);
         // update out meter
         for (size_t chan = 0; chan < 2; ++chan) {
-            const auto current_shift = previous_pre_[chan] + previous_reduction_[chan] - dbs[1][chan];
-            const auto current_out = std::max(dbs[2][chan], dbs[2][chan] + current_shift);
-            const auto pre_rect = out_rect_[chan].load();
-            const auto pre_height = (1.f - current_out / min_db) * bound.getHeight();
-            out_rect_[chan].store({pre_rect.getX(), bound.getHeight() - pre_height,
-                                   pre_rect.getWidth(), pre_height});
+            const auto current_out = out_dbs[chan];
+            const auto previous_out = previous_out_[chan];
+            if (current_out > previous_out) {
+                previous_out_[chan] = current_out;
+                out_decay_mul_[chan] = 1.f;
+            } else {
+                previous_out_[chan] = std::max(
+                    previous_out - out_decay_mul_[chan] * static_cast<float>(delta_time) * kMeterDecayPerSecond,
+                    current_out);
+                out_decay_mul_[chan] = std::min(out_decay_mul_[chan] * (1.f + 3.f * static_cast<float>(delta_time)), 10.f);
+            }
+            const auto out_height = (1.f - previous_out_[chan] / min_db) * bound.getHeight();
+            out_rect_[chan].setY(bound.getHeight() - out_height);
+            out_rect_[chan].setHeight(out_height);
         }
     }
 
