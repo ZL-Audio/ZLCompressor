@@ -326,6 +326,13 @@ namespace zlp {
         auto static constexpr kDefaultV = 80.f;
     };
 
+    class PRangeINF : public BoolParameters<PRangeINF> {
+    public:
+        auto static constexpr kID = "range_inf";
+        auto static constexpr kName = "Range INF";
+        auto static constexpr kDefaultV = false;
+    };
+
     class PHold : public FloatParameters<PHold> {
     public:
         auto static constexpr kID = "hold";
@@ -575,7 +582,8 @@ namespace zlp {
                    PCompON::get(), PCompDelta::get(),
                    PClipperDrive::get(),
                    POversample::get(), PLookAhead::get(),
-                   PRMSON::get(), PRMSLength::get(), PRMSSpeed::get(), PRMSMix::get());
+                   PRMSON::get(), PRMSLength::get(), PRMSSpeed::get(), PRMSMix::get(),
+                   PRangeINF::get());
         for (size_t i = 0; i < kBandNum; ++i) {
             const auto suffix = std::to_string(i);
             layout.add(PFilterStatus::get(suffix), PFilterType::get(suffix), POrder::get(suffix),

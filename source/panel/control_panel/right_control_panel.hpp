@@ -46,9 +46,9 @@ namespace zlpanel {
         zlgui::slider::TwoValueRotarySlider<false, false, false> wet_slider_;
         zlgui::attachment::SliderAttachment<true> wet_attachment_;
 
-        const std::unique_ptr<juce::Drawable> rms_drawable_;
-        zlgui::button::ClickButton rms_button_;
-        zlgui::attachment::ButtonAttachment<true> rms_attachment_;
+        const std::unique_ptr<juce::Drawable> inf_drawable_;
+        zlgui::button::ClickButton inf_button_;
+        zlgui::attachment::ButtonAttachment<true> inf_attachment_;
 
         const std::unique_ptr<juce::Drawable> learn_drawable_;
         zlgui::button::ClickButton learn_button_;

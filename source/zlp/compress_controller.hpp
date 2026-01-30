@@ -113,6 +113,12 @@ namespace zlp {
             to_update_.store(true, std::memory_order::release);
         }
 
+        void setIsRangeINF(const bool is_range_inf) {
+            is_range_inf_.store(is_range_inf, std::memory_order::relaxed);
+            to_update_range_.store(true, std::memory_order::release);
+            to_update_.store(true, std::memory_order::release);
+        }
+
         void setOutputGain(const float db) {
             output_gain_db_.store(db, std::memory_order::relaxed);
             to_update_output_gain_.store(true, std::memory_order::release);
@@ -291,6 +297,8 @@ namespace zlp {
         std::atomic<bool> to_update_range_{true};
         std::atomic<float> range_{80.f};
         float c_range_{80.f};
+        std::atomic<bool> is_range_inf_{false};
+        bool c_is_range_inf_{false};
         // clipper
         zldsp::compressor::TanhClipper<float> clipper_;
         // output gain

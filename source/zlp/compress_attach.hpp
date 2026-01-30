@@ -42,7 +42,8 @@ namespace zlp {
             PClipperDrive::kID,
             POversample::kID, PLookAhead::kID,
             PCompON::kID, PCompDelta::kID,
-            PRMSON::kID, PRMSLength::kID, PRMSSpeed::kID, PRMSMix::kID
+            PRMSON::kID, PRMSLength::kID, PRMSSpeed::kID, PRMSMix::kID,
+            PRangeINF::kID
         };
 
         void parameterChanged(const juce::String& parameter_ID, float value) override;

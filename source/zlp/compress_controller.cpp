@@ -195,8 +195,8 @@ namespace zlp {
             to_update_output_gain_.store(true);
         }
         if (to_update_range_.exchange(false, std::memory_order::acquire)) {
-            c_range_ = range_.load(
-                std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
+            c_range_ = range_.load(std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
+            c_is_range_inf_ = is_range_inf_.load(std::memory_order::relaxed);
         }
         if (to_update_output_gain_.exchange(false, std::memory_order::acquire)) {
             output_gain_.setGainDecibels(
@@ -415,8 +415,13 @@ namespace zlp {
             }
         }
         // process wet values and convert decibel to gain
-        side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
-        side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
+        if (c_is_range_inf_) {
+            side_v0 = kfr::exp10(side_v0 * c_wet1_);
+            side_v1 = kfr::exp10(side_v1 * c_wet2_);
+        } else {
+            side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
+            side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
+        }
         // apply stereo swap
         if (c_stereo_swap_) {
             if (c_is_downward_) {

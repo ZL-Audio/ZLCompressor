@@ -20,12 +20,11 @@ namespace zlpanel {
         wet_slider_("Wet", base_,
                     tooltip_helper.getToolTipText(multilingual::kWet), 1.f),
         wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_),
-        rms_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_r_svg,
-                                                          BinaryData::dline_r_svgSize)),
-        rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
-                    tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
-        rms_attachment_(rms_button_.getButton(), p.parameters_,
-                        zlp::PRMSON::kID, updater_),
+        inf_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_inf_svg,
+                                                          BinaryData::dline_inf_svgSize)),
+        inf_button_(base, inf_drawable_.get(), inf_drawable_.get()),
+        inf_attachment_(inf_button_.getButton(), p.parameters_,
+                        zlp::PRangeINF::kID, updater_),
         learn_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_l_svg,
                                                             BinaryData::dline_l_svgSize)),
         learn_button_(base, learn_drawable_.get(), learn_drawable_.get(),
@@ -54,9 +53,9 @@ namespace zlpanel {
         wet_slider_.setBufferedToImage(true);
         addAndMakeVisible(wet_slider_);
 
-        rms_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
-        rms_button_.setBufferedToImage(true);
-        addAndMakeVisible(rms_button_);
+        inf_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
+        inf_button_.setBufferedToImage(true);
+        addAndMakeVisible(inf_button_);
 
         learn_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
         learn_button_.addMouseListener(this, true);
@@ -119,7 +118,7 @@ namespace zlpanel {
             t_bound.removeFromTop(padding);
             const auto extra_padding = (t_bound.getHeight() - 2 * button_size) / 4;
             t_bound.removeFromTop(extra_padding);
-            rms_button_.setBounds(t_bound.removeFromTop(button_size));
+            inf_button_.setBounds(t_bound.removeFromTop(button_size));
             t_bound.removeFromBottom(extra_padding);
             learn_button_.setBounds(t_bound.removeFromBottom(button_size));
         }

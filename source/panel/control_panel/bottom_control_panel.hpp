@@ -46,5 +46,9 @@ namespace zlpanel {
 
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
+
+        const std::unique_ptr<juce::Drawable> rms_drawable_;
+        zlgui::button::ClickButton rms_button_;
+        zlgui::attachment::ButtonAttachment<true> rms_attachment_;
     };
 }

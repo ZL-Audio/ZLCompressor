@@ -29,7 +29,7 @@ namespace zlpanel {
             ? base_.getTextColour()
             : base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
         if (out_value_ < -120.f) {
-            g.drawText("inf", bound.removeFromRight(meter_width),
+            g.drawText("-inf", bound.removeFromRight(meter_width),
                        juce::Justification::centred, false);
         } else {
             g.drawText(formatValue(out_value_), bound.removeFromRight(meter_width),

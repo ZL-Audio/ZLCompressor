@@ -99,6 +99,8 @@ namespace zlp {
             controller_ref_.setRMSSpeed(value);
         } else if (parameter_ID == PRMSMix::kID) {
             controller_ref_.setRMSMix(value);
+        } else if (parameter_ID == PRangeINF::kID) {
+            controller_ref_.setIsRangeINF(value > .5f);
         }
     }
 }

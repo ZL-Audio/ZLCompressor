@@ -8,6 +8,7 @@
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
 #include "bottom_control_panel.hpp"
+#include "BinaryData.h"
 
 namespace zlpanel {
     BottomControlPanel::BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
@@ -19,7 +20,13 @@ namespace zlpanel {
         label_laf_(base),
         style_box_(zlp::PCompStyle::kChoices, base,
                    tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
-        style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_) {
+        style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
+    rms_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_r_svg,
+                                                          BinaryData::dline_r_svgSize)),
+        rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
+                    tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
+        rms_attachment_(rms_button_.getButton(), p.parameters_,
+                        zlp::PRMSON::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
 
         label_laf_.setFontScale(1.5f);
@@ -37,6 +44,10 @@ namespace zlpanel {
 
         style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
+
+        rms_button_.setImageAlpha(.5f, .5f, 1.f, 1.f);
+        rms_button_.setBufferedToImage(true);
+        addAndMakeVisible(rms_button_);
 
         addChildComponent(rms_control_panel_);
 
@@ -70,6 +81,7 @@ namespace zlpanel {
         const auto font_size = base_.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto slider_width = getSliderWidth(font_size);
+        const auto button_size = getButtonSize(font_size);
         auto bound = getLocalBounds();
         bound.removeFromLeft(padding);
         bound.removeFromLeft(slider_width);
@@ -87,6 +99,9 @@ namespace zlpanel {
 
         bound.removeFromLeft(padding);
         release_label_.setBounds(bound.removeFromLeft(slider_width));
+
+        rms_button_.setBounds(bound.removeFromLeft(button_size));
+        bound.removeFromLeft(padding);
 
         rms_control_panel_.setBounds(bound);
     }
