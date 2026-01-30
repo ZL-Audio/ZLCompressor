@@ -13,7 +13,7 @@
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
 #include "../../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
-#include "../../../../dsp/analyzer/mag_analyzer/mag_meter_receiver.hpp"
+#include "../../../../dsp/analyzer/mag_analyzer/mag_receiver.hpp"
 #include "../../../../dsp/analyzer/mag_analyzer/mag_reduction_receiver.hpp"
 #include "meter_top_panel.hpp"
 
@@ -62,8 +62,8 @@ namespace zlpanel {
         std::atomic<float> reduction_max_value_{0.f};
 
         zldsp::analyzer::MagReductionReceiver reduction_receiver_{};
-        zldsp::analyzer::MagMeterReceiver pre_receiver_{};
-        zldsp::analyzer::MagMeterReceiver out_receiver_{};
+        zldsp::analyzer::MagReceiver pre_receiver_{};
+        zldsp::analyzer::MagReceiver out_receiver_{};
 
         std::atomic<float> reduction_peak_{0.f};
         std::atomic<float> out_peak_{-240.f};

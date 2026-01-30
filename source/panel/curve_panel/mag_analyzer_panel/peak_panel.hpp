@@ -15,7 +15,8 @@
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
 #include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
-#include "../../../dsp/analyzer/mag_analyzer/mag_analyzer_receiver.hpp"
+#include "../../../dsp/analyzer/mag_analyzer/mag_receiver.hpp"
+#include "../../../dsp/analyzer/mag_analyzer/mag_reduction_receiver.hpp"
 
 #include "rms_panel.hpp"
 
@@ -46,11 +47,10 @@ namespace zlpanel {
         std::atomic<float>& analyzer_min_db_ref_;
         std::atomic<float>& analyzer_time_length_ref_;
 
-        zldsp::analyzer::MagAnalyzerReceiver<3> analyzer_receiver_{};
-
         AtomicBound<float> atomic_bound_;
 
-        kfr::univector<float> xs_{}, pre_ys_{}, post_ys_{}, out_ys_{};
+        float pre_db_{-240.f}, out_db_{-240.f}, reduction_db_{0.f};
+        kfr::univector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{};
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         std::mutex mutex_;

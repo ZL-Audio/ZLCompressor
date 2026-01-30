@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../../container/fifo/fifo_base.hpp"
-#include "../analyzer_base/analyzer_receiver_base.hpp"
 #include "../../chore/decibels.hpp"
 
 namespace zldsp::analyzer {

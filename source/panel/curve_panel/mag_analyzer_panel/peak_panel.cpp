@@ -83,7 +83,7 @@ namespace zlpanel {
             xs_.resize(num_points_ + 2);
             pre_ys_.resize(num_points_ + 2);
             out_ys_.resize(num_points_ + 2);
-            post_ys_.resize(num_points_ + 2);
+            reduction_ys_.resize(num_points_ + 2);
         }
 
         auto& fifo{transfer_buffer.getMulticastFIFO()};
@@ -94,30 +94,34 @@ namespace zlpanel {
                 if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                     const auto range = fifo.prepareToRead(consumer_id, num_samples_per_point_);
                     rms_panel.run(sample_rate_, range, transfer_buffer);
-                    analyzer_receiver_.run(range, transfer_buffer.getSampleFIFOs(),
-                                           mag_type, stereo_type);
+                    pre_db_ = zldsp::analyzer::MagReceiver::calculate(
+                        range, transfer_buffer.getSampleFIFOs()[0], mag_type, stereo_type);
+                    out_db_ = zldsp::analyzer::MagReceiver::calculate(
+                        range, transfer_buffer.getSampleFIFOs()[2], mag_type, stereo_type);
+                    reduction_db_ = zldsp::analyzer::MagReductionReceiver::calculateReduction(
+                        range, transfer_buffer.getSampleFIFOs()[0], transfer_buffer.getSampleFIFOs()[1], stereo_type);
                     fifo.finishRead(consumer_id, num_samples_per_point_);
                     num_missing_points_ = 0;
                 } else {
                     if (num_missing_points_ < kPausedThreshold) {
                         num_missing_points_ += 1;
                     } else if (num_missing_points_ == kPausedThreshold) {
-                        for (auto y : {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
-                            const auto start_idx = y.size() - static_cast<size_t>(kPausedThreshold);
-                            for (size_t idx = start_idx; idx < y.size(); ++idx) {
-                                y[idx] = 100000.f;
-                            }
-                        }
+                        const auto shift = static_cast<ptrdiff_t>(
+                            pre_ys_.size() - static_cast<size_t>(kPausedThreshold));
+                        std::ranges::fill(pre_ys_.begin() + shift, pre_ys_.end(), 10000.f);
+                        std::ranges::fill(out_ys_.begin() + shift, out_ys_.end(), 10000.f);
+                        std::ranges::fill(reduction_ys_.begin() + shift, reduction_ys_.end(), 0.f);
                     }
                 }
-                if (num_missing_points_ < kPausedThreshold) {
-                    analyzer_receiver_.updateY(bound.getHeight(), 0.f, min_db,
-                                               {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}});
-                } else {
-                    for (auto y : {std::span{pre_ys_}, std::span{post_ys_}, std::span{out_ys_}}) {
-                        std::ranges::rotate(y, y.begin() + 1);
-                        y.back() = 100000.f;
-                    }
+                {
+                    const auto too_many_missing = num_missing_points_ >= kPausedThreshold;
+                    const auto scale = bound.getHeight() / min_db;
+                    std::ranges::rotate(pre_ys_, pre_ys_.begin() + 1);
+                    pre_ys_.back() = too_many_missing ? 10000.f : pre_db_ * scale;
+                    std::ranges::rotate(out_ys_, out_ys_.begin() + 1);
+                    out_ys_.back() = too_many_missing ? 10000.f : out_db_ * scale;
+                    std::ranges::rotate(reduction_ys_, reduction_ys_.begin() + 1);
+                    reduction_ys_.back() = too_many_missing ? 0.f : reduction_db_ * scale;
                 }
                 start_time_ += second_per_point_;
             }
@@ -140,7 +144,7 @@ namespace zlpanel {
                 start_time_ = next_time_stamp;
                 std::ranges::fill(pre_ys_, 100000.f);
                 std::ranges::fill(out_ys_, 100000.f);
-                std::ranges::fill(post_ys_, 100000.f);
+                std::ranges::fill(reduction_ys_, 0.f);
             }
         }
 
@@ -179,15 +183,15 @@ namespace zlpanel {
         next_in_path_.startNewSubPath(xs_[0], bound.getBottom());
         next_in_path_.lineTo(xs_[0], pre_ys_[0]);
         next_out_path_.startNewSubPath(xs_[0], out_ys_[0]);
-        next_reduction_path_.startNewSubPath(xs_[0], post_ys_[0] - pre_ys_[0]);
+        next_reduction_path_.startNewSubPath(xs_[0], reduction_ys_[0]);
         const auto center_y = bound.getCentreY();
         for (size_t i = 1; i < xs_.size(); ++i) {
             next_in_path_.lineTo(xs_[i], pre_ys_[i]);
             next_out_path_.lineTo(xs_[i], out_ys_[i]);
             if constexpr (center) {
-                next_reduction_path_.lineTo(xs_[i], post_ys_[i] - pre_ys_[i] + center_y);
+                next_reduction_path_.lineTo(xs_[i], reduction_ys_[i] + center_y);
             } else {
-                next_reduction_path_.lineTo(xs_[i], post_ys_[i] - pre_ys_[i]);
+                next_reduction_path_.lineTo(xs_[i], reduction_ys_[i]);
             }
         }
         next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
