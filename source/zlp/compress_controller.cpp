@@ -122,9 +122,16 @@ namespace zlp {
             to_update_hold_.store(true);
         }
         if (to_update_lookahead_.exchange(false, std::memory_order::acquire)) {
+            const auto delay_length = lookahead_delay_length_.load(std::memory_order::relaxed);
             to_update_pdc = true;
-            lookahead_delay_.setDelay(lookahead_delay_length_.load(std::memory_order::relaxed));
-            is_lookahead_nonzero = (lookahead_delay_.getDelayInSamples() != 0);
+            lookahead_delay_.setDelay(std::abs(delay_length));
+            if (std::abs(delay_length) < 1e-6f) {
+                delay_status_ = DelayStatus::kZero;
+            } else if (delay_length > 0.f) {
+                delay_status_ = DelayStatus::kMainDelay;
+            } else {
+                delay_status_ = DelayStatus::kSideDelay;
+            }
         }
         // load stereo mode
         const auto stereo_mode = stereo_mode_.load(std::memory_order::relaxed);
@@ -214,8 +221,21 @@ namespace zlp {
             }
         }
         if (to_update_pdc) {
-            pdc_.store(lookahead_delay_.getDelayInSamples() + oversample_delay_.getDelayInSamples());
-            triggerAsyncUpdate();
+            int new_pdc{0};
+            switch (delay_status_) {
+            case DelayStatus::kZero:
+            case DelayStatus::kSideDelay: {
+                new_pdc = oversample_delay_.getDelayInSamples();
+                break;
+            }
+            case DelayStatus::kMainDelay: {
+                new_pdc = lookahead_delay_.getDelayInSamples() + oversample_delay_.getDelayInSamples();
+                break;
+            }
+            }
+            if (pdc_.exchange(new_pdc) != new_pdc) {
+                triggerAsyncUpdate();
+            }
         }
     }
 
@@ -225,8 +245,18 @@ namespace zlp {
         if (to_update_.exchange(false, std::memory_order::acquire)) {
             prepareBuffer();
         }
-        if (is_lookahead_nonzero) {
+        switch (delay_status_) {
+        case DelayStatus::kZero: {
+            break;
+        }
+        case DelayStatus::kMainDelay: {
             lookahead_delay_.process(main_pointers, num_samples);
+            break;
+        }
+        case DelayStatus::kSideDelay: {
+            lookahead_delay_.process(side_pointers, num_samples);
+            break;
+        }
         }
         // process the pre lufs matcher
         if (c_lufs_matcher_on_) {
@@ -362,7 +392,7 @@ namespace zlp {
         if (c_use_rms_) {
             switch (c_direction_) {
             case PCompDirection::kCompress:
-                case PCompDirection::kShape: {
+            case PCompDirection::kShape: {
                 processSideBufferRMS(compression_computer_,
                                      rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
                 break;
@@ -372,7 +402,7 @@ namespace zlp {
                                      rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
                 break;
             }
-                case PCompDirection::kInflate: {
+            case PCompDirection::kInflate: {
                 processSideBufferRMS(inflation_computer_,
                                      rms_side_buffer0_.data(), rms_side_buffer1_.data(), num_samples);
                 break;

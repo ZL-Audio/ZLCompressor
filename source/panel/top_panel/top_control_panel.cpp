@@ -135,10 +135,10 @@ namespace zlpanel {
         updater_.updateComponents();
         const auto new_lookahead_value = lookahead_slider_.getSlider().getValue();
         if (std::abs(new_lookahead_value - old_lookahead_value_) > 1e-4) {
-            if (new_lookahead_value < 1e-4 && old_lookahead_value_ > 1e-4) {
+            if (std::abs(new_lookahead_value) < 1e-4 && std::abs(old_lookahead_value_) > 1e-4) {
                 setLookaheadAlpha(.5f);
             }
-            if (new_lookahead_value > 1e-4 && old_lookahead_value_ < 1e-4) {
+            if (std::abs(new_lookahead_value) > 1e-4 && std::abs(old_lookahead_value_) < 1e-4) {
                 setLookaheadAlpha(1.f);
             }
             old_lookahead_value_ = new_lookahead_value;

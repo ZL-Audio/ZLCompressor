@@ -49,8 +49,7 @@ namespace zldsp::delay {
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(states_[chan].data() + static_cast<size_t>(tail_), input[chan], num_samples);
                 }
-            }
-            else {
+            } else {
                 const auto block1_size = static_cast<size_t>(capacity_ - tail_);
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(states_[chan].data() + static_cast<size_t>(tail_), input[chan], block1_size);
@@ -64,8 +63,7 @@ namespace zldsp::delay {
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(input[chan], states_[chan].data() + static_cast<size_t>(head_), num_samples);
                 }
-            }
-            else {
+            } else {
                 const auto block1_size = static_cast<size_t>(capacity_ - head_);
                 for (size_t chan = 0; chan < input.size(); ++chan) {
                     vector::copy(input[chan], states_[chan].data() + static_cast<size_t>(head_), block1_size);
@@ -85,8 +83,7 @@ namespace zldsp::delay {
                 if (tail_ < 0) {
                     tail_ += capacity_;
                 }
-            }
-            else {
+            } else {
                 head_ -= delta;
                 if (head_ < 0) {
                     head_ += capacity_;

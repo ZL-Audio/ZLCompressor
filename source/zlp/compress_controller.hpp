@@ -241,9 +241,12 @@ namespace zlp {
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
         double oversample_sr_{48000.0};
         // lookahead
+        enum class DelayStatus {
+            kZero, kMainDelay, kSideDelay
+        };
         std::atomic<float> lookahead_delay_length_{0.f};
         std::atomic<bool> to_update_lookahead_{false};
-        bool is_lookahead_nonzero{false};
+        DelayStatus delay_status_{DelayStatus::kZero};
         zldsp::delay::IntegerDelay<float> lookahead_delay_{};
         // pdc
         std::atomic<int> pdc_{0};

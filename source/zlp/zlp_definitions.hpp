@@ -465,7 +465,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "lookahead";
         auto static constexpr kName = "Lookahead";
-        inline auto static const kRange = getLogMidRangeShift(2.f, 22.f, 7.f, 0.01f, -2.f);
+        inline auto static const kRange = getSymmetricLogMidRangeShift(2.f, 22.f, 7.f, 0.01f, -2.f);
         auto static constexpr kDefaultV = 0.f;
     };
 
