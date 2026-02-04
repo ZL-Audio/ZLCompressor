@@ -10,8 +10,7 @@
 #pragma once
 
 #include <span>
-
-#include "../../vector/kfr_import.hpp"
+#include <vector>
 
 namespace zldsp::analyzer {
     class SpectrumDecayer {
@@ -20,7 +19,9 @@ namespace zldsp::analyzer {
 
         void prepare(const size_t fft_size) {
             state_.resize(fft_size / 2 + 1);
+            decay_mul_.resize(fft_size / 2 + 1);
             std::ranges::fill(state_.begin(), state_.end(), -240.f);
+            std::ranges::fill(decay_mul_.begin(), decay_mul_.end(), 1.f);
         }
 
         void setDecaySpeed(const float refresh_rate, const float decay_per_second) {
@@ -28,18 +29,28 @@ namespace zldsp::analyzer {
         }
 
         void decay(std::span<float> spectrum_db, const bool frozen = false) {
-            auto v = kfr::make_univector(spectrum_db);
-            auto s = state_.slice(0, v.size());
             if (frozen) {
-                v = kfr::max(s, v);
+                for (size_t i = 0; i < spectrum_db.size(); ++i) {
+                    spectrum_db[i] = std::max(spectrum_db[i], state_[i]);
+                    state_[i] = spectrum_db[i];
+                }
             } else {
-                v = kfr::max(s + decay_per_call_, v);
+                for (size_t i = 0; i < spectrum_db.size(); ++i) {
+                    if (spectrum_db[i] < state_[i]) {
+                        spectrum_db[i] = std::max(spectrum_db[i], state_[i] + decay_mul_[i] * decay_per_call_);
+                        state_[i] = spectrum_db[i];
+                        decay_mul_[i] = std::min(decay_mul_[i] * 1.033f, 10.f);
+                    } else {
+                        state_[i] = spectrum_db[i];
+                        decay_mul_[i] = 1.f;
+                    }
+                }
             }
-            s = v;
         }
 
     private:
-        kfr::univector<float> state_{};
+        std::vector<float> state_{};
+        std::vector<float> decay_mul_{};
         float decay_per_call_{0.};
     };
 }
