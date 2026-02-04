@@ -75,6 +75,7 @@ namespace zlpanel {
             rms_control_panel_.setVisible(rms_on);
         }
         updater_.updateComponents();
+        rms_control_panel_.repaintCallBackSlow();
     }
 
     void BottomControlPanel::resized() {
