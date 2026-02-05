@@ -14,7 +14,7 @@
 #include <array>
 
 namespace zlpanel::multilingual::ja {
-    static constexpr std::array kTexts = {
+    inline constexpr std::array kTexts = {
         "リニアゲイン状態と処理後のゲイン状態の間のニー（Knee）幅を制御します。",
         "ゲイン伝達関数の非線形カーブを制御します。",
         "ダイナミクス処理が開始されるスレッショルド（閾値）レベルを制御します。",

@@ -14,7 +14,7 @@
 #include <array>
 
 namespace zlpanel::multilingual::de {
-    static constexpr std::array kTexts = {
+    inline constexpr std::array kTexts = {
         "Steuert die Kniebreite zwischen dem linearen und dem bearbeiteten Verstärkungsbereich.",
         "Steuert die nichtlineare Krümmung der Verstärkungskennlinie.",
         "Steuert den Schwellenwert, ab dem die Dynamikbearbeitung beginnt.",

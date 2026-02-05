@@ -14,7 +14,7 @@
 #include <array>
 
 namespace zlpanel::multilingual::it {
-    static constexpr std::array kTexts = {
+    inline constexpr std::array kTexts = {
         "Controlla la larghezza del knee tra gli stati di guadagno lineare ed elaborato.",
         "Controlla la curvatura non lineare della funzione di trasferimento del guadagno.",
         "Controlla il livello di soglia (threshold) dove inizia l'elaborazione della dinamica.",

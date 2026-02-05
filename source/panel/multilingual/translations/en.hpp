@@ -14,7 +14,7 @@
 #include <array>
 
 namespace zlpanel::multilingual::en {
-    static constexpr std::array kTexts = {
+    inline constexpr std::array kTexts = {
         "Control the knee width between the linear and processed gain states.",
         "Control the non-linear curvature of the gain transfer function.",
         "Control the threshold level where dynamics processing begins.",

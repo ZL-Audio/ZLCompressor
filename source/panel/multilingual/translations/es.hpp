@@ -14,7 +14,7 @@
 #include <array>
 
 namespace zlpanel::multilingual::es {
-    static constexpr std::array kTexts = {
+    inline constexpr std::array kTexts = {
         "Controla el ancho de la rodilla (knee) entre los estados de ganancia lineal y procesada.",
         "Controla la curvatura no lineal de la función de transferencia de ganancia.",
         "Controla el nivel de umbral donde comienza el procesamiento dinámico.",

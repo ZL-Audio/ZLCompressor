@@ -14,7 +14,7 @@
 #include <array>
 
 namespace zlpanel::multilingual::zh_Hant {
-    static constexpr std::array kTexts = {
+    inline constexpr std::array kTexts = {
         "控制線性增益狀態與處理後增益狀態之間的拐點寬度。",
         "控制增益傳遞函數的非線性曲率。",
         "控制動態處理開始的閾值電平。",
