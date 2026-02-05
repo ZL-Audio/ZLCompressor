@@ -4,7 +4,21 @@ LICENSE and CODE are available at [https://github.com/ZL-Audio/ZLCompressor](htt
 
 # Changelog
 
-# 0.3.2
+## 0.4.0
+
+New Features
+
+- add meter panel
+- add inf range button
+- add negative lookahead (i.e., side-chain delay)
+
+Bug fixes and Improvements
+
+- improve UI layout
+- improve magnitude analyzer display
+- improve FFT analyzer display
+
+## 0.3.2
 
 Bug fixes and Improvements
 
