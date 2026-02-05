@@ -159,4 +159,4 @@ namespace zlpanel {
                                        std::round(new_value)), std::memory_order::relaxed);
         to_update_filter_status_.store(true, std::memory_order::release);
     }
-} // zlpanel
+}

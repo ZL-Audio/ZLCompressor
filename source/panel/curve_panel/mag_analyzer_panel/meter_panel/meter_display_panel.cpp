@@ -184,13 +184,16 @@ namespace zlpanel {
             }
         }
         // update reduction short-term max display
-        auto reduction_max_value = std::max(std::abs(reduction_dbs[0]), std::abs(reduction_dbs[1]));
-        reduction_max_value = circular_min_max_.push(reduction_max_value);
+        float reduction_max_value;
         float reduction_max_pos;
         if (is_upwards_) {
-            reduction_max_pos = (.5f - std::abs(reduction_max_value / min_db)) * bound.getHeight();
+            reduction_max_value = std::max(0.f, std::max(reduction_dbs[0], reduction_dbs[1]));
+            reduction_max_value = circular_min_max_.push(reduction_max_value);
+            reduction_max_pos = (.5f + reduction_max_value / min_db) * bound.getHeight();
         } else {
-            reduction_max_pos = std::abs(reduction_max_value / min_db) * bound.getHeight();
+            reduction_max_value = std::max(0.f, std::max(-reduction_dbs[0], -reduction_dbs[1]));
+            reduction_max_value = circular_min_max_.push(reduction_max_value);
+            reduction_max_pos = -reduction_max_value / min_db * bound.getHeight();
         }
         reduction_max_rect_.setY(reduction_max_pos - reduction_max_rect_.getHeight() * .5f);
         reduction_max_value_.store(reduction_max_value, std::memory_order::relaxed);

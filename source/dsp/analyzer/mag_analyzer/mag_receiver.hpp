@@ -35,6 +35,9 @@ namespace zldsp::analyzer {
                                const std::vector<std::vector<float>>& fifo,
                                const MagType mag_type,
                                const StereoType stereo_type) {
+            if (range.block_size1 + range.block_size2 == 0) {
+                return 0.f;
+            }
             if (fifo.size() != 2 || stereo_type == StereoType::kStereo) {
                 switch (mag_type) {
                 case MagType::kRMS: {

@@ -22,6 +22,10 @@ namespace zldsp::analyzer {
          */
         static float calculateMS(const zldsp::container::FIFORange& range,
                                  const std::vector<float>& fifo) {
+            if (range.block_size1 + range.block_size2 == 0) {
+                return 0.f;
+            }
+
             auto sum_op = [&](const int start, const int size) {
                 return kfr::sumsqr(kfr::make_univector(
                     fifo.data() + static_cast<size_t>(start), static_cast<size_t>(size)));
