@@ -45,6 +45,21 @@ namespace zlpanel::multilingual {
         kOversample,
         kClipper,
         kLogo,
+        kFloor,
+        kRangeINF,
+        kDownwardC,
+        kUpwardC,
+        kDownardE,
+        kUpwardE,
+        kMeterPanel,
+        kCumuRMSPanel,
+        kGainTransferPanel,
+        kSideEQPanel,
+        kSideControlPanel,
+        kMagMeasureMethod,
+        kMagMeasureStereo,
+        kMagAnalyzerTimeLength,
+        kMagAnalyzerMinDB,
         kLabelNum
     };
 }

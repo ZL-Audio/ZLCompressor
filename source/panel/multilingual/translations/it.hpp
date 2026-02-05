@@ -15,40 +15,54 @@
 
 namespace zlpanel::multilingual::it {
     static constexpr std::array kTexts = {
-        "Regola la lunghezza della transizione tra lo stato non compresso e quello compresso.", // Knee
-        "Regola il comportamento non lineare dello stato compresso.", // Ratio non-linearity
-        "Regola il punto di inizio dello stato compresso.", // Threshold
-        "Regola la quantità di riduzione del guadagno dello stato compresso.", // Ratio
-        "Scegli lo stile di compressione.", // Mode/Style
-        "Regola il comportamento della fase di attacco.", // Attack
-        "Regola il comportamento della fase di rilascio.", // Release
-        "Regola la velocità di aumento della riduzione del guadagno.", // Attack speed
-        "Regola la velocità di diminuzione della riduzione del guadagno.", // Release speed
-        "Premi: abilita la compressione RMS\nRilascia: disabilita la compressione RMS.", // RMS toggle
-        "Regola la durata della misurazione RMS.", // RMS window
-        "Regola la velocità relativa di attacco/rilascio della compressione RMS.", // RMS attack/release
-        "Regola la percentuale di mix della compressione RMS.", // RMS mix
-        "Regola il valore massimo della riduzione del guadagno.", // Range/Max GR
-        "Regola il tempo minimo in cui la riduzione del guadagno non può diminuire.", // Hold
-        "Regola il guadagno di compensazione applicato dopo la compressione.", // Makeup Gain
-        "Premi: avvia la misurazione del loudness integrato del segnale di ingresso e di uscita\nRilascia: aggiorna il Makeup alla differenza tra i due valori di loudness.",
-        // Auto Makeup
-        "Regola la percentuale del segnale processato (wet).", // Mix/Wet/Dry
-        "I canali M/S sono collegati tra loro.", // M/S Link
-        "I canali L/R sono collegati tra loro.", // L/R Link
-        "I canali M/S sono collegati al massimo tra M/S.", // M/S Max Link
-        "I canali L/R sono collegati al massimo tra L/R.", // L/R Max Link
-        "Premi: scambia i canali stereo del side-chain.", // Side-chain swap
-        "Regola la percentuale di collegamento tra i due canali stereo.", // Stereo Link
-        "Regola la percentuale del segnale processato (wet) per ogni canale stereo.", // Channel-specific wet mix
-        "Regola il guadagno del segnale di side-chain.", // Side-chain gain
-        "Premi: usa segnale di side-chain esterno\nRilascia: usa segnale di side-chain interno.", // External side-chain
-        "Premi: ascolta il segnale di side-chain.", // Side-chain listen
-        "Rilascia: bypassa il plugin.", // Bypass
-        "Premi: emetti il segnale delta.", // Delta signal
-        "Regola il tempo di lookahead del segnale di side-chain.", // Lookahead
-        "Scegli il fattore di oversampling.", // Oversampling
-        "Regola il drive relativo del clipper.", // Clipper Drive
-        "Doppio clic: apri le impostazioni dell'interfaccia utente." // UI Settings
+        "Controlla la larghezza del knee tra gli stati di guadagno lineare ed elaborato.",
+        "Controlla la curvatura non lineare della funzione di trasferimento del guadagno.",
+        "Controlla il livello di soglia (threshold) dove inizia l'elaborazione della dinamica.",
+        "Controlla il rapporto (ratio) della funzione di trasferimento del guadagno.",
+        "Scegli lo stile di elaborazione.",
+        "Controlla la risposta temporale della fase di attacco.",
+        "Controlla la risposta temporale della fase di rilascio.",
+        "Controlla il tempo necessario affinché la variazione di guadagno aumenti al livello target.",
+        "Controlla il tempo necessario affinché la variazione di guadagno diminuisca al livello target.",
+        "Premi: abilita l'elaborazione RMS.",
+        "Controlla la finestra di integrazione per la misurazione RMS.",
+        "Controlla il tempo relativo di attacco/rilascio dell'elaborazione RMS.",
+        "Controlla la percentuale di mix dell'elaborazione RMS.",
+        "Controlla la massima variazione di guadagno consentita.",
+        "Controlla la durata minima di mantenimento della variazione di guadagno prima del rilascio.",
+        "Controlla il guadagno di compensazione (makeup gain) applicato dopo l'elaborazione.",
+        "Premi: avvia la misurazione del loudness integrato per ingresso e uscita\nRilascia: applica il guadagno di compensazione basato sulla differenza di loudness misurata.",
+        "Controlla la percentuale globale di mix wet.",
+        "M/S sono collegati tra loro.",
+        "L/R sono collegati tra loro.",
+        "M/S sono collegati al massimo di M/S.",
+        "L/R sono collegati al massimo di L/R.",
+        "Premi: scambia i canali di ingresso stereo del side-chain.",
+        "Controlla la percentuale di accoppiamento stereo tra i canali.",
+        "Controlla la percentuale di segnale wet per ogni canale.",
+        "Controlla il guadagno del segnale side-chain.",
+        "Premi: attiva l'ingresso side-chain esterno\nRilascia: usa il segnale side-chain interno.",
+        "Premi: monitora il segnale side-chain.",
+        "Rilascia: bypassa l'elaborazione del plugin.",
+        "Premi: monitora il segnale delta.",
+        "Controlla il ritardo di lookahead per il rilevatore side-chain.",
+        "Scegli il fattore di sovracampionamento.",
+        "Controlla l'intensità di drive del soft clipper.",
+        "Doppio clic: apri la configurazione dell'interfaccia.",
+        "Controlla il livello minimo (floor) della funzione di trasferimento del guadagno.",
+        "Premi: imposta la variazione massima di guadagno su infinito.",
+        "Compressione verso il basso (Downward): Attenua i segnali sopra la soglia per ridurre la gamma dinamica.",
+        "Compressione verso l'alto (Upward): Amplifica i segnali sotto la soglia per ridurre la gamma dinamica.",
+        "Espansione verso il basso (Downward): Attenua i segnali sotto la soglia per aumentare la gamma dinamica.",
+        "Espansione verso l'alto (Upward): Amplifica i segnali sopra la soglia per aumentare la gamma dinamica.",
+        "Premi: attiva/disattiva la visualizzazione dei meter.",
+        "Premi: attiva/disattiva il pannello di analisi RMS cumulativa.",
+        "Premi: attiva/disattiva la visualizzazione della curva di trasferimento del guadagno.",
+        "Premi: attiva/disattiva l'interfaccia dell'equalizzatore side-chain.",
+        "Premi: attiva/disattiva il pannello di controllo side-chain.",
+        "Scegli il metodo di misurazione dell'ampiezza.",
+        "Scegli il canale stereo per la misurazione dell'ampiezza.",
+        "Scegli la durata temporale dell'analizzatore di ampiezza.",
+        "Scegli il valore minimo in decibel dell'analizzatore di ampiezza."
     };
 }

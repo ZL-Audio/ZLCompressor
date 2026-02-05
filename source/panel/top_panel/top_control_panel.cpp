@@ -36,7 +36,11 @@ namespace zlpanel {
         clipper_slider_("", base_,
                         tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper)),
         clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperDrive::kID, updater_),
-        direction_box_(zlp::PCompDirection::kChoices, base),
+        direction_box_(zlp::PCompDirection::kChoices, base, "",
+                       {tooltip_helper.getToolTipText(multilingual::kDownwardC),
+                        tooltip_helper.getToolTipText(multilingual::kUpwardC),
+                        tooltip_helper.getToolTipText(multilingual::kDownardE),
+                        tooltip_helper.getToolTipText(multilingual::kUpwardE)}),
         direction_attachment_(direction_box_.getBox(), p.parameters_, zlp::PCompDirection::kID, updater_) {
 
         for (auto& b : {&on_button_, &delta_button_}) {
