@@ -95,6 +95,17 @@ jobs:
           cat .env # show us the config
           cat .env >> $GITHUB_ENV # pull in our PRODUCT_NAME, etc
 
+      - name: Download AAX from Pre-release
+        if: (matrix.name == 'macOS-x86') || (matrix.name == 'macOS-arm') || (matrix.name == 'Windows-x86')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AAX_RELEASE_PAT }}
+        run: |
+          mkdir -p "aax_releases/${{ matrix.name }}"
+          gh release download ${{ env.PROJECT_NAME }} --repo "ZL-Audio/ZLAAX" --pattern "${{ matrix.name }}.zip" --dir "temp_dl"
+          unzip -q "temp_dl/${{ matrix.name }}.zip" -d "aax_releases/${{ matrix.name }}"
+          ls -R aax_releases/
+
       - name: Set additional env vars for next steps
         shell: bash
         run: |
