@@ -1,0 +1,119 @@
+name: AAX Pre Release
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIR: Builds
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  DISPLAY: :0
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+jobs:
+  build_and_test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS-x86
+            os: macos-latest
+            cmake_extra_flags: -DCMAKE_OSX_ARCHITECTURES="x86_64" -DKFR_ARCHS="sse2;avx;avx2" -DZL_JUCE_FORMATS="AAX"
+          - name: macOS-arm
+            os: macos-latest
+            cmake_extra_flags: -DCMAKE_OSX_ARCHITECTURES="arm64" -DZL_JUCE_FORMATS="AAX"
+          - name: Windows-x86
+            os: windows-latest
+            vcvars64_path: '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"'
+            cmake_extra_flags: -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DKFR_ARCHS="sse2;avx;avx2" -DZL_JUCE_FORMATS="AAX"
+
+    steps:
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: choco install ninja
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Import Certificates (macOS)
+        uses: apple-actions/import-codesign-certs@v6
+        if: ${{ (matrix.name == 'macOS') && (env.p12-file-base64 != '')}}
+        with:
+          p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
+          p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
+        env:
+          p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
+
+      - name: Configure and Build (macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} ${{ matrix.cmake_extra_flags }} .
+          cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
+
+      - name: Configure and Build (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call ${{ matrix.vcvars64_path }}
+          cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} ${{ matrix.cmake_extra_flags }} .
+          cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
+
+      - name: Read in .env from CMake
+        shell: bash
+        run: |
+          cat .env >> $GITHUB_ENV
+
+      - name: Check AAX releases
+        shell: bash
+        run: |
+          ls "${{ env.ARTIFACTS_PATH }}/AAX"
+
+      - name: Upload AAX
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.name }}
+          path: "${{ env.ARTIFACTS_PATH }}/AAX/*.aaxplugin"
+
+  pre-release:
+    name: Release AAX
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    steps:
+    - name: Get artifacts
+      uses: actions/download-artifact@v7
+      with:
+        path: artifacts
+
+    - name: Zip Artifacts
+      run: |
+        mkdir -p upload_ready
+        # Iterate over the downloaded artifact directories (e.g., artifacts/macOS-x86)
+        for dir in artifacts/*/; do
+            dir=${dir%*/}      # remove trailing slash
+            name=${dir##*/}    # extract folder name (e.g., macOS-x86)
+            echo "Zipping $name..."
+            
+            # Go into the directory so the zip root is the content, not the artifacts folder
+            cd "$dir"
+            # Zip the .aaxplugin folder (recursively) into a file named {platform}.zip
+            zip -r "../../upload_ready/$name.zip" *.aaxplugin
+            cd ../..
+        done
+        ls -l upload_ready
+
+    - name: Upload to ZLAAX Release
+      env:
+        GH_TOKEN: ${{ secrets.AAX_RELEASE_PAT }} 
+      run: |
+        gh release upload ZLCompressor upload_ready/*.zip --repo "ZL-Audio/ZLAAX" --clobber
