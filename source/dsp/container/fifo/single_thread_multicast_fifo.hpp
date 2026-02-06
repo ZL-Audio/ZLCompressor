@@ -32,7 +32,7 @@ namespace zldsp::container {
             std::ranges::fill(reader_heads_, 0);
         }
 
-        int getCapacity() const { return capacity_; }
+        [[nodiscard]] int getCapacity() const { return capacity_; }
 
         /**
          * register a consumer
@@ -61,7 +61,7 @@ namespace zldsp::container {
             }
         }
 
-        int getNumFree() const {
+        [[nodiscard]] int getNumFree() const {
             const int slowest_head = getSlowestReaderHead();
             if (slowest_head > tail_) {
                 return slowest_head - tail_ - 1;
@@ -69,7 +69,7 @@ namespace zldsp::container {
             return capacity_ - tail_ + slowest_head - 1;
         }
 
-        FIFORange prepareToWrite(const int num_to_write) const {
+        [[nodiscard]] FIFORange prepareToWrite(const int num_to_write) const {
             FIFORange range;
             range.start_index1 = tail_;
             range.block_size1 = std::min(num_to_write, capacity_ - tail_);
@@ -97,7 +97,7 @@ namespace zldsp::container {
             }
         }
 
-        FIFORange prepareToRead(const size_t consumer_id, const int num_to_read) const {
+        [[nodiscard]] FIFORange prepareToRead(const size_t consumer_id, const int num_to_read) const {
             FIFORange range;
             const int head = reader_heads_[consumer_id];
 

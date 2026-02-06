@@ -117,7 +117,7 @@ namespace zlpanel {
         const auto min_db = zlstate::PAnalyzerMinDB::kDBs[static_cast<size_t>(std::round(
             analyzer_min_db_ref_.load(std::memory_order::relaxed)))];
 
-        const auto delta_time = next_time_stamp - start_time_;
+        const auto delta_time = std::clamp(next_time_stamp - start_time_, 0.01, 1.0);
         start_time_ = next_time_stamp;
         // run meter receiver
         auto& fifo{transfer_buffer.getMulticastFIFO()};
