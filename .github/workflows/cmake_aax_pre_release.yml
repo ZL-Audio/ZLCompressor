@@ -98,18 +98,13 @@ jobs:
     - name: Zip Artifacts
       run: |
         mkdir -p upload_ready
-        # Iterate over the downloaded artifact directories (e.g., artifacts/macOS-x86)
-        for dir in artifacts/*/; do
-            dir=${dir%*/}      # remove trailing slash
-            name=${dir##*/}    # extract folder name (e.g., macOS-x86)
-            echo "Zipping $name..."
-            
-            # Go into the directory so the zip root is the content, not the artifacts folder
-            cd "$dir"
-            # Zip the .aaxplugin folder (recursively) into a file named {platform}.zip
-            zip -r "../../upload_ready/$name.zip" *.aaxplugin
-            cd ../..
+        cd artifacts
+        for dir in */; do
+            name=${dir%/}
+            echo "Zipping folder $name..."
+            zip -r "../upload_ready/$name.zip" "$name"
         done
+        cd ..
         ls -l upload_ready
 
     - name: Upload to ZLAAX Release

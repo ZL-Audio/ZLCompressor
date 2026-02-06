@@ -101,9 +101,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AAX_RELEASE_PAT }}
         run: |
-          mkdir -p "aax_releases/${{ matrix.name }}"
+          mkdir -p "aax_releases"
           gh release download ${{ env.PROJECT_NAME }} --repo "ZL-Audio/ZLAAX" --pattern "${{ matrix.name }}.zip" --dir "temp_dl"
-          unzip -q "temp_dl/${{ matrix.name }}.zip" -d "aax_releases/${{ matrix.name }}"
+          unzip -q "temp_dl/${{ matrix.name }}.zip" -d "aax_releases"
           ls -R aax_releases/
 
       - name: Set additional env vars for next steps
