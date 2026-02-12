@@ -37,8 +37,8 @@ namespace zlpanel {
     }
 
     void ComputerPanel::paint(juce::Graphics& g) {
-        const juce::GenericScopedTryLock guard{path_lock_};
-        if (!guard.isLocked()) {
+        const std::unique_lock lock{mutex_, std::try_to_lock};
+        if (!lock.owns_lock()) {
             return;
         }
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour));
@@ -70,7 +70,7 @@ namespace zlpanel {
             break;
         }
         }
-        const juce::GenericScopedLock guard{path_lock_};
+        std::lock_guard lock{mutex_};
         comp_path_ = next_comp_path_;
     }
 

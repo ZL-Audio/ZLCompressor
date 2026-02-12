@@ -22,7 +22,7 @@ namespace zlpanel {
     }
 
     void RMSPanel::paint(juce::Graphics& g) {
-        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        const std::unique_lock lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
         }
@@ -83,7 +83,7 @@ namespace zlpanel {
             }
             next_in_path_.lineTo(0.f, ys_.back());
             next_in_path_.closeSubPath();
-            std::lock_guard<std::mutex> lock{mutex_};
+            std::lock_guard lock{mutex_};
             in_path_ = next_in_path_;
             out_path_ = next_out_path_;
         }

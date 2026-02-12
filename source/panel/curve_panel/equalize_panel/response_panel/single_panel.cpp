@@ -36,7 +36,7 @@ namespace zlpanel {
     }
 
     void SinglePanel::paint(juce::Graphics& g) {
-        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        const std::unique_lock lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
         }
@@ -111,7 +111,7 @@ namespace zlpanel {
         next_line_ = juce::Line<float>(button_x, button_y, button_curve_x, button_curve_y);
         button_pos_.store({button_x, button_y});
 
-        std::lock_guard<std::mutex> lock{mutex_};
+        std::lock_guard lock{mutex_};
         path_.swapWithPath(next_path_);
         line_ = next_line_;
 
@@ -142,4 +142,4 @@ namespace zlpanel {
             button_pos_.store({0.f, -static_cast<float>(bound.getHeight() * 2)});
         }
     }
-} // zlpanel
+}

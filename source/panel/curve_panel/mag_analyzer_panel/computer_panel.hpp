@@ -12,6 +12,7 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     class ComputerPanel final : public juce::Component,
@@ -50,7 +51,7 @@ namespace zlpanel {
 
         std::atomic<bool> to_update_{true};
         juce::Path comp_path_, next_comp_path_;
-        juce::SpinLock path_lock_;
+        zldsp::lock::SpinLock mutex_;
 
         void lookAndFeelChanged() override;
 

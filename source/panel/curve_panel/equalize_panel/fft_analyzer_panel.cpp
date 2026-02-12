@@ -32,7 +32,7 @@ namespace zlpanel {
             skip_next_repaint_ = false;
             return;
         }
-        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        const std::unique_lock lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
         }
@@ -150,7 +150,7 @@ namespace zlpanel {
         next_out_path_.lineTo(xs_[num_point_ - 1] + .1f, bound.getBottom() * 1.5f);
         next_out_path_.closeSubPath();
 
-        std::lock_guard<std::mutex> lock{mutex_};
+        std::lock_guard lock{mutex_};
         out_path_.swapWithPath(next_out_path_);
     }
 

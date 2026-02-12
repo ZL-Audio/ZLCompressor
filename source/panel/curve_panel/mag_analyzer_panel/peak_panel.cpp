@@ -27,7 +27,7 @@ namespace zlpanel {
     PeakPanel::~PeakPanel() = default;
 
     void PeakPanel::paint(juce::Graphics& g) {
-        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        const std::unique_lock lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
         }
@@ -167,7 +167,7 @@ namespace zlpanel {
             } else {
                 updatePaths<false>(bound);
             }
-            std::lock_guard<std::mutex> lock{mutex_};
+            std::lock_guard lock{mutex_};
             in_path_.swapWithPath(next_in_path_);
             out_path_.swapWithPath(next_out_path_);
             reduction_path_.swapWithPath(next_reduction_path_);

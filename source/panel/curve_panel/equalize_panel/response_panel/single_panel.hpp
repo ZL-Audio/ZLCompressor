@@ -10,12 +10,12 @@
 #pragma once
 
 #include <numbers>
-#include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
 #include "static_freq_array.hpp"
+#include "../../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     class SinglePanel final : public juce::Component,
@@ -58,7 +58,7 @@ namespace zlpanel {
 
         juce::Path path_, next_path_;
         juce::Line<float> line_, next_line_;
-        std::mutex mutex_;
+        zldsp::lock::SpinLock mutex_;
 
         AtomicPoint<float> button_pos_;
 

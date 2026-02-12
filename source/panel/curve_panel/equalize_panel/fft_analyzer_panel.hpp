@@ -18,6 +18,7 @@
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_smoother.hpp"
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_tilter.hpp"
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_decayer.hpp"
+#include "../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     class FFTAnalyzerPanel final : public juce::Component,
@@ -44,7 +45,7 @@ namespace zlpanel {
 
         std::vector<float> xs_{}, ys_{};
         juce::Path out_path_, next_out_path_;
-        std::mutex mutex_;
+        zldsp::lock::SpinLock mutex_;
 
         double c_sample_rate_{};
         int fft_size_{0};

@@ -22,7 +22,7 @@ namespace zlpanel {
     SumPanel::~SumPanel() = default;
 
     void SumPanel::paint(juce::Graphics& g) {
-        const std::unique_lock<std::mutex> lock{mutex_, std::try_to_lock};
+        const std::unique_lock lock{mutex_, std::try_to_lock};
         if (!lock.owns_lock()) {
             return;
         }
@@ -76,7 +76,7 @@ namespace zlpanel {
         }
         minimizer.finish();
 
-        std::lock_guard<std::mutex> lock{mutex_};
+        std::lock_guard lock{mutex_};
         path_.swapWithPath(next_path_);
 
         return true;

@@ -9,12 +9,11 @@
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
 #include "static_freq_array.hpp"
+#include "../../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     class SumPanel final : public juce::Component {
@@ -39,10 +38,10 @@ namespace zlpanel {
         kfr::univector<float, kWsFloat.size()> ys{};
 
         juce::Path path_, next_path_;
-        std::mutex mutex_;
+        zldsp::lock::SpinLock mutex_;
 
         float curve_thickness_{0.f};
 
         void lookAndFeelChanged() override;
     };
-} // zlpanel
+}
