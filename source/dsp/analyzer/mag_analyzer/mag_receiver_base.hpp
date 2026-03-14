@@ -62,7 +62,7 @@ namespace zldsp::analyzer {
                 peak = std::max(peak, max_op(range.start_index1, range.block_size1));
             }
             if (range.block_size2 > 0) {
-                peak = max_op(range.start_index2, range.block_size2);
+                peak = std::max(peak, max_op(range.start_index2, range.block_size2));
             }
             return peak;
         }
