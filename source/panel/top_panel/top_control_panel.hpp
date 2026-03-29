@@ -57,6 +57,8 @@ namespace zlpanel {
 
         std::array<float, 4> previous_clipper_value_{0.f, 1.f, 0.f, 1.f};
         size_t previous_direction_idx_{0};
+        std::atomic<float>& direction_ref_;
+        int repaint_counter_{0};
         zlgui::combobox::CompactCombobox direction_box_;
         zlgui::attachment::ComboBoxAttachment<false> direction_attachment_;
 

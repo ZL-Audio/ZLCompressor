@@ -36,6 +36,7 @@ namespace zlpanel {
         clipper_slider_("", base_,
                         tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper)),
         clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperDrive::kID, updater_),
+        direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
         direction_box_(zlp::PCompDirection::kChoices, base, "",
                        {tooltip_helper.getToolTipText(multilingual::kDownwardC),
                         tooltip_helper.getToolTipText(multilingual::kUpwardC),
@@ -137,6 +138,21 @@ namespace zlpanel {
 
     void TopControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+        const auto direction = static_cast<int>(std::round(direction_ref_.load(std::memory_order::relaxed)));
+        if (direction != direction_box_.getBox().getSelectedItemIndex()) {
+            if (repaint_counter_ == 4) {
+                direction_box_.getBox().setSelectedItemIndex(direction, juce::dontSendNotification);
+                auto* para = p_ref_.parameters_.getParameter(zlp::PClipperDrive::kID);
+                previous_clipper_value_[previous_direction_idx_] = para->getValue();
+                previous_direction_idx_ = static_cast<size_t>(direction);
+                direction_box_.repaint();
+                repaint_counter_ = 0;
+            } else {
+                repaint_counter_ += 1;
+            }
+        } else {
+            repaint_counter_ = 0;
+        }
         const auto new_lookahead_value = lookahead_slider_.getSlider().getValue();
         if (std::abs(new_lookahead_value - old_lookahead_value_) > 1e-4) {
             if (std::abs(new_lookahead_value) < 1e-4 && std::abs(old_lookahead_value_) > 1e-4) {
