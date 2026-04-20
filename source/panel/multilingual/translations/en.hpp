@@ -24,7 +24,7 @@ namespace zlpanel::multilingual::en {
         "Control the temporal response of the release stage.",
         "Control the time it takes for the gain change to increase to its target level.",
         "Control the time it takes for the gain change to decrease to its target level.",
-        "Press: enbale RMS processing.",
+        "Press: enable RMS processing.",
         "Control the integration window for RMS measurement.",
         "Control the relative attack/release time of the RMS processing.",
         "Control the mix percentage of the RMS processing",
@@ -63,6 +63,6 @@ namespace zlpanel::multilingual::en {
         "Choose the magnitude measurement method.",
         "Choose the magnitude measurement stereo channel.",
         "Choose the magnitude analyzer time length.",
-        "Choose the magnitude analyzer minimum decible value."
+        "Choose the magnitude analyzer minimum decibel value."
     };
 }
