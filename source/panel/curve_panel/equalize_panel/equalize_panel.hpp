@@ -48,7 +48,7 @@ namespace zlpanel {
         ResponsePanel response_panel_;
         ButtonPanel button_panel_;
         juce::Point<float> popup_top_center_{}, popup_bottom_center_{}, previous_popup_target_pos_{};
-        float shift_x_max{};
+        float shift_x_max_{};
 
         std::array<std::atomic<zlp::EqualizeController::FilterStatus>, zlp::kBandNum> filter_status_{};
         std::atomic<bool> to_update_filter_status_{false};

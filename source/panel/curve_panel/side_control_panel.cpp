@@ -131,9 +131,10 @@ namespace zlpanel {
     }
 
     void SideControlPanel::resized() {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto font_size = base_.getFontSize();
+        const auto padding = getPaddingSize(font_size);
+        const auto slider_height = getSliderHeight(font_size);
+        const auto button_height = getButtonSize(font_size);
 
         auto bound = getLocalBounds();
         bound.removeFromLeft(padding);
@@ -182,6 +183,14 @@ namespace zlpanel {
             ext_side_button_.setBounds(t_bound.removeFromLeft(button_height));
             side_out_button_.setBounds(t_bound.removeFromRight(button_height));
         }
+
+        const auto dragging_distance = getSliderDraggingDistance(font_size);
+        for (auto& s : {&stereo_link_slider_, &side_gain_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
+        for (auto& s : {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
     }
 
     void SideControlPanel::repaintCallBackSlow() {
@@ -213,4 +222,4 @@ namespace zlpanel {
             side_out2_label_.setText(stereo_swap_flag_ ? "M" : "S", juce::dontSendNotification);
         }
     }
-} // zlpanel
+}

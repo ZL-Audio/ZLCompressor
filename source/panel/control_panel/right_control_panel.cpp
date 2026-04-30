@@ -135,6 +135,10 @@ namespace zlpanel {
             wet_label_.setBounds(t_bound.removeFromTop(label_height));
             wet_slider_.setBounds(t_bound);
         }
+
+        const auto dragging_distance = getSliderDraggingDistance(font_size);
+        gain_slider_.setMouseDragSensitivity(dragging_distance);
+        wet_slider_.setMouseDragSensitivity(dragging_distance);
     }
 
     void RightControlPanel::repaintCallBackSlow() {

@@ -75,4 +75,4 @@ namespace zlpanel {
 
         void updateLabels();
     };
-} // zlpanel
+}

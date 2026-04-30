@@ -278,9 +278,9 @@ namespace zlgui::slider {
             else if (show_slider2_ && event.mods.isRightButtonDown()) {
                 slider2_.mouseDown(event);
             }
-            const auto currentShiftPressed = event.mods.isShiftDown();
-            if (currentShiftPressed != is_shift_pressed_) {
-                is_shift_pressed_ = currentShiftPressed;
+            const auto current_shift_pressed = event.mods.isShiftDown();
+            if (current_shift_pressed != is_shift_pressed_) {
+                is_shift_pressed_ = current_shift_pressed;
                 updateDragDistance();
             }
         }

@@ -46,4 +46,4 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<false, false, false> gain_slider_;
         std::unique_ptr<zlgui::attachment::SliderAttachment<true>> gain_attachment_;
     };
-} // zlpanel
+}

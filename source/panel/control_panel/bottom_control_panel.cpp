@@ -21,7 +21,7 @@ namespace zlpanel {
         style_box_(zlp::PCompStyle::kChoices, base,
                    tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
         style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
-    rms_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_r_svg,
+        rms_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_r_svg,
                                                           BinaryData::dline_r_svgSize)),
         rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
                     tooltip_helper.getToolTipText(multilingual::kRMSCompress)),

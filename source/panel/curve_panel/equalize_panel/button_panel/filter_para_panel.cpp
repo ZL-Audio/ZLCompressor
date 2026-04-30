@@ -57,6 +57,12 @@ namespace zlpanel {
         freq_slider_.setBounds(t_bound);
         gain_label_.setBounds(bound.removeFromLeft(label_width));
         gain_slider_.setBounds(bound);
+
+        const auto font_size = base_.getFontSize();
+        const auto dragging_distance = getSliderDraggingDistance(font_size);
+        for (auto& s : {&freq_slider_, &gain_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
     }
 
     void FilterParaPanel::updateBand() {
@@ -108,4 +114,4 @@ namespace zlpanel {
         }
         updater_.updateComponents();
     }
-} // zlpanel
+}

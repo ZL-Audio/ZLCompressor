@@ -61,6 +61,12 @@ namespace zlpanel {
         rms_speed_slider_.setBounds(bound.removeFromLeft(width));
         rms_mix_label_.setBounds(bound.removeFromLeft(width - 2 * delta));
         rms_mix_slider_.setBounds(bound.removeFromLeft(width));
+
+        const auto font_size = base_.getFontSize();
+        const auto dragging_distance = getSliderDraggingDistance(font_size);
+        for (auto& s : {&rms_length_slider_, &rms_speed_slider_, &rms_mix_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
     }
 
     void RMSControlPanel::repaintCallBackSlow() {

@@ -70,7 +70,7 @@ namespace zlpanel {
         popup_top_center_ = {popup_width * .5f, 0.f};
         popup_bottom_center_ = {popup_width * .5f, popup_height};
         previous_popup_target_pos_ = {-100.f, -100.f};
-        shift_x_max = static_cast<float>(bound.getWidth()) - popup_width;
+        shift_x_max_ = static_cast<float>(bound.getWidth()) - popup_width;
     }
 
     void EqualizePanel::repaintCallBackSlow() {
@@ -128,7 +128,7 @@ namespace zlpanel {
                                              ? popup_target_pos.y - popup_top_center_.y + base_.getFontSize()
                                              : popup_target_pos.y - popup_bottom_center_.y - base_.getFontSize();
 
-                    const float shift_x = std::clamp(popup_target_pos.x - popup_top_center_.x, 0.f, shift_x_max);
+                    const float shift_x = std::clamp(popup_target_pos.x - popup_top_center_.x, 0.f, shift_x_max_);
 
                     button_panel_.getPopupPanel().setTransform(juce::AffineTransform::translation(shift_x, shift_y));
                 }

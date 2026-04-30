@@ -160,6 +160,16 @@ namespace zlpanel {
             curve_slider_.setBounds(e_bound);
             floor_slider_.setBounds(e_bound);
         }
+
+        const auto font_size = base_.getFontSize();
+        const auto dragging_distance = getSliderDraggingDistance(font_size);
+        for (auto& s : {&th_slider_, &ratio_slider_, &attack_slider_, &release_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
+        for (auto& s : {&knee_slider_, &curve_slider_, &floor_slider_,
+                        &pump_slider_, &smooth_slider_, &range_slider_, &hold_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
     }
 
     void MidControlPanel::repaintCallBackSlow() {

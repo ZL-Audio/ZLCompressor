@@ -134,6 +134,11 @@ namespace zlpanel {
         clipper_label_.setBounds(bound.removeFromRight(slider_width));
         bound.removeFromLeft(padding);
         direction_box_.setBounds(bound.removeFromLeft(slider_width));
+
+        const auto dragging_distance = getSliderDraggingDistance(font_size);
+        for (auto& s : {&lookahead_slider_, &clipper_slider_}) {
+            s->setMouseDragSensitivity(dragging_distance);
+        }
     }
 
     void TopControlPanel::repaintCallBackSlow() {
