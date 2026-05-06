@@ -4,6 +4,24 @@ LICENSE and CODE are available at [https://github.com/ZL-Audio/ZLCompressor](htt
 
 # Changelog
 
+## 0.5.0
+
+Bug fixes
+
+- fix incorrect peak display
+- fix compression direction combobox display
+- fix grammar mistakes in tooltips
+- fix mouse dragging sensitivity of rotary sliders
+
+Improvements
+
+- improve DSP performance
+- improve GUI performance
+
+Other Changes
+
+- add LV2 tags
+
 ## 0.4.0
 
 New Features
