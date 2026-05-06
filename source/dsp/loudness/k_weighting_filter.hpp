@@ -10,6 +10,7 @@
 #pragma once
 
 #include <numbers>
+#include "../vector/vector.hpp"
 #include "../filter/filter.hpp"
 
 namespace zldsp::loudness {
@@ -57,8 +58,7 @@ namespace zldsp::loudness {
                 }
             }
             for (size_t channel = 0; channel < buffer.size(); ++channel) {
-                auto v = kfr::make_univector(buffer[channel], num_samples);
-                v = v * kBias;
+                vector::multiply(buffer[channel], kBias, num_samples);
             }
         }
 

@@ -14,6 +14,8 @@
 #include "../analyzer_base/analyzer_receiver_base.hpp"
 
 namespace zldsp::analyzer {
+    namespace hn = hwy::HWY_NAMESPACE;
+
     class MagReceiver {
     public:
         explicit MagReceiver() = default;
@@ -59,33 +61,113 @@ namespace zldsp::analyzer {
                 }
             }
             float value{0.f};
-            auto analyze_expr = [&](const auto& expression) {
-                if (mag_type == MagType::kPeak) {
-                    value = std::max(value, kfr::absmaxof(expression));
-                } else {
-                    value += kfr::sumsqr(expression);
-                }
-            };
             auto process_segment = [&](const size_t start, const size_t size) {
                 if (size == 0) {
                     return;
                 }
-                auto vL = kfr::make_univector(fifo[0].data() + start, size);
-                auto vR = kfr::make_univector(fifo[1].data() + start, size);
-
                 switch (stereo_type) {
-                case StereoType::kLeft:
-                    analyze_expr(vL);
+                case StereoType::kLeft: {
+                    if (mag_type == MagType::kPeak) {
+                        value = std::max(value, vector::max_abs_of(fifo[0].data() + start, size));
+                    } else {
+                        value += vector::sum_sqr(fifo[0].data() + start, size);
+                    }
                     break;
-                case StereoType::kRight:
-                    analyze_expr(vR);
+                }
+                case StereoType::kRight: {
+                    if (mag_type == MagType::kPeak) {
+                        value = std::max(value, vector::max_abs_of(fifo[1].data() + start, size));
+                    } else {
+                        value += vector::sum_sqr(fifo[1].data() + start, size);
+                    }
                     break;
-                case StereoType::kMid:
-                    analyze_expr(kSqrt2Over2 * (vL + vR));
+                }
+                case StereoType::kMid: {
+                    static constexpr hn::ScalableTag<float> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    const auto v_sqrt2_over_2 = hn::Set(d, kSqrt2Over2);
+                    const float* __restrict in0 = fifo[0].data() + start;
+                    const float* __restrict in1 = fifo[1].data() + start;
+                    if (mag_type == MagType::kPeak) {
+                        auto v_max_abs = hn::Zero(d);
+                        size_t i = 0;
+                        for (; i + lanes <= size; i += lanes) {
+                            const auto v_in0 = hn::LoadU(d, in0 + i);
+                            const auto v_in1 = hn::LoadU(d, in1 + i);
+                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Add(v_in0, v_in1));
+                            v_max_abs = hn::Max(hn::Abs(v_mid), v_max_abs);
+                        }
+                        float scalar_max_abs = hn::ReduceMax(d, v_max_abs);
+                        for (; i < size; ++i) {
+                            const auto v_in0 = in0[i];
+                            const auto v_in1 = in1[i];
+                            const auto v_mid = kSqrt2Over2 * (v_in0 + v_in1);
+                            scalar_max_abs = std::max(std::abs(v_mid), scalar_max_abs);
+                        }
+                        value = std::max(value, scalar_max_abs);
+                    } else {
+                        auto v_sum = hn::Zero(d);
+                        size_t i = 0;
+                        for (; i + lanes <= size; i += lanes) {
+                            const auto v_in0 = hn::LoadU(d, in0 + i);
+                            const auto v_in1 = hn::LoadU(d, in1 + i);
+                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Add(v_in0, v_in1));
+                            v_sum = hn::MulAdd(v_mid, v_mid, v_sum);
+                        }
+                        float scalar_sum = hn::ReduceSum(d, v_sum);
+                        for (; i < size; ++i) {
+                            const auto v_in0 = in0[i];
+                            const auto v_in1 = in1[i];
+                            const auto v_mid = kSqrt2Over2 * (v_in0 + v_in1);
+                            scalar_sum += v_mid * v_mid;
+                        }
+                        value += scalar_sum;
+                    }
                     break;
-                case StereoType::kSide:
-                    analyze_expr(kSqrt2Over2 * (vL - vR));
+                }
+                case StereoType::kSide: {
+                    static constexpr hn::ScalableTag<float> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    const auto v_sqrt2_over_2 = hn::Set(d, kSqrt2Over2);
+                    const float* __restrict in0 = fifo[0].data() + start;
+                    const float* __restrict in1 = fifo[1].data() + start;
+                    if (mag_type == MagType::kPeak) {
+                        auto v_max_abs = hn::Zero(d);
+                        size_t i = 0;
+                        for (; i + lanes <= size; i += lanes) {
+                            const auto v_in0 = hn::LoadU(d, in0 + i);
+                            const auto v_in1 = hn::LoadU(d, in1 + i);
+                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Sub(v_in0, v_in1));
+                            v_max_abs = hn::Max(hn::Abs(v_mid), v_max_abs);
+                        }
+                        float scalar_max_abs = hn::ReduceMax(d, v_max_abs);
+                        for (; i < size; ++i) {
+                            const auto v_in0 = in0[i];
+                            const auto v_in1 = in1[i];
+                            const auto v_mid = kSqrt2Over2 * (v_in0 - v_in1);
+                            scalar_max_abs = std::max(std::abs(v_mid), scalar_max_abs);
+                        }
+                        value = std::max(value, scalar_max_abs);
+                    } else {
+                        auto v_sum = hn::Zero(d);
+                        size_t i = 0;
+                        for (; i + lanes <= size; i += lanes) {
+                            const auto v_in0 = hn::LoadU(d, in0 + i);
+                            const auto v_in1 = hn::LoadU(d, in1 + i);
+                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Sub(v_in0, v_in1));
+                            v_sum = hn::MulAdd(v_mid, v_mid, v_sum);
+                        }
+                        float scalar_sum = hn::ReduceSum(d, v_sum);
+                        for (; i < size; ++i) {
+                            const auto v_in0 = in0[i];
+                            const auto v_in1 = in1[i];
+                            const auto v_mid = kSqrt2Over2 * (v_in0 - v_in1);
+                            scalar_sum += v_mid * v_mid;
+                        }
+                        value += scalar_sum;
+                    }
                     break;
+                }
                 case StereoType::kStereo:
                 default:
                     break;

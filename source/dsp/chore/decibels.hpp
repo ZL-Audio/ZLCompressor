@@ -13,6 +13,12 @@
 #include <algorithm>
 
 namespace zldsp::chore {
+    inline constexpr double kLogMin = 1e-12;
+    inline constexpr double kLogMul = 8.6858896380650365530;
+
+    inline constexpr double kLogSqrMin = 1e-24;
+    inline constexpr double kLogSqrMul = 4.3429448190325182765;
+
     template <typename FloatType>
     FloatType decibelsToGain(const FloatType value) {
         return std::pow(FloatType(10), value * FloatType(0.05));

@@ -17,7 +17,7 @@
 #endif
 
 namespace zldsp::lock {
-    class SpinLock {
+    class alignas(64) SpinLock {
     private:
         std::atomic_flag flag = ATOMIC_FLAG_INIT;
 

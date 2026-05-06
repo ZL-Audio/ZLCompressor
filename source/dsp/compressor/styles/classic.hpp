@@ -11,7 +11,7 @@
 
 #include "../../chore/decibels.hpp"
 #include "../tracker/tracker.hpp"
-#include "../../vector/vector.hpp"
+#include "../follower/follower.hpp"
 
 namespace zldsp::compressor {
     template <typename FloatType>
@@ -27,7 +27,7 @@ namespace zldsp::compressor {
 
         template <typename C, typename F, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(C& computer, F& follower,
-                     FloatType* buffer, const size_t num_samples) {
+                     FloatType* __restrict buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 FloatType input_db;
                 input_db = chore::gainToDecibels(std::abs(x0_));
@@ -42,7 +42,7 @@ namespace zldsp::compressor {
 
         template <typename C, typename F, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(C& computer, F& follower, RMSTracker<FloatType>& tracker,
-                     FloatType* buffer, const size_t num_samples) {
+                     FloatType* __restrict buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 FloatType input_db;
                 tracker.processSample(x0_);

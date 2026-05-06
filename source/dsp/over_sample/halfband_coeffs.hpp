@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <span>
 #include <array>
 
 namespace zldsp::oversample::halfband_coeff {

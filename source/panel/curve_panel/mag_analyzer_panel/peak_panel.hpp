@@ -51,7 +51,7 @@ namespace zlpanel {
         AtomicBound<float> atomic_bound_;
 
         float pre_db_{-240.f}, out_db_{-240.f}, reduction_db_{0.f};
-        kfr::univector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{};
+        zldsp::vector::aligned_vector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{};
         juce::Path in_path_, out_path_, reduction_path_;
         juce::Path next_in_path_, next_out_path_, next_reduction_path_;
         zldsp::lock::SpinLock mutex_;

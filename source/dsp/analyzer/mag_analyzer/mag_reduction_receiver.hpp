@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <vector>
 #include "mag_receiver.hpp"
 
 namespace zldsp::analyzer {

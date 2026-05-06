@@ -11,6 +11,7 @@
 
 #include "../../chore/decibels.hpp"
 #include "../tracker/tracker.hpp"
+#include "../follower/follower.hpp"
 #include "../../vector/vector.hpp"
 
 namespace zldsp::compressor {
@@ -27,7 +28,7 @@ namespace zldsp::compressor {
 
         template <typename C, typename F, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(C& computer, F& follower,
-                     FloatType* buffer, const size_t num_samples) {
+                     FloatType* __restrict buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 const FloatType input_db = chore::gainToDecibels(std::abs(x0_));
                 // pass through the computer and the follower
@@ -35,15 +36,14 @@ namespace zldsp::compressor {
                     -chore::decibelsToGain(computer.eval(input_db)));
                 // apply the gain on the current sample and save it as the feedback sample for the next
                 x0_ = buffer[i] * smooth_reduction_gain;
-                buffer[i] = std::max(smooth_reduction_gain, FloatType(1e-12));
+                buffer[i] = smooth_reduction_gain;
             }
-            auto vector = kfr::make_univector(buffer, num_samples);
-            vector = FloatType(20) * kfr::log10(vector);
+            vector::mag_to_db(buffer, num_samples);
         }
 
         template <typename C, typename F, PPState pp_state = PPState::kOff, SState s_state = SState::kOff>
         void process(C& computer, F& follower, RMSTracker<FloatType>& tracker,
-                     FloatType* buffer, const size_t num_samples) {
+                     FloatType* __restrict buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
                 tracker.processSample(x0_);
                 // get the db from the tracker
@@ -53,10 +53,9 @@ namespace zldsp::compressor {
                     -chore::decibelsToGain(computer.eval(input_db)));
                 // apply the gain on the current sample and save it as the feedback sample for the next
                 x0_ = buffer[i] * smooth_reduction_gain;
-                buffer[i] = std::max(smooth_reduction_gain, FloatType(1e-12));
+                buffer[i] = smooth_reduction_gain;
             }
-            auto vector = kfr::make_univector(buffer, num_samples);
-            vector = FloatType(20) * kfr::log10(vector);
+            vector::mag_to_db(buffer, num_samples);
         }
 
     private:

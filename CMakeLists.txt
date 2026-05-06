@@ -207,19 +207,36 @@ target_link_libraries(SharedCode
         juce::juce_recommended_warning_flags
 )
 
-# add kfr
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_subdirectory(kfr)
-target_link_libraries(SharedCode INTERFACE kfr kfr_dsp kfr_dft)
+# add highway
+set(ZL_HWY_STATIC_TARGET "NONE" CACHE STRING "Target architecture for static dispatch")
+if(ZL_HWY_STATIC_TARGET STREQUAL "NONE")
+    message(FATAL_ERROR "HWY_STATIC_TARGET must be set: SSE2/SEE42/AVX2/NEON.")
+endif()
+set(HWY_ENABLE_EXAMPLES OFF CACHE BOOL "Disable highway examples" FORCE)
+set(HWY_ENABLE_TESTS OFF CACHE BOOL "Disable highway tests" FORCE)
+set(HWY_COMPILE_ONLY_STATIC ON CACHE BOOL "Force highway static dispatch" FORCE)
+add_subdirectory(highway)
+target_link_libraries(SharedCode INTERFACE hwy)
+if(ZL_HWY_STATIC_TARGET STREQUAL "NEON")
+    set(ZL_HWY_ARCH_FLAGS "-march=armv8-a+simd")
+elseif(ZL_HWY_STATIC_TARGET STREQUAL "SSE2")
+    set(ZL_HWY_ARCH_FLAGS "-march=x86-64")
+elseif(ZL_HWY_STATIC_TARGET STREQUAL "SSE42")
+    set(ZL_HWY_ARCH_FLAGS "-march=x86-64-v2" "-maes" "-mpclmul")
+elseif(ZL_HWY_STATIC_TARGET STREQUAL "AVX2")
+    set(ZL_HWY_ARCH_FLAGS "-march=x86-64-v3" "-maes" "-mpclmul")
+else()
+    message(FATAL_ERROR "Unsupported HWY_STATIC_TARGET chosen: ${ZL_HWY_STATIC_TARGET}")
+endif()
+message(STATUS "SIMD target is ${ZL_HWY_STATIC_TARGET}")
+target_compile_options(hwy PRIVATE ${ZL_HWY_ARCH_FLAGS})
+target_compile_options(SharedCode INTERFACE ${ZL_HWY_ARCH_FLAGS})
 
 # Link the nlopt targets our SharedCode target
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 
 # IPP support, comment out to disable
-include(PamplejuceIPP)
-
-# A separate target keeps the Tests target fast!
-# include(Benchmarks)
+# include(PamplejuceIPP)
 
 # Pass some config to GA (like our PRODUCT_NAME)
 include(GitHubENV)

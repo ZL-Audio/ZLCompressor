@@ -18,6 +18,8 @@
 #include "../../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
+    namespace hn = hwy::HWY_NAMESPACE;
+
     class SinglePanel final : public juce::Component,
                               private juce::AudioProcessorValueTreeState::Listener {
     public:

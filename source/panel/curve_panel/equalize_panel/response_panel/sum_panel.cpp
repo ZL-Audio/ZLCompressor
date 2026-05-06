@@ -13,6 +13,7 @@ namespace zlpanel {
     SumPanel::SumPanel(PluginProcessor& processor, zlgui::UIBase& base)
         : p_ref_(processor), base_{base} {
         juce::ignoreUnused(p_ref_);
+        ys_.resize(kWsFloat.size());
         path_.preallocateSpace(kWsFloat.size() * 3 + 12);
         next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
 
@@ -51,28 +52,27 @@ namespace zlpanel {
         int band_count{0};
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             if (filter_status[band] == zlp::EqualizeController::FilterStatus::kOn) {
-                auto ys_vector = kfr::make_univector<float>(yss[band].data(), yss[band].size());
                 if (band_count == 0) {
-                    ys = ys_vector;
+                    zldsp::vector::copy(ys_.data(), yss[band].data(), yss[band].size());
                 } else {
-                    ys = ys + ys_vector;
+                    zldsp::vector::add(ys_.data(), yss[band].data(), yss[band].size());
                 }
                 band_count += 1;
             }
         }
 
         if (band_count == 0) {
-            std::fill(ys.begin(), ys.end(), bound.getCentreY());
+            std::fill(ys_.begin(), ys_.end(), bound.getCentreY());
         } else if (band_count > 1) {
             const auto total_shift = -bound.getCentreY() * static_cast<float>(band_count - 1);
-            ys = ys + total_shift;
+            zldsp::vector::add(ys_.data(), total_shift, ys_.size());
         }
 
         next_path_.clear();
         PathMinimizer minimizer(next_path_);
-        minimizer.startNewSubPath(xs[0], ys[0]);
-        for (size_t i = 1; i < std::min(xs.size(), ys.size()); ++i) {
-            minimizer.lineTo(xs[i], ys[i]);
+        minimizer.startNewSubPath(xs[0], ys_[0]);
+        for (size_t i = 1; i < std::min(xs.size(), ys_.size()); ++i) {
+            minimizer.lineTo(xs[i], ys_[i]);
         }
         minimizer.finish();
 
@@ -81,4 +81,4 @@ namespace zlpanel {
 
         return true;
     }
-} // zlpanel
+}

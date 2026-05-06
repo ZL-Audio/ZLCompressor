@@ -9,9 +9,6 @@
 
 #pragma once
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wall"
-#pragma clang diagnostic ignored "-Weverything"
-#include <kfr/kfr.h>
-#include <kfr/dsp.hpp>
-#pragma clang diagnostic pop
+#include "zldsp_fft/src/zldsp_fft_rfft.hpp"
+#include "zldsp_fft/src/zldsp_fft_cfft.hpp"
+#include "zldsp_fft_window.hpp"

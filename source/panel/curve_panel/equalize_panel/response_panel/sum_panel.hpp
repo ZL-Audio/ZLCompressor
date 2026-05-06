@@ -35,7 +35,7 @@ namespace zlpanel {
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
 
-        kfr::univector<float, kWsFloat.size()> ys{};
+        zldsp::vector::aligned_vector<float> ys_{};
 
         juce::Path path_, next_path_;
         zldsp::lock::SpinLock mutex_;

@@ -29,7 +29,7 @@ namespace zlpanel {
             "Copyright (c) 2023 - [zsliu98](https://github.com/zsliu98)\n\n"
             "JUCE framework from [JUCE](https://github.com/juce-framework/JUCE)\n\n"
             "JUCE template from [pamplejuce](https://github.com/sudara/pamplejuce)\n\n"
-            "[kfr](https://github.com/kfrlib/kfr) by [KFR](https://github.com/kfrlib)\n\n"
+            "[Highway](https://github.com/google/highway) by [Google](https://github.com/google)\n\n"
             "[Material Symbols](https://github.com/google/material-design-icons) by [Google](https://github.com/google)\n\n"
             "[inter](https://github.com/rsms/inter) by [The Inter Project Authors](https://github.com/rsms/inter)\n\n"
             "Dimitrios Giannoulis, Michael Massberg, and Joshua D. Reiss. Digital dynamic range compressor design. A tutorial and analysis. Journal of the Audio Engineering Society. (2012).\n\n"

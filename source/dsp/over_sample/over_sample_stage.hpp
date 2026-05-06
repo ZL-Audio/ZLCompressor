@@ -11,10 +11,11 @@
 
 #include <span>
 #include <algorithm>
-
-#include "../vector/kfr_import.hpp"
+#include <vector>
+#include <cstring>
 
 namespace zldsp::oversample {
+    namespace hn = hwy::HWY_NAMESPACE;
     template <typename FloatType>
     class OverSampleStage {
     public:
@@ -97,10 +98,8 @@ namespace zldsp::oversample {
                     os_data[i << 1] = delay_line[up_coeff_center_pos_ + i] * up_coeff_center_;
                     delay_line[up_coeff_.size() + i] = chan_data[i];
                     if constexpr (use_simd) {
-                        auto v = kfr::make_univector(&delay_line[i + 1], up_coeff_.size());
-                        os_data[(i << 1) + 1] = kfr::dotproduct(v, up_coeff_);
-                    }
-                    else {
+                        os_data[(i << 1) + 1] = vector::dot_product(&delay_line[i + 1], up_coeff_.data(), up_coeff_.size());
+                    } else {
                         FloatType output{FloatType(0)};
                         const auto shifted_delay_line = &delay_line[i + 1];
                         for (size_t k = 0; k < symmetric_size; ++k) {
@@ -131,11 +130,9 @@ namespace zldsp::oversample {
                 center_pos = down_center_pos_;
                 for (size_t i = 0; i < num_samples; ++i) {
                     if constexpr (use_simd) {
-                        auto v = kfr::make_univector(&delay_line[i], down_coeff_.size());
                         FloatType output = center_delay_line[center_pos] * down_coeff_center_;
-                        chan_data[i] = output + kfr::dotproduct(v, down_coeff_);
-                    }
-                    else {
+                        chan_data[i] = output + vector::dot_product(&delay_line[i], down_coeff_.data(), down_coeff_.size());
+                    } else {
                         FloatType output = center_delay_line[center_pos] * down_coeff_center_;
                         const auto shifted_delay_line = &delay_line[i];
                         for (size_t k = 0; k < symmetric_size; ++k) {
@@ -164,16 +161,16 @@ namespace zldsp::oversample {
         std::vector<FloatType*>& getOSPointer() { return os_pointers_; }
 
     private:
-        kfr::univector<FloatType> up_coeff_{};
+        vector::aligned_vector<FloatType> up_coeff_{};
         FloatType up_coeff_center_{FloatType(0)};
         size_t up_coeff_center_pos_{0};
-        std::vector<kfr::univector<FloatType>> up_delay_lines_{};
+        std::vector<vector::aligned_vector<FloatType>> up_delay_lines_{};
 
-        kfr::univector<FloatType> down_coeff_{};
+        vector::aligned_vector<FloatType> down_coeff_{};
         FloatType down_coeff_center_{FloatType(0)};
-        std::vector<kfr::univector<FloatType>> down_delay_lines_{};
+        std::vector<vector::aligned_vector<FloatType>> down_delay_lines_{};
         size_t down_center_pos_{0};
-        std::vector<kfr::univector<FloatType>> down_center_delay_lines_{};
+        std::vector<vector::aligned_vector<FloatType>> down_center_delay_lines_{};
 
         size_t latency_{0};
 

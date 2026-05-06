@@ -11,7 +11,7 @@
 
 #include <span>
 
-#include "../../vector/kfr_import.hpp"
+#include "../../vector/vector.hpp"
 
 namespace zldsp::analyzer {
     class SpectrumTilter {
@@ -32,12 +32,10 @@ namespace zldsp::analyzer {
         }
 
         void tilt(std::span<float> spectrum_db) {
-            auto v = kfr::make_univector(spectrum_db);
-            auto shift = tilt_shift_.slice(0, v.size());
-            v = v + shift;
+            vector::add(spectrum_db.data(), tilt_shift_.data(), spectrum_db.size());
         }
 
     private:
-        kfr::univector<float> tilt_shift_{};
+        vector::aligned_vector<float> tilt_shift_{};
     };
 }

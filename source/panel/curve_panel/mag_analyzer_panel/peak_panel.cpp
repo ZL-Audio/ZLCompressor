@@ -46,7 +46,7 @@ namespace zlpanel {
     }
 
     void PeakPanel::resized() {
-        auto bound = getLocalBounds();
+        const auto bound = getLocalBounds();
         atomic_bound_.store(bound.toFloat());
         lookAndFeelChanged();
     }

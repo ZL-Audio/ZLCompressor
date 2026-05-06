@@ -42,6 +42,15 @@ namespace zldsp::filter {
             return static_cast<SampleType>(std::sqrt(numerator / denominator));
         }
 
+        static SampleType getSqrMagnitude(const std::array<double, 6>& coeff, const SampleType w) {
+            const auto w_2 = w * w;
+            const auto t1 = coeff[2] - coeff[0] * w_2;
+            const auto denominator = coeff[1] * coeff[1] * w_2 + t1 * t1;
+            const auto t2 = coeff[5] - coeff[3] * w_2;
+            const auto numerator = coeff[4] * coeff[4] * w_2 + t2 * t2;
+            return static_cast<SampleType>(numerator / denominator);
+        }
+
         static std::complex<SampleType> getResponse(const std::array<double, 6>& coeff,
                                                     const std::complex<SampleType>& wi) {
             const auto wi2 = wi * wi;

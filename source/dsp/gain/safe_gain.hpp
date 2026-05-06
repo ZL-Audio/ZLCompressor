@@ -7,10 +7,6 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
-//
-// Created by Zishu Liu on 5/30/25.
-//
-
 #pragma once
 
 #include <atomic>

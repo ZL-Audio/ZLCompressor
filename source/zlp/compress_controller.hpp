@@ -23,6 +23,8 @@
 #include <juce_dsp/juce_dsp.h>
 
 namespace zlp {
+    namespace hn = hwy::HWY_NAMESPACE;
+
     class CompressController final : private juce::AsyncUpdater {
     public:
         static constexpr size_t kAnalyzerPointNum = 251;
@@ -196,7 +198,7 @@ namespace zlp {
     private:
         juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
-        std::array<kfr::univector<float>, 2> pre_buffer_, post_buffer_;
+        std::array<zldsp::vector::aligned_vector<float>, 2> pre_buffer_, post_buffer_;
         std::array<float*, 2> pre_pointers_{}, post_pointers_{};
         // global parameter update flag
         std::atomic<bool> to_update_{true};
@@ -240,10 +242,12 @@ namespace zlp {
         zldsp::oversample::OverSampler<float, 3> over_sampler8_;
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
         double oversample_sr_{48000.0};
+
         // lookahead
         enum class DelayStatus {
             kZero, kMainDelay, kSideDelay
         };
+
         std::atomic<float> lookahead_delay_length_{0.f};
         std::atomic<bool> to_update_lookahead_{false};
         DelayStatus delay_status_{DelayStatus::kZero};
@@ -284,7 +288,7 @@ namespace zlp {
         std::atomic<float> rms_mix_{0.f};
         float c_rms_mix_{0.f};
         std::atomic<float> attack_{0.f}, release_{0.f}, rms_speed_{1.f};
-        std::vector<float> rms_side_buffer0_, rms_side_buffer1_;
+        zldsp::vector::aligned_vector<float> rms_side_buffer0_, rms_side_buffer1_;
         std::array<zldsp::compressor::CleanCompressor<float>, 2> rms_comps_ = {
             zldsp::compressor::CleanCompressor<float>{},
             zldsp::compressor::CleanCompressor<float>{}
@@ -314,6 +318,11 @@ namespace zlp {
         void processBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
                            float* __restrict side_buffer0, float* __restrict side_buffer1,
                            size_t num_samples, bool bypass);
+
+        template <bool is_range_inf, bool stereo_swap>
+        void appleSideBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
+                             float* __restrict side_buffer0, float* __restrict side_buffer1,
+                             size_t num_samples) const;
 
         template <typename C>
         void processSideBuffer(C& c,

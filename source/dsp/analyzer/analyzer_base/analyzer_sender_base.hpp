@@ -59,16 +59,16 @@ namespace zldsp::analyzer {
                 const auto buffer = buffers[i];
                 if (range.block_size1 > 0) {
                     for (size_t chan = 0; chan < buffer.size(); ++chan) {
-                        zldsp::vector::copy(sample_fifos_[i][chan].data() + static_cast<size_t>(range.start_index1),
-                                            buffer[chan],
-                                            static_cast<size_t>(range.block_size1));
+                        vector::copy(sample_fifos_[i][chan].data() + static_cast<size_t>(range.start_index1),
+                                     buffer[chan],
+                                     static_cast<size_t>(range.block_size1));
                     }
                 }
                 if (range.block_size2 > 0) {
                     for (size_t chan = 0; chan < buffer.size(); ++chan) {
-                        zldsp::vector::copy(sample_fifos_[i][chan].data() + static_cast<size_t>(range.start_index2),
-                                            buffer[chan] + static_cast<size_t>(range.block_size1),
-                                            static_cast<size_t>(range.block_size2));
+                        vector::copy(sample_fifos_[i][chan].data() + static_cast<size_t>(range.start_index2),
+                                     buffer[chan] + static_cast<size_t>(range.block_size1),
+                                     static_cast<size_t>(range.block_size2));
                     }
                 }
             }

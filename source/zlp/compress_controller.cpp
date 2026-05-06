@@ -325,10 +325,7 @@ namespace zlp {
         // delta
         if (c_is_delta_) {
             for (size_t chan = 0; chan < 2; ++chan) {
-                auto pre_vector = kfr::make_univector(pre_pointers_[chan], num_samples);
-                auto post_vector = kfr::make_univector(post_pointers_[chan], num_samples);
-                auto main_vector = kfr::make_univector(main_pointers[chan], num_samples);
-                main_vector = pre_vector - post_vector;
+                zldsp::vector::sub(main_pointers[chan], pre_pointers_[chan], post_pointers_[chan], num_samples);
             }
         }
         // process the post lufs matcher
@@ -339,12 +336,7 @@ namespace zlp {
 
     void CompressController::processBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
                                            float* __restrict side_buffer0, float* __restrict side_buffer1,
-                                           const size_t num_samples, bool bypass) {
-        // create univector refs
-        auto side_v0 = kfr::make_univector(side_buffer0, num_samples);
-        auto side_v1 = kfr::make_univector(side_buffer1, num_samples);
-        auto main_v0 = kfr::make_univector(main_buffer0, num_samples);
-        auto main_v1 = kfr::make_univector(main_buffer1, num_samples);
+                                           const size_t num_samples, const bool bypass) {
         // prepare followers
         if (follower_[0].prepareBuffer()) {
             follower_[1].copyFrom(follower_[0]);
@@ -354,10 +346,8 @@ namespace zlp {
             if (rms_follower_[0].prepareBuffer()) {
                 rms_follower_[1].copyFrom(rms_follower_[0]);
             }
-            auto rms_side_v0 = kfr::make_univector(rms_side_buffer0_.data(), num_samples);
-            auto rms_side_v1 = kfr::make_univector(rms_side_buffer1_.data(), num_samples);
-            rms_side_v0 = side_v0;
-            rms_side_v1 = side_v1;
+            zldsp::vector::copy(rms_side_buffer0_.data(), side_buffer0, num_samples);
+            zldsp::vector::copy(rms_side_buffer1_.data(), side_buffer1, num_samples);
         }
         // prepare computer & process
         switch (c_direction_) {
@@ -408,10 +398,32 @@ namespace zlp {
                 break;
             }
             }
-            auto rms_side_v0 = kfr::make_univector(rms_side_buffer0_.data(), num_samples);
-            auto rms_side_v1 = kfr::make_univector(rms_side_buffer1_.data(), num_samples);
-            side_v0 = side_v0 * (1.f - c_rms_mix_) + rms_side_v0 * c_rms_mix_;
-            side_v1 = side_v1 * (1.f - c_rms_mix_) + rms_side_v1 * c_rms_mix_;
+            {
+                static constexpr hn::ScalableTag<float> d;
+                static constexpr size_t lanes = hn::MaxLanes(d);
+                const auto v_mix = hn::Set(d, c_rms_mix_);
+                size_t i = 0;
+                for (; i + lanes <= num_samples; i += lanes) {
+                    const auto v_rms_side0 = hn::LoadU(d, rms_side_buffer0_.data() + i);
+                    const auto v_rms_side1 = hn::LoadU(d, rms_side_buffer1_.data() + i);
+                    auto v_side0 = hn::LoadU(d, side_buffer0 + i);
+                    auto v_side1 = hn::LoadU(d, side_buffer1 + i);
+                    v_side0 = hn::MulAdd(v_mix, hn::Sub(v_rms_side0, v_side0), v_side0);
+                    v_side1 = hn::MulAdd(v_mix, hn::Sub(v_rms_side1, v_side1), v_side1);
+                    hn::StoreU(v_side0, d, side_buffer0 + i);
+                    hn::StoreU(v_side1, d, side_buffer1 + i);
+                }
+                for (; i < num_samples; ++i) {
+                    const auto v_rms_side0 = rms_side_buffer0_[i];
+                    const auto v_rms_side1 = rms_side_buffer1_[i];
+                    auto v_side0 = side_buffer0[i];
+                    auto v_side1 = side_buffer1[i];
+                    v_side0 = c_rms_mix_ * (v_rms_side0 - v_side0) + v_side0;
+                    v_side1 = c_rms_mix_ * (v_rms_side1 - v_side1) + v_side1;
+                    side_buffer0[i] = v_side0;
+                    side_buffer1[i] = v_side1;
+                }
+            }
         }
         // apply the hold
         if (hold_buffer_[0].getSize() > 0) {
@@ -444,30 +456,18 @@ namespace zlp {
                 side_buffer1[i] = x - xy;
             }
         }
-        // process wet values and convert decibel to gain
+        // process wet values and convert decibel to gain, apply stereo swap
         if (c_is_range_inf_) {
-            side_v0 = kfr::exp10(side_v0 * c_wet1_);
-            side_v1 = kfr::exp10(side_v1 * c_wet2_);
-        } else {
-            side_v0 = kfr::exp10(kfr::max(side_v0, -c_range_) * c_wet1_);
-            side_v1 = kfr::exp10(kfr::max(side_v1, -c_range_) * c_wet2_);
-        }
-        // apply stereo swap
-        if (c_stereo_swap_) {
-            if (c_is_downward_) {
-                main_v0 = main_v0 * side_v1;
-                main_v1 = main_v1 * side_v0;
+            if (c_stereo_swap_) {
+                appleSideBuffer<true, true>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
             } else {
-                main_v0 = main_v0 / side_v1;
-                main_v1 = main_v1 / side_v0;
+                appleSideBuffer<true, false>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
             }
         } else {
-            if (c_is_downward_) {
-                main_v0 = main_v0 * side_v0;
-                main_v1 = main_v1 * side_v1;
+            if (c_stereo_swap_) {
+                appleSideBuffer<false, true>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
             } else {
-                main_v0 = main_v0 / side_v0;
-                main_v1 = main_v1 / side_v1;
+                appleSideBuffer<false, false>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
             }
         }
         // apply clipper
@@ -475,6 +475,67 @@ namespace zlp {
         if (clipper_.getIsON()) {
             clipper_.process(main_buffer0, num_samples);
             clipper_.process(main_buffer1, num_samples);
+        }
+    }
+
+    template <bool is_range_inf, bool stereo_swap>
+    void CompressController::appleSideBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
+                                             float* __restrict side_buffer0, float* __restrict side_buffer1,
+                                             const size_t num_samples) const {
+        static constexpr hn::ScalableTag<float> d;
+        static constexpr size_t lanes = hn::MaxLanes(d);
+        static constexpr float kLn10 = 2.30258509299404568402f;
+
+        const float wet1 = c_is_downward_ ? c_wet1_ * kLn10: -c_wet1_* kLn10;
+        const float wet2 = c_is_downward_ ? c_wet2_ * kLn10: -c_wet2_ * kLn10;
+
+        const auto v_wet1 = hn::Set(d, wet1);
+        const auto v_wet2 = hn::Set(d, wet2);
+        const auto v_neg_range = hn::Set(d, -c_range_);
+
+        size_t i = 0;
+        for (; i + lanes <= num_samples; i += lanes) {
+            auto v_side0 = hn::LoadU(d, side_buffer0 + i);
+            auto v_side1 = hn::LoadU(d, side_buffer1 + i);
+            if constexpr (!is_range_inf) {
+                v_side0 = hn::Max(v_side0, v_neg_range);
+                v_side1 = hn::Max(v_side1, v_neg_range);
+            }
+            v_side0 = hn::CallExp(d, hn::Mul(v_side0, v_wet1));
+            v_side1 = hn::CallExp(d, hn::Mul(v_side1, v_wet2));
+            auto v_main0 = hn::LoadU(d, main_buffer0 + i);
+            auto v_main1 = hn::LoadU(d, main_buffer1 + i);
+            if constexpr (stereo_swap) {
+                v_main0 = hn::Mul(v_main0, v_side1);
+                v_main1 = hn::Mul(v_main1, v_side0);
+            } else {
+                v_main0 = hn::Mul(v_main0, v_side0);
+                v_main1 = hn::Mul(v_main1, v_side1);
+            }
+            hn::StoreU(v_main0, d, main_buffer0 + i);
+            hn::StoreU(v_main1, d, main_buffer1 + i);
+        }
+
+        for (; i < num_samples; ++i) {
+            float s0 = side_buffer0[i];
+            float s1 = side_buffer1[i];
+            if constexpr (!is_range_inf) {
+                s0 = std::max(s0, -c_range_);
+                s1 = std::max(s1, -c_range_);
+            }
+            s0 = std::exp(s0 * wet1);
+            s1 = std::exp(s1 * wet2);
+            float m0 = main_buffer0[i];
+            float m1 = main_buffer1[i];
+            if constexpr (stereo_swap) {
+                m0 *= s1;
+                m1 *= s0;
+            } else {
+                m0 *= s0;
+                m1 *= s1;
+            }
+            main_buffer0[i] = m0;
+            main_buffer1[i] = m1;
         }
     }
 

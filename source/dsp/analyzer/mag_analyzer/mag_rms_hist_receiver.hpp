@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../../vector/vector.hpp"
 #include "../../container/fifo/fifo_base.hpp"
 #include "../../chore/decibels.hpp"
 
@@ -30,7 +31,7 @@ namespace zldsp::analyzer {
                 while (size > max_num_samples_ - current_num_samples_) {
                     const auto shift = max_num_samples_ - current_num_samples_;
                     for (size_t ch = 0; ch < fifo.size(); ++ch) {
-                        sqr_sum_ += kfr::sumsqr(kfr::make_univector(fifo[ch].data() + start, shift));
+                        sqr_sum_ += vector::sum_sqr(fifo[ch].data() + start, shift);
                     }
 
                     addToHist();
@@ -43,7 +44,7 @@ namespace zldsp::analyzer {
                 }
                 if (size > 0) {
                     for (size_t ch = 0; ch < fifo.size(); ++ch) {
-                        sqr_sum_ += kfr::sumsqr(kfr::make_univector(fifo[ch].data() + start, size));
+                        sqr_sum_ += vector::sum_sqr(fifo[ch].data() + start, size);
                     }
                     current_num_samples_ += size;
                 }
@@ -76,8 +77,8 @@ namespace zldsp::analyzer {
             std::ranges::fill(hist_, 0.);
         }
 
-        void updateHeight(const float max_height, std::span<float> heights) {
-            const auto max_hist = std::max(kfr::maxof(kfr::make_univector(hist_)), 10.0);
+        void updateHeight(const float max_height, std::span<float> heights) const {
+            const auto max_hist = std::max(vector::max_of(hist_.data(), hist_.size()), 10.0);
             const auto scale = static_cast<double>(max_height) / max_hist;
             heights[0] = static_cast<float>((hist_[0] * 0.75 + hist_[1] * .25) * scale);
             for (size_t i = 1; i < hist_.size() - 1; ++i) {

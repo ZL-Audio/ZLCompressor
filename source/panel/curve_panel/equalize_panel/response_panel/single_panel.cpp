@@ -68,12 +68,22 @@ namespace zlpanel {
         const auto filter_type = filter_.getFilterType();
         filter_.updateParas();
         filter_.updateMagnitude(kWsFloat, ys);
-
         const auto scale = -bound.getHeight() * .5f / max_db;
         const auto bias = bound.getCentreY();
-        auto ys_vector = kfr::make_univector(ys);
-        ys_vector = ys_vector * scale + bias;
-
+        {
+            static constexpr hn::ScalableTag<float> d;
+            static constexpr size_t lanes = hn::MaxLanes(d);
+            const auto v_mul = hn::Set(d, scale);
+            const auto v_add = hn::Set(d, bias);
+            size_t i = 0;
+            for (; i + lanes <= ys.size(); i += lanes) {
+                const auto v_in = hn::LoadU(d, ys.data() + i);
+                hn::StoreU(hn::MulAdd(v_in, v_mul, v_add), d, ys.data() + i);
+            }
+            for (; i < ys.size(); ++i) {
+                ys[i] = ys[i] * scale + bias;
+            }
+        }
         next_path_.clear();
         PathMinimizer minimizer(next_path_);
         minimizer.startNewSubPath(xs[0], ys[0]);

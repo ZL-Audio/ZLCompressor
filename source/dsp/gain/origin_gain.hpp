@@ -13,7 +13,6 @@
 
 #include "../chore/smoothed_value.hpp"
 #include "../chore/decibels.hpp"
-#include "../vector/vector.hpp"
 
 namespace zldsp::gain {
     template <typename FloatType>
@@ -33,47 +32,53 @@ namespace zldsp::gain {
             setGainLinear(chore::decibelsToGain<FloatType>(new_gain_decibels));
         }
 
-        FloatType getTargetGainLinear() const noexcept { return gain_.getTarget(); }
+        FloatType getTargetGainLinear() const noexcept {
+            return gain_.getTarget();
+        }
 
         FloatType getTargetGainDecibels() const noexcept {
             return chore::gainToDecibels<FloatType>(getTargetGainLinear());
         }
 
-        FloatType getCurrentGainLinear() const noexcept { return gain_.getCurrent(); }
+        FloatType getCurrentGainLinear() const noexcept {
+            return gain_.getCurrent();
+        }
 
         FloatType getCurrentGainDecibels() const noexcept {
             return chore::gainToDecibels<FloatType>(getCurrentGainLinear());
         }
 
-        [[nodiscard]] bool isSmoothing() const noexcept { return gain_.isSmoothing(); }
-
-        void prepare(const double sample_rate, const size_t max_num_samples,
-                     const double ramp_length_in_seconds) noexcept {
-            gain_.prepare(sample_rate, ramp_length_in_seconds);
-            gain_vs_.resize(max_num_samples);
+        [[nodiscard]] bool isSmoothing() const noexcept {
+            return gain_.isSmoothing();
         }
 
-        template <bool IsBypassed = false>
+        void prepare(const double sample_rate, const size_t,
+                     const double ramp_length_in_seconds) noexcept {
+            gain_.prepare(sample_rate, ramp_length_in_seconds);
+        }
+
+        template <bool bypass = false>
         void process(std::span<FloatType*> buffer, const size_t num_samples) {
             if (!gain_.isSmoothing()) {
-                if constexpr (IsBypassed) return;
-                for (size_t chan = 0; chan < buffer.size(); ++chan) {
-                    zldsp::vector::multiply(buffer[chan], gain_.getCurrent(), num_samples);
+                if constexpr (bypass) {
+                    return;
                 }
-            }
-            else {
+                for (size_t chan = 0; chan < buffer.size(); ++chan) {
+                    vector::multiply(buffer[chan], gain_.getCurrent(), num_samples);
+                }
+            } else {
                 for (size_t idx = 0; idx < num_samples; ++idx) {
-                    gain_vs_[idx] = gain_.getNext();
-                }
-                if constexpr (IsBypassed) return;
-                for (size_t chan = 0; chan < buffer.size(); ++chan) {
-                    zldsp::vector::multiply(buffer[chan], gain_vs_.data(), num_samples);
+                    const auto gain = gain_.getNext();
+                    if constexpr (!bypass) {
+                        for (size_t chan = 0; chan < buffer.size(); ++chan) {
+                            buffer[chan][idx] *= gain;
+                        }
+                    }
                 }
             }
         }
 
     private:
         zldsp::chore::SmoothedValue<FloatType, zldsp::chore::SmoothedTypes::kFixLin> gain_{FloatType(1)};
-        kfr::univector<FloatType> gain_vs_;
     };
 }

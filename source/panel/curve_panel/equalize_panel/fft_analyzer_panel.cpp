@@ -128,13 +128,12 @@ namespace zlpanel {
         if (num_point_ < 3) {
             return;
         }
-        auto spectrum_slice = spectrum.slice(0, num_point_);
-        spectrum_slice = 10.f * kfr::log10(kfr::max(spectrum_slice, 1e-24f));
-        spectrum_tilter_.tilt(spectrum_slice);
-        spectrum_decayer_.decay(spectrum_slice, is_fft_frozen_.load(std::memory_order::relaxed));
+        zldsp::vector::sqr_mag_to_db(spectrum.data(), num_point_);
+        spectrum_tilter_.tilt(std::span{spectrum.data(), num_point_});
+        spectrum_decayer_.decay(std::span{spectrum.data(), num_point_},
+            is_fft_frozen_.load(std::memory_order::relaxed));
 
-        auto y_v = kfr::make_univector(ys_.data(), num_point_);
-        y_v = spectrum_slice * (bound.getHeight() / -72.f);
+        zldsp::vector::multiply(ys_.data(), spectrum.data(), bound.getHeight() / -72.f, num_point_);
         next_out_path_.clear();
         PathMinimizer<200> minimizer{next_out_path_};
         const auto num_accu = static_cast<size_t>(std::sqrt(static_cast<float>(num_point_)));
