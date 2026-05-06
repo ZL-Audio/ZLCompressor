@@ -14,17 +14,17 @@
 #include <algorithm>
 
 #if defined(__clang__) || defined(__GNUC__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
-    #pragma GCC diagnostic ignored "-Wshadow"
-    #pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-    #pragma GCC diagnostic ignored "-Wshadow-field-in-constructor"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#pragma GCC diagnostic ignored "-Wshadow-field-in-constructor"
 #endif
 #include <hwy/highway.h>
 #include <hwy/aligned_allocator.h>
 #include <hwy/contrib/math/math-inl.h>
 #if defined(__clang__) || defined(__GNUC__)
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 
 namespace zldsp::vector {
@@ -60,7 +60,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void add(F* in, const F to_add, const size_t size) {
+    HWY_INLINE void add(F* HWY_RESTRICT in, const F to_add, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         const auto v_add = hn::Set(d, to_add);
@@ -75,7 +75,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void add(F* in, const F* to_add, const size_t size) {
+    HWY_INLINE void add(F* HWY_RESTRICT in, const F* HWY_RESTRICT to_add, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         size_t i = 0;
@@ -90,7 +90,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void sub(F* in, const F* to_sub, const size_t size) {
+    HWY_INLINE void sub(F* HWY_RESTRICT in, const F* HWY_RESTRICT to_sub, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         size_t i = 0;
@@ -105,7 +105,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void sub(F* out, const F* in, const F* to_sub, const size_t size) {
+    HWY_INLINE void sub(F* HWY_RESTRICT out, const F* HWY_RESTRICT in, const F* HWY_RESTRICT to_sub, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         size_t i = 0;
@@ -120,7 +120,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void multiply(F* in, const F to_mul, const size_t size) {
+    HWY_INLINE void multiply(F* HWY_RESTRICT in, const F to_mul, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         const auto v_m = hn::Set(d, to_mul);
@@ -135,7 +135,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void multiply(F* out, F* in, const F to_mul, const size_t size) {
+    HWY_INLINE void multiply(F* HWY_RESTRICT out, const F* HWY_RESTRICT in, const F to_mul, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         const auto v_m = hn::Set(d, to_mul);
@@ -150,7 +150,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void multiply(F* in, F* to_mul, const size_t size) {
+    HWY_INLINE void multiply(F* HWY_RESTRICT in, const F* HWY_RESTRICT to_mul, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         size_t i = 0;
@@ -165,7 +165,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void multiply(F* out, F* in, F* to_mul, const size_t size) {
+    HWY_INLINE void multiply(F* HWY_RESTRICT out, const F* HWY_RESTRICT in, const F* HWY_RESTRICT to_mul, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         size_t i = 0;
@@ -180,7 +180,7 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE void clamp(F* in, const F lo, const F hi, const size_t size) {
+    HWY_INLINE void clamp(F* HWY_RESTRICT in, const F lo, const F hi, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
         const auto v_lo = hn::Set(d, lo);
@@ -197,16 +197,33 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE F sum(const F* in, const size_t size) {
+    HWY_INLINE F sum(const F* HWY_RESTRICT in, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
-        auto v_sum = hn::Zero(d);
+        static constexpr size_t block = lanes << 2;
+
         size_t i = 0;
-        for (; i + lanes <= size; i += lanes) {
-            auto v_in = hn::LoadU(d, in + i);
-            v_sum = hn::Add(v_sum, v_in);
+        hn::Vec<decltype(d)> single_sum;
+        if (size >= block) {
+            auto sum0 = hn::Zero(d);
+            auto sum1 = hn::Zero(d);
+            auto sum2 = hn::Zero(d);
+            auto sum3 = hn::Zero(d);
+            for (; i + block <= size; i += block) {
+                sum0 = hn::Add(sum0, hn::LoadU(d, in + i));
+                sum1 = hn::Add(sum1, hn::LoadU(d, in + i + lanes));
+                sum2 = hn::Add(sum2, hn::LoadU(d, in + i + lanes * 2));
+                sum3 = hn::Add(sum3, hn::LoadU(d, in + i + lanes * 3));
+            }
+            single_sum = hn::Add(hn::Add(sum0, sum1), hn::Add(sum2, sum3));
+        } else {
+            single_sum = hn::Zero(d);
         }
-        F scalar_sum = hn::ReduceSum(d, v_sum);
+        for (; i + lanes <= size; i += lanes) {
+            auto va = hn::LoadU(d, in + i);
+            single_sum = hn::Add(va, single_sum);
+        }
+        F scalar_sum = hn::ReduceSum(d, single_sum);
         for (; i < size; ++i) {
             scalar_sum += in[i];
         }
@@ -214,16 +231,45 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE F sum_sqr(const F* in, const size_t size) {
+    HWY_INLINE F sum_sqr(const F* HWY_RESTRICT in, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
-        auto v_sum = hn::Zero(d);
+        static constexpr size_t block = lanes << 2;
+
         size_t i = 0;
-        for (; i + lanes <= size; i += lanes) {
-            auto v_in = hn::LoadU(d, in + i);
-            v_sum = hn::MulAdd(v_in, v_in, v_sum);
+        hn::Vec<decltype(d)> single_sum;
+        if (size >= block) {
+            auto sum0 = hn::Zero(d);
+            auto sum1 = hn::Zero(d);
+            auto sum2 = hn::Zero(d);
+            auto sum3 = hn::Zero(d);
+            for (; i + block <= size; i += block) {
+                {
+                    auto va = hn::LoadU(d, in + i);
+                    sum0 = hn::MulAdd(va, va, sum0);
+                }
+                {
+                    auto va = hn::LoadU(d, in + i + lanes);
+                    sum1 = hn::MulAdd(va, va, sum1);
+                }
+                {
+                    auto va = hn::LoadU(d, in + i + lanes * 2);
+                    sum2 = hn::MulAdd(va, va, sum2);
+                }
+                {
+                    auto va = hn::LoadU(d, in + i + lanes * 3);
+                    sum3 = hn::MulAdd(va, va, sum3);
+                }
+            }
+            single_sum = hn::Add(hn::Add(sum0, sum1), hn::Add(sum2, sum3));
+        } else {
+            single_sum = hn::Zero(d);
         }
-        F scalar_sum = hn::ReduceSum(d, v_sum);
+        for (; i + lanes <= size; i += lanes) {
+            auto va = hn::LoadU(d, in + i);
+            single_sum = hn::MulAdd(va, va, single_sum);
+        }
+        F scalar_sum = hn::ReduceSum(d, single_sum);
         for (; i < size; ++i) {
             scalar_sum += in[i] * in[i];
         }
@@ -231,18 +277,51 @@ namespace zldsp::vector {
     }
 
     template <typename F>
-    HWY_INLINE F dot_product(const F* __restrict in0, const F* __restrict in1,
-                                     const size_t size) {
+    HWY_INLINE F dot_product(const F* HWY_RESTRICT in0, const F* HWY_RESTRICT in1,
+                             const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
-        auto v_sum = hn::Zero(d);
+        static constexpr size_t block = lanes << 2;
+
         size_t i = 0;
+        hn::Vec<decltype(d)> single_sum;
+        if (size >= block) {
+            auto sum0 = hn::Zero(d);
+            auto sum1 = hn::Zero(d);
+            auto sum2 = hn::Zero(d);
+            auto sum3 = hn::Zero(d);
+            for (; i + block <= size; i += block) {
+                {
+                    auto va = hn::LoadU(d, in0 + i);
+                    auto vb = hn::LoadU(d, in1 + i);
+                    sum0 = hn::MulAdd(va, vb, sum0);
+                }
+                {
+                    auto va = hn::LoadU(d, in0 + i + lanes);
+                    auto vb = hn::LoadU(d, in1 + i + lanes);
+                    sum1 = hn::MulAdd(va, vb, sum1);
+                }
+                {
+                    auto va = hn::LoadU(d, in0 + i + lanes * 2);
+                    auto vb = hn::LoadU(d, in1 + i + lanes * 2);
+                    sum2 = hn::MulAdd(va, vb, sum2);
+                }
+                {
+                    auto va = hn::LoadU(d, in0 + i + lanes * 3);
+                    auto vb = hn::LoadU(d, in1 + i + lanes * 3);
+                    sum3 = hn::MulAdd(va, vb, sum3);
+                }
+            }
+            single_sum = hn::Add(hn::Add(sum0, sum1), hn::Add(sum2, sum3));
+        } else {
+            single_sum = hn::Zero(d);
+        }
         for (; i + lanes <= size; i += lanes) {
             auto va = hn::LoadU(d, in0 + i);
             auto vb = hn::LoadU(d, in1 + i);
-            v_sum = hn::MulAdd(va, vb, v_sum);
+            single_sum = hn::MulAdd(va, vb, single_sum);
         }
-        F scalar_sum = hn::ReduceSum(d, v_sum);
+        F scalar_sum = hn::ReduceSum(d, single_sum);
         for (; i < size; ++i) {
             scalar_sum += in0[i] * in1[i];
         }
