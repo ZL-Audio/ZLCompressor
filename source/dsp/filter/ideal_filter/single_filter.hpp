@@ -100,7 +100,7 @@ namespace zldsp::filter {
                              std::span<FloatType> dbs) {
             std::fill(dbs.begin(), dbs.end(), FloatType(1));
             for (size_t i = 0; i < current_filter_num_; ++i) {
-                IdealBase<FloatType>::updateMagnitude(coeffs_[i], ws, dbs);
+                IdealBase<FloatType>::updateSqrMagnitude(coeffs_[i], ws, dbs);
             }
             vector::sqr_mag_to_db(dbs.data(), dbs.size());
         }

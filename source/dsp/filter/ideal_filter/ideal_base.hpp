@@ -25,6 +25,14 @@ namespace zldsp::filter {
             }
         }
 
+        static void updateSqrMagnitude(
+            const std::array<double, 6>& coeff,
+            const std::span<const SampleType> ws, std::span<SampleType> gains) {
+            for (size_t idx = 0; idx < ws.size(); ++idx) {
+                gains[idx] *= getSqrMagnitude(coeff, ws[idx]);
+            }
+        }
+
         static void updateResponse(
             const std::array<double, 6>& coeff,
             const std::span<const std::complex<SampleType>> wis, std::span<std::complex<SampleType>> response) {

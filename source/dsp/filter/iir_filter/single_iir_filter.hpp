@@ -76,8 +76,7 @@ namespace zldsp::filter {
         void process(std::span<FloatType*> buffer, const size_t num_samples) {
             if (c_freq_.isSmoothing() || c_gain_.isSmoothing() || c_q_.isSmoothing()) {
                 processIIR<IsBypassed, true>(buffer, num_samples);
-            }
-            else {
+            } else {
                 processIIR<IsBypassed, false>(buffer, num_samples);
             }
         }
@@ -85,7 +84,8 @@ namespace zldsp::filter {
         template <bool IsBypassed = false, bool IsSmooth = false>
         void processIIR(std::span<FloatType*> buffer, const size_t num_samples) {
             for (size_t i = 0; i < num_samples; ++i) {
-                if constexpr (IsSmooth) updateCoeffs();
+                if constexpr (IsSmooth)
+                    updateCoeffs();
                 for (size_t channel = 0; channel < buffer.size(); ++channel) {
                     auto sample = buffer[channel][i];
                     for (size_t filter_idx = 0; filter_idx < current_filter_num_; ++filter_idx) {
@@ -109,12 +109,10 @@ namespace zldsp::filter {
                 if constexpr (Update) {
                     to_update_fgq_.store(true, std::memory_order::release);
                 }
-            }
-            else {
+            } else {
                 if constexpr (Force) {
                     c_freq_.setCurrentAndTarget(static_cast<double>(freq));
-                }
-                else {
+                } else {
                     c_freq_.setTarget(static_cast<double>(freq));
                 }
             }
@@ -124,8 +122,7 @@ namespace zldsp::filter {
         FloatType getFreq() const {
             if constexpr (Async) {
                 return static_cast<FloatType>(freq_.load(std::memory_order::relaxed));
-            }
-            else {
+            } else {
                 return static_cast<FloatType>(c_freq_.getTarget());
             }
         }
@@ -141,12 +138,10 @@ namespace zldsp::filter {
                 if constexpr (Update) {
                     to_update_fgq_.store(true, std::memory_order::release);
                 }
-            }
-            else {
+            } else {
                 if constexpr (Force) {
                     c_gain_.setCurrentAndTarget(static_cast<double>(gain));
-                }
-                else {
+                } else {
                     c_gain_.setTarget(static_cast<double>(gain));
                 }
             }
@@ -156,8 +151,7 @@ namespace zldsp::filter {
         FloatType getGain() const {
             if constexpr (Async) {
                 return static_cast<FloatType>(gain_.load(std::memory_order::relaxed));
-            }
-            else {
+            } else {
                 return static_cast<FloatType>(c_gain_.getTarget());
             }
         }
@@ -173,12 +167,10 @@ namespace zldsp::filter {
                 if constexpr (Update) {
                     to_update_fgq_.store(true, std::memory_order::release);
                 }
-            }
-            else {
+            } else {
                 if constexpr (Force) {
                     c_q_.setCurrentAndTarget(static_cast<double>(q));
-                }
-                else {
+                } else {
                     c_q_.setTarget(static_cast<double>(q));
                 }
             }
@@ -188,8 +180,7 @@ namespace zldsp::filter {
         FloatType getQ() const {
             if constexpr (Async) {
                 return static_cast<FloatType>(q_.load(std::memory_order::relaxed));
-            }
-            else {
+            } else {
                 return static_cast<FloatType>(c_q_.getTarget());
             }
         }
@@ -218,8 +209,7 @@ namespace zldsp::filter {
         inline FilterType getFilterType() const {
             if constexpr (Async) {
                 return filter_type_.load(std::memory_order::relaxed);
-            }
-            else {
+            } else {
                 return c_filter_type_;
             }
         }
@@ -241,8 +231,7 @@ namespace zldsp::filter {
         inline size_t getOrder() const {
             if constexpr (Async) {
                 return order_.load(std::memory_order::relaxed);
-            }
-            else {
+            } else {
                 return c_order_;
             }
         }
@@ -284,29 +273,26 @@ namespace zldsp::filter {
         std::atomic<FilterType> filter_type_{FilterType::kPeak};
         FilterType c_filter_type_{FilterType::kPeak};
 
-        double sample_rate_;
+        double sample_rate_{1.0};
 
         std::atomic<bool> to_update_para_{true};
         std::atomic<bool> to_update_fgq_{false};
 
-        std::array<std::array < double, 6>
-        ,
-        FilterSize
-        >
-        coeffs_ {
-        };
+        std::array<std::array<double, 6>, FilterSize> coeffs_{};
 
         static size_t updateIIRCoeffs(const FilterType filterType, const size_t n,
                                       const double f, const double fs, const double g0, const double q0,
-                                      std::array<std::array < double, 6>, FilterSize> &coeffs) {
-            return FilterDesign::updateCoeffs < FilterSize,
-                MartinCoeff::get1LowShelf, MartinCoeff::get1HighShelf, MartinCoeff::get1TiltShelf,
-                MartinCoeff::get1LowPass, MartinCoeff::get1HighPass,
-                MartinCoeff::get2Peak,
-                MartinCoeff::get2LowShelf, MartinCoeff::get2HighShelf, MartinCoeff::get2TiltShelf,
-                MartinCoeff::get2LowPass, MartinCoeff::get2HighPass,
-                MartinCoeff::get2BandPass, MartinCoeff::get2Notch > (
-                    filterType, n, f, fs, g0, q0, coeffs);
+                                      std::array<std::array<double, 6>, FilterSize>& coeffs) {
+            return FilterDesign::updateCoeffs<FilterSize,
+                                              MartinCoeff::get1LowShelf, MartinCoeff::get1HighShelf,
+                                              MartinCoeff::get1TiltShelf,
+                                              MartinCoeff::get1LowPass, MartinCoeff::get1HighPass,
+                                              MartinCoeff::get2Peak,
+                                              MartinCoeff::get2LowShelf, MartinCoeff::get2HighShelf,
+                                              MartinCoeff::get2TiltShelf,
+                                              MartinCoeff::get2LowPass, MartinCoeff::get2HighPass,
+                                              MartinCoeff::get2BandPass, MartinCoeff::get2Notch>(
+                filterType, n, f, fs, g0, q0, coeffs);
         }
     };
 }
