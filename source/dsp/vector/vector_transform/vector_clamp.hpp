@@ -9,20 +9,24 @@
 
 #pragma once
 
-#include "vector_transform/vector_copy.hpp"
-#include "vector_transform/vector_add.hpp"
-#include "vector_transform/vector_sub.hpp"
-#include "vector_transform/vector_multiply.hpp"
-#include "vector_transform/vector_clamp.hpp"
-#include "vector_transform/vector_mag_to_db.hpp"
-
-#include "vector_reduce/vector_sum.hpp"
-#include "vector_reduce/vector_sum_sqr.hpp"
-#include "vector_reduce/vector_dot_product.hpp"
-#include "vector_reduce/vector_max_of.hpp"
-#include "vector_reduce/vector_max_abs_of.hpp"
+#include "../highway_import.hpp"
 
 namespace zldsp::vector {
+    namespace hn = hwy::HWY_NAMESPACE;
+
     template <typename F>
-    using aligned_vector = std::vector<F, hwy::AlignedAllocator<F>>;
+    HWY_INLINE void clamp(F* HWY_RESTRICT in, const F lo, const F hi, const size_t size) {
+        static constexpr hn::ScalableTag<F> d;
+        static constexpr size_t lanes = hn::MaxLanes(d);
+        const auto v_lo = hn::Set(d, lo);
+        const auto v_hi = hn::Set(d, hi);
+        size_t i = 0;
+        for (; i + lanes <= size; i += lanes) {
+            auto v_in = hn::LoadU(d, in + i);
+            hn::StoreU(hn::Clamp(v_in, v_lo, v_hi), d, in + i);
+        }
+        for (; i < size; ++i) {
+            in[i] = std::clamp(in[i], lo, hi);
+        }
+    }
 }

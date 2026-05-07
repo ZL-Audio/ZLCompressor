@@ -9,20 +9,25 @@
 
 #pragma once
 
-#include "vector_transform/vector_copy.hpp"
-#include "vector_transform/vector_add.hpp"
-#include "vector_transform/vector_sub.hpp"
-#include "vector_transform/vector_multiply.hpp"
-#include "vector_transform/vector_clamp.hpp"
-#include "vector_transform/vector_mag_to_db.hpp"
-
-#include "vector_reduce/vector_sum.hpp"
-#include "vector_reduce/vector_sum_sqr.hpp"
-#include "vector_reduce/vector_dot_product.hpp"
-#include "vector_reduce/vector_max_of.hpp"
-#include "vector_reduce/vector_max_abs_of.hpp"
+#include "../highway_import.hpp"
 
 namespace zldsp::vector {
+    namespace hn = hwy::HWY_NAMESPACE;
+
     template <typename F>
-    using aligned_vector = std::vector<F, hwy::AlignedAllocator<F>>;
+    HWY_INLINE F max_of(const F* __restrict in, const size_t size) {
+        static constexpr hn::ScalableTag<F> d;
+        static constexpr size_t lanes = hn::MaxLanes(d);
+        auto v_max = hn::Set(d, std::numeric_limits<F>::lowest());
+        size_t i = 0;
+        for (; i + lanes <= size; i += lanes) {
+            auto v_in = hn::LoadU(d, in + i);
+            v_max = hn::Max(v_max, v_in);
+        }
+        F scalar_max = hn::ReduceMax(d, v_max);
+        for (; i < size; ++i) {
+            scalar_max = std::max(scalar_max, in[i]);
+        }
+        return scalar_max;
+    }
 }

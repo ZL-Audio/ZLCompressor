@@ -9,20 +9,20 @@
 
 #pragma once
 
-#include "vector_transform/vector_copy.hpp"
-#include "vector_transform/vector_add.hpp"
-#include "vector_transform/vector_sub.hpp"
-#include "vector_transform/vector_multiply.hpp"
-#include "vector_transform/vector_clamp.hpp"
-#include "vector_transform/vector_mag_to_db.hpp"
+#include <span>
+#include <vector>
+#include <algorithm>
 
-#include "vector_reduce/vector_sum.hpp"
-#include "vector_reduce/vector_sum_sqr.hpp"
-#include "vector_reduce/vector_dot_product.hpp"
-#include "vector_reduce/vector_max_of.hpp"
-#include "vector_reduce/vector_max_abs_of.hpp"
-
-namespace zldsp::vector {
-    template <typename F>
-    using aligned_vector = std::vector<F, hwy::AlignedAllocator<F>>;
-}
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#pragma GCC diagnostic ignored "-Wshadow-field-in-constructor"
+#endif
+#include <hwy/highway.h>
+#include <hwy/aligned_allocator.h>
+#include <hwy/contrib/math/math-inl.h>
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
