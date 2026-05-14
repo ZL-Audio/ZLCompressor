@@ -26,7 +26,7 @@ namespace zlpanel {
 
         static constexpr auto kText =
             "ZL Compressor is Free and Open-source. ZL Compressor is licensed under AGPLv3, except for the logo of ZL Audio and the logo of ZL Compressor. You can obtain the corresponding source code at https://github.com/ZL-Audio/ZLCompressor or https://gitee.com/ZL-Audio/ZLCompressor.\n\n"
-            "Copyright (c) 2023 - [zsliu98](https://github.com/zsliu98)\n\n"
+            "Copyright (c) 2025-2026 [zsliu98](https://github.com/zsliu98)\n\n"
             "JUCE framework from [JUCE](https://github.com/juce-framework/JUCE)\n\n"
             "JUCE template from [pamplejuce](https://github.com/sudara/pamplejuce)\n\n"
             "[Highway](https://github.com/google/highway) by [Google](https://github.com/google)\n\n"

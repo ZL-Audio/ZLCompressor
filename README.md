@@ -66,7 +66,7 @@ After building, the plugins should have been copied to the corresponding folders
 
 ZL Compressor is licensed under AGPLv3, as found in the [LICENSE.md](LICENSE.md) file. However, the [logo of ZL Audio](assets/zlaudio.svg) and the [logo of ZL Compressor](assets/logo.svg) are not covered by this license.
 
-Copyright (c) 2026 - [zsliu98](https://github.com/zsliu98)
+Copyright (c) 2025-2026 [zsliu98](https://github.com/zsliu98)
 
 JUCE framework from [JUCE](https://github.com/juce-framework/JUCE)
 
