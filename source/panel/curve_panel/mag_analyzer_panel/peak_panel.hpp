@@ -17,7 +17,6 @@
 #include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_receiver.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_reduction_receiver.hpp"
-#include "../../../dsp/lock/spin_lock.hpp"
 
 #include "rms_panel.hpp"
 
@@ -52,9 +51,7 @@ namespace zlpanel {
 
         float pre_db_{-240.f}, out_db_{-240.f}, reduction_db_{0.f};
         zldsp::vector::aligned_vector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{};
-        juce::Path in_path_, out_path_, reduction_path_;
-        juce::Path next_in_path_, next_out_path_, next_reduction_path_;
-        zldsp::lock::SpinLock mutex_;
+        BufferedUI<juce::Path> in_path_, out_path_, reduction_path_;
 
         float curve_thickness_{0.f};
 

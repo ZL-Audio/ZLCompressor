@@ -14,8 +14,9 @@ namespace zlpanel {
         : p_ref_(processor), base_{base} {
         juce::ignoreUnused(p_ref_);
         ys_.resize(kWsFloat.size());
-        path_.preallocateSpace(kWsFloat.size() * 3 + 12);
-        next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
+        for (auto& path: path_.get_buffer()) {
+            path.preallocateSpace(kWsFloat.size() * 3 + 12);
+        }
 
         setInterceptsMouseClicks(false, false);
     }
@@ -23,12 +24,9 @@ namespace zlpanel {
     SumPanel::~SumPanel() = default;
 
     void SumPanel::paint(juce::Graphics& g) {
-        const std::unique_lock lock{mutex_, std::try_to_lock};
-        if (!lock.owns_lock()) {
-            return;
-        }
+        path_.pull();
         g.setColour(base_.getColourMap2(0));
-        g.strokePath(path_, juce::PathStrokeType(curve_thickness_,
+        g.strokePath(path_.get_reader(), juce::PathStrokeType(curve_thickness_,
                                                  juce::PathStrokeType::curved,
                                                  juce::PathStrokeType::rounded));
     }
@@ -68,16 +66,15 @@ namespace zlpanel {
             zldsp::vector::add(ys_.data(), total_shift, ys_.size());
         }
 
-        next_path_.clear();
-        PathMinimizer minimizer(next_path_);
+        auto& next_path{path_.get_writer()};
+        next_path.clear();
+        PathMinimizer minimizer(next_path);
         minimizer.startNewSubPath(xs[0], ys_[0]);
         for (size_t i = 1; i < std::min(xs.size(), ys_.size()); ++i) {
             minimizer.lineTo(xs[i], ys_[i]);
         }
         minimizer.finish();
-
-        std::lock_guard lock{mutex_};
-        path_.swapWithPath(next_path_);
+        path_.publish();
 
         return true;
     }

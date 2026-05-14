@@ -42,24 +42,15 @@ namespace zlpanel {
         std::atomic<float>& eq_max_db_id_ref_;
         float eq_max_db_id_{-1.f}, eq_max_db_{0.f};
 
-        std::array<zldsp::filter::Ideal < float, 16>
-        ,
-        zlp::kBandNum
-        >
-        filters_;
+        std::array<zldsp::filter::Ideal<float, 16>, zlp::kBandNum> filters_;
         juce::Component dummy_component_;
         std::array<std::unique_ptr<SinglePanel>, zlp::kBandNum> single_panels_;
         SumPanel sum_panel_;
 
         std::array<float, kWsFloat.size()> xs_{};
-        std::array<std::array < float, kWsFloat.size()>
-        ,
-        8
-        >
-        yss_ {
-        };
+        std::array<std::array<float, kWsFloat.size()>, 8> yss_{};
 
         AtomicBound<float> bound_;
         juce::Rectangle<float> c_bound_;
     };
-} // zlpanel
+}

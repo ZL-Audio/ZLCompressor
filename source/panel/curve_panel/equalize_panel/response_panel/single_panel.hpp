@@ -15,7 +15,6 @@
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
 #include "static_freq_array.hpp"
-#include "../../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     namespace hn = hwy::HWY_NAMESPACE;
@@ -58,9 +57,8 @@ namespace zlpanel {
             zlp::PFreq::kID, zlp::PGain::kID, zlp::PQ::kID
         };
 
-        juce::Path path_, next_path_;
-        juce::Line<float> line_, next_line_;
-        zldsp::lock::SpinLock mutex_;
+        BufferedUI<juce::Path> path_;
+        BufferedUI<juce::Line<float>> line_;
 
         AtomicPoint<float> button_pos_;
 
@@ -72,4 +70,4 @@ namespace zlpanel {
 
         void lookAndFeelChanged() override;
     };
-} // zlpanel
+}

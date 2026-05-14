@@ -13,7 +13,6 @@
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
 #include "static_freq_array.hpp"
-#include "../../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     class SumPanel final : public juce::Component {
@@ -37,8 +36,7 @@ namespace zlpanel {
 
         zldsp::vector::aligned_vector<float> ys_{};
 
-        juce::Path path_, next_path_;
-        zldsp::lock::SpinLock mutex_;
+        BufferedUI<juce::Path> path_;
 
         float curve_thickness_{0.f};
 

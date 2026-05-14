@@ -12,12 +12,12 @@
 namespace zlpanel {
     SinglePanel::SinglePanel(PluginProcessor& processor, zlgui::UIBase& base,
                              const size_t band_idx,
-                             zldsp::filter::Ideal<float, 16>& filter)
-        : p_ref_(processor), base_(base), band_idx_(band_idx), filter_(filter) {
-        path_.preallocateSpace(kWsFloat.size() * 3 + 12);
-        next_path_.preallocateSpace(kWsFloat.size() * 3 + 12);
+                             zldsp::filter::Ideal<float, 16>& filter) :
+        p_ref_(processor), base_(base), band_idx_(band_idx), filter_(filter) {
         button_pos_.store({0.f, -1e6f});
-
+        for (auto& path: path_.get_buffer()) {
+            path.preallocateSpace(kWsFloat.size() * 3 + 12);
+        }
         const std::string suffix = std::to_string(band_idx_);
         for (auto& ID : kBandIDs) {
             auto para_ID = ID + suffix;
@@ -36,16 +36,13 @@ namespace zlpanel {
     }
 
     void SinglePanel::paint(juce::Graphics& g) {
-        const std::unique_lock lock{mutex_, std::try_to_lock};
-        if (!lock.owns_lock()) {
-            return;
-        }
+        path_.pull();
         g.setColour(base_.getColourMap1(band_idx_));
-        g.strokePath(path_, juce::PathStrokeType(curve_thickness_ * curve_thickness_scale,
-                                                 juce::PathStrokeType::curved,
-                                                 juce::PathStrokeType::rounded));
-
-        g.drawLine(line_, line_thickness_);
+        g.strokePath(path_.get_reader(), juce::PathStrokeType(curve_thickness_ * curve_thickness_scale,
+                                                                   juce::PathStrokeType::curved,
+                                                                   juce::PathStrokeType::rounded));
+        line_.pull();
+        g.drawLine(line_.get_reader(), line_thickness_);
     }
 
     void SinglePanel::resized() {
@@ -84,8 +81,10 @@ namespace zlpanel {
                 ys[i] = ys[i] * scale + bias;
             }
         }
-        next_path_.clear();
-        PathMinimizer minimizer(next_path_);
+
+        auto& next_path{path_.get_writer()};
+        next_path.clear();
+        PathMinimizer minimizer(next_path);
         minimizer.startNewSubPath(xs[0], ys[0]);
         for (size_t i = 1; i < std::min(xs.size(), ys.size()); ++i) {
             minimizer.lineTo(xs[i], ys[i]);
@@ -118,12 +117,12 @@ namespace zlpanel {
             break;
         }
         }
-        next_line_ = juce::Line<float>(button_x, button_y, button_curve_x, button_curve_y);
+        auto& next_line{line_.get_writer()};
+        next_line = juce::Line<float>(button_x, button_y, button_curve_x, button_curve_y);
         button_pos_.store({button_x, button_y});
 
-        std::lock_guard lock{mutex_};
-        path_.swapWithPath(next_path_);
-        line_ = next_line_;
+        path_.publish();
+        line_.publish();
 
         return true;
     }
@@ -131,17 +130,13 @@ namespace zlpanel {
     void SinglePanel::parameterChanged(const juce::String& parameter_ID, const float new_value) {
         if (parameter_ID.startsWith(zlp::PFreq::kID)) {
             filter_.setFreq(new_value);
-        }
-        else if (parameter_ID.startsWith(zlp::PGain::kID)) {
+        } else if (parameter_ID.startsWith(zlp::PGain::kID)) {
             filter_.setGain(new_value);
-        }
-        else if (parameter_ID.startsWith(zlp::PQ::kID)) {
+        } else if (parameter_ID.startsWith(zlp::PQ::kID)) {
             filter_.setQ(new_value);
-        }
-        else if (parameter_ID.startsWith(zlp::PFilterType::kID)) {
+        } else if (parameter_ID.startsWith(zlp::PFilterType::kID)) {
             filter_.setFilterType(static_cast<zldsp::filter::FilterType>(std::round(new_value)));
-        }
-        else if (parameter_ID.startsWith(zlp::POrder::kID)) {
+        } else if (parameter_ID.startsWith(zlp::POrder::kID)) {
             filter_.setOrder(zlp::POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
         }
     }

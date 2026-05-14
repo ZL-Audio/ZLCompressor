@@ -22,14 +22,12 @@ namespace zlpanel {
     }
 
     void RMSPanel::paint(juce::Graphics& g) {
-        const std::unique_lock lock{mutex_, std::try_to_lock};
-        if (!lock.owns_lock()) {
-            return;
-        }
+        in_path_.pull();
+        out_path_.pull();
         g.setColour(base_.getTextColour().withAlpha(.25f));
-        g.fillPath(in_path_);
+        g.fillPath(in_path_.get_reader());
         g.setColour(base_.getTextColour().withAlpha(.9f));
-        g.strokePath(out_path_,
+        g.strokePath(out_path_.get_reader(),
                      juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
@@ -72,20 +70,22 @@ namespace zlpanel {
             in_receiver_.updateHeight(bound.getWidth(), in_xs_);
             out_receiver_.updateHeight(bound.getWidth(), out_xs_);
 
-            next_in_path_.clear();
-            next_out_path_.clear();
-            next_in_path_.startNewSubPath(0.f, ys_.front());
-            next_in_path_.lineTo(in_xs_.front(), ys_.front());
-            next_out_path_.startNewSubPath(out_xs_.front(), ys_.front());
+            auto& next_in_path{in_path_.get_writer()};
+            auto& next_out_path{out_path_.get_writer()};
+            next_in_path.clear();
+            next_out_path.clear();
+            next_in_path.startNewSubPath(0.f, ys_.front());
+            next_in_path.lineTo(in_xs_.front(), ys_.front());
+            next_out_path.startNewSubPath(out_xs_.front(), ys_.front());
             for (size_t i = 1; i < kNumPoints; ++i) {
-                next_in_path_.lineTo(in_xs_[i], ys_[i]);
-                next_out_path_.lineTo(out_xs_[i], ys_[i]);
+                next_in_path.lineTo(in_xs_[i], ys_[i]);
+                next_out_path.lineTo(out_xs_[i], ys_[i]);
             }
-            next_in_path_.lineTo(0.f, ys_.back());
-            next_in_path_.closeSubPath();
-            std::lock_guard lock{mutex_};
-            in_path_ = next_in_path_;
-            out_path_ = next_out_path_;
+            next_in_path.lineTo(0.f, ys_.back());
+            next_in_path.closeSubPath();
+
+            in_path_.publish();
+            out_path_.publish();
         }
     }
 

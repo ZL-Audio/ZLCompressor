@@ -101,4 +101,4 @@ namespace zlpanel {
             single_panels_[band]->toFront(false);
         }
     }
-} // zlpanel
+}

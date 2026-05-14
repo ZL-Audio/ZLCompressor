@@ -14,8 +14,8 @@ namespace zlpanel {
         p_ref_(processor),
         base_(base) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::EqualizeController::kAnalyzerPointNum) * 3 + 1;
-        for (auto& path : {&out_path_, &next_out_path_}) {
-            path->preallocateSpace(preallocateSpace);
+        for (auto& path : out_path_.get_buffer()) {
+            path.preallocateSpace(preallocateSpace);
         }
         receiver_.setON({true});
         setInterceptsMouseClicks(false, false);
@@ -32,12 +32,9 @@ namespace zlpanel {
             skip_next_repaint_ = false;
             return;
         }
-        const std::unique_lock lock{mutex_, std::try_to_lock};
-        if (!lock.owns_lock()) {
-            return;
-        }
+        out_path_.pull();
         g.setColour(base_.getTextColour().withAlpha(.375f));
-        g.fillPath(out_path_);
+        g.fillPath(out_path_.get_reader());
     }
 
     void FFTAnalyzerPanel::resized() {
@@ -102,8 +99,7 @@ namespace zlpanel {
         spectrum_smoother_.smooth(spectrum);
 
         if (to_update_tilt_.exchange(false, std::memory_order::acquire)) {
-            spectrum_tilter_.setTiltSlope(sample_rate,
-                                          spectrum_tilt_slope_.load(std::memory_order::relaxed));
+            spectrum_tilter_.setTiltSlope(sample_rate, spectrum_tilt_slope_.load(std::memory_order::relaxed));
         }
         if (to_update_xs_ || std::abs(bound.getWidth() - c_width_) > 0.01f) {
             c_width_ = bound.getWidth();
@@ -131,26 +127,25 @@ namespace zlpanel {
         zldsp::vector::sqr_mag_to_db(spectrum.data(), num_point_);
         spectrum_tilter_.tilt(std::span{spectrum.data(), num_point_});
         spectrum_decayer_.decay(std::span{spectrum.data(), num_point_},
-            is_fft_frozen_.load(std::memory_order::relaxed));
-
+                                is_fft_frozen_.load(std::memory_order::relaxed));
         zldsp::vector::multiply(ys_.data(), spectrum.data(), bound.getHeight() / -72.f, num_point_);
-        next_out_path_.clear();
-        PathMinimizer<200> minimizer{next_out_path_};
+
+        auto& next_out_path{out_path_.get_writer()};
+        next_out_path.clear();
+        PathMinimizer<200> minimizer{next_out_path};
         const auto num_accu = static_cast<size_t>(std::sqrt(static_cast<float>(num_point_)));
-        next_out_path_.startNewSubPath(xs_.front() - .1f, bound.getBottom() * 1.5f);
+        next_out_path.startNewSubPath(xs_.front() - .1f, bound.getBottom() * 1.5f);
         for (size_t i = 0; i < num_accu; ++i) {
-            next_out_path_.lineTo(xs_[i], ys_[i]);
+            next_out_path.lineTo(xs_[i], ys_[i]);
         }
         minimizer.startNewSubPath<false>(xs_[num_accu], ys_[num_accu]);
         for (size_t i = num_accu + 1; i < num_point_; ++i) {
             minimizer.lineTo(xs_[i], ys_[i]);
         }
         minimizer.finish();
-        next_out_path_.lineTo(xs_[num_point_ - 1] + .1f, bound.getBottom() * 1.5f);
-        next_out_path_.closeSubPath();
-
-        std::lock_guard lock{mutex_};
-        out_path_.swapWithPath(next_out_path_);
+        next_out_path.lineTo(xs_[num_point_ - 1] + .1f, bound.getBottom() * 1.5f);
+        next_out_path.closeSubPath();
+        out_path_.publish();
     }
 
     void FFTAnalyzerPanel::setRefreshRate(const double refresh_rate) {

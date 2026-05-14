@@ -16,7 +16,6 @@
 #include "../../helper/helper.hpp"
 #include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_rms_hist_receiver.hpp"
-#include "../../../dsp/lock/spin_lock.hpp"
 
 namespace zlpanel {
     class RMSPanel final : public juce::Component {
@@ -54,9 +53,7 @@ namespace zlpanel {
         float height_{0.f};
 
         std::array<float, kNumPoints> in_xs_{}, out_xs_{}, ys_{};
-        juce::Path in_path_, out_path_;
-        juce::Path next_in_path_, next_out_path_;
-        zldsp::lock::SpinLock mutex_;
+        BufferedUI<juce::Path> in_path_, out_path_;
 
         std::atomic<bool> to_reset_{false};
 

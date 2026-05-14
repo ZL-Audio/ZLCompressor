@@ -14,8 +14,9 @@ namespace zlpanel {
         p_ref_(p), base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
         min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
-        comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
-        next_comp_path_.preallocateSpace(static_cast<int>(kNumPoint) * 3);
+        for (auto& path: comp_path_.get_buffer()) {
+            path.preallocateSpace(static_cast<int>(kNumPoint) * 3);
+        }
         for (auto& ID : kComputerIDs) {
             p_ref_.parameters_.addParameterListener(ID, this);
             parameterChanged(ID, p_ref_.parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
@@ -37,12 +38,9 @@ namespace zlpanel {
     }
 
     void ComputerPanel::paint(juce::Graphics& g) {
-        const std::unique_lock lock{mutex_, std::try_to_lock};
-        if (!lock.owns_lock()) {
-            return;
-        }
+        comp_path_.pull();
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour));
-        g.strokePath(comp_path_,
+        g.strokePath(comp_path_.get_reader(),
                      juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
@@ -70,8 +68,6 @@ namespace zlpanel {
             break;
         }
         }
-        std::lock_guard lock{mutex_};
-        comp_path_ = next_comp_path_;
     }
 
     void ComputerPanel::resized() {
@@ -117,9 +113,11 @@ namespace zlpanel {
         const auto delta_y = bound.getHeight() / static_cast<float>(kNumPoint - 1);
         auto x = bound.getX();
         const auto delta_x = delta_y;
-        next_comp_path_.clear();
+
+        auto& next_comp_path{comp_path_.get_writer()};
+        next_comp_path.clear();
         const auto mul = bound.getHeight() / current_min_db;
-        PathMinimizer minimizer{next_comp_path_};
+        PathMinimizer minimizer{next_comp_path};
         minimizer.startNewSubPath(x - bound.getHeight(),
                                   c.eval(current_min_db * 2.f) * mul + bound.getY());
         for (size_t i = 0; i < kNumPoint; ++i) {
@@ -130,5 +128,6 @@ namespace zlpanel {
             db_in += delta_db_in;
         }
         minimizer.finish();
+        comp_path_.publish();
     }
 }

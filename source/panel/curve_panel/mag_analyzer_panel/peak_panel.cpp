@@ -18,8 +18,14 @@ namespace zlpanel {
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
         analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)) {
         constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
-        for (auto& path : {&in_path_, &out_path_, &reduction_path_}) {
-            path->preallocateSpace(preallocateSpace);
+        for (auto& path : in_path_.get_buffer()) {
+            path.preallocateSpace(preallocateSpace);
+        }
+        for (auto& path : out_path_.get_buffer()) {
+            path.preallocateSpace(preallocateSpace);
+        }
+        for (auto& path : reduction_path_.get_buffer()) {
+            path.preallocateSpace(preallocateSpace);
         }
         setInterceptsMouseClicks(false, false);
     }
@@ -27,19 +33,18 @@ namespace zlpanel {
     PeakPanel::~PeakPanel() = default;
 
     void PeakPanel::paint(juce::Graphics& g) {
-        const std::unique_lock lock{mutex_, std::try_to_lock};
-        if (!lock.owns_lock()) {
-            return;
-        }
+        in_path_.pull();
+        out_path_.pull();
+        reduction_path_.pull();
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPreColour));
-        g.fillPath(in_path_);
+        g.fillPath(in_path_.get_reader());
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPostColour));
-        g.strokePath(out_path_,
+        g.strokePath(out_path_.get_reader(),
                      juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
-        g.strokePath(reduction_path_,
+        g.strokePath(reduction_path_.get_reader(),
                      juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
                                           juce::PathStrokeType::rounded));
@@ -167,34 +172,36 @@ namespace zlpanel {
             } else {
                 updatePaths<false>(bound);
             }
-            std::lock_guard lock{mutex_};
-            in_path_.swapWithPath(next_in_path_);
-            out_path_.swapWithPath(next_out_path_);
-            reduction_path_.swapWithPath(next_reduction_path_);
+            in_path_.publish();
+            out_path_.publish();
+            reduction_path_.publish();
         }
     }
 
     template <bool center>
     void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
-        next_in_path_.clear();
-        next_out_path_.clear();
-        next_reduction_path_.clear();
+        auto& next_in_path{in_path_.get_writer()};
+        auto& next_out_path{out_path_.get_writer()};
+        auto& next_reduction_path{reduction_path_.get_writer()};
+        next_in_path.clear();
+        next_out_path.clear();
+        next_reduction_path.clear();
 
-        next_in_path_.startNewSubPath(xs_[0], bound.getBottom());
-        next_in_path_.lineTo(xs_[0], pre_ys_[0]);
-        next_out_path_.startNewSubPath(xs_[0], out_ys_[0]);
-        next_reduction_path_.startNewSubPath(xs_[0], reduction_ys_[0]);
+        next_in_path.startNewSubPath(xs_[0], bound.getBottom());
+        next_in_path.lineTo(xs_[0], pre_ys_[0]);
+        next_out_path.startNewSubPath(xs_[0], out_ys_[0]);
+        next_reduction_path.startNewSubPath(xs_[0], reduction_ys_[0]);
         const auto center_y = bound.getCentreY();
         for (size_t i = 1; i < xs_.size(); ++i) {
-            next_in_path_.lineTo(xs_[i], pre_ys_[i]);
-            next_out_path_.lineTo(xs_[i], out_ys_[i]);
+            next_in_path.lineTo(xs_[i], pre_ys_[i]);
+            next_out_path.lineTo(xs_[i], out_ys_[i]);
             if constexpr (center) {
-                next_reduction_path_.lineTo(xs_[i], reduction_ys_[i] + center_y);
+                next_reduction_path.lineTo(xs_[i], reduction_ys_[i] + center_y);
             } else {
-                next_reduction_path_.lineTo(xs_[i], reduction_ys_[i]);
+                next_reduction_path.lineTo(xs_[i], reduction_ys_[i]);
             }
         }
-        next_in_path_.lineTo(xs_[xs_.size() - 1], bound.getBottom());
+        next_in_path.lineTo(xs_[xs_.size() - 1], bound.getBottom());
     }
 
     void PeakPanel::lookAndFeelChanged() {
