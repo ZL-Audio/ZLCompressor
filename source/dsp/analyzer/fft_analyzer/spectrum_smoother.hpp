@@ -50,15 +50,15 @@ namespace zldsp::analyzer {
     private:
         std::vector<size_t> low_idx_, high_idx_;
         std::vector<float> count_req_;
-        std::vector<float> temp_cum_sum_;
+        std::vector<double> temp_cum_sum_;
 
         void applyBoxcarAverage(const std::span<float> data) {
-            temp_cum_sum_[0] = 0.0f;
+            temp_cum_sum_[0] = 0.0;
             for (size_t i = 0; i < data.size(); ++i) {
-                temp_cum_sum_[i + 1] = temp_cum_sum_[i] + data[i];
+                temp_cum_sum_[i + 1] = temp_cum_sum_[i] + static_cast<double>(data[i]);
             }
             for (size_t i = 0; i < data.size(); ++i) {
-                data[i] = (temp_cum_sum_[high_idx_[i]] - temp_cum_sum_[low_idx_[i]]) * count_req_[i];
+                data[i] = static_cast<float>(temp_cum_sum_[high_idx_[i]] - temp_cum_sum_[low_idx_[i]]) * count_req_[i];
             }
         }
     };
