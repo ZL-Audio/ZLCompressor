@@ -15,7 +15,7 @@ namespace zlpanel {
                              zldsp::filter::Ideal<float, 16>& filter) :
         p_ref_(processor), base_(base), band_idx_(band_idx), filter_(filter) {
         button_pos_.store({0.f, -1e6f});
-        for (auto& path: path_.get_buffer()) {
+        for (auto& path : path_.get_buffer()) {
             path.preallocateSpace(kWsFloat.size() * 3 + 12);
         }
         const std::string suffix = std::to_string(band_idx_);
@@ -39,8 +39,8 @@ namespace zlpanel {
         path_.pull();
         g.setColour(base_.getColourMap1(band_idx_));
         g.strokePath(path_.get_reader(), juce::PathStrokeType(curve_thickness_ * curve_thickness_scale,
-                                                                   juce::PathStrokeType::curved,
-                                                                   juce::PathStrokeType::rounded));
+                                                              juce::PathStrokeType::curved,
+                                                              juce::PathStrokeType::rounded));
         line_.pull();
         g.drawLine(line_.get_reader(), line_thickness_);
     }
@@ -84,7 +84,7 @@ namespace zlpanel {
 
         auto& next_path{path_.get_writer()};
         next_path.clear();
-        PathMinimizer minimizer(next_path);
+        PathMinimizer<1> minimizer(next_path);
         minimizer.startNewSubPath(xs[0], ys[0]);
         for (size_t i = 1; i < std::min(xs.size(), ys.size()); ++i) {
             minimizer.lineTo(xs[i], ys[i]);

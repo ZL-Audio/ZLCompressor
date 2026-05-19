@@ -10,9 +10,10 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <span>
 
 namespace zlpanel {
-    template <int kIntTol = 1>
+    template <int kIntTol = 10>
     class PathMinimizer {
     public:
         static constexpr float kTol = 0.01f * static_cast<float>(kIntTol);
@@ -20,12 +21,6 @@ namespace zlpanel {
         explicit PathMinimizer(juce::Path& path) : path_ref_(path) {
         }
 
-        /**
-         *
-         * @tparam start whether it is the first point in the path
-         * @param x
-         * @param y
-         */
         template <bool start = true>
         void startNewSubPath(const float x, const float y) {
             if constexpr (start) {
@@ -40,11 +35,13 @@ namespace zlpanel {
         }
 
         void lineTo(const float x, const float y) {
-            const auto w = (current_x_ - start_x_) / (x - start_x_);
-            if (std::abs(w * start_y_ + (1.f - w) * y - current_y_) > kTol) {
-                path_ref_.lineTo(current_x_, current_y_);
-                start_x_ = x;
-                start_y_ = y;
+            if (x - start_x_ > .25f) {
+                const auto w = (current_x_ - start_x_) / (x - start_x_);
+                if (std::abs((1.f - w) * start_y_ + w * y - current_y_) > kTol) {
+                    path_ref_.lineTo(current_x_, current_y_);
+                    start_x_ = x;
+                    start_y_ = y;
+                }
             }
             current_x_ = x;
             current_y_ = y;
@@ -52,6 +49,24 @@ namespace zlpanel {
 
         void finish() const {
             path_ref_.lineTo(current_x_, current_y_);
+        }
+
+        template <bool start = true, bool reverse = false>
+        void drawPath(std::span<float> xs, std::span<float> ys) {
+            if constexpr (!reverse) {
+                startNewSubPath<start>(xs[0], ys[0]);
+                for (size_t i = 1; i < xs.size(); ++i) {
+                    lineTo(xs[i], ys[i]);
+                }
+                finish();
+            } else {
+                startNewSubPath<start>(xs.back(), ys.back());
+                const auto shift = xs.size() - 1;
+                for (size_t i = 1; i < xs.size(); ++i) {
+                    lineTo(xs[shift - i], ys[shift - i]);
+                }
+                finish();
+            }
         }
 
     private:

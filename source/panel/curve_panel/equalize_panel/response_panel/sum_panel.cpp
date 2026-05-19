@@ -10,11 +10,11 @@
 #include "sum_panel.hpp"
 
 namespace zlpanel {
-    SumPanel::SumPanel(PluginProcessor& processor, zlgui::UIBase& base)
-        : p_ref_(processor), base_{base} {
+    SumPanel::SumPanel(PluginProcessor& processor, zlgui::UIBase& base) :
+        p_ref_(processor), base_{base} {
         juce::ignoreUnused(p_ref_);
         ys_.resize(kWsFloat.size());
-        for (auto& path: path_.get_buffer()) {
+        for (auto& path : path_.get_buffer()) {
             path.preallocateSpace(kWsFloat.size() * 3 + 12);
         }
 
@@ -27,8 +27,8 @@ namespace zlpanel {
         path_.pull();
         g.setColour(base_.getColourMap2(0));
         g.strokePath(path_.get_reader(), juce::PathStrokeType(curve_thickness_,
-                                                 juce::PathStrokeType::curved,
-                                                 juce::PathStrokeType::rounded));
+                                                              juce::PathStrokeType::curved,
+                                                              juce::PathStrokeType::rounded));
     }
 
     void SumPanel::resized() {
@@ -39,14 +39,13 @@ namespace zlpanel {
         curve_thickness_ = base_.getFontSize() * .2f * base_.getEQCurveThickness();
     }
 
-    bool SumPanel::run(std::array < float, kWsFloat.size() > &xs,
-                       std::array < std::array < float, kWsFloat.size() >, 8 > &yss,
-                       std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> & filter_status,
+    bool SumPanel::run(std::array<float, kWsFloat.size()>& xs,
+                       std::array<std::array<float, kWsFloat.size()>, 8>& yss,
+                       std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
 
-    
-    const juce::Rectangle<float>& bound
-    )
- {
+
+                       const juce::Rectangle<float>& bound
+        ) {
         int band_count{0};
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             if (filter_status[band] == zlp::EqualizeController::FilterStatus::kOn) {
@@ -68,7 +67,7 @@ namespace zlpanel {
 
         auto& next_path{path_.get_writer()};
         next_path.clear();
-        PathMinimizer minimizer(next_path);
+        PathMinimizer<1> minimizer(next_path);
         minimizer.startNewSubPath(xs[0], ys_[0]);
         for (size_t i = 1; i < std::min(xs.size(), ys_.size()); ++i) {
             minimizer.lineTo(xs[i], ys_[i]);

@@ -117,7 +117,7 @@ namespace zlpanel {
         auto& next_comp_path{comp_path_.get_writer()};
         next_comp_path.clear();
         const auto mul = bound.getHeight() / current_min_db;
-        PathMinimizer minimizer{next_comp_path};
+        PathMinimizer<1> minimizer{next_comp_path};
         minimizer.startNewSubPath(x - bound.getHeight(),
                                   c.eval(current_min_db * 2.f) * mul + bound.getY());
         for (size_t i = 0; i < kNumPoint; ++i) {

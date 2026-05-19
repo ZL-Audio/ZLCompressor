@@ -132,7 +132,7 @@ namespace zlpanel {
 
         auto& next_out_path{out_path_.get_writer()};
         next_out_path.clear();
-        PathMinimizer<200> minimizer{next_out_path};
+        PathMinimizer<10> minimizer{next_out_path};
         const auto num_accu = static_cast<size_t>(std::sqrt(static_cast<float>(num_point_)));
         next_out_path.startNewSubPath(xs_.front() - .1f, bound.getBottom() * 1.5f);
         for (size_t i = 0; i < num_accu; ++i) {
