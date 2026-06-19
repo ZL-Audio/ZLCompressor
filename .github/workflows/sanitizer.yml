@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           fetch-depth: 0
@@ -64,7 +64,7 @@ jobs:
           cat .env >> $GITHUB_ENV # pull in our PRODUCT_NAME, etc
 
       - name: Checkout pluginval code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: "pluginval"
           repository: 'ZL-Audio/pluginval'
