@@ -237,6 +237,9 @@ add_compile_definitions(HWY_COMPILE_ONLY_STATIC)
 add_compile_options(${ZL_HWY_ARCH_FLAGS})
 add_subdirectory(highway)
 target_link_libraries(SharedCode INTERFACE hwy)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(SharedCode INTERFACE ${ZL_HWY_ARCH_FLAGS})
+endif ()
 
 # Link the nlopt targets our SharedCode target
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
