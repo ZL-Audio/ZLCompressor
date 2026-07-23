@@ -136,6 +136,21 @@ juce_add_plugin("${PROJECT_NAME}"
         # You might want to use v${MAJOR_VERSION} here once you go to v2...
         PRODUCT_NAME "${PRODUCT_NAME}")
 
+# On Linux, JUCE adds -Wl,--no-undefined by default. 
+# This prevents shared libraries (like VST3) from having unresolved sanitizer symbols.
+# We must remove it if sanitizers are enabled, because the host provides the sanitizer runtime.
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND (WITH_ADDRESS_SANITIZER OR WITH_THREAD_SANITIZER))
+    foreach (target "${PROJECT_NAME}_VST3" "${PROJECT_NAME}_LV2" "${PROJECT_NAME}_Standalone" "${PROJECT_NAME}_SharedCode")
+        if (TARGET ${target})
+            get_target_property(CURRENT_OPTS ${target} LINK_OPTIONS)
+            if (CURRENT_OPTS)
+                list(REMOVE_ITEM CURRENT_OPTS "-Wl,--no-undefined")
+                set_target_properties(${target} PROPERTIES LINK_OPTIONS "${CURRENT_OPTS}")
+            endif ()
+        endif ()
+    endforeach ()
+endif ()
+
 # Add LV2 tags
 if ("LV2" IN_LIST FORMATS)
     set(LV2_TARGET "${PROJECT_NAME}_LV2")
@@ -237,15 +252,10 @@ add_compile_definitions(HWY_COMPILE_ONLY_STATIC)
 add_compile_options(${ZL_HWY_ARCH_FLAGS})
 add_subdirectory(highway)
 target_link_libraries(SharedCode INTERFACE hwy)
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_options(SharedCode INTERFACE ${ZL_HWY_ARCH_FLAGS})
-endif ()
+target_link_options(SharedCode INTERFACE ${ZL_HWY_ARCH_FLAGS})
 
-# Link the nlopt targets our SharedCode target
+# Link our SharedCode target
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
-
-# IPP support, comment out to disable
-# include(PamplejuceIPP)
 
 # Pass some config to GA (like our PRODUCT_NAME)
 include(GitHubENV)

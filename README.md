@@ -11,19 +11,6 @@
 ZL Compressor is a compressor plugin.
 
 <img src="https://drive.google.com/uc?export=view&id=1b7aTDklTdt73kORaXwW5fJycM6T9k83U" style="width:750px; max-width: 100%; height: auto" />
- 
-<!-- ## Usage
-
-See the wiki for details.
-
-## Download
-
-See the releases for the latest version. 
-
-**Please NOTICE**:
-- the installer has **NOT** been notarized/EV certificated on macOS/Windows
-- the plugin has **NOT** been fully tested on DAWs
- -->
 
 ## Build from Source
 
@@ -34,7 +21,7 @@ Please make sure `Clang` (`AppleClang 16+` or `LLVM/Clang 17+`), `cmake 3.25+`, 
 On Linux, you can install the remaining dependencies with the following command:
 
 ```console
-sudo apt-get update && sudo apt install libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype-dev libfontconfig1-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev
+sudo apt-get update && sudo apt install libasound2-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libfreetype-dev libfontconfig1-dev libxi-dev
 ```
 
 ### Clone and Build
