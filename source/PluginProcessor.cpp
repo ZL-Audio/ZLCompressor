@@ -72,21 +72,18 @@ double PluginProcessor::getTailLengthSeconds() const {
 }
 
 int PluginProcessor::getNumPrograms() {
-    return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
-    // so this should be at least 1, even if you're not really implementing programs.
+    return 1;
 }
 
 int PluginProcessor::getCurrentProgram() {
     return 0;
 }
 
-void PluginProcessor::setCurrentProgram(int index) {
-    juce::ignoreUnused(index);
+void PluginProcessor::setCurrentProgram(int) {
 }
 
-const juce::String PluginProcessor::getProgramName(int index) {
-    juce::ignoreUnused(index);
-    return {};
+const juce::String PluginProcessor::getProgramName(int) {
+    return "Default";
 }
 
 void PluginProcessor::changeProgramName(int, const juce::String&) {
