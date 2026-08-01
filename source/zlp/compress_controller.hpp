@@ -237,9 +237,24 @@ namespace zlp {
         std::atomic<int> oversample_idx_{0};
         int c_oversample_idx_{-1};
         // oversamplers
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
         zldsp::oversample::OverSampler<float, 1> over_sampler2_;
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
         zldsp::oversample::OverSampler<float, 2> over_sampler4_;
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
         zldsp::oversample::OverSampler<float, 3> over_sampler8_;
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+        zldsp::oversample::OverSampler<float, 4> over_sampler16_;
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+        zldsp::oversample::OverSampler<float, 5> over_sampler32_;
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+        zldsp::oversample::OverSampler<float, 6> over_sampler64_;
+#endif
         zldsp::delay::IntegerDelay<float> oversample_delay_{};
         double oversample_sr_{48000.0};
 

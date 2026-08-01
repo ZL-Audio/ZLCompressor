@@ -31,21 +31,55 @@ namespace zlp {
         post_buffer_[1].resize(max_num_samples);
         post_pointers_[0] = post_buffer_[0].data();
         post_pointers_[1] = post_buffer_[1].data();
-        // allocate memories for up to 8x oversampling
+        // allocate memories for up to max oversampling
         for (auto& t : rms_tracker_) {
-            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f * 8.f + 0.001f);
+            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f * static_cast<float>(1 << ZL_MAX_OVERSAMPLE_RATE) + 0.001f);
             t.prepare(sample_rate);
             t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f + 0.001f);
         }
-        rms_side_buffer0_.resize(max_num_samples * 8);
+        rms_side_buffer0_.resize(max_num_samples * (1 << ZL_MAX_OVERSAMPLE_RATE));
         rms_side_buffer1_.resize(rms_side_buffer0_.size());
         // init oversamplers
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
         over_sampler2_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
         over_sampler4_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
         over_sampler8_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+        over_sampler16_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+        over_sampler32_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+        over_sampler64_.prepare(4, max_num_samples);
+#endif
 
+#if ZL_MAX_OVERSAMPLE_RATE == 0
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2, 0.f);
+#elif ZL_MAX_OVERSAMPLE_RATE == 1
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler2_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 2
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler4_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 3
         oversample_delay_.prepare(sample_rate, max_num_samples, 2,
                                   static_cast<float>(over_sampler8_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 4
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler16_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 5
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler32_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 6
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler64_.getLatency()) / static_cast<float>(sample_rate));
+#endif
         oversample_delay_.setDelayInSamples(0);
         c_oversample_idx_ = -1;
         // init lookahead delay
@@ -85,21 +119,48 @@ namespace zlp {
                 oversample_delay_.setDelayInSamples(0);
                 break;
             }
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
             case 1: {
                 over_sampler2_.reset();
                 oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler2_.getLatency()));
                 break;
             }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
             case 2: {
                 over_sampler4_.reset();
                 oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler4_.getLatency()));
                 break;
             }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
             case 3: {
                 over_sampler8_.reset();
                 oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler8_.getLatency()));
                 break;
             }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+            case 4: {
+                over_sampler16_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler16_.getLatency()));
+                break;
+            }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+            case 5: {
+                over_sampler32_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler32_.getLatency()));
+                break;
+            }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+            case 6: {
+                over_sampler64_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler64_.getLatency()));
+                break;
+            }
+#endif
             default: ;
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
@@ -278,6 +339,7 @@ namespace zlp {
             processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples, bypass);
             break;
         }
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
         case 1: {
             over_sampler2_.upsample(pointers, num_samples);
             auto& os_pointers = over_sampler2_.getOSPointer();
@@ -286,6 +348,8 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, num_samples);
             break;
         }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
         case 2: {
             over_sampler4_.upsample(pointers, num_samples);
             auto& os_pointers = over_sampler4_.getOSPointer();
@@ -294,6 +358,8 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, num_samples);
             break;
         }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
         case 3: {
             over_sampler8_.upsample(pointers, num_samples);
             auto& os_pointers = over_sampler8_.getOSPointer();
@@ -302,6 +368,37 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, num_samples);
             break;
         }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+        case 4: {
+            over_sampler16_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler16_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 4, bypass);
+            over_sampler16_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+        case 5: {
+            over_sampler32_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler32_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 5, bypass);
+            over_sampler32_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+        case 6: {
+            over_sampler64_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler64_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 6, bypass);
+            over_sampler64_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+#endif
         default: ;
         }
         // stereo combine the main buffer

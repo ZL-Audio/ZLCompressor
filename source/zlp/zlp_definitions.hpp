@@ -11,6 +11,10 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#if !defined(ZL_MAX_OVERSAMPLE_RATE)
+#error "ZL_MAX_OVERSAMPLE_RATE must be defined"
+#endif
+
 namespace zlp {
     inline static constexpr int kVersionHint = 1;
 
@@ -455,8 +459,25 @@ namespace zlp {
     public:
         auto static constexpr kID = "oversample";
         auto static constexpr kName = "Oversample";
+
         inline auto static const kChoices = juce::StringArray{
+#if ZL_MAX_OVERSAMPLE_RATE == 0
+            "Off"
+#elif ZL_MAX_OVERSAMPLE_RATE == 1
+            "Off", "2x"
+#elif ZL_MAX_OVERSAMPLE_RATE == 2
+            "Off", "2x", "4x"
+#elif ZL_MAX_OVERSAMPLE_RATE == 3
             "Off", "2x", "4x", "8x"
+#elif ZL_MAX_OVERSAMPLE_RATE == 4
+            "Off", "2x", "4x", "8x", "16x"
+#elif ZL_MAX_OVERSAMPLE_RATE == 5
+            "Off", "2x", "4x", "8x", "16x", "32x"
+#elif ZL_MAX_OVERSAMPLE_RATE == 6
+            "Off", "2x", "4x", "8x", "16x", "32x", "64x"
+#else
+#error "Invalid ZL_MAX_OVERSAMPLE_RATE"
+#endif
         };
         int static constexpr kDefaultI = 0;
     };

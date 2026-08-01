@@ -35,6 +35,8 @@ Once you have set up the environment, you can clone the ZL Compressor code, popu
   - If you are on x86-64 and your CPU supports SSE2/SSE4, set `ZL_HWY_STATIC_TARGET=SSE4`.
   - If you are on x86-64 and your CPU supports SSE2/SSE4/AVX2, set `ZL_HWY_STATIC_TARGET=AVX2`.
   - If you are on arm64, set `ZL_HWY_STATIC_TARGET=NEON`.
+- the variable `ZL_MAX_OVERSAMPLE_RATE` as the maximum over-sampling rate index
+  - for example `=3` indicates maximum 8x over-sampling, supports value from `0` to `6`
 - If there are multiple compilers on your OS, you may need to pass extra flags to maker sure that cmake uses `LLVM/Clang`.
   - On Linux, you may pass `-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++`.
   - On Windows, you may pass `-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl`.
