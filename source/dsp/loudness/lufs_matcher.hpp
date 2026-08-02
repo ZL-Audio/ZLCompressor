@@ -13,10 +13,21 @@
 #include "lufs_meter.hpp"
 
 namespace zldsp::loudness {
-    template <typename FloatType, bool UseLowPass = false>
+    /**
+     * an integrated matcher which matches the loudness of pre and post
+     * @tparam FloatType the float type of input audio buffer
+     */
+    template <typename FloatType>
     class LUFSMatcher {
     public:
-        LUFSMatcher() = default;
+        /**
+         *
+         * @param use_low_pass whether to use an extra lowpass filter at 22,000 Hz
+         */
+        explicit LUFSMatcher(const bool use_low_pass = true) :
+            pre_loudness_meter_(use_low_pass),
+            post_loudness_meter_(use_low_pass) {
+        }
 
         void prepare(const double sample_rate, const size_t num_channels) {
             pre_loudness_meter_.prepare(sample_rate, num_channels);
@@ -32,14 +43,24 @@ namespace zldsp::loudness {
             current_count_ = 0.0;
         }
 
+        /**
+         * process the pre audio input
+         * @param pre
+         * @param num_samples
+         */
         void processPre(std::span<FloatType*> pre, const size_t num_samples) {
             pre_loudness_meter_.process(pre, num_samples);
         }
 
+        /**
+         * process the post audio input
+         * @param post
+         * @param num_samples
+         */
         void processPost(std::span<FloatType*> post, const size_t num_samples) {
             post_loudness_meter_.process(post, num_samples);
             current_count_ += static_cast<double>(num_samples);
-            if (current_count_ >= sample_rate_) {
+            while (current_count_ >= sample_rate_) {
                 current_count_ -= sample_rate_;
                 const auto pre_loudness = pre_loudness_meter_.getIntegratedLoudness();
                 const auto post_loudness = post_loudness_meter_.getIntegratedLoudness();
@@ -47,12 +68,17 @@ namespace zldsp::loudness {
             }
         }
 
+        /**
+         * thread-safe method
+         * get the value of post audio loudness - pre audio loudness
+         * @return
+         */
         FloatType getDiff() const {
             return loudness_diff_.load(std::memory_order::relaxed);
         }
 
     private:
-        LUFSMeter<FloatType, UseLowPass> pre_loudness_meter_, post_loudness_meter_;
+        LUFSMeter<FloatType> pre_loudness_meter_, post_loudness_meter_;
         std::atomic<FloatType> loudness_diff_{FloatType(0)};
         double sample_rate_{48000}, current_count_{0};
     };

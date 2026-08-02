@@ -9,61 +9,78 @@
 
 #pragma once
 
+#include <algorithm>
 #include <numbers>
-#include "../vector/vector.hpp"
-#include "../filter/filter.hpp"
+#include "../filter/iir_filter/tdf/tdf.hpp"
 
 namespace zldsp::loudness {
-    template <typename FloatType, bool UseLowPass = false>
+    /**
+     * a K-weighting filter used for integrated loudness measurement
+     * @tparam FloatType the float type of input audio buffer
+     */
+    template <typename FloatType>
     class KWeightingFilter {
     public:
-        KWeightingFilter() = default;
+        /**
+         *
+         * @param use_low_pass whether to use an extra lowpass filter at 22,000 Hz
+         */
+        explicit KWeightingFilter(const bool use_low_pass = false) :
+            use_low_pass_(use_low_pass) {
+        }
 
         void prepare(const double sample_rate, const size_t num_channels) {
-            high_pass_.prepare(num_channels);
-            high_shelf_.prepare(num_channels);
-            const auto w1 = 2.0 * std::numbers::pi * 38.13713296248405 / sample_rate;
-            const auto w2 = 2.0 * std::numbers::pi * 1500.6868667368922 / sample_rate;
-            high_pass_.updateFromBiquad(
-                zldsp::filter::MartinCoeff::get2HighPass(w1, 0.500242812458813));
-            high_shelf_.updateFromBiquad(
-                zldsp::filter::MartinCoeff::get2HighShelf(w2, 1.5847768458311522, 0.7096433028107384));
-            if constexpr (UseLowPass) {
-                low_pass_.prepare(num_channels);
-                const auto w3 = 2.0 * std::numbers::pi * 22000.0 / sample_rate;
-                low_pass_.updateFromBiquad(
-                    zldsp::filter::MartinCoeff::get2LowPass(w3, 0.7071067811865476));
+            {
+                high_pass_.prepare(sample_rate, num_channels, 0);
+                high_pass_.setFilterType(filter::FilterType::kHighPass);
+                high_pass_.setOrder(2);
+                high_pass_.setFreq(38.13713296248405);
+                high_pass_.setQ(0.500242812458813);
+                high_pass_.updateCoeffs();
+            }
+            {
+                high_shelf_.prepare(sample_rate, num_channels, 0);
+                high_shelf_.setFilterType(filter::FilterType::kHighShelf);
+                high_shelf_.setOrder(2);
+                high_shelf_.setFreq(1500.6868667368922);
+                high_shelf_.setGain(3.9993623475151354);
+                high_shelf_.setQ(0.7096433028107384);
+                high_shelf_.updateCoeffs();
+            }
+            low_pass_enabled_ = use_low_pass_ && sample_rate > 40000.0;
+            if (low_pass_enabled_) {
+                low_pass_.prepare(sample_rate, num_channels, 0);
+                low_pass_.setFilterType(filter::FilterType::kLowPass);
+                low_pass_.setOrder(2);
+                low_pass_.setFreq(std::min(22000.0, 0.49964 * sample_rate));
+                low_pass_.setQ(0.7071067811865476);
+                low_pass_.updateCoeffs();
             }
         }
 
         void reset() {
             high_pass_.reset();
             high_shelf_.reset();
-            if constexpr (UseLowPass) {
+            if (low_pass_enabled_) {
                 low_pass_.reset();
             }
         }
 
         void process(std::span<FloatType*> buffer, const size_t num_samples) {
-            for (size_t channel = 0; channel < buffer.size(); ++channel) {
-                auto samples = buffer[channel];
-                for (size_t i = 0; i < num_samples; ++i) {
-                    auto sample = samples[i];
-                    sample = high_pass_.processSample(channel, sample);
-                    sample = high_shelf_.processSample(channel, sample);
-                    if constexpr (UseLowPass) {
-                        sample = low_pass_.processSample(channel, sample);
-                    }
-                    samples[i] = sample;
-                }
+            high_pass_.process(buffer, num_samples);
+            high_shelf_.process(buffer, num_samples);
+            if (low_pass_enabled_) {
+                low_pass_.process(buffer, num_samples);
             }
-            for (size_t channel = 0; channel < buffer.size(); ++channel) {
-                vector::multiply(buffer[channel], kBias, num_samples);
+            for (size_t chan = 0; chan < buffer.size(); chan++) {
+                zldsp::vector::multiply(buffer[chan], kBias, num_samples);
             }
         }
 
     private:
-        zldsp::filter::IIRBase<FloatType> high_pass_, high_shelf_, low_pass_;
+        bool use_low_pass_{false};
+        bool low_pass_enabled_{false};
+        zldsp::filter::TDF<FloatType, 1> high_pass_, high_shelf_, low_pass_;
         static constexpr FloatType kBias = static_cast<FloatType>(1.0051643348917434);
     };
 }

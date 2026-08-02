@@ -68,8 +68,7 @@ namespace zlpanel {
         bound.removeFromRight((1 - 0.98761596f) * bound.getWidth());
         const auto filter_type = static_cast<zldsp::filter::FilterType>(filter_type_);
         switch (filter_type) {
-        case zldsp::filter::FilterType::kPeak:
-        case zldsp::filter::FilterType::kBandShelf: {
+        case zldsp::filter::FilterType::kPeak: {
             dragger_.setXYEnabled(true, true);
             dragger_.setButtonArea(
                 bound.withSizeKeepingCentre(
@@ -78,7 +77,8 @@ namespace zlpanel {
         }
         case zldsp::filter::FilterType::kLowShelf:
         case zldsp::filter::FilterType::kHighShelf:
-        case zldsp::filter::FilterType::kTiltShelf: {
+        case zldsp::filter::FilterType::kTiltShelf:
+        case zldsp::filter::FilterType::kFlatTilt: {
             dragger_.setXYEnabled(true, true);
             dragger_.setButtonArea(
                 bound.withSizeKeepingCentre(
@@ -88,7 +88,8 @@ namespace zlpanel {
         case zldsp::filter::FilterType::kNotch:
         case zldsp::filter::FilterType::kLowPass:
         case zldsp::filter::FilterType::kHighPass:
-        case zldsp::filter::FilterType::kBandPass: {
+        case zldsp::filter::FilterType::kBandPass:
+        case zldsp::filter::FilterType::kAllPass: {
             dragger_.setXYEnabled(true, false);
             dragger_.setButtonArea(bound.withSizeKeepingCentre(
                 bound.getWidth(), kScale * base_.getFontSize()));

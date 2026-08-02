@@ -53,21 +53,21 @@ namespace zlp {
             controller_ref_.setFilterStatus(idx, static_cast<EqualizeController::FilterStatus>(new_value));
         }
         else if (parameter_ID.startsWith(PFreq::kID)) {
-            controller_ref_.getFilter(idx).setFreq(static_cast<double>(new_value));
+            controller_ref_.setFilterFreq(idx, static_cast<double>(new_value));
         }
         else if (parameter_ID.startsWith(PGain::kID)) {
-            controller_ref_.getFilter(idx).setGain(static_cast<double>(new_value));
+            controller_ref_.setFilterGain(idx, static_cast<double>(new_value));
         }
         else if (parameter_ID.startsWith(PQ::kID)) {
-            controller_ref_.getFilter(idx).setQ(static_cast<double>(new_value));
+            controller_ref_.setFilterQ(idx, static_cast<double>(new_value));
         }
         else if (parameter_ID.startsWith(PFilterType::kID)) {
-            controller_ref_.getFilter(idx).setFilterType(
-                static_cast<zldsp::filter::FilterType>(std::round(new_value)));
+            controller_ref_.setFilterType(
+                idx, static_cast<zldsp::filter::FilterType>(std::round(new_value)));
         }
         else if (parameter_ID.startsWith(POrder::kID)) {
-            controller_ref_.getFilter(idx).setOrder(
-                POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
+            controller_ref_.setFilterOrder(
+                idx, POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
         }
     }
 }

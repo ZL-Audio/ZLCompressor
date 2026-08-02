@@ -31,53 +31,103 @@ namespace zlp {
         post_buffer_[1].resize(max_num_samples);
         post_pointers_[0] = post_buffer_[0].data();
         post_pointers_[1] = post_buffer_[1].data();
-        // allocate memories for up to 8x oversampling
+        // allocate memories for up to max oversampling
         for (auto& t : rms_tracker_) {
-            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f * 8.f + 0.001f);
+            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f * static_cast<float>(1 << ZL_MAX_OVERSAMPLE_RATE) + 0.001f);
             t.prepare(sample_rate);
             t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f + 0.001f);
         }
-        rms_side_buffer0_.resize(max_num_samples * 8);
+        rms_side_buffer0_.resize(max_num_samples * (1 << ZL_MAX_OVERSAMPLE_RATE));
         rms_side_buffer1_.resize(rms_side_buffer0_.size());
         // init oversamplers
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
         over_sampler2_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
         over_sampler4_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
         over_sampler8_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+        over_sampler16_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+        over_sampler32_.prepare(4, max_num_samples);
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+        over_sampler64_.prepare(4, max_num_samples);
+#endif
 
+#if ZL_MAX_OVERSAMPLE_RATE == 0
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2, 0.f);
+#elif ZL_MAX_OVERSAMPLE_RATE == 1
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler2_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 2
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler4_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 3
         oversample_delay_.prepare(sample_rate, max_num_samples, 2,
                                   static_cast<float>(over_sampler8_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 4
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler16_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 5
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler32_.getLatency()) / static_cast<float>(sample_rate));
+#elif ZL_MAX_OVERSAMPLE_RATE == 6
+        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+                                  static_cast<float>(over_sampler64_.getLatency()) / static_cast<float>(sample_rate));
+#endif
         oversample_delay_.setDelayInSamples(0);
         c_oversample_idx_ = -1;
         // init lookahead delay
         lookahead_delay_.prepare(sample_rate, max_num_samples, 2, 0.02f);
         lookahead_delay_.setDelayInSamples(0);
-        to_update_lookahead_.store(true, std::memory_order::release);
+        to_update_status_.signal();
+        to_update_stereo_.signal();
+        to_update_style_.signal();
+        to_update_follower_.signal();
+        to_update_rms_.signal();
+        to_update_hold_.signal();
+        to_update_range_.signal();
+        to_update_wet_.signal();
+        to_update_output_gain_.signal();
+        to_update_oversample_.signal();
+        to_update_lookahead_.signal();
         // init hold buffers
         for (auto& h : hold_buffer_) {
             h.setCapacity(static_cast<size_t>(8.0 * sample_rate));
         }
-        to_update_.store(true, std::memory_order::release);
+        to_update_.signal();
     }
 
     void CompressController::prepareBuffer() {
+        if (!to_update_.check()) {
+            return;
+        }
         bool to_update_pdc = false;
-        c_is_on_ = is_on_.load(std::memory_order::relaxed);
-        c_is_delta_ = is_delta_.load(std::memory_order::relaxed);
-        c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
 
-        const auto new_lufs_matcher_on_ = lufs_matcher_on_.load(std::memory_order::relaxed);
-        if (new_lufs_matcher_on_ != c_lufs_matcher_on_) {
-            c_lufs_matcher_on_ = new_lufs_matcher_on_;
-            if (c_lufs_matcher_on_) {
-                lufs_matcher_.reset();
+        if (to_update_status_.check()) {
+            c_is_on_ = is_on_.load(std::memory_order::relaxed);
+            c_is_delta_ = is_delta_.load(std::memory_order::relaxed);
+            c_mag_analyzer_on_ = mag_analyzer_on_.load(std::memory_order::relaxed);
+
+            const auto new_lufs_matcher_on_ = lufs_matcher_on_.load(std::memory_order::relaxed);
+            if (new_lufs_matcher_on_ != c_lufs_matcher_on_) {
+                c_lufs_matcher_on_ = new_lufs_matcher_on_;
+                if (c_lufs_matcher_on_) {
+                    lufs_matcher_.reset();
+                }
             }
+            c_copy_pre = c_mag_analyzer_on_ || c_is_delta_;
+            c_copy_post = c_mag_analyzer_on_ || c_is_delta_;
         }
 
-        c_copy_pre = c_mag_analyzer_on_ || c_is_delta_;
-        c_copy_post = c_mag_analyzer_on_ || c_is_delta_;
         // load oversampling idx, set up trackers/followers and update latency
-        const auto new_oversample_idx = oversample_idx_.load(std::memory_order::relaxed);
-        if (new_oversample_idx != c_oversample_idx_) {
+        if (to_update_oversample_.check()) {
+            const auto new_oversample_idx = oversample_idx_.load(std::memory_order::relaxed);
             to_update_pdc = true;
             c_oversample_idx_ = new_oversample_idx;
             switch (c_oversample_idx_) {
@@ -85,27 +135,54 @@ namespace zlp {
                 oversample_delay_.setDelayInSamples(0);
                 break;
             }
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
             case 1: {
                 over_sampler2_.reset();
                 oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler2_.getLatency()));
                 break;
             }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
             case 2: {
                 over_sampler4_.reset();
                 oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler4_.getLatency()));
                 break;
             }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
             case 3: {
                 over_sampler8_.reset();
                 oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler8_.getLatency()));
                 break;
             }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+            case 4: {
+                over_sampler16_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler16_.getLatency()));
+                break;
+            }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+            case 5: {
+                over_sampler32_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler32_.getLatency()));
+                break;
+            }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+            case 6: {
+                over_sampler64_.reset();
+                oversample_delay_.setDelayInSamples(static_cast<int>(over_sampler64_.getLatency()));
+                break;
+            }
+#endif
             default: ;
             }
             const auto oversample_mul = 1 << c_oversample_idx_;
             // prepare tracker and followers with the multiplied samplerate
             oversample_sr_ = sample_rate_ * static_cast<double>(oversample_mul);
-            to_update_rms_.store(true, std::memory_order::release);
+            to_update_rms_.signal();
             for (auto& f : follower_) {
                 f.prepare(oversample_sr_);
             }
@@ -119,9 +196,10 @@ namespace zlp {
             for (auto& h : hold_buffer_) {
                 h.setCapacity(static_cast<size_t>(oversample_sr_));
             }
-            to_update_hold_.store(true);
+            to_update_hold_.signal();
         }
-        if (to_update_lookahead_.exchange(false, std::memory_order::acquire)) {
+
+        if (to_update_lookahead_.check()) {
             const auto delay_length = lookahead_delay_length_.load(std::memory_order::relaxed);
             to_update_pdc = true;
             lookahead_delay_.setDelay(std::abs(delay_length));
@@ -133,13 +211,29 @@ namespace zlp {
                 delay_status_ = DelayStatus::kSideDelay;
             }
         }
+
+        if (to_update_follower_.check()) {
+            const auto attack = attack_.load(std::memory_order::relaxed);
+            const auto release = release_.load(std::memory_order::relaxed);
+            const auto rms_speed = rms_speed_.load(std::memory_order::relaxed);
+            follower_[0].setAttack(attack);
+            follower_[0].setRelease(release);
+            rms_follower_[0].setAttack(attack * rms_speed);
+            rms_follower_[0].setRelease(release * rms_speed);
+        }
+
         // load stereo mode
-        const auto stereo_mode = stereo_mode_.load(std::memory_order::relaxed);
-        c_stereo_mode_is_midside = (stereo_mode == 0) || (stereo_mode == 2);
-        c_stereo_mode_is_max = (stereo_mode == 2) || (stereo_mode == 3);
-        c_stereo_swap_ = stereo_swap_.load(std::memory_order::relaxed);
+        if (to_update_stereo_.check()) {
+            const auto stereo_mode = stereo_mode_.load(std::memory_order::relaxed);
+            c_stereo_mode_is_midside = (stereo_mode == 0) || (stereo_mode == 2);
+            c_stereo_mode_is_max = (stereo_mode == 2) || (stereo_mode == 3);
+            c_stereo_swap_ = stereo_swap_.load(std::memory_order::relaxed);
+            c_stereo_link_ = stereo_link_.load(std::memory_order::relaxed);
+            c_stereo_link_max_ = 1.f - 2.f * (1.f - c_stereo_link_);
+        }
+
         // load compressor style, reset the internal state if different
-        if (to_update_style_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_style_.check()) {
             c_comp_style_ = comp_style_.load(std::memory_order::relaxed);
             c_direction_ = direction_.load(std::memory_order::relaxed);
             c_is_downward_ = (c_direction_ == PCompDirection::kCompress
@@ -180,11 +274,9 @@ namespace zlp {
                 break;
             }
         }
-        // load stereo link
-        c_stereo_link_ = stereo_link_.load(std::memory_order::relaxed);
-        c_stereo_link_max_ = 1.f - 2.f * (1.f - c_stereo_link_);
+
         // load hold values
-        if (to_update_hold_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_hold_.check()) {
             const auto oversample_mul = 1 << c_oversample_idx_;
             const auto hold_size = static_cast<size_t>(
                 sample_rate_ * hold_length_.load(std::memory_order::relaxed)
@@ -193,23 +285,26 @@ namespace zlp {
             hold_buffer_[1].setSize(hold_size);
         }
         // load wet values
-        if (to_update_wet_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_wet_.check()) {
             const auto c_wet = wet_.load(std::memory_order::relaxed);
             c_wet1_ = wet1_.load(std::memory_order::relaxed) * c_wet * 0.05f;
             // 0.05 accounts for the db to gain transformation
             c_wet2_ = wet2_.load(std::memory_order::relaxed) * c_wet * 0.05f;
-            to_update_range_.store(true);
-            to_update_output_gain_.store(true);
+            to_update_range_.signal();
+            to_update_output_gain_.signal();
         }
-        if (to_update_range_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_range_.check()) {
             c_range_ = range_.load(std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed);
             c_is_range_inf_ = is_range_inf_.load(std::memory_order::relaxed);
         }
-        if (to_update_output_gain_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_output_gain_.check()) {
             output_gain_.setGainDecibels(
                 output_gain_db_.load(std::memory_order::relaxed) * wet_.load(std::memory_order::relaxed));
         }
-        if (to_update_rms_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_rms_.check()) {
+            const auto rms_length = rms_length_.load(std::memory_order::relaxed);
+            rms_tracker_[0].setMomentarySeconds(rms_length);
+            rms_tracker_[1].setMomentarySeconds(rms_length);
             c_use_rms_ = use_rms_.load(std::memory_order::relaxed);
             if (c_use_rms_) {
                 c_rms_mix_ = rms_mix_.load(std::memory_order::relaxed);
@@ -242,9 +337,7 @@ namespace zlp {
     void CompressController::process(std::array<float*, 2> main_pointers,
                                      std::array<float*, 2> side_pointers,
                                      const size_t num_samples, bool bypass) {
-        if (to_update_.exchange(false, std::memory_order::acquire)) {
-            prepareBuffer();
-        }
+        prepareBuffer();
         switch (delay_status_) {
         case DelayStatus::kZero: {
             break;
@@ -278,6 +371,7 @@ namespace zlp {
             processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples, bypass);
             break;
         }
+#if ZL_MAX_OVERSAMPLE_RATE >= 1
         case 1: {
             over_sampler2_.upsample(pointers, num_samples);
             auto& os_pointers = over_sampler2_.getOSPointer();
@@ -286,6 +380,8 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, num_samples);
             break;
         }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 2
         case 2: {
             over_sampler4_.upsample(pointers, num_samples);
             auto& os_pointers = over_sampler4_.getOSPointer();
@@ -294,6 +390,8 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, num_samples);
             break;
         }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 3
         case 3: {
             over_sampler8_.upsample(pointers, num_samples);
             auto& os_pointers = over_sampler8_.getOSPointer();
@@ -302,6 +400,37 @@ namespace zlp {
             oversample_delay_.process(pre_pointers_, num_samples);
             break;
         }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 4
+        case 4: {
+            over_sampler16_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler16_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 4, bypass);
+            over_sampler16_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 5
+        case 5: {
+            over_sampler32_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler32_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 5, bypass);
+            over_sampler32_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+#endif
+#if ZL_MAX_OVERSAMPLE_RATE >= 6
+        case 6: {
+            over_sampler64_.upsample(pointers, num_samples);
+            auto& os_pointers = over_sampler64_.getOSPointer();
+            processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 6, bypass);
+            over_sampler64_.downsample(pointers, num_samples);
+            oversample_delay_.process(pre_pointers_, num_samples);
+            break;
+        }
+#endif
         default: ;
         }
         // stereo combine the main buffer

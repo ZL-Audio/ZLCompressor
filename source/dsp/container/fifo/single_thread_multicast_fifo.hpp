@@ -119,11 +119,11 @@ namespace zldsp::container {
         }
 
     private:
-        bool isConsumerValid(const size_t id) const {
+        [[nodiscard]] bool isConsumerValid(const size_t id) const {
             return id < active_readers_.size() && active_readers_[id];
         }
 
-        int getSlowestReaderHead() const {
+        [[nodiscard]] int getSlowestReaderHead() const {
             int max_ready = -1;
             int slowest_head = tail_;
 

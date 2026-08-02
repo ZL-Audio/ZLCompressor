@@ -15,34 +15,34 @@ namespace zldsp::vector {
     namespace hn = hwy::HWY_NAMESPACE;
 
     template <typename F>
-    HWY_INLINE F sum(const F* HWY_RESTRICT in, const size_t size) {
+    HWY_INLINE void fma(F* HWY_RESTRICT in, const F to_mul, const F to_add, const size_t size) {
         static constexpr hn::ScalableTag<F> d;
         static constexpr size_t lanes = hn::MaxLanes(d);
-        static constexpr size_t block = lanes << 2;
-
+        const auto v_mul = hn::Set(d, to_mul);
+        const auto v_add = hn::Set(d, to_add);
         size_t i = 0;
-        auto single_sum = hn::Zero(d);
-        if (size >= block) {
-            auto sum0 = hn::Zero(d);
-            auto sum1 = hn::Zero(d);
-            auto sum2 = hn::Zero(d);
-            auto sum3 = hn::Zero(d);
-            for (; i + block <= size; i += block) {
-                sum0 = hn::Add(sum0, hn::LoadU(d, in + i));
-                sum1 = hn::Add(sum1, hn::LoadU(d, in + i + lanes));
-                sum2 = hn::Add(sum2, hn::LoadU(d, in + i + lanes * 2));
-                sum3 = hn::Add(sum3, hn::LoadU(d, in + i + lanes * 3));
-            }
-            single_sum = hn::Add(hn::Add(sum0, sum1), hn::Add(sum2, sum3));
-        }
         for (; i + lanes <= size; i += lanes) {
-            auto va = hn::LoadU(d, in + i);
-            single_sum = hn::Add(va, single_sum);
+            const auto v_in = hn::LoadU(d, in + i);
+            hn::StoreU(hn::MulAdd(v_mul, v_in, v_add), d, in + i);
         }
-        F scalar_sum = hn::ReduceSum(d, single_sum);
         for (; i < size; ++i) {
-            scalar_sum += in[i];
+            in[i] = std::fma(to_mul, in[i], to_add);
         }
-        return scalar_sum;
+    }
+
+    template <typename F>
+    HWY_INLINE void fma(F* HWY_RESTRICT out, F* HWY_RESTRICT in, const F to_mul, const F to_add, const size_t size) {
+        static constexpr hn::ScalableTag<F> d;
+        static constexpr size_t lanes = hn::MaxLanes(d);
+        const auto v_mul = hn::Set(d, to_mul);
+        const auto v_add = hn::Set(d, to_add);
+        size_t i = 0;
+        for (; i + lanes <= size; i += lanes) {
+            const auto v_in = hn::LoadU(d, in + i);
+            hn::StoreU(hn::MulAdd(v_mul, v_in, v_add), d, out + i);
+        }
+        for (; i < size; ++i) {
+            out[i] = std::fma(to_mul, in[i], to_add);
+        }
     }
 }

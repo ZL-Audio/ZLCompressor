@@ -57,14 +57,16 @@ namespace zlpanel {
     bool SinglePanel::run(const std::span<float> xs, std::span<float> ys,
                           const juce::Rectangle<float>& bound, const float max_db,
                           const bool force) {
-        if (!filter_.getUpdateFlag().exchange(false, std::memory_order::acquire) && !force) {
+        const auto to_update = to_update_.exchange(false, std::memory_order::acquire) || force;
+        if (!to_update) {
             return false;
         }
         const auto center_freq = filter_.getFreq();
         const auto center_gain = filter_.getGain();
         const auto filter_type = filter_.getFilterType();
-        filter_.updateParas();
-        filter_.updateMagnitude(kWsFloat, ys);
+        filter_.updateCoeffs();
+        filter_.updateMagnitudeSquare(std::span<const float>{kWsFloat}, ys);
+        zldsp::vector::sqr_mag_to_db(ys.data(), ys.size());
         const auto scale = -bound.getHeight() * .5f / max_db;
         const auto bias = bound.getCentreY();
         {
@@ -91,35 +93,39 @@ namespace zlpanel {
         }
         minimizer.finish();
 
-        const auto center_w = center_freq / 24000.f * static_cast<float>(std::numbers::pi);
-        const auto button_curve_x = bound.getWidth() * std::log(center_freq / 10.f) / std::log(2200.f);
-        const auto button_curve_y = filter_.getDB(center_w) * scale + bias;
+        const auto center_w = static_cast<float>(center_freq / 24000.0 * std::numbers::pi);
+        const auto button_curve_x = static_cast<float>(
+            bound.getWidth() * std::log(center_freq / 10.f) / std::log(2200.f));
+        const auto button_db = zldsp::chore::squareGainToDecibels(
+            filter_.getCenterMagnitudeSquare(center_w));
+        const auto button_curve_y = button_db * scale + bias;
 
         const auto button_x = button_curve_x;
         float button_y{bias};
         switch (filter_type) {
         case zldsp::filter::FilterType::kPeak:
-        case zldsp::filter::FilterType::kBandShelf:
         case zldsp::filter::FilterType::kLowShelf:
-        case zldsp::filter::FilterType::kHighShelf: {
+        case zldsp::filter::FilterType::kHighShelf:
+        case zldsp::filter::FilterType::kFlatTilt: {
             button_y = button_curve_y;
             break;
         }
         case zldsp::filter::FilterType::kTiltShelf: {
-            button_y = center_gain * scale * .5f + bias;
+            button_y = static_cast<float>(center_gain * static_cast<double>(scale) * .5 + bias);
             break;
         }
         case zldsp::filter::FilterType::kLowPass:
         case zldsp::filter::FilterType::kHighPass:
         case zldsp::filter::FilterType::kBandPass:
-        case zldsp::filter::FilterType::kNotch: {
+        case zldsp::filter::FilterType::kNotch:
+        case zldsp::filter::FilterType::kAllPass: {
             button_y = bias;
             break;
         }
         }
         auto& next_line{line_.get_writer()};
         next_line = juce::Line<float>(button_x, button_y, button_curve_x, button_curve_y);
-        button_pos_.store({button_x, button_y});
+        button_pos_.store({static_cast<float>(button_x), button_y});
 
         path_.publish();
         line_.publish();
@@ -139,6 +145,7 @@ namespace zlpanel {
         } else if (parameter_ID.startsWith(zlp::POrder::kID)) {
             filter_.setOrder(zlp::POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
         }
+        to_update_.store(true, std::memory_order::release);
     }
 
     void SinglePanel::visibilityChanged() {

@@ -20,10 +20,24 @@ namespace zldsp::fft {
      * @param window
      */
     template <typename F>
-    void create_periodic_hanning(std::span<F> window) {
+    void createPeriodicHanning(std::span<F> window) {
         const double two_over_n = 2.0 / static_cast<double>(window.size());
         for (size_t i = 0; i < window.size(); ++i) {
             window[i] = static_cast<F>(0.5 * (1.0 - common::math::cospi(static_cast<double>(i) * two_over_n)));
+        }
+    }
+
+    /**
+     * create periodic Hanning window
+     * @tparam F
+     * @param window
+     * @param scale
+     */
+    template <typename F>
+    void createPeriodicHanning(std::span<F> window, const F scale) {
+        const double two_over_n = 2.0 / static_cast<double>(window.size());
+        for (size_t i = 0; i < window.size(); ++i) {
+            window[i] = scale * static_cast<F>(0.5 * (1.0 - common::math::cospi(static_cast<double>(i) * two_over_n)));
         }
     }
 }

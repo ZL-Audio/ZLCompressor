@@ -13,10 +13,15 @@
 #include "k_weighting_filter.hpp"
 
 namespace zldsp::loudness {
-    template <typename FloatType, bool UseLowPass = false>
+    template <typename FloatType>
     class LUFSMeter {
     public:
-        LUFSMeter() {
+        /**
+         *
+         * @param use_low_pass whether to use an extra lowpass filter at 22,000 Hz
+         */
+        explicit LUFSMeter(const bool use_low_pass = true) :
+            k_weighting_filter_(use_low_pass) {
             histogram_.resize(701);
             histogram_sums_.resize(701);
         }
@@ -86,8 +91,7 @@ namespace zldsp::loudness {
             if (total_lufs <= FloatType(-60)) {
                 return total_lufs;
             } else {
-                const auto end_idx = static_cast<size_t>(
-                    std::round(-(total_lufs - FloatType(10)) * FloatType(10)));
+                const auto end_idx = static_cast<size_t>(std::round(-(total_lufs - FloatType(10)) * FloatType(10)));
                 const auto sub_count = vector::sum(histogram_.data(), end_idx);
                 const auto sub_sum = vector::sum(histogram_sums_.data(), end_idx);
                 const auto sub_mean_square = sub_sum / sub_count;
@@ -97,7 +101,7 @@ namespace zldsp::loudness {
         }
 
     private:
-        KWeightingFilter<FloatType, UseLowPass> k_weighting_filter_;
+        KWeightingFilter<FloatType> k_weighting_filter_;
         std::vector<std::vector<FloatType>> small_buffer_;
         std::vector<FloatType*> small_buffer_ptrs_;
         int current_idx_{0}, max_idx_{0};
@@ -105,8 +109,8 @@ namespace zldsp::loudness {
         FloatType mean_mul_{1};
         std::array<FloatType, 4> sum_squares_{};
 
-        std::vector<FloatType, hwy::AlignedAllocator<FloatType>> histogram_{};
-        std::vector<FloatType, hwy::AlignedAllocator<FloatType>> histogram_sums_{};
+        vector::aligned_vector<FloatType> histogram_{};
+        vector::aligned_vector<FloatType> histogram_sums_{};
         std::vector<FloatType> weights_;
 
         void update() {
@@ -129,8 +133,8 @@ namespace zldsp::loudness {
                 return;
             }
             // calculate the mean square
-            const auto mean_square = (sum_squares_[0] + sum_squares_[1] + sum_squares_[2] + sum_squares_[3]) *
-                mean_mul_;
+            const auto mean_square = (
+                sum_squares_[0] + sum_squares_[1] + sum_squares_[2] + sum_squares_[3]) * mean_mul_;
             // update histogram
             if (mean_square >= FloatType(1.1724653045822963e-7)) {
                 // if greater than -70 LKFS

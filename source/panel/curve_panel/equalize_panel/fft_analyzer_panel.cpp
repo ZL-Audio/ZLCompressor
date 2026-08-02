@@ -17,7 +17,7 @@ namespace zlpanel {
         for (auto& path : out_path_.get_buffer()) {
             path.preallocateSpace(preallocateSpace);
         }
-        receiver_.setON({true});
+        receiver_.setON(true);
         setInterceptsMouseClicks(false, false);
 
         base_.getPanelValueTree().addListener(this);
@@ -66,9 +66,10 @@ namespace zlpanel {
                 fft_order = 15;
             }
             fft_size_ = 1 << fft_order;
-            receiver_.prepare(static_cast<int>(fft_order), {1});
+            processor_.prepare(fft_order);
+            receiver_.prepare(1);
             spectrum_smoother_.prepare(static_cast<size_t>(fft_size_));
-            spectrum_smoother_.setSmooth(0.1);
+            spectrum_smoother_.setSmoothOCT(0.1);
             spectrum_tilter_.prepare(static_cast<size_t>(fft_size_));
             spectrum_decayer_.prepare(static_cast<size_t>(fft_size_));
 
@@ -80,13 +81,13 @@ namespace zlpanel {
 
         auto& fifo{sender.getAbstractFIFO()};
         auto num_read = fifo.getNumReady();
-        if (num_read > static_cast<int>(receiver_.getFFTSize())) {
-            (void)fifo.prepareToRead(num_read - static_cast<int>(receiver_.getFFTSize()));
-            fifo.finishRead(num_read - static_cast<int>(receiver_.getFFTSize()));
-            num_read = static_cast<int>(receiver_.getFFTSize());
+        if (num_read > static_cast<int>(processor_.getFFTSize())) {
+            (void)fifo.prepareToRead(num_read - static_cast<int>(processor_.getFFTSize()));
+            fifo.finishRead(num_read - static_cast<int>(processor_.getFFTSize()));
+            num_read = static_cast<int>(processor_.getFFTSize());
         }
         const auto range = fifo.prepareToRead(num_read);
-        receiver_.pull(range, sender.getSampleFIFOs());
+        receiver_.pull(range, sender.getSampleFIFOs()[0]);
         fifo.finishRead(num_read);
         sender.getLock().unlock();
 
@@ -95,7 +96,7 @@ namespace zlpanel {
         }
         receiver_.forward(zldsp::analyzer::StereoType::kStereo);
 
-        auto& spectrum{receiver_.getAbsSqrFFTBuffers()[0]};
+        auto& spectrum{receiver_.getAbsSqrFFTBuffer()};
         spectrum_smoother_.smooth(spectrum);
 
         if (to_update_tilt_.exchange(false, std::memory_order::acquire)) {
@@ -117,8 +118,10 @@ namespace zlpanel {
             xs_[0] = std::min(0.f, xs_[2] - 2.f * xs_[1]);
         }
         if (to_update_decay_.exchange(false, std::memory_order::acquire)) {
+            const auto decay_speed = std::max(
+                0.1f, -spectrum_decay_speed_.load(std::memory_order::relaxed) / 20.f);
             spectrum_decayer_.setDecaySpeed(refresh_rate_.load(std::memory_order::relaxed),
-                                            spectrum_decay_speed_.load(std::memory_order::relaxed));
+                                             -72.f, 0.15f / decay_speed);
         }
 
         if (num_point_ < 3) {

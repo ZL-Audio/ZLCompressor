@@ -9,4 +9,29 @@
 
 #pragma once
 
-#include "single_iir_filter.hpp"
+#include <atomic>
+
+namespace zlchore::thread {
+    class Notifier {
+    public:
+        Notifier() = default;
+
+        explicit Notifier(const bool initial_state) :
+            flag_(initial_state) {
+        }
+
+        void signal() {
+            flag_.store(true, std::memory_order_release);
+        }
+
+        bool check() {
+            if (!flag_.load(std::memory_order_relaxed)) {
+                return false;
+            }
+            return flag_.exchange(false, std::memory_order_acquire);
+        }
+
+    private:
+        std::atomic<bool> flag_{false};
+    };
+}

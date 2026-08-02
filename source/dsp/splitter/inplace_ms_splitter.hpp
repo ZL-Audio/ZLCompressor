@@ -101,9 +101,7 @@ namespace zldsp::splitter {
         static void combine(FloatType* __restrict l_buffer, FloatType* __restrict r_buffer, const size_t num_samples) {
             static constexpr hn::ScalableTag<FloatType> d;
             static constexpr size_t lanes = hn::MaxLanes(d);
-
             size_t i = 0;
-
             if constexpr (Mode == GainMode::kPre) {
                 for (; i + lanes <= num_samples; i += lanes) {
                     auto v_mid = hn::LoadU(d, l_buffer + i);

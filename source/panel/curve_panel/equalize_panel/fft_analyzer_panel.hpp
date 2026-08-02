@@ -59,7 +59,8 @@ namespace zlpanel {
 
         std::atomic<bool> is_fft_frozen_{false};
 
-        zldsp::analyzer::FFTAnalyzerReceiver<1> receiver_;
+        zldsp::analyzer::FFTAnalyzerProcessor processor_;
+        zldsp::analyzer::FFTAnalyzerReceiver receiver_{processor_};
         zldsp::analyzer::SpectrumSmoother spectrum_smoother_;
         zldsp::analyzer::SpectrumTilter spectrum_tilter_;
         zldsp::analyzer::SpectrumDecayer spectrum_decayer_;

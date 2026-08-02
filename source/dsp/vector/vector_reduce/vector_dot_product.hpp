@@ -22,7 +22,7 @@ namespace zldsp::vector {
         static constexpr size_t block = lanes << 2;
 
         size_t i = 0;
-        hn::Vec<decltype(d)> single_sum;
+        auto single_sum = hn::Zero(d);
         if (size >= block) {
             auto sum0 = hn::Zero(d);
             auto sum1 = hn::Zero(d);
@@ -51,8 +51,6 @@ namespace zldsp::vector {
                 }
             }
             single_sum = hn::Add(hn::Add(sum0, sum1), hn::Add(sum2, sum3));
-        } else {
-            single_sum = hn::Zero(d);
         }
         for (; i + lanes <= size; i += lanes) {
             auto va = hn::LoadU(d, in0 + i);

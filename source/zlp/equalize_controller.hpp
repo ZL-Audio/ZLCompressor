@@ -9,9 +9,11 @@
 
 #pragma once
 
+#include "../chore/thread/notifier.hpp"
+#include "../dsp/filter/empty_filter/empty.hpp"
 #include "../dsp/filter/filter.hpp"
 #include "../dsp/analyzer/analyzer_base/analyzer_sender_base.hpp"
-#include "../dsp/gain/origin_gain.hpp"
+#include "../dsp/gain/gain.hpp"
 #include "zlp_definitions.hpp"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -33,16 +35,52 @@ namespace zlp {
 
         void setFilterStatus(const size_t filter_idx, const FilterStatus filter_status) {
             filter_status_[filter_idx].store(filter_status, std::memory_order::relaxed);
-            to_update_filter_status_.store(true, std::memory_order::release);
+            to_update_filter_status_.signal();
+            to_update_.signal();
         }
 
         void setGain(const float db) {
             gain_db_.store(static_cast<double>(db), std::memory_order::relaxed);
-            to_update_gain_.store(true, std::memory_order::release);
+            to_update_gain_.signal();
+            to_update_.signal();
         }
 
-        zldsp::filter::IIR<double, 16>& getFilter(const size_t idx) {
-            return filters_[idx];
+        void setFilterFreq(const size_t idx, const double freq) {
+            empty_filters_[idx].setFreq(freq);
+            empty_update_flags_[idx].signal();
+            to_update_.signal();
+        }
+
+        void setFilterGain(const size_t idx, const double gain) {
+            empty_filters_[idx].setGain(gain);
+            empty_update_flags_[idx].signal();
+            to_update_.signal();
+        }
+
+        void setFilterQ(const size_t idx, const double q) {
+            empty_filters_[idx].setQ(q);
+            empty_update_flags_[idx].signal();
+            to_update_.signal();
+        }
+
+        void setFilterType(const size_t idx, const zldsp::filter::FilterType type) {
+            empty_filters_[idx].setFilterType(type);
+            empty_update_flags_[idx].signal();
+            to_update_.signal();
+        }
+
+        void setFilterOrder(const size_t idx, const size_t order) {
+            empty_filters_[idx].setOrder(order);
+            empty_update_flags_[idx].signal();
+            to_update_.signal();
+        }
+
+        zldsp::filter::FilterType getFilterType(const size_t idx) const {
+            return empty_filters_[idx].getFilterType();
+        }
+
+        double getFilterQ(const size_t idx) const {
+            return empty_filters_[idx].getQ();
         }
 
         auto& getFFTAnalyzerSender() {
@@ -51,6 +89,8 @@ namespace zlp {
 
         void setFFTAnalyzerON(const bool f) {
             fft_analyzer_on_.store(f, std::memory_order::relaxed);
+            to_update_fft_analyzer_.signal();
+            to_update_.signal();
         }
 
         [[nodiscard]] bool getFFTAnalyzerON() const {
@@ -59,6 +99,8 @@ namespace zlp {
 
         void setSoloBand(const size_t solo_band) {
             solo_band_.store(solo_band, std::memory_order::relaxed);
+            to_update_solo_.signal();
+            to_update_.signal();
         }
 
         size_t getSoloBand() const {
@@ -74,22 +116,29 @@ namespace zlp {
         }
 
     private:
-        std::atomic<bool> to_update_gain_{true};
+        zlchore::thread::Notifier to_update_{true};
+        zlchore::thread::Notifier to_update_gain_{true};
         std::atomic<double> gain_db_{0.f};
         zldsp::gain::Gain<double> gain_{};
         bool c_gain_equal_zero_{true};
 
-        std::array<zldsp::filter::IIR<double, 16> ,kBandNum> filters_{};
-        std::atomic<bool> to_update_filter_status_{true};
+        std::array<zldsp::filter::TDF<double, 16>, kBandNum> filters_{};
+        std::array<zldsp::filter::Empty, kBandNum> empty_filters_{};
+        std::array<zlchore::thread::Notifier, kBandNum> empty_update_flags_{};
+        std::array<zldsp::filter::FilterParameters, kBandNum> filter_paras_{};
+        zlchore::thread::Notifier to_update_filter_status_{true};
         std::array<std::atomic<FilterStatus>, kBandNum> filter_status_;
         std::array<FilterStatus, kBandNum> c_filter_status_{};
         std::vector<size_t> on_indices_{};
 
         std::atomic<bool> fft_analyzer_on_{false};
+        bool c_fft_analyzer_on_{false};
+        zlchore::thread::Notifier to_update_fft_analyzer_{true};
         zldsp::analyzer::AnalyzerSenderBase<double, 1> fft_analyzer_sender_{};
 
-        zldsp::filter::IIR<double, 16> solo_filter_{};
+        zldsp::filter::TDF<double, 16> solo_filter_{};
         std::atomic<size_t> solo_band_{kBandNum};
+        zlchore::thread::Notifier to_update_solo_{false};
         size_t c_solo_band_{kBandNum};
         bool c_solo_on_{false};
         std::array<std::vector<double>, 2> solo_buffers_;
@@ -97,6 +146,6 @@ namespace zlp {
 
         void prepareBuffer();
 
-        void updateSoloFilter();
+        void updateSoloFilter(const zldsp::filter::FilterParameters& target, bool force);
     };
 }

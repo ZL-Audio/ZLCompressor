@@ -186,9 +186,13 @@ include(Assets)
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 
+set(ZL_MAX_OVERSAMPLE_RATE 3 CACHE STRING "Maximum over-sampling rate (0: Off, 1: 2x, 2: 4x, 3: 8x, 4: 16x, 5: 32x, 6: 64x)")
+message(STATUS "Maximum over-sampling rate is ${ZL_MAX_OVERSAMPLE_RATE}")
+
 # This is where you can set preprocessor definitions for JUCE and your plugin
 target_compile_definitions(SharedCode
         INTERFACE
+        ZL_MAX_OVERSAMPLE_RATE=${ZL_MAX_OVERSAMPLE_RATE}
 
         # JUCE_WEB_BROWSER and JUCE_USE_CURL off by default
         JUCE_WEB_BROWSER=0  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call

@@ -96,7 +96,7 @@ namespace zlpanel {
                 case zldsp::filter::FilterType::kLowShelf:
                 case zldsp::filter::FilterType::kHighShelf:
                 case zldsp::filter::FilterType::kTiltShelf:
-                case zldsp::filter::FilterType::kBandShelf: {
+                case zldsp::filter::FilterType::kFlatTilt: {
                     gain_label_.setVisible(true);
                     gain_slider_.setVisible(true);
                     break;
@@ -104,7 +104,8 @@ namespace zlpanel {
                 case zldsp::filter::FilterType::kLowPass:
                 case zldsp::filter::FilterType::kHighPass:
                 case zldsp::filter::FilterType::kNotch:
-                case zldsp::filter::FilterType::kBandPass: {
+                case zldsp::filter::FilterType::kBandPass:
+                case zldsp::filter::FilterType::kAllPass: {
                     gain_label_.setVisible(false);
                     gain_slider_.setVisible(false);
                     break;

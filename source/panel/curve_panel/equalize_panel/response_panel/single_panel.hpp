@@ -51,6 +51,7 @@ namespace zlpanel {
 
         const size_t band_idx_;
         zldsp::filter::Ideal<float, 16>& filter_;
+        std::atomic<bool> to_update_{true};
 
         constexpr static std::array kBandIDs{
             zlp::PFilterType::kID, zlp::POrder::kID,

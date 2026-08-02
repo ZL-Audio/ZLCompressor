@@ -17,24 +17,29 @@ namespace zlp {
     void EqualizeController::prepare(const double sample_rate, const size_t max_num_samples) {
         fft_analyzer_sender_.prepare(sample_rate, max_num_samples, {2}, 0.1);
         fft_analyzer_sender_.setON(0, true);
-        for (auto& filter : filters_) {
-            filter.prepare(sample_rate, 2);
+        for (size_t i = 0; i < kBandNum; ++i) {
+            filter_paras_[i] = empty_filters_[i].getParas();
+            filters_[i].prepare(sample_rate, 2, max_num_samples);
+            filters_[i].updateParas(filter_paras_[i]);
         }
         gain_.prepare(sample_rate, max_num_samples, 0.01);
         for (size_t chan = 0; chan < 2; chan++) {
             solo_buffers_[chan].resize(max_num_samples);
             solo_pointers_[chan] = solo_buffers_[chan].data();
         }
-        solo_filter_.prepare(sample_rate, 2);
+        solo_filter_.prepare(sample_rate, 2, max_num_samples);
     }
 
     void EqualizeController::prepareBuffer() {
-        if (to_update_gain_.exchange(false, std::memory_order::acquire)) {
+        if (!to_update_.check()) {
+            return;
+        }
+        if (to_update_gain_.check()) {
             const auto c_gain_db = gain_db_.load(std::memory_order::relaxed);
             gain_.setGainDecibels(c_gain_db);
             c_gain_equal_zero_ = std::abs(c_gain_db) < 1e-3;
         }
-        if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
+        if (to_update_filter_status_.check()) {
             // cache new filter status
             for (size_t i = 0; i < kBandNum; ++i) {
                 const auto new_filter_status = filter_status_[i].load(std::memory_order::relaxed);
@@ -53,17 +58,24 @@ namespace zlp {
                 }
             }
         }
-        if (solo_band_.load(std::memory_order::relaxed) != c_solo_band_) {
+        if (to_update_fft_analyzer_.check()) {
+            c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
+        }
+        if (to_update_solo_.check()) {
             c_solo_band_ = solo_band_.load(std::memory_order::relaxed);
             c_solo_on_ = c_solo_band_ < kBandNum;
             if (c_solo_on_) {
                 solo_filter_.reset();
-                updateSoloFilter();
+                updateSoloFilter(filter_paras_[c_solo_band_], true);
             }
         }
         for (const auto& i : on_indices_) {
-            if (filters_[i].prepareBuffer() && i == c_solo_band_) {
-                updateSoloFilter();
+            if (empty_update_flags_[i].check()) {
+                filter_paras_[i] = empty_filters_[i].getParas();
+                filters_[i].updateParas(filter_paras_[i]);
+                if (i == c_solo_band_ && c_solo_on_) {
+                    updateSoloFilter(filter_paras_[i], false);
+                }
             }
         }
     }
@@ -93,46 +105,44 @@ namespace zlp {
             }
             }
         }
-        if (fft_analyzer_on_.load(std::memory_order::relaxed)) {
+        if (c_fft_analyzer_on_) {
             fft_analyzer_sender_.process({pointers}, num_samples);
         }
     }
 
-    void EqualizeController::updateSoloFilter() {
-        auto& target_filter{filters_[c_solo_band_]};
-        switch (target_filter.getFilterType<false>()) {
+    void EqualizeController::updateSoloFilter(const zldsp::filter::FilterParameters& target, const bool force) {
+        auto solo_paras = target;
+        switch (solo_paras.filter_type) {
         case zldsp::filter::FilterType::kLowShelf:
         case zldsp::filter::FilterType::kHighPass: {
-            solo_filter_.setFilterType(zldsp::filter::FilterType::kLowPass);
+            solo_paras.filter_type = zldsp::filter::FilterType::kLowPass;
             break;
         }
         case zldsp::filter::FilterType::kHighShelf:
         case zldsp::filter::FilterType::kLowPass: {
-            solo_filter_.setFilterType(zldsp::filter::FilterType::kHighPass);
+            solo_paras.filter_type = zldsp::filter::FilterType::kHighPass;
             break;
         }
         case zldsp::filter::FilterType::kPeak:
-        case zldsp::filter::FilterType::kBandShelf:
         case zldsp::filter::FilterType::kNotch:
-        case zldsp::filter::FilterType::kBandPass: {
-            solo_filter_.setFilterType(zldsp::filter::FilterType::kBandPass);
+        case zldsp::filter::FilterType::kBandPass:
+        case zldsp::filter::FilterType::kAllPass: {
+            solo_paras.filter_type = zldsp::filter::FilterType::kBandPass;
             break;
         }
-        case zldsp::filter::FilterType::kTiltShelf: {
-            solo_filter_.setFilterType(zldsp::filter::FilterType::kTiltShelf);
+        case zldsp::filter::FilterType::kTiltShelf:
+        case zldsp::filter::FilterType::kFlatTilt: {
+            solo_paras.filter_type = zldsp::filter::FilterType::kTiltShelf;
             break;
         }
         }
-        solo_filter_.setOrder(target_filter.getOrder<false>());
-        solo_filter_.setFreq(target_filter.getFreq<false>());
-        solo_filter_.setQ(target_filter.getQ<false>());
-        if (target_filter.getFilterType<false>() == zldsp::filter::FilterType::kTiltShelf) {
-            solo_filter_.setQ(std::sqrt(2.0) * 0.5);
-            solo_filter_.setGain(target_filter.getGain<false>());
+        if (solo_paras.filter_type == zldsp::filter::FilterType::kTiltShelf) {
+            solo_paras.q = std::sqrt(2.0) * 0.5;
         }
-        else {
-            solo_filter_.setQ(target_filter.getQ<false>());
+        if (force) {
+            solo_filter_.forceUpdate(solo_paras);
+        } else {
+            solo_filter_.updateParas(solo_paras);
         }
-        solo_filter_.prepareBuffer();
     }
 }

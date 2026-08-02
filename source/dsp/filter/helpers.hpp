@@ -14,29 +14,40 @@
 #include <numeric>
 #include <numbers>
 
+#include "../chore/decibels.hpp"
+
 namespace zldsp::filter {
-    constexpr static double pi = std::numbers::pi;
-    constexpr static double ppi = 2 * std::numbers::pi;
+    inline constexpr double pi = std::numbers::pi;
+    inline constexpr double ppi = 2 * std::numbers::pi;
+
+    inline constexpr double kDbToExp2 = 0.16609640474436813;
+    inline constexpr double kDbToExp2Sqrt = kDbToExp2 * 0.5;
 
     enum FilterType {
         kPeak, kLowShelf, kLowPass, kHighShelf, kHighPass,
-        kNotch, kBandPass, kTiltShelf, kBandShelf,
+        kNotch, kBandPass, kTiltShelf, kFlatTilt, kAllPass
     };
 
     enum FilterStructure {
         kIIR, kSVF, kParallel
     };
 
+    struct FilterParameters {
+        FilterType filter_type;
+        size_t order;
+        double freq, gain, q;
+    };
+
     inline double dotProduct(const std::array<double, 3>& x, const std::array<double, 3>& y) {
-        return std::inner_product(x.begin(), x.end(), y.begin(), 0.0);
+        return x[0] * y[0] + x[1] * y[1] + x[2] * y[2];
     }
 
     inline double gainToDB(const double gain) {
-        return std::log10(std::max(std::abs(gain), 1e-16)) * 20;
+        return chore::gainToDecibels(gain);
     }
 
     inline double dbToGain(const double db) {
-        return std::pow(10, db * 0.05);
+        return chore::decibelsToGain(db);
     }
 
     inline std::array<double, 2> getBandwidth(const double w0, const double q) {

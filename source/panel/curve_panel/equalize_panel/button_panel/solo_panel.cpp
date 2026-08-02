@@ -21,9 +21,10 @@ namespace zlpanel {
         if (selected_band_idx_ >= zlp::kBandNum) {
             return;
         }
-        auto& filter{p_ref_.getEqualizeController().getFilter(selected_band_idx_)};
+        auto& equalize_controller{p_ref_.getEqualizeController()};
+        const auto filter_type = equalize_controller.getFilterType(selected_band_idx_);
         g.setColour(base_.getBackgroundColour().withAlpha(.75f));
-        switch (filter.getFilterType<true>()) {
+        switch (filter_type) {
         case zldsp::filter::FilterType::kLowShelf:
         case zldsp::filter::FilterType::kHighPass: {
             const auto x = dragger_panels_[selected_band_idx_]->getDragger().getButtonPos().x;
@@ -43,11 +44,11 @@ namespace zlpanel {
             break;
         }
         case zldsp::filter::FilterType::kPeak:
-        case zldsp::filter::FilterType::kBandShelf:
         case zldsp::filter::FilterType::kNotch:
-        case zldsp::filter::FilterType::kBandPass: {
+        case zldsp::filter::FilterType::kBandPass:
+        case zldsp::filter::FilterType::kAllPass: {
             const auto x = dragger_panels_[selected_band_idx_]->getDragger().getButtonPos().x;
-            const auto solo_q = p_ref_.getEqualizeController().getFilter(selected_band_idx_).getQ();
+            const auto solo_q = equalize_controller.getFilterQ(selected_band_idx_);
             const auto bw = static_cast<float>(std::asinh(0.5f / solo_q) / std::log(2200.f));
 
             auto bound = getLocalBounds().toFloat();
@@ -60,7 +61,8 @@ namespace zlpanel {
             g.fillRect(right_area);
             break;
         }
-        case zldsp::filter::FilterType::kTiltShelf: {
+        case zldsp::filter::FilterType::kTiltShelf:
+        case zldsp::filter::FilterType::kFlatTilt: {
         }
         }
     }

@@ -9,11 +9,7 @@
 
 #pragma once
 
-#include "../../fft/zldsp_fft_include.hpp"
-#include "../../fft/zldsp_fft_window.hpp"
-#include "../../vector/vector.hpp"
-#include "../../container/fifo/fifo_base.hpp"
-#include "../analyzer_base/analyzer_receiver_base.hpp"
+#include "fft_analyzer_processor.hpp"
 
 namespace zldsp::analyzer {
     namespace hn = hwy::HWY_NAMESPACE;
@@ -21,51 +17,62 @@ namespace zldsp::analyzer {
      * a fft analyzer receiver which pulls input samples from FIFOs and runs forward FFT
      * @tparam kNum the number of FFTs
      */
-    template <size_t kNum>
     class FFTAnalyzerReceiver {
     public:
-        explicit FFTAnalyzerReceiver() = default;
+        explicit FFTAnalyzerReceiver(FFTAnalyzerProcessor& processor) :
+            processor_(processor) {
+        }
 
         /**
          *
-         * @param order FFT order
          * @param num_channels number of channels
          */
-        void prepare(const int order, std::array<size_t, kNum> num_channels) {
-            setOrder(order, num_channels);
+        void prepare(const size_t num_channels) {
+            abs_sqr_fft_buffer_.resize(processor_.getFFTSize() / 2 + 1);
+            circular_buffer_.resize(num_channels);
+            states_.resize(num_channels);
+            reset();
+        }
+
+        /**
+         * reset internal buffers
+         */
+        void reset() {
+            for (size_t chan = 0; chan < circular_buffer_.size(); ++chan) {
+                circular_buffer_[chan].resize(processor_.getFFTSize());
+                std::ranges::fill(circular_buffer_[chan], 0.f);
+            }
+            std::ranges::fill(states_, 0.f);
         }
 
         /**
          * pull data from FIFO into circular buffer
          * @param range
-         * @param sample_fifos
+         * @param sample_fifo
          */
         void pull(const zldsp::container::FIFORange range,
-                  std::array<std::vector<std::vector<float>>, kNum>& sample_fifos) {
+                  const std::vector<std::vector<float>>& sample_fifo) {
             const auto num_ready = range.block_size1 + range.block_size2;
-            const auto num_replace = static_cast<int>(fft_->get_size()) - num_ready;
-            for (size_t i = 0; i < kNum; ++i) {
-                if (!is_on_[i]) { continue; }
-                for (size_t chan = 0; chan < circular_buffers_[i].size(); ++chan) {
-                    auto& circular_buffer{circular_buffers_[i][chan]};
-                    auto& sample_fifo{sample_fifos[i][chan]};
-                    std::memmove(circular_buffer.data(),
-                                 circular_buffer.data() + static_cast<std::ptrdiff_t>(num_ready),
-                                 sizeof(float) * static_cast<size_t>(num_replace));
-                    if (range.block_size1 > 0) {
-                        std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index1),
-                                  sample_fifo.begin() + static_cast<std::ptrdiff_t>(
-                                      range.start_index1 + range.block_size1),
-                                  circular_buffer.begin() + static_cast<std::ptrdiff_t>(num_replace));
-                    }
-                    if (range.block_size2 > 0) {
-                        std::copy(sample_fifo.begin() + static_cast<std::ptrdiff_t>(range.start_index2),
-                                  sample_fifo.begin() + static_cast<std::ptrdiff_t>(
-                                      range.start_index2 + range.block_size2),
-                                  circular_buffer.begin() + static_cast<std::ptrdiff_t>(
-                                      num_replace + range.block_size1));
-                    }
+            const auto num_replace = static_cast<int>(processor_.getFFTSize()) - num_ready;
+            if (!is_on_) { return; }
+            for (size_t chan = 0; chan < circular_buffer_.size(); ++chan) {
+                auto& circular_buffer{circular_buffer_[chan]};
+                auto y = circular_buffer.back();
+                auto x = states_[chan];
+                std::memmove(circular_buffer.data(),
+                             circular_buffer.data() + static_cast<size_t>(num_ready),
+                             sizeof(float) * static_cast<size_t>(num_replace));
+                if (range.block_size1 > 0) {
+                    copyWithHighPass(circular_buffer.data() + static_cast<size_t>(num_replace),
+                        sample_fifo[chan].data() + static_cast<size_t>(range.start_index1),
+                        static_cast<size_t>(range.block_size1), y, x);
                 }
+                if (range.block_size2 > 0) {
+                    copyWithHighPass(circular_buffer.data() + static_cast<size_t>(num_replace + range.block_size1),
+                        sample_fifo[chan].data() + static_cast<size_t>(range.start_index2),
+                        static_cast<size_t>(range.block_size2), y, x);
+                }
+                states_[chan] = x;
             }
         }
 
@@ -75,109 +82,93 @@ namespace zldsp::analyzer {
          */
         void forward(const StereoType stereo_type) {
             // run forward FFT & apply tilt
-            for (size_t i = 0; i < kNum; ++i) {
-                if (!is_on_[i]) { continue; }
-                if (circular_buffers_[i].size() != 2 || stereo_type == StereoType::kStereo) {
-                    for (size_t chan = 0; chan < circular_buffers_[i].size(); ++chan) {
-                        vector::multiply(fft_in_.data(), circular_buffers_[i][chan].data(),
-                            window_.data(), window_.size());
-                        if (chan == 0) {
-                            fft_->forward_sqr_mag(fft_in_.data(), abs_sqr_fft_buffers_[i].data());
-                        } else {
-                            fft_->forward_sqr_mag(fft_in_.data(), fft_out_.data());
-                            vector::add(abs_sqr_fft_buffers_[i].data(), fft_out_.data(), fft_out_.size());
-                        }
+            if (!is_on_) { return; }
+            auto& fft_in{processor_.getFFTIn()};
+            auto& fft_out{processor_.getFFTOut()};
+            const auto& window{processor_.getWindow()};
+            if (circular_buffer_.size() != 2 || stereo_type == StereoType::kStereo) {
+                for (size_t chan = 0; chan < circular_buffer_.size(); ++chan) {
+                    vector::multiply(fft_in.data(), circular_buffer_[chan].data(),
+                                     window.data(), window.size());
+                    if (chan == 0) {
+                        processor_.forwardSqrMag(fft_in.data(), abs_sqr_fft_buffer_.data());
+                    } else {
+                        processor_.forwardSqrMag(fft_in.data(), fft_out.data());
+                        vector::add(abs_sqr_fft_buffer_.data(), fft_out.data(), fft_out.size());
+                    }
+                }
+            } else {
+                if (stereo_type == StereoType::kLeft) {
+                    vector::multiply(fft_in.data(), circular_buffer_[0].data(),
+                                     window.data(), window.size());
+                } else if (stereo_type == StereoType::kRight) {
+                    vector::multiply(fft_in.data(), circular_buffer_[1].data(),
+                                     window.data(), window.size());
+                } else if (stereo_type == StereoType::kMid) {
+                    static constexpr hn::ScalableTag<float> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    float* __restrict fft_in_ptr = fft_in.data();
+                    const float* __restrict in0_ptr = circular_buffer_[0].data();
+                    const float* __restrict in1_ptr = circular_buffer_[1].data();
+                    const float* __restrict window_ptr = window.data();
+                    const auto v_sqrt_over_2 = hn::Set(d, kSqrt2Over2);
+                    for (size_t j = 0; j < processor_.getFFTSize(); j += lanes) {
+                        const auto v_in0 = hn::LoadU(d, in0_ptr + j);
+                        const auto v_in1 = hn::LoadU(d, in1_ptr + j);
+                        const auto v_window = hn::LoadU(d, window_ptr + j);
+                        const auto v_out = hn::Mul(hn::Add(v_in0, v_in1), v_sqrt_over_2);
+                        hn::StoreU(hn::Mul(v_out, v_window), d, fft_in_ptr + j);
                     }
                 } else {
-                    if (stereo_type == StereoType::kLeft) {
-                        vector::multiply(fft_in_.data(), circular_buffers_[i][0].data(),
-                            window_.data(), fft_->get_size());
-                    } else if (stereo_type == StereoType::kRight) {
-                        vector::multiply(fft_in_.data(), circular_buffers_[i][1].data(),
-                            window_.data(), fft_->get_size());
-                    } else if (stereo_type == StereoType::kMid) {
-                        static constexpr hn::ScalableTag<float> d;
-                        static constexpr size_t lanes = hn::MaxLanes(d);
-                        float* __restrict fft_in_ptr = fft_in_.data();
-                        const float* __restrict in0_ptr = circular_buffers_[i][0].data();
-                        const float* __restrict in1_ptr = circular_buffers_[i][1].data();
-                        const float* __restrict window_ptr = window_.data();
-                        const auto v_sqrt_over_2 = hn::Set(d, kSqrt2Over2);
-                        for (size_t j = 0; j < fft_->get_size(); j += lanes) {
-                            const auto v_in0 = hn::LoadU(d, in0_ptr + j);
-                            const auto v_in1 = hn::LoadU(d, in1_ptr + j);
-                            const auto v_window = hn::LoadU(d, window_ptr + j);
-                            const auto v_out = hn::Mul(hn::Add(v_in0, v_in1), v_sqrt_over_2);
-                            hn::StoreU(hn::Mul(v_out, v_window), d, fft_in_ptr + j);
-                        }
-                    } else {
-                        static constexpr hn::ScalableTag<float> d;
-                        static constexpr size_t lanes = hn::MaxLanes(d);
-                        float* __restrict fft_in_ptr = fft_in_.data();
-                        const float* __restrict in0_ptr = circular_buffers_[i][0].data();
-                        const float* __restrict in1_ptr = circular_buffers_[i][1].data();
-                        const float* __restrict window_ptr = window_.data();
-                        const auto v_sqrt_over_2 = hn::Set(d, kSqrt2Over2);
-                        for (size_t j = 0; j < fft_->get_size(); j += lanes) {
-                            const auto v_in0 = hn::LoadU(d, in0_ptr + j);
-                            const auto v_in1 = hn::LoadU(d, in1_ptr + j);
-                            const auto v_window = hn::LoadU(d, window_ptr + j);
-                            const auto v_out = hn::Mul(hn::Sub(v_in0, v_in1), v_sqrt_over_2);
-                            hn::StoreU(hn::Mul(v_out, v_window), d, fft_in_ptr + j);
-                        }
+                    static constexpr hn::ScalableTag<float> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    float* __restrict fft_in_ptr = fft_in.data();
+                    const float* __restrict in0_ptr = circular_buffer_[0].data();
+                    const float* __restrict in1_ptr = circular_buffer_[1].data();
+                    const float* __restrict window_ptr = window.data();
+                    const auto v_sqrt_over_2 = hn::Set(d, kSqrt2Over2);
+                    for (size_t j = 0; j < processor_.getFFTSize(); j += lanes) {
+                        const auto v_in0 = hn::LoadU(d, in0_ptr + j);
+                        const auto v_in1 = hn::LoadU(d, in1_ptr + j);
+                        const auto v_window = hn::LoadU(d, window_ptr + j);
+                        const auto v_out = hn::Mul(hn::Sub(v_in0, v_in1), v_sqrt_over_2);
+                        hn::StoreU(hn::Mul(v_out, v_window), d, fft_in_ptr + j);
                     }
-                    fft_->forward_sqr_mag(fft_in_.data(), abs_sqr_fft_buffers_[i].data());
                 }
+                processor_.forwardSqrMag(fft_in.data(), abs_sqr_fft_buffer_.data());
             }
         }
 
-        void setON(std::array<bool, kNum> is_on) {
+        void setON(const bool is_on) {
             is_on_ = is_on;
-        }
-
-        [[nodiscard]] size_t getFFTSize() const {
-            return fft_->get_size();
         }
 
         /**
          * get absolute square spectrum
          * @return
          */
-        std::array<vector::aligned_vector<float>, kNum>& getAbsSqrFFTBuffers() {
-            return abs_sqr_fft_buffers_;
+        vector::aligned_vector<float>& getAbsSqrFFTBuffer() {
+            return abs_sqr_fft_buffer_;
         }
 
     protected:
-        std::array<std::vector<vector::aligned_vector<float>>, kNum> circular_buffers_;
+        FFTAnalyzerProcessor& processor_;
 
-        vector::aligned_vector<float> fft_in_;
-        vector::aligned_vector<float> fft_out_;
-        std::array<vector::aligned_vector<float>, kNum> abs_sqr_fft_buffers_;
+        std::vector<vector::aligned_vector<float>> circular_buffer_;
+        vector::aligned_vector<float> abs_sqr_fft_buffer_;
 
-        std::unique_ptr<zldsp::fft::RFFT<float>> fft_;
-        vector::aligned_vector<float> window_;
+        std::vector<float> states_;
 
-        std::array<bool, kNum> is_on_{};
+        bool is_on_{false};
 
-        void setOrder(const int fft_order, std::array<size_t, kNum>& num_channels) {
-            fft_ = std::make_unique<zldsp::fft::RFFT<float>>(fft_order);
-            const auto fft_size = fft_->get_size();
-
-            window_.resize(fft_size);
-            zldsp::fft::create_periodic_hanning(std::span{window_.data(), window_.size()});
-            const auto scale = 1.f / static_cast<float>(fft_size);
-            vector::multiply(window_.data(), scale, window_.size());
-            fft_in_.resize(fft_size);
-            fft_out_.resize(fft_size / 2 + 1);
-            for (size_t i = 0; i < kNum; ++i) {
-                abs_sqr_fft_buffers_[i].resize(fft_size / 2 + 1);
-            }
-            for (size_t i = 0; i < kNum; ++i) {
-                circular_buffers_[i].resize(num_channels[i]);
-                for (size_t chan = 0; chan < num_channels[i]; ++chan) {
-                    circular_buffers_[i][chan].resize(fft_size);
-                    std::fill(circular_buffers_[i][chan].begin(), circular_buffers_[i][chan].end(), 0.f);
-                }
+        static void copyWithHighPass(float* __restrict output, const float* __restrict input,
+                                     const size_t num_samples,
+                                     float& y, float& x) {
+            for (size_t i = 0; i < num_samples; ++i) {
+                const auto in = input[i];
+                y = in - x + 0.9999f * y;
+                output[i] = y;
+                x = in;
             }
         }
     };
