@@ -569,20 +569,7 @@ namespace zlp {
             "6 dB/oct", "12 dB/oct", "24 dB/oct", "48 dB/oct", "72 dB/oct", "96 dB/oct"
         };
         int static constexpr kDefaultI = 1;
-        static constexpr std::array<size_t, 7> kOrderArray{1, 2, 4, 8, 12, 16};
-
-        static size_t convertToIdx(const size_t order) {
-            switch (order) {
-            case 1: return 0;
-            case 2: return 1;
-            case 4: return 2;
-            case 6: return 3;
-            case 8: return 4;
-            case 12: return 5;
-            case 16: return 6;
-            default: return 0;
-            }
-        }
+        static constexpr std::array<size_t, 6> kOrderArray{1, 2, 4, 8, 12, 16};
     };
 
     class PFreq : public FloatParameters<PFreq> {
