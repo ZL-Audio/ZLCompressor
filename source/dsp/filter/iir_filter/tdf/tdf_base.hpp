@@ -12,6 +12,7 @@
 #include <numbers>
 #include <vector>
 #include <span>
+#include <cmath>
 
 #include "../../../vector/vector.hpp"
 
