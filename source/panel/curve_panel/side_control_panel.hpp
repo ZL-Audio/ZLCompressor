@@ -73,6 +73,10 @@ namespace zlpanel {
         zlgui::button::ClickButton side_out_button_;
         zlgui::attachment::ButtonAttachment<true> side_out_attachment_;
 
+        const std::unique_ptr<juce::Drawable> eq_bypass_drawable_;
+        zlgui::button::ClickButton eq_bypass_button_;
+        zlgui::attachment::ButtonAttachment<true> eq_bypass_attachment_;
+
         void updateLabels();
     };
 }

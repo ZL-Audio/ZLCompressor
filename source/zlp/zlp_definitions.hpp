@@ -393,6 +393,13 @@ namespace zlp {
         auto static constexpr kDefaultV = false;
     };
 
+    class PSideEQBypass : public BoolParameters<PSideEQBypass> {
+    public:
+        auto static constexpr kID = "side_eq_bypass";
+        auto static constexpr kName = "Side EQ Bypass";
+        auto static constexpr kDefaultV = false;
+    };
+
     class PSideGain : public FloatParameters<PSideGain> {
     public:
         auto static constexpr kID = "side gain";
@@ -602,7 +609,8 @@ namespace zlp {
                    PThreshold::get(), PRatio::get(), PKneeW::get(), PCurve::get(), PFloor::get(),
                    PAttack::get(), PRelease::get(), PPump::get(), PSmooth::get(),
                    PHold::get(), PRange::get(), PWet::get(), POutGain::get(),
-                   PExtSide::get(), PSideOut::get(), PSideGain::get(),
+                   PExtSide::get(), PSideOut::get(),
+                   PSideGain::get(), PSideEQBypass::get(),
                    PSideStereoMode::get(), PSideStereoSwap::get(),
                    PSideStereoLink::get(), PSideStereoWet1::get(), PSideStereoWet2::get(),
                    PCompON::get(), PCompDelta::get(),

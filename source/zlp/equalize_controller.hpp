@@ -89,7 +89,6 @@ namespace zlp {
 
         void setFFTAnalyzerON(const bool f) {
             fft_analyzer_on_.store(f, std::memory_order::relaxed);
-            to_update_fft_analyzer_.signal();
             to_update_.signal();
         }
 
@@ -115,6 +114,11 @@ namespace zlp {
             return solo_pointers_;
         }
 
+        void setEQBypass(const bool bypass) {
+            a_eq_bypass_.store(bypass, std::memory_order::relaxed);
+            to_update_.signal();
+        }
+
     private:
         zlchore::thread::Notifier to_update_{true};
         zlchore::thread::Notifier to_update_gain_{true};
@@ -134,7 +138,6 @@ namespace zlp {
 
         std::atomic<bool> fft_analyzer_on_{false};
         bool c_fft_analyzer_on_{false};
-        zlchore::thread::Notifier to_update_fft_analyzer_{true};
         zldsp::analyzer::AnalyzerSenderBase<double, 1> fft_analyzer_sender_{};
 
         zldsp::filter::TDF<double, 16> solo_filter_{};
@@ -144,6 +147,9 @@ namespace zlp {
         bool c_solo_on_{false};
         std::array<std::vector<double>, 2> solo_buffers_;
         std::array<double*, 2> solo_pointers_{};
+
+        std::atomic<bool> a_eq_bypass_{false};
+        bool eq_bypass_{false};
 
         void prepareBuffer();
 

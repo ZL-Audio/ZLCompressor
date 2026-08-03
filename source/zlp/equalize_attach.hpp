@@ -27,11 +27,11 @@ namespace zlp {
         EqualizeController& controller_ref_;
 
         constexpr static std::array kIDs{
-            PSideGain::kID
+            PSideGain::kID, PSideEQBypass::kID
         };
 
         constexpr static std::array kDefaultVs{
-            PSideGain::kDefaultV
+            PSideGain::kDefaultV, static_cast<float>(PSideEQBypass::kDefaultV),
         };
 
         constexpr static std::array kBandIDs{

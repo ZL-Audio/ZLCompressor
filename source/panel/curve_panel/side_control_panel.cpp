@@ -11,9 +11,8 @@
 #include "side_control_panel.hpp"
 
 namespace zlpanel {
-    SideControlPanel::SideControlPanel(PluginProcessor& p, zlgui::UIBase& base,
-                                       multilingual::TooltipHelper& tooltip_helper) :
-        base_(base),
+    SideControlPanel::SideControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+                                       multilingual::TooltipHelper &tooltip_helper) : base_(base),
         stereo_mode_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoMode::kID)),
         stereo_swap_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoSwap::kID)),
         panel_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
@@ -72,11 +71,22 @@ namespace zlpanel {
         side_out_button_(base, side_out_drawable_.get(), side_out_drawable_.get(),
                          tooltip_helper.getToolTipText(multilingual::kSideOut)),
         side_out_attachment_(side_out_button_.getButton(), p.parameters_,
-                             zlp::PSideOut::kID, updater_) {
-        for (auto& b : {&stereo_swap_button_, &ext_side_button_, &side_out_button_}) {
+                             zlp::PSideOut::kID, updater_),
+        eq_bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
+                                                                BinaryData::bypass_svgSize)),
+        eq_bypass_button_(base_, eq_bypass_drawable_.get(), eq_bypass_drawable_.get(),
+                          ""),
+        eq_bypass_attachment_(eq_bypass_button_.getButton(), p.parameters_,
+                              zlp::PSideEQBypass::kID, updater_) {
+        for (auto &b: {&stereo_swap_button_, &ext_side_button_, &side_out_button_}) {
             b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
+        }
+        {
+            eq_bypass_button_.setImageAlpha(1.f, 1.f, .5f, .75f);
+            eq_bypass_button_.setBufferedToImage(true);
+            addAndMakeVisible(eq_bypass_button_);
         }
 
         stereo_mode_box_.setSizeScale(.9f, .9f);
@@ -89,7 +99,7 @@ namespace zlpanel {
 
         updateLabels();
         label_laf_.setFontScale(1.25f);
-        for (auto& l : {&side_in1_label_, &side_in2_label_, &side_out1_label_, &side_out2_label_}) {
+        for (auto &l: {&side_in1_label_, &side_in2_label_, &side_out1_label_, &side_out2_label_}) {
             l->setJustificationType(juce::Justification::centred);
             l->setLookAndFeel(&label_laf_);
             l->setBufferedToImage(true);
@@ -98,7 +108,7 @@ namespace zlpanel {
 
         stereo_wet1_slider_.setComponentID(zlp::PSideStereoWet1::kID);
         stereo_wet2_slider_.setComponentID(zlp::PSideStereoWet2::kID);
-        for (auto& s : {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
+        for (auto &s: {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
             s->setFontScale(1.25f);
             s->getSlider().setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             s->getSlider().setSliderSnapsToMousePosition(false);
@@ -113,7 +123,7 @@ namespace zlpanel {
         setBufferedToImage(true);
     }
 
-    void SideControlPanel::paint(juce::Graphics& g) {
+    void SideControlPanel::paint(juce::Graphics &g) {
         g.fillAll(base_.getBackgroundColour());
     }
 
@@ -121,7 +131,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
-        return 7 * padding + 2 * slider_height + 4 * button_height;
+        return 8 * padding + 2 * slider_height + 5 * button_height;
     }
 
     int SideControlPanel::getIdealWidth() const {
@@ -184,11 +194,20 @@ namespace zlpanel {
             side_out_button_.setBounds(t_bound.removeFromRight(button_height));
         }
 
+        bound.removeFromTop(padding);
+        {
+            auto t_bound = bound.removeFromTop(button_height);
+            const auto spacing = (t_bound.getWidth() - 2 * button_height) / 3;
+            t_bound.removeFromLeft(spacing);
+            t_bound.removeFromRight(spacing);
+            eq_bypass_button_.setBounds(t_bound.removeFromRight(button_height));
+        }
+
         const auto dragging_distance = getSliderDraggingDistance(font_size);
-        for (auto& s : {&stereo_link_slider_, &side_gain_slider_}) {
+        for (auto &s: {&stereo_link_slider_, &side_gain_slider_}) {
             s->setMouseDragSensitivity(dragging_distance);
         }
-        for (auto& s : {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
+        for (auto &s: {&stereo_wet1_slider_, &stereo_wet2_slider_}) {
             s->setMouseDragSensitivity(dragging_distance);
         }
     }

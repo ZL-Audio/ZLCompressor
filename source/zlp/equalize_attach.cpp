@@ -10,9 +10,9 @@
 #include "equalize_attach.hpp"
 
 namespace zlp {
-    EqualizeAttach::EqualizeAttach(juce::AudioProcessor& processor,
-                                   juce::AudioProcessorValueTreeState& parameters,
-                                   EqualizeController& controller)
+    EqualizeAttach::EqualizeAttach(juce::AudioProcessor &processor,
+                                   juce::AudioProcessorValueTreeState &parameters,
+                                   EqualizeController &controller)
         : processor_ref_(processor),
           parameters_ref_(parameters),
           controller_ref_(controller) {
@@ -32,7 +32,7 @@ namespace zlp {
     }
 
     EqualizeAttach::~EqualizeAttach() {
-        for (auto& ID : kIDs) {
+        for (auto &ID: kIDs) {
             parameters_ref_.removeParameterListener(ID, this);
         }
         for (size_t band = 0; band < kBandNum; ++band) {
@@ -44,28 +44,24 @@ namespace zlp {
         }
     }
 
-    void EqualizeAttach::parameterChanged(const juce::String& parameter_ID, const float new_value) {
+    void EqualizeAttach::parameterChanged(const juce::String &parameter_ID, const float new_value) {
         const auto idx = static_cast<size_t>(parameter_ID.getTrailingIntValue());
         if (parameter_ID == PSideGain::kID) {
             controller_ref_.setGain(new_value);
-        }
-        else if (parameter_ID.startsWith(PFilterStatus::kID)) {
+        } else if (parameter_ID == PSideEQBypass::kID) {
+            controller_ref_.setEQBypass(new_value > .5f);
+        } else if (parameter_ID.startsWith(PFilterStatus::kID)) {
             controller_ref_.setFilterStatus(idx, static_cast<EqualizeController::FilterStatus>(new_value));
-        }
-        else if (parameter_ID.startsWith(PFreq::kID)) {
+        } else if (parameter_ID.startsWith(PFreq::kID)) {
             controller_ref_.setFilterFreq(idx, static_cast<double>(new_value));
-        }
-        else if (parameter_ID.startsWith(PGain::kID)) {
+        } else if (parameter_ID.startsWith(PGain::kID)) {
             controller_ref_.setFilterGain(idx, static_cast<double>(new_value));
-        }
-        else if (parameter_ID.startsWith(PQ::kID)) {
+        } else if (parameter_ID.startsWith(PQ::kID)) {
             controller_ref_.setFilterQ(idx, static_cast<double>(new_value));
-        }
-        else if (parameter_ID.startsWith(PFilterType::kID)) {
+        } else if (parameter_ID.startsWith(PFilterType::kID)) {
             controller_ref_.setFilterType(
                 idx, static_cast<zldsp::filter::FilterType>(std::round(new_value)));
-        }
-        else if (parameter_ID.startsWith(POrder::kID)) {
+        } else if (parameter_ID.startsWith(POrder::kID)) {
             controller_ref_.setFilterOrder(
                 idx, POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
         }

@@ -60,9 +60,7 @@ namespace zlp {
                 }
             }
         }
-        if (to_update_fft_analyzer_.check()) {
-            c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
-        }
+        c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
         if (to_update_solo_.check()) {
             c_solo_band_ = solo_band_.load(std::memory_order::relaxed);
             c_solo_on_ = c_solo_band_ < kBandNum;
@@ -81,12 +79,17 @@ namespace zlp {
                 }
             }
         }
+        eq_bypass_ = a_eq_bypass_.load(std::memory_order::relaxed);
     }
 
     void EqualizeController::process(std::array<double*, 2> pointers, const size_t num_samples) {
         prepareBuffer();
         if (!c_gain_equal_zero_) {
-            gain_.process(pointers, num_samples);
+            if (eq_bypass_) {
+                gain_.template process<true>(pointers, num_samples);
+            } else {
+                gain_.template process<false>(pointers, num_samples);
+            }
         }
         if (c_solo_on_) {
             zldsp::vector::copy(solo_pointers_[0], pointers[0], num_samples);
@@ -103,7 +106,11 @@ namespace zlp {
                 break;
             }
             case kOn: {
-                filters_[i].template process<false>(pointers, num_samples);
+                if (eq_bypass_) {
+                    filters_[i].template process<true>(pointers, num_samples);
+                } else {
+                    filters_[i].template process<false>(pointers, num_samples);
+                }
                 break;
             }
             }
