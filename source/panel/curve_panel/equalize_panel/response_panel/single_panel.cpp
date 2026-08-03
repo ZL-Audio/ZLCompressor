@@ -10,29 +10,16 @@
 #include "single_panel.hpp"
 
 namespace zlpanel {
-    SinglePanel::SinglePanel(PluginProcessor& processor, zlgui::UIBase& base,
+    SinglePanel::SinglePanel(zlgui::UIBase& base,
                              const size_t band_idx,
                              zldsp::filter::Ideal<float, 16>& filter) :
-        p_ref_(processor), base_(base), band_idx_(band_idx), filter_(filter) {
+        base_(base), band_idx_(band_idx), filter_(filter) {
         button_pos_.store({0.f, -1e6f});
         for (auto& path : path_.get_buffer()) {
-            path.preallocateSpace(kWsFloat.size() * 3 + 12);
-        }
-        const std::string suffix = std::to_string(band_idx_);
-        for (auto& ID : kBandIDs) {
-            auto para_ID = ID + suffix;
-            p_ref_.parameters_.addParameterListener(para_ID, this);
-            parameterChanged(para_ID, p_ref_.parameters_.getRawParameterValue(para_ID)->load());
+            path.preallocateSpace(400 * 3 + 12);
         }
 
         setInterceptsMouseClicks(false, false);
-    }
-
-    SinglePanel::~SinglePanel() {
-        const std::string suffix = std::to_string(band_idx_);
-        for (auto& ID : kBandIDs) {
-            p_ref_.parameters_.removeParameterListener(ID + suffix, this);
-        }
     }
 
     void SinglePanel::paint(juce::Graphics& g) {
@@ -54,48 +41,32 @@ namespace zlpanel {
         line_thickness_ = base_.getFontSize() * .075f * base_.getEQCurveThickness();
     }
 
-    bool SinglePanel::run(const std::span<float> xs, std::span<float> ys,
+    void SinglePanel::run(const std::span<const float> xs, const std::span<const float> dbs,
                           const juce::Rectangle<float>& bound, const float max_db,
-                          const bool force) {
-        const auto to_update = to_update_.exchange(false, std::memory_order::acquire) || force;
-        if (!to_update) {
-            return false;
-        }
+                          const double sample_rate, const double fft_max) {
         const auto center_freq = filter_.getFreq();
         const auto center_gain = filter_.getGain();
         const auto filter_type = filter_.getFilterType();
-        filter_.updateCoeffs();
-        filter_.updateMagnitudeSquare(std::span<const float>{kWsFloat}, ys);
-        zldsp::vector::sqr_mag_to_db(ys.data(), ys.size());
         const auto scale = -bound.getHeight() * .5f / max_db;
         const auto bias = bound.getCentreY();
-        {
-            static constexpr hn::ScalableTag<float> d;
-            static constexpr size_t lanes = hn::MaxLanes(d);
-            const auto v_mul = hn::Set(d, scale);
-            const auto v_add = hn::Set(d, bias);
-            size_t i = 0;
-            for (; i + lanes <= ys.size(); i += lanes) {
-                const auto v_in = hn::LoadU(d, ys.data() + i);
-                hn::StoreU(hn::MulAdd(v_in, v_mul, v_add), d, ys.data() + i);
-            }
-            for (; i < ys.size(); ++i) {
-                ys[i] = ys[i] * scale + bias;
-            }
+        ys_.resize(dbs.size());
+        for (size_t i = 0; i < dbs.size(); ++i) {
+            ys_[i] = dbs[i] * scale + bias;
         }
 
         auto& next_path{path_.get_writer()};
         next_path.clear();
         PathMinimizer<1> minimizer(next_path);
-        minimizer.startNewSubPath(xs[0], ys[0]);
-        for (size_t i = 1; i < std::min(xs.size(), ys.size()); ++i) {
-            minimizer.lineTo(xs[i], ys[i]);
+        minimizer.startNewSubPath(xs[0], ys_[0]);
+        for (size_t i = 1; i < std::min(xs.size(), ys_.size()); ++i) {
+            minimizer.lineTo(xs[i], ys_[i]);
         }
         minimizer.finish();
 
-        const auto center_w = static_cast<float>(center_freq / 24000.0 * std::numbers::pi);
+        const auto center_w = static_cast<float>(center_freq * 2.0 * std::numbers::pi / sample_rate);
         const auto button_curve_x = static_cast<float>(
-            bound.getWidth() * std::log(center_freq / 10.f) / std::log(2200.f));
+            bound.getX() + bound.getWidth() * std::log(center_freq / zlp::kEQMinFreq)
+            / std::log(fft_max / zlp::kEQMinFreq));
         const auto button_db = zldsp::chore::squareGainToDecibels(
             filter_.getCenterMagnitudeSquare(center_w));
         const auto button_curve_y = button_db * scale + bias;
@@ -129,23 +100,6 @@ namespace zlpanel {
 
         path_.publish();
         line_.publish();
-
-        return true;
-    }
-
-    void SinglePanel::parameterChanged(const juce::String& parameter_ID, const float new_value) {
-        if (parameter_ID.startsWith(zlp::PFreq::kID)) {
-            filter_.setFreq(new_value);
-        } else if (parameter_ID.startsWith(zlp::PGain::kID)) {
-            filter_.setGain(new_value);
-        } else if (parameter_ID.startsWith(zlp::PQ::kID)) {
-            filter_.setQ(new_value);
-        } else if (parameter_ID.startsWith(zlp::PFilterType::kID)) {
-            filter_.setFilterType(static_cast<zldsp::filter::FilterType>(std::round(new_value)));
-        } else if (parameter_ID.startsWith(zlp::POrder::kID)) {
-            filter_.setOrder(zlp::POrder::kOrderArray[static_cast<size_t>(std::round(new_value))]);
-        }
-        to_update_.store(true, std::memory_order::release);
     }
 
     void SinglePanel::visibilityChanged() {

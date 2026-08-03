@@ -82,6 +82,10 @@ public:
         return equalize_controller_;
     }
 
+    [[nodiscard]] double getAtomicSampleRate() const {
+        return sample_rate_.load(std::memory_order::relaxed);
+    }
+
 private:
     zlp::CompressController compress_controller_;
     zlp::CompressAttach compress_attach_;
@@ -99,6 +103,7 @@ private:
     };
 
     std::atomic<float> &ext_side_, &side_out_;
+    std::atomic<double> sample_rate_{48000.0};
     ChannelLayout channel_layout_{kInvalid};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)

@@ -104,6 +104,12 @@ namespace zlpanel {
     }
 
     void CurvePanel::repaintCallBackSlow() {
+        const auto sample_rate = p_ref_.getAtomicSampleRate();
+        if (std::abs(sample_rate - c_sample_rate_) > 1.0) {
+            c_sample_rate_ = sample_rate;
+            equalize_panel_.updateSampleRate(sample_rate);
+        }
+
         const auto side_control_show = side_control_show_ref_.load(std::memory_order::relaxed) > .5f;
         const auto equalize_show = equalize_show_ref_.load(std::memory_order::relaxed) > .5f;
         const auto computer_show = computer_show_ref_.load(std::memory_order::relaxed) > .5f;

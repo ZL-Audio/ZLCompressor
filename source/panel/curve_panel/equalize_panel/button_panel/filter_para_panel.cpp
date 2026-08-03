@@ -70,9 +70,7 @@ namespace zlpanel {
         freq_attachment_.reset();
         gain_attachment_.reset();
         if (selected_band_idx_ != zlp::kBandNum) {
-            freq_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true>>(
-                freq_slider_.getSlider(), p_ref_.parameters_,
-                zlp::PFreq::kID + std::to_string(selected_band_idx_), updater_);
+            updateFreqMax(freq_max_);
             gain_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true>>(
                 gain_slider_.getSlider(), p_ref_.parameters_,
                 zlp::PGain::kID + std::to_string(selected_band_idx_), updater_);
@@ -84,6 +82,17 @@ namespace zlpanel {
         else {
             ftype_ref_ = nullptr;
             setVisible(false);
+        }
+    }
+
+    void FilterParaPanel::updateFreqMax(const double freq_max) {
+        freq_max_ = freq_max;
+        freq_attachment_.reset();
+        if (selected_band_idx_ != zlp::kBandNum) {
+            freq_attachment_ = std::make_unique<zlgui::attachment::SliderAttachment<true>>(
+                freq_slider_.getSlider(), p_ref_.parameters_,
+                zlp::PFreq::kID + std::to_string(selected_band_idx_),
+                zlp::getLogMidRange(10.0, freq_max_, 1000.0, 0.1), updater_);
         }
     }
 

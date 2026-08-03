@@ -26,6 +26,8 @@ namespace zlpanel {
 
         void updateBand();
 
+        void updateFreqMax(double freq_max);
+
         void repaintCallBackSlow();
 
     private:
@@ -39,6 +41,7 @@ namespace zlpanel {
 
         std::atomic<float>* ftype_ref_{nullptr};
         float c_ftype_{-1.f};
+        double freq_max_{zlp::getEQFreqMax(48000.0)};
 
         zlgui::slider::CompactLinearSlider<false, false, false> freq_slider_;
         std::unique_ptr<zlgui::attachment::SliderAttachment<true>> freq_attachment_;

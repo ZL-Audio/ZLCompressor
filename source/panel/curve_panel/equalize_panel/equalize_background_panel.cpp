@@ -21,18 +21,39 @@ namespace zlpanel {
         g.setFont(base_.getFontSize());
         g.setColour(base_.getTextColour().withAlpha(.375f));
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
-            g.drawText(std::string(kBackgroundFreqsNames[i]), text_bounds_[i], juce::Justification::bottomRight);
+            if (visible_freqs_[i]) {
+                g.drawText(std::string(kBackgroundFreqsNames[i]), text_bounds_[i], juce::Justification::bottomRight);
+            }
         }
         g.setColour(base_.getTextColour().withAlpha(.1f));
         g.fillRectList(rect_list_);
     }
 
     void EqualizerBackgroundPanel::Background1::resized() {
+        updateLayout();
+    }
+
+    void EqualizerBackgroundPanel::Background1::updateFreqMax(const double freq_max) {
+        if (std::abs(freq_max - freq_max_) <= 1.0) {
+            return;
+        }
+        freq_max_ = freq_max;
+        updateLayout();
+        repaint();
+    }
+
+    void EqualizerBackgroundPanel::Background1::updateLayout() {
         rect_list_.clear();
         auto bound = getLocalBounds().toFloat();
         const auto thickness = base_.getFontSize() * 0.1f;
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
-            const auto x = kBackgroundFreqs[i] * bound.getWidth() + bound.getX();
+            visible_freqs_[i] = kBackgroundFreqs[i] <= freq_max_;
+            if (!visible_freqs_[i]) {
+                continue;
+            }
+            const auto x = static_cast<float>(std::log(kBackgroundFreqs[i] / zlp::kEQMinFreq)
+                                              / std::log(freq_max_ / zlp::kEQMinFreq)) * bound.getWidth()
+                           + bound.getX();
             rect_list_.add({x - thickness * .5f, bound.getY(), thickness, bound.getHeight()});
             text_bounds_[i] = juce::Rectangle<float>(x - base_.getFontSize() * 3 - base_.getFontSize() * 0.125f,
                                                      bound.getBottom() - base_.getFontSize() * 2,
@@ -59,5 +80,9 @@ namespace zlpanel {
 
     void EqualizerBackgroundPanel::setMouseOver(const bool is_mouse_on) {
         setVisible(is_mouse_on);
+    }
+
+    void EqualizerBackgroundPanel::updateSampleRate(const double sample_rate) {
+        background1_.updateFreqMax(zlp::getEQFFTMax(sample_rate));
     }
 }

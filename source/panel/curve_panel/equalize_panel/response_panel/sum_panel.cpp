@@ -10,12 +10,11 @@
 #include "sum_panel.hpp"
 
 namespace zlpanel {
-    SumPanel::SumPanel(PluginProcessor& processor, zlgui::UIBase& base) :
-        p_ref_(processor), base_{base} {
-        juce::ignoreUnused(p_ref_);
-        ys_.resize(kWsFloat.size());
+    SumPanel::SumPanel(zlgui::UIBase& base) :
+        base_{base} {
+        ys_.resize(400);
         for (auto& path : path_.get_buffer()) {
-            path.preallocateSpace(kWsFloat.size() * 3 + 12);
+            path.preallocateSpace(400 * 3 + 12);
         }
 
         setInterceptsMouseClicks(false, false);
@@ -39,30 +38,29 @@ namespace zlpanel {
         curve_thickness_ = base_.getFontSize() * .2f * base_.getEQCurveThickness();
     }
 
-    bool SumPanel::run(std::array<float, kWsFloat.size()>& xs,
-                       std::array<std::array<float, kWsFloat.size()>, 8>& yss,
-                       std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
-
-
-                       const juce::Rectangle<float>& bound
-        ) {
-        int band_count{0};
+    void SumPanel::run(const std::span<const float> xs,
+                       const std::array<zldsp::vector::aligned_vector<float>, zlp::kBandNum>& mags,
+                       const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
+                       const juce::Rectangle<float>& bound, const float max_db) {
+        ys_.resize(xs.size());
+        std::fill(ys_.begin(), ys_.end(), 0.f);
+        bool has_on_filter{false};
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             if (filter_status[band] == zlp::EqualizeController::FilterStatus::kOn) {
-                if (band_count == 0) {
-                    zldsp::vector::copy(ys_.data(), yss[band].data(), yss[band].size());
-                } else {
-                    zldsp::vector::add(ys_.data(), yss[band].data(), yss[band].size());
+                has_on_filter = true;
+                for (size_t i = 0; i < ys_.size(); ++i) {
+                    ys_[i] += mags[band][i];
                 }
-                band_count += 1;
             }
         }
 
-        if (band_count == 0) {
+        if (!has_on_filter) {
             std::fill(ys_.begin(), ys_.end(), bound.getCentreY());
-        } else if (band_count > 1) {
-            const auto total_shift = -bound.getCentreY() * static_cast<float>(band_count - 1);
-            zldsp::vector::add(ys_.data(), total_shift, ys_.size());
+        } else {
+            const auto scale = -bound.getHeight() * .5f / max_db;
+            for (auto& y : ys_) {
+                y = y * scale + bound.getCentreY();
+            }
         }
 
         auto& next_path{path_.get_writer()};
@@ -74,7 +72,5 @@ namespace zlpanel {
         }
         minimizer.finish();
         path_.publish();
-
-        return true;
     }
 }

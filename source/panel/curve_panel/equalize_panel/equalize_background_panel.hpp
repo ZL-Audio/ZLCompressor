@@ -22,12 +22,12 @@ namespace zlpanel {
 
         void setMouseOver(bool is_mouse_on);
 
+        void updateSampleRate(double sample_rate);
+
     private:
-        /** stl does not support constexpr log/pow,
-         * (np.log([20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]) - np.log(10)) / (np.log(22000) - np.log(10)) */
         static constexpr std::array<float, 10> kBackgroundFreqs = {
-            0.09006341f, 0.20912077f, 0.29918418f, 0.3892476f, 0.50830495f,
-            0.59836837f, 0.68843178f, 0.80748914f, 0.89755255f, 0.98761596f
+            20.f, 50.f, 100.f, 200.f, 500.f,
+            1000.f, 2000.f, 5000.f, 10000.f, 20000.f
         };
 
         static constexpr std::array<std::string_view, 10> kBackgroundFreqsNames = {
@@ -46,11 +46,17 @@ namespace zlpanel {
 
             void resized() override;
 
+            void updateFreqMax(double freq_max);
+
         private:
             zlgui::UIBase& base_;
 
             juce::RectangleList<float> rect_list_;
             std::array<juce::Rectangle<float>, 10> text_bounds_;
+            std::array<bool, 10> visible_freqs_{};
+            double freq_max_{22000.0};
+
+            void updateLayout();
         };
 
         Background1 background1_;

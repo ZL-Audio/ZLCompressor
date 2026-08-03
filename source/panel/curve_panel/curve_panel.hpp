@@ -54,7 +54,8 @@ namespace zlpanel {
 
         std::atomic<float> &equalize_show_ref_, &side_control_show_ref_;
         std::atomic<float> &computer_show_ref_, &rms_show_ref_;
+        double c_sample_rate_{0.0};
 
         void run() override;
     };
-} // zlpanel
+}

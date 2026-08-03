@@ -69,7 +69,7 @@ namespace zlpanel {
             processor_.prepare(fft_order);
             receiver_.prepare(1);
             spectrum_smoother_.prepare(static_cast<size_t>(fft_size_));
-            spectrum_smoother_.setSmoothOCT(0.1);
+            spectrum_smoother_.setSmooth(0.5, sample_rate, zldsp::analyzer::SpectrumSmoother::SmoothMethod::kERB);
             spectrum_tilter_.prepare(static_cast<size_t>(fft_size_));
             spectrum_decayer_.prepare(static_cast<size_t>(fft_size_));
 
@@ -105,13 +105,15 @@ namespace zlpanel {
         if (to_update_xs_ || std::abs(bound.getWidth() - c_width_) > 0.01f) {
             c_width_ = bound.getWidth();
             const auto delta_freq = static_cast<float>(sample_rate / static_cast<double>(fft_size_));
-            const auto temp_scale = static_cast<float>(1.0 / std::log(22000.0 / 10.0)) * bound.getWidth();
-            const auto temp_bias = std::log(static_cast<float>(10.0)) * temp_scale;
+            const auto fft_max = static_cast<float>(zlp::getEQFFTMax(sample_rate));
+            const auto temp_scale = static_cast<float>(1.0 / std::log(fft_max / zlp::kEQMinFreq)) * bound.getWidth();
+            const auto temp_bias = std::log(zlp::kEQMinFreq) * temp_scale;
+            num_point_ = xs_.size();
             for (size_t i = 1; i < xs_.size(); ++i) {
                 const auto freq = delta_freq * static_cast<float>(i);
                 xs_[i] = std::log(freq) * temp_scale - temp_bias;
-                if (xs_[i] > c_width_) {
-                    num_point_ = i + 1;
+                if (freq > fft_max) {
+                    num_point_ = i;
                     break;
                 }
             }

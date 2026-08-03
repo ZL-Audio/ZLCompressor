@@ -24,6 +24,8 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
+        void updateSampleRate(double sample_rate);
+
         zlgui::dragger::Dragger& getDragger() {
             return dragger_;
         }
@@ -31,21 +33,6 @@ namespace zlpanel {
         void setEQMaxDB(float db);
 
     private:
-        const juce::NormalisableRange<float> kFreqRange{
-            10.f, 20000.f,
-            [](float rangeStart, float rangeEnd, float valueToRemap) {
-                return std::exp(valueToRemap * std::log(
-                    rangeEnd / rangeStart)) * rangeStart;
-            },
-            [](float rangeStart, float rangeEnd, float valueToRemap) {
-                return std::log(valueToRemap / rangeStart) / std::log(
-                    rangeEnd / rangeStart);
-            },
-            [](float rangeStart, float rangeEnd, float valueToRemap) {
-                return juce::jlimit(
-                    rangeStart, rangeEnd, valueToRemap);
-            }
-        };
         static constexpr float kScale = 1.f;
 
         PluginProcessor& p_ref_;
@@ -60,7 +47,12 @@ namespace zlpanel {
         zlgui::dragger::Dragger dragger_;
         std::unique_ptr<zlgui::attachment::DraggerAttachment<false, true>> dragger_attachment_x_;
         std::unique_ptr<zlgui::attachment::DraggerAttachment<false, false>> dragger_attachment_y_;
+        juce::NormalisableRange<float> freq_range_{makeFreqRange(static_cast<float>(zlp::getEQFreqMax(48000.0)))};
+        float eq_max_db_{30.f};
+        double sample_rate_{48000.0};
 
+        static juce::NormalisableRange<float> makeFreqRange(float max_freq);
+        void rebuildAttachments();
         void updateDraggerBound();
         void lookAndFeelChanged() override;
     };

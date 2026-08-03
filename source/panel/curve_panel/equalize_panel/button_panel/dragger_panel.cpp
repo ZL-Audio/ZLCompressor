@@ -31,7 +31,23 @@ namespace zlpanel {
             }
         };
 
+        rebuildAttachments();
         setInterceptsMouseClicks(false, true);
+    }
+
+    juce::NormalisableRange<float> DraggerPanel::makeFreqRange(const float max_freq) {
+        return {
+            zlp::kEQMinFreq, max_freq,
+            [](const float range_start, const float range_end, const float value_to_remap) {
+                return std::exp(value_to_remap * std::log(range_end / range_start)) * range_start;
+            },
+            [](const float range_start, const float range_end, const float value_to_remap) {
+                return std::log(value_to_remap / range_start) / std::log(range_end / range_start);
+            },
+            [](const float range_start, const float range_end, const float value_to_remap) {
+                return std::clamp(value_to_remap, range_start, range_end);
+            }
+        };
     }
 
     void DraggerPanel::resized() {
@@ -48,16 +64,28 @@ namespace zlpanel {
     }
 
     void DraggerPanel::setEQMaxDB(const float db) {
+        eq_max_db_ = db;
+        rebuildAttachments();
+    }
+
+    void DraggerPanel::updateSampleRate(const double sample_rate) {
+        sample_rate_ = sample_rate;
+        freq_range_ = makeFreqRange(static_cast<float>(zlp::getEQFreqMax(sample_rate)));
+        rebuildAttachments();
+        updateDraggerBound();
+    }
+
+    void DraggerPanel::rebuildAttachments() {
         dragger_attachment_x_.reset();
         dragger_attachment_x_ = std::make_unique<zlgui::attachment::DraggerAttachment<false, true>>(
             dragger_, p_ref_.parameters_,
-            zlp::PFreq::kID + std::to_string(band_idx_), kFreqRange,
+            zlp::PFreq::kID + std::to_string(band_idx_), freq_range_,
             updater_
         );
         dragger_attachment_y_.reset();
         dragger_attachment_y_ = std::make_unique<zlgui::attachment::DraggerAttachment<false, false>>(
             dragger_, p_ref_.parameters_,
-            zlp::PGain::kID + std::to_string(band_idx_), juce::NormalisableRange<float>(-db, db, .01f),
+            zlp::PGain::kID + std::to_string(band_idx_), juce::NormalisableRange<float>(-eq_max_db_, eq_max_db_, .01f),
             updater_
         );
     }
@@ -65,7 +93,11 @@ namespace zlpanel {
     void DraggerPanel::updateDraggerBound() {
         dragger_.setBounds(getLocalBounds());
         auto bound = getLocalBounds().toFloat();
-        bound.removeFromRight((1 - 0.98761596f) * bound.getWidth());
+        const auto fft_max = static_cast<float>(zlp::getEQFFTMax(sample_rate_));
+        const auto slider_max = static_cast<float>(zlp::getEQFreqMax(sample_rate_));
+        const auto width_portion = std::clamp(
+            std::log(slider_max / zlp::kEQMinFreq) / std::log(fft_max / zlp::kEQMinFreq), 0.f, 1.f);
+        bound.removeFromRight((1.f - width_portion) * bound.getWidth());
         const auto filter_type = static_cast<zldsp::filter::FilterType>(filter_type_);
         switch (filter_type) {
         case zldsp::filter::FilterType::kPeak: {

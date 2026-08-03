@@ -32,6 +32,8 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
+        void updateSampleRate(double sample_rate);
+
         DraggerPanel& getDraggerPanel(const size_t band) {
             return *dragger_panels_[band];
         }
@@ -76,6 +78,8 @@ namespace zlpanel {
 
         std::atomic<float>& eq_max_db_id_ref_;
         float eq_max_db_id_{-1.f};
+        float slider_max_{static_cast<float>(zlp::getEQFreqMax(48000.0))};
+        float fft_max_{static_cast<float>(zlp::getEQFFTMax(48000.0))};
 
         zlgui::attachment::ComponentUpdater updater_;
 

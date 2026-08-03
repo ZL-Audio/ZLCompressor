@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #if !defined(ZL_MAX_OVERSAMPLE_RATE)
@@ -19,6 +21,22 @@ namespace zlp {
     inline static constexpr int kVersionHint = 1;
 
     inline static constexpr size_t kBandNum = 8;
+    inline static constexpr float kEQMinFreq = 10.f;
+    inline static constexpr float kEQMaxFreq = 160000.f;
+
+    inline double getEQFreqMax(const double sample_rate) {
+        const auto freq_max = sample_rate >= 40000.0 && sample_rate < 50000.0
+            ? 30000.0
+            : 0.5 * sample_rate;
+        return std::clamp(freq_max, static_cast<double>(kEQMinFreq), static_cast<double>(kEQMaxFreq));
+    }
+
+    inline double getEQFFTMax(const double sample_rate) {
+        const auto freq_max = sample_rate >= 40000.0 && sample_rate < 50000.0
+            ? 30000.0
+            : 0.5 * sample_rate;
+        return std::clamp(freq_max, static_cast<double>(kEQMinFreq), static_cast<double>(kEQMaxFreq));
+    }
 
     template <typename FloatType>
     inline juce::NormalisableRange<FloatType> getLogMidRange(
@@ -571,7 +589,7 @@ namespace zlp {
     public:
         auto static constexpr kID = "freq";
         auto static constexpr kName = "Freq";
-        inline auto static const kRange = getLogMidRange(10.f, 20000.f, 1000.f, 0.1f);
+        inline auto static const kRange = getLogMidRange(kEQMinFreq, kEQMaxFreq, 1000.f, 0.1f);
         auto static constexpr kDefaultV = 1000.f;
     };
 

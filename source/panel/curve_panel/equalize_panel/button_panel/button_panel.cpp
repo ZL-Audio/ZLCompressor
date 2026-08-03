@@ -134,6 +134,15 @@ namespace zlpanel {
         }
     }
 
+    void ButtonPanel::updateSampleRate(const double sample_rate) {
+        slider_max_ = static_cast<float>(zlp::getEQFreqMax(sample_rate));
+        fft_max_ = static_cast<float>(zlp::getEQFFTMax(sample_rate));
+        para_panel_.updateFreqMax(slider_max_);
+        for (auto& dragger_panel : dragger_panels_) {
+            dragger_panel->updateSampleRate(sample_rate);
+        }
+    }
+
     void ButtonPanel::updateBand() {
         if (previous_band_idx_ != selected_band_idx_) {
             turnOffSolo();
@@ -263,7 +272,9 @@ namespace zlpanel {
         const auto x = point.getX(), y = point.getY();
 
         const auto eq_max_db = zlstate::PEQMaxDB::kDBs[static_cast<size_t>(eq_max_db_id_)];
-        const auto freq = std::exp(x / bound.getWidth() * std::log(2200.f)) * 10.f;
+        const auto x_portion = std::clamp(x / bound.getWidth(), 0.f, 1.f);
+        const auto freq = std::clamp(std::exp(x_portion * std::log(fft_max_ / zlp::kEQMinFreq)) * zlp::kEQMinFreq,
+                                     zlp::kEQMinFreq, slider_max_);
         const auto gain = -(y - bound.getCentreY()) / bound.getHeight() * 2.f * eq_max_db;
 
         std::vector<float> init_values;

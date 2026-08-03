@@ -15,10 +15,12 @@ namespace zlp {
     }
 
     void EqualizeController::prepare(const double sample_rate, const size_t max_num_samples) {
+        max_freq_ = getEQFreqMax(sample_rate);
         fft_analyzer_sender_.prepare(sample_rate, max_num_samples, {2}, 0.1);
         fft_analyzer_sender_.setON(0, true);
         for (size_t i = 0; i < kBandNum; ++i) {
             filter_paras_[i] = empty_filters_[i].getParas();
+            filter_paras_[i].freq = std::min(filter_paras_[i].freq, max_freq_);
             filters_[i].prepare(sample_rate, 2, max_num_samples);
             filters_[i].updateParas(filter_paras_[i]);
         }
@@ -72,6 +74,7 @@ namespace zlp {
         for (const auto& i : on_indices_) {
             if (empty_update_flags_[i].check()) {
                 filter_paras_[i] = empty_filters_[i].getParas();
+                filter_paras_[i].freq = std::min(filter_paras_[i].freq, max_freq_);
                 filters_[i].updateParas(filter_paras_[i]);
                 if (i == c_solo_band_ && c_solo_on_) {
                     updateSoloFilter(filter_paras_[i], false);

@@ -104,6 +104,7 @@ void PluginProcessor::prepareToPlay(const double sample_rate, const int samples_
     double_buffer_.clear();
     compress_controller_.prepare(sample_rate, static_cast<size_t>(samples_per_block));
     equalize_controller_.prepare(sample_rate, static_cast<size_t>(samples_per_block));
+    sample_rate_.store(sample_rate, std::memory_order::relaxed);
     // determine current channel layout
     const auto* main_bus = getBus(true, 0);
     const auto* aux_bus = getBus(true, 1);

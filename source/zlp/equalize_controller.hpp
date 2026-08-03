@@ -126,6 +126,7 @@ namespace zlp {
         std::array<zldsp::filter::Empty, kBandNum> empty_filters_{};
         std::array<zlchore::thread::Notifier, kBandNum> empty_update_flags_{};
         std::array<zldsp::filter::FilterParameters, kBandNum> filter_paras_{};
+        double max_freq_{getEQFreqMax(48000.0)};
         zlchore::thread::Notifier to_update_filter_status_{true};
         std::array<std::atomic<FilterStatus>, kBandNum> filter_status_;
         std::array<FilterStatus, kBandNum> c_filter_status_{};

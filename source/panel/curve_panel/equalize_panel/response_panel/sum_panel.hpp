@@ -9,15 +9,17 @@
 
 #pragma once
 
-#include "../../../../PluginProcessor.hpp"
+#include <span>
+#include <vector>
+
 #include "../../../../gui/gui.hpp"
+#include "../../../../zlp/equalize_controller.hpp"
 #include "../../../helper/helper.hpp"
-#include "static_freq_array.hpp"
 
 namespace zlpanel {
     class SumPanel final : public juce::Component {
     public:
-        explicit SumPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit SumPanel(zlgui::UIBase& base);
 
         ~SumPanel() override;
 
@@ -25,16 +27,15 @@ namespace zlpanel {
 
         void resized() override;
 
-        bool run(std::array<float, kWsFloat.size()>& xs,
-                 std::array<std::array < float, kWsFloat.size()>, 8> &yss,
-                 std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
-                 const juce::Rectangle<float>& bound);
+        void run(std::span<const float> xs,
+                 const std::array<zldsp::vector::aligned_vector<float>, zlp::kBandNum>& mags,
+                 const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
+                 const juce::Rectangle<float>& bound, float max_db);
 
     private:
-        PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
 
-        zldsp::vector::aligned_vector<float> ys_{};
+        std::vector<float> ys_;
 
         BufferedUI<juce::Path> path_;
 

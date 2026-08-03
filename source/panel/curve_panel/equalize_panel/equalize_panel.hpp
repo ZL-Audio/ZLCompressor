@@ -34,6 +34,8 @@ namespace zlpanel {
 
         void repaintCallBackAfter();
 
+        void updateSampleRate(double sample_rate);
+
         auto& getFFTAnalyzerPanel() {
             return fft_analyzer_panel_;
         }
