@@ -219,9 +219,7 @@ namespace zlp {
         // lufs matcher
         std::atomic<bool> lufs_matcher_on_{false};
         bool c_lufs_matcher_on_{false};
-        // The equalizer matcher now selects its low-pass behavior at runtime.
-        // Keep it enabled here to preserve the compressor's previous matcher path.
-        zldsp::loudness::LUFSMatcher<float> lufs_matcher_{};
+        zldsp::loudness::LUFSMatcher<float> lufs_matcher_{true};
         // copy pre post flags
         bool c_copy_pre{false}, c_copy_post{false};
         // stereo control

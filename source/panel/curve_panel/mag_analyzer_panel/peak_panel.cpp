@@ -58,7 +58,7 @@ namespace zlpanel {
 
     void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel,
                         zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
-                        size_t consumer_id) {
+                        const size_t consumer_id) {
         const auto bound = atomic_bound_.load();
         const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
             analyzer_stereo_type_ref_.load(std::memory_order::relaxed)));

@@ -25,7 +25,7 @@ namespace zlgui::slider {
         static constexpr float kStartAngle = 2.0943951023931953f, kEndAngle = 7.3303828583761845f;
         std::string permitted_characters_ = "-0123456789.kK";
         std::function<std::string(double)> value_formatter_;
-        std::function<std::optional<double>(const std::string &)> string_formatter_;
+        std::function<std::optional<double>(const std::string&)> string_formatter_;
 
     private:
         class Background final : public juce::Component {
@@ -40,8 +40,7 @@ namespace zlgui::slider {
             void paint(juce::Graphics& g) override {
                 if constexpr (kOpaque) {
                     g.fillAll(base_.getBackgroundColour());
-                }
-                else {
+                } else {
                     g.setColour(base_.getBackgroundColour());
                     g.fillEllipse(getLocalBounds().toFloat());
                 }
@@ -50,8 +49,8 @@ namespace zlgui::slider {
                 bounds = bounds.withSizeKeepingCentre(diameter, diameter);
                 juce::Path mask;
                 mask.addPieSegment(bounds, kStartAngle - juce::MathConstants<float>::pi * 1.5f,
-                                   kEndAngle - juce::MathConstants<float>::pi * 1.5f,
-                                   0);
+                                     kEndAngle - juce::MathConstants<float>::pi * 1.5f,
+                                     0);
                 g.saveState();
                 g.reduceClipRegion(mask);
                 // draw knob background
@@ -85,8 +84,7 @@ namespace zlgui::slider {
                     if (show_slider2_) {
                         if (value1_ > value2_) {
                             g.setColour(base_.getColourMap2(0).withAlpha(.75f));
-                        }
-                        else {
+                        } else {
                             g.setColour(base_.getColourMap2(2).withAlpha(.75f));
                         }
                         g.fillPath(filling2_);
@@ -125,8 +123,7 @@ namespace zlgui::slider {
                                         0);
                 if (kUseSecondSlider && show_slider2_) {
                     setSlider2Value(value2_);
-                }
-                else {
+                } else {
                     repaint();
                 }
             }
@@ -191,17 +188,20 @@ namespace zlgui::slider {
                 label_.setBufferedToImage(true);
                 label_look_and_feel_.setFontScale(1.75f);
                 label_.setLookAndFeel(&label_look_and_feel_);
+                label_.setBorderSize(juce::BorderSize<int>{0});
             }
 
             label1_.setText(getDisplayValue(slider1_), juce::dontSendNotification);
             label_look_and_feel1_.setFontScale(1.5f);
             label1_.setJustificationType(juce::Justification::centredBottom);
             label1_.setLookAndFeel(&label_look_and_feel1_);
+            label1_.setBorderSize(juce::BorderSize<int>{0});
 
             if constexpr (kUseSecondSlider) {
                 label2_.setText(getDisplayValue(slider2_), juce::dontSendNotification);
                 label2_.setJustificationType(juce::Justification::centredTop);
                 label2_.setLookAndFeel(&label_look_and_feel1_);
+                label2_.setBorderSize(juce::BorderSize<int>{0});
             }
 
             for (auto& l : {&label_, &label1_, &label2_}) {
@@ -211,8 +211,7 @@ namespace zlgui::slider {
             if constexpr (kUseName) {
                 addAndMakeVisible(label_);
                 addChildComponent(label1_);
-            }
-            else {
+            } else {
                 addAndMakeVisible(label1_);
             }
 
@@ -262,8 +261,7 @@ namespace zlgui::slider {
             }
             if (event.mods.isLeftButtonDown()) {
                 slider1_.mouseUp(event);
-            }
-            else if (show_slider2_ && event.mods.isRightButtonDown()) {
+            } else if (show_slider2_ && event.mods.isRightButtonDown()) {
                 slider2_.mouseUp(event);
             }
         }
@@ -274,8 +272,7 @@ namespace zlgui::slider {
             }
             if (event.mods.isLeftButtonDown()) {
                 slider1_.mouseDown(event);
-            }
-            else if (show_slider2_ && event.mods.isRightButtonDown()) {
+            } else if (show_slider2_ && event.mods.isRightButtonDown()) {
                 slider2_.mouseDown(event);
             }
             const auto current_shift_pressed = event.mods.isShiftDown();
@@ -288,8 +285,7 @@ namespace zlgui::slider {
         void mouseDrag(const juce::MouseEvent& event) override {
             if (event.mods.isLeftButtonDown()) {
                 slider1_.mouseDrag(event);
-            }
-            else if (show_slider2_ && event.mods.isRightButtonDown()) {
+            } else if (show_slider2_ && event.mods.isRightButtonDown()) {
                 slider2_.mouseDrag(event);
             }
         }
@@ -338,16 +334,14 @@ namespace zlgui::slider {
                 if (portion < .5f || !show_slider2_) {
                     label1_.showEditor();
                     return;
-                }
-                else {
+                } else {
                     label2_.showEditor();
                     return;
                 }
             }
             if (event.mods.isLeftButtonDown()) {
                 slider1_.mouseDoubleClick(event);
-            }
-            else if (show_slider2_ && event.mods.isRightButtonDown()) {
+            } else if (show_slider2_ && event.mods.isRightButtonDown()) {
                 slider2_.mouseDoubleClick(event);
             }
         }
@@ -355,8 +349,7 @@ namespace zlgui::slider {
         void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override {
             if (!show_slider2_) {
                 slider1_.mouseWheelMove(event, wheel);
-            }
-            else {
+            } else {
                 slider1_.mouseWheelMove(event, wheel);
                 slider2_.mouseWheelMove(event, wheel);
             }
@@ -400,8 +393,7 @@ namespace zlgui::slider {
                 label2_.setVisible(true);
                 label2_.setBounds(valueBound2.toNearestInt());
                 label2_.setJustificationType(juce::Justification::centredTop);
-            }
-            else {
+            } else {
                 label_bound = label_bound.withSizeKeepingCentre(label_bound.getWidth(), label_bound.getHeight() * .5f);
                 label1_.setBounds(label_bound.toNearestInt());
                 label2_.setVisible(false);
@@ -462,8 +454,7 @@ namespace zlgui::slider {
             char buffer[32];
             if (std::abs(value) < 1.0) {
                 snprintf(buffer, sizeof(buffer), "%.*f", actual_precision - 1, display_value);
-            }
-            else {
+            } else {
                 snprintf(buffer, sizeof(buffer), "%.*g", actual_precision, display_value);
             }
             std::string str{buffer};
@@ -500,10 +491,20 @@ namespace zlgui::slider {
                 }
             }
 
-            editor.setJustification(juce::Justification::centred);
-            editor.setColour(juce::TextEditor::outlineColourId, base_.getTextColour());
+            if (l != nullptr) {
+                editor.setJustification(l->getJustificationType());
+            } else {
+                editor.setJustification(juce::Justification::centred);
+            }
+            editor.setIndents(2, 0);
+            editor.setBorder(juce::BorderSize<int>{0});
+            editor.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
+            editor.setColour(juce::TextEditor::focusedOutlineColourId, base_.getTextColour().withAlpha(.5f));
             editor.setColour(juce::TextEditor::highlightedTextColourId, base_.getTextColour());
-            editor.applyFontToAllText(juce::FontOptions{base_.getFontSize() * kFontHuge});
+            
+            const juce::FontOptions font_opt{base_.getFontSize() * kFontHuge};
+            editor.setFont(font_opt);
+            editor.applyFontToAllText(font_opt);
             editor.applyColourToAllText(base_.getTextColour(), true);
         }
 
@@ -516,8 +517,7 @@ namespace zlgui::slider {
             double actual_value;
             if (format_result != std::nullopt) {
                 actual_value = format_result.value();
-            }
-            else {
+            } else {
                 const auto k = ctext.contains("k") || ctext.contains("K") ? 1000.0 : 1.0;
                 actual_value = ctext.getDoubleValue() * k;
             }
@@ -561,8 +561,7 @@ namespace zlgui::slider {
             if (is_shift_pressed_) {
                 actual_drag_distance = juce::roundToInt(
                     static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDragFine));
-            }
-            else {
+            } else {
                 actual_drag_distance = juce::roundToInt(
                     static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDrag));
             }
