@@ -65,7 +65,9 @@ namespace zldsp::compressor {
                     square_sum_ -= static_cast<double>(square_buffer_.popFront());
                 }
                 if (c_buffer_size_ == 1) {
-                    square_sum_ = static_cast<double>(square_buffer_.getFront());
+                    square_sum_ = square_buffer_.isEmpty()
+                                      ? 0.0
+                                      : static_cast<double>(square_buffer_.getFront());
                 }
             }
         }

@@ -31,21 +31,23 @@ namespace zldsp::container {
 
         void setCapacity(const size_t capacity) {
             minmax_buffer_.setCapacity(capacity);
+            clear();
         }
 
         void setSize(const size_t x) {
             size_ = static_cast<unsigned long long>(x);
-            if (static_cast<unsigned long long>(x) < count_) {
-                while (!minmax_buffer_.isEmpty() && minmax_buffer_.getFront().second <= head_ - count_) {
-                    minmax_buffer_.popFront();
-                }
+            count_ = std::min(count_, size_);
+            while (!minmax_buffer_.isEmpty() && minmax_buffer_.getFront().second <= head_ - count_) {
+                minmax_buffer_.popFront();
             }
         }
 
         [[nodiscard]] size_t getSize() const { return size_; }
 
         void clear() {
+            head_ = 0;
             count_ = 0;
+            minmax_buffer_.clear();
         }
 
         T push(T x) {

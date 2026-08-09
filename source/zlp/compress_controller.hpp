@@ -345,7 +345,7 @@ namespace zlp {
                            float* __restrict side_buffer0, float* __restrict side_buffer1,
                            size_t num_samples, bool bypass);
 
-        template <bool is_range_inf, bool stereo_swap>
+        template <bool stereo_swap>
         void appleSideBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
                              float* __restrict side_buffer0, float* __restrict side_buffer1,
                              size_t num_samples) const;

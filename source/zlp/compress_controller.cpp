@@ -33,7 +33,8 @@ namespace zlp {
         post_pointers_[1] = post_buffer_[1].data();
         // allocate memories for up to max oversampling
         for (auto& t : rms_tracker_) {
-            t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f * static_cast<float>(1 << ZL_MAX_OVERSAMPLE_RATE) + 0.001f);
+            t.setMaximumMomentarySeconds(
+                zlp::PRMSLength::kRange.end / 1000.f * static_cast<float>(1 << ZL_MAX_OVERSAMPLE_RATE) + 0.001f);
             t.prepare(sample_rate);
             t.setMaximumMomentarySeconds(zlp::PRMSLength::kRange.end / 1000.f + 0.001f);
         }
@@ -192,6 +193,7 @@ namespace zlp {
             for (auto& t : rms_tracker_) {
                 t.prepare(oversample_sr_);
             }
+            to_update_style_.signal();
             // prepare the hold buffer with the multiplied samplerate
             for (auto& h : hold_buffer_) {
                 h.setCapacity(static_cast<size_t>(oversample_sr_));
@@ -234,8 +236,10 @@ namespace zlp {
 
         // load compressor style, reset the internal state if different
         if (to_update_style_.check()) {
+            const auto previous_direction = c_direction_;
             c_comp_style_ = comp_style_.load(std::memory_order::relaxed);
             c_direction_ = direction_.load(std::memory_order::relaxed);
+            const auto direction_changed = c_direction_ != previous_direction;
             c_is_downward_ = (c_direction_ == PCompDirection::kCompress
                 || c_direction_ == PCompDirection::kExpand);
             if (c_direction_ == PCompDirection::kCompress) {
@@ -272,6 +276,12 @@ namespace zlp {
             }
             default:
                 break;
+            }
+            zldsp::compressor::CleanCompressor<float>::reset(rms_follower_[0]);
+            zldsp::compressor::CleanCompressor<float>::reset(rms_follower_[1]);
+            if (direction_changed) {
+                hold_buffer_[0].clear();
+                hold_buffer_[1].clear();
             }
         }
 
@@ -368,7 +378,8 @@ namespace zlp {
         std::array<float*, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
         switch (c_oversample_idx_) {
         case 0: {
-            processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples, bypass);
+            processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples,
+                          bypass);
             break;
         }
 #if ZL_MAX_OVERSAMPLE_RATE >= 1
@@ -586,18 +597,10 @@ namespace zlp {
             }
         }
         // process wet values and convert decibel to gain, apply stereo swap
-        if (c_is_range_inf_) {
-            if (c_stereo_swap_) {
-                appleSideBuffer<true, true>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
-            } else {
-                appleSideBuffer<true, false>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
-            }
+        if (c_stereo_swap_) {
+            appleSideBuffer<true>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
         } else {
-            if (c_stereo_swap_) {
-                appleSideBuffer<false, true>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
-            } else {
-                appleSideBuffer<false, false>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
-            }
+            appleSideBuffer<false>(main_buffer0, main_buffer1, side_buffer0, side_buffer1, num_samples);
         }
         // apply clipper
         clipper_.prepareBuffer();
@@ -607,7 +610,7 @@ namespace zlp {
         }
     }
 
-    template <bool is_range_inf, bool stereo_swap>
+    template <bool stereo_swap>
     void CompressController::appleSideBuffer(float* __restrict main_buffer0, float* __restrict main_buffer1,
                                              float* __restrict side_buffer0, float* __restrict side_buffer1,
                                              const size_t num_samples) const {
@@ -615,23 +618,25 @@ namespace zlp {
         static constexpr size_t lanes = hn::MaxLanes(d);
         static constexpr float kLn10 = 2.30258509299404568402f;
 
-        const float wet1 = c_is_downward_ ? c_wet1_ * kLn10: -c_wet1_* kLn10;
-        const float wet2 = c_is_downward_ ? c_wet2_ * kLn10: -c_wet2_ * kLn10;
+        const float wet1 = c_is_downward_ ? c_wet1_ * kLn10 : -c_wet1_ * kLn10;
+        const float wet2 = c_is_downward_ ? c_wet2_ * kLn10 : -c_wet2_ * kLn10;
 
         const auto v_wet1 = hn::Set(d, wet1);
         const auto v_wet2 = hn::Set(d, wet2);
-        const auto v_neg_range = hn::Set(d, -c_range_);
+        const auto range_low = c_is_range_inf_ ? -240.f : -c_range_;
+        const auto range_high = c_is_range_inf_ ? 40.f : std::min(40.f, c_range_);
+
+        const auto v_neg_range = hn::Set(d, range_low);
+        const auto v_pos_range = hn::Set(d, range_high);
 
         size_t i = 0;
         for (; i + lanes <= num_samples; i += lanes) {
             auto v_side0 = hn::LoadU(d, side_buffer0 + i);
             auto v_side1 = hn::LoadU(d, side_buffer1 + i);
-            if constexpr (!is_range_inf) {
-                v_side0 = hn::Max(v_side0, v_neg_range);
-                v_side1 = hn::Max(v_side1, v_neg_range);
-            }
-            v_side0 = hn::CallExp(d, hn::Mul(v_side0, v_wet1));
-            v_side1 = hn::CallExp(d, hn::Mul(v_side1, v_wet2));
+            v_side0 = hn::Clamp(v_side0, v_neg_range, v_pos_range);
+            v_side0 = hn::Exp(d, hn::Mul(v_side0, v_wet1));
+            v_side1 = hn::Clamp(v_side1, v_neg_range, v_pos_range);
+            v_side1 = hn::Exp(d, hn::Mul(v_side1, v_wet2));
             auto v_main0 = hn::LoadU(d, main_buffer0 + i);
             auto v_main1 = hn::LoadU(d, main_buffer1 + i);
             if constexpr (stereo_swap) {
@@ -648,11 +653,9 @@ namespace zlp {
         for (; i < num_samples; ++i) {
             float s0 = side_buffer0[i];
             float s1 = side_buffer1[i];
-            if constexpr (!is_range_inf) {
-                s0 = std::max(s0, -c_range_);
-                s1 = std::max(s1, -c_range_);
-            }
+            s0 = std::clamp(s0, range_low, range_high);
             s0 = std::exp(s0 * wet1);
+            s1 = std::clamp(s1, range_low, range_high);
             s1 = std::exp(s1 * wet2);
             float m0 = main_buffer0[i];
             float m1 = main_buffer1[i];
