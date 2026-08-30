@@ -76,7 +76,7 @@ namespace zlpanel {
             auto paras = empty_filters_[band].getParas();
             paras.freq = std::min(paras.freq, slider_max_);
             filters_[band].forceUpdate(paras);
-            filters_[band].updateMagnitudeSquare(std::span<const float>(ws_.data(), ws_.size()), mags_[band]);
+            filters_[band].updateMagnitudeSquare(ws_, mags_[band]);
             zldsp::vector::sqr_mag_to_db(mags_[band].data(), mags_[band].size());
             single_panels_[band]->run(std::span<const float>(xs_.data(), xs_.size()),
                                       std::span<const float>(mags_[band].data(), mags_[band].size()),

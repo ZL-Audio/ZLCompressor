@@ -92,7 +92,7 @@ namespace zldsp::filter {
             return gains[0];
         }
 
-        void updateMagnitudeSquare(std::span<const FloatType> ws, std::span<FloatType> gains) const {
+        void updateMagnitudeSquare(std::span<FloatType> ws, std::span<FloatType> gains) const {
             if (current_filter_num_ == 0) {
                 std::fill(gains.begin(), gains.end(), static_cast<FloatType>(1.0));
                 return;
