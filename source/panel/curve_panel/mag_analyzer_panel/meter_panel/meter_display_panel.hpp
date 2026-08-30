@@ -27,7 +27,7 @@ namespace zlpanel {
         void paint(juce::Graphics& g) override;
 
         void run(double next_time_stamp,
-                 zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
                  size_t consumer_id);
 
         void resized() override;

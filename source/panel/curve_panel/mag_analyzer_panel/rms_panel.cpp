@@ -34,7 +34,8 @@ namespace zlpanel {
     }
 
     void RMSPanel::run(const double sample_rate, const zldsp::container::FIFORange range,
-                       zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer) {
+                       zldsp::analyzer::FIFOTransferBuffer<
+                           zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer) {
         const auto bound = atomic_bound_.load();
         if (std::abs(bound.getHeight() - height_) > .1f) {
             height_ = bound.getHeight();
@@ -65,8 +66,10 @@ namespace zlpanel {
                 receiver->reset();
             }
         }
-        in_receiver_.run(range, transfer_buffer.getSampleFIFOs()[0]);
-        if (out_receiver_.run(range, transfer_buffer.getSampleFIFOs()[2])) {
+        in_receiver_.run(range,
+                         transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream]);
+        if (out_receiver_.run(range,
+                              transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPostStream])) {
             in_receiver_.updateHeight(bound.getWidth(), in_xs_);
             out_receiver_.updateHeight(bound.getWidth(), out_xs_);
 

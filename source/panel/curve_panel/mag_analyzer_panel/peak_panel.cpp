@@ -13,6 +13,8 @@ namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor& p, zlgui::UIBase& base) :
         base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
+        side_chain_curve_display_ref_(*p.na_parameters_.getRawParameterValue(
+            zlstate::PSideChainCurveDisplay::kID)),
         analyzer_stereo_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
@@ -22,6 +24,9 @@ namespace zlpanel {
             path.preallocateSpace(preallocateSpace);
         }
         for (auto& path : out_path_.get_buffer()) {
+            path.preallocateSpace(preallocateSpace);
+        }
+        for (auto& path : side_chain_path_.get_buffer()) {
             path.preallocateSpace(preallocateSpace);
         }
         for (auto& path : reduction_path_.get_buffer()) {
@@ -35,9 +40,17 @@ namespace zlpanel {
     void PeakPanel::paint(juce::Graphics& g) {
         in_path_.pull();
         out_path_.pull();
+        side_chain_path_.pull();
         reduction_path_.pull();
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPreColour));
         g.fillPath(in_path_.get_reader());
+        if (side_chain_curve_display_ref_.load(std::memory_order::relaxed) > .5f) {
+            g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kSideChainColour));
+            g.strokePath(side_chain_path_.get_reader(),
+                         juce::PathStrokeType(curve_thickness_,
+                                              juce::PathStrokeType::curved,
+                                              juce::PathStrokeType::rounded));
+        }
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPostColour));
         g.strokePath(out_path_.get_reader(),
                      juce::PathStrokeType(curve_thickness_,
@@ -57,7 +70,7 @@ namespace zlpanel {
     }
 
     void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel,
-                        zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+                        zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
                         const size_t consumer_id) {
         const auto bound = atomic_bound_.load();
         const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
@@ -88,6 +101,7 @@ namespace zlpanel {
             xs_.resize(num_points_ + 2);
             pre_ys_.resize(num_points_ + 2);
             out_ys_.resize(num_points_ + 2);
+            side_chain_ys_.resize(num_points_ + 2);
             reduction_ys_.resize(num_points_ + 2);
         }
 
@@ -100,11 +114,22 @@ namespace zlpanel {
                     const auto range = fifo.prepareToRead(consumer_id, num_samples_per_point_);
                     rms_panel.run(sample_rate_, range, transfer_buffer);
                     pre_db_ = zldsp::analyzer::MagReceiver::calculate(
-                        range, transfer_buffer.getSampleFIFOs()[0], mag_type, stereo_type);
+                        range,
+                        transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
+                        mag_type, stereo_type);
                     out_db_ = zldsp::analyzer::MagReceiver::calculate(
-                        range, transfer_buffer.getSampleFIFOs()[2], mag_type, stereo_type);
+                        range,
+                        transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPostStream],
+                        mag_type, stereo_type);
+                    side_chain_db_ = zldsp::analyzer::MagReceiver::calculate(
+                        range,
+                        transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerSideChainStream],
+                        mag_type, stereo_type);
                     reduction_db_ = zldsp::analyzer::MagReductionReceiver::calculateReduction(
-                        range, transfer_buffer.getSampleFIFOs()[0], transfer_buffer.getSampleFIFOs()[1], stereo_type);
+                        range,
+                        transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
+                        transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerCompressedStream],
+                        stereo_type);
                     fifo.finishRead(consumer_id, num_samples_per_point_);
                     num_missing_points_ = 0;
                 } else {
@@ -115,6 +140,7 @@ namespace zlpanel {
                             pre_ys_.size() - static_cast<size_t>(kPausedThreshold));
                         std::ranges::fill(pre_ys_.begin() + shift, pre_ys_.end(), 10000.f);
                         std::ranges::fill(out_ys_.begin() + shift, out_ys_.end(), 10000.f);
+                        std::ranges::fill(side_chain_ys_.begin() + shift, side_chain_ys_.end(), 10000.f);
                         std::ranges::fill(reduction_ys_.begin() + shift, reduction_ys_.end(), 0.f);
                     }
                 }
@@ -125,6 +151,8 @@ namespace zlpanel {
                     pre_ys_.back() = too_many_missing ? 10000.f : pre_db_ * scale;
                     std::ranges::rotate(out_ys_, out_ys_.begin() + 1);
                     out_ys_.back() = too_many_missing ? 10000.f : out_db_ * scale;
+                    std::ranges::rotate(side_chain_ys_, side_chain_ys_.begin() + 1);
+                    side_chain_ys_.back() = too_many_missing ? 10000.f : side_chain_db_ * scale;
                     std::ranges::rotate(reduction_ys_, reduction_ys_.begin() + 1);
                     reduction_ys_.back() = too_many_missing ? 0.f : reduction_db_ * scale;
                 }
@@ -149,6 +177,7 @@ namespace zlpanel {
                 start_time_ = next_time_stamp;
                 std::ranges::fill(pre_ys_, 100000.f);
                 std::ranges::fill(out_ys_, 100000.f);
+                std::ranges::fill(side_chain_ys_, 100000.f);
                 std::ranges::fill(reduction_ys_, 0.f);
             }
         }
@@ -174,6 +203,7 @@ namespace zlpanel {
             }
             in_path_.publish();
             out_path_.publish();
+            side_chain_path_.publish();
             reduction_path_.publish();
         }
     }
@@ -182,19 +212,23 @@ namespace zlpanel {
     void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
         auto& next_in_path{in_path_.get_writer()};
         auto& next_out_path{out_path_.get_writer()};
+        auto& next_side_chain_path{side_chain_path_.get_writer()};
         auto& next_reduction_path{reduction_path_.get_writer()};
         next_in_path.clear();
         next_out_path.clear();
+        next_side_chain_path.clear();
         next_reduction_path.clear();
 
         next_in_path.startNewSubPath(xs_[0], bound.getBottom());
         next_in_path.lineTo(xs_[0], pre_ys_[0]);
         next_out_path.startNewSubPath(xs_[0], out_ys_[0]);
+        next_side_chain_path.startNewSubPath(xs_[0], side_chain_ys_[0]);
         next_reduction_path.startNewSubPath(xs_[0], reduction_ys_[0]);
         const auto center_y = bound.getCentreY();
         for (size_t i = 1; i < xs_.size(); ++i) {
             next_in_path.lineTo(xs_[i], pre_ys_[i]);
             next_out_path.lineTo(xs_[i], out_ys_[i]);
+            next_side_chain_path.lineTo(xs_[i], side_chain_ys_[i]);
             if constexpr (center) {
                 next_reduction_path.lineTo(xs_[i], reduction_ys_[i] + center_y);
             } else {

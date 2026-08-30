@@ -48,7 +48,7 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         std::atomic<float>& meter_display_ref_;
 
-        zldsp::analyzer::FIFOTransferBuffer<3> transfer_buffer_{};
+        zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum> transfer_buffer_{};
 
         size_t peak_consumer_id_{0}, meter_consumer_id_{1};
 

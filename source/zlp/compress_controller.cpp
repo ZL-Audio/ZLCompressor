@@ -16,8 +16,8 @@ namespace zlp {
 
     void CompressController::prepare(const double sample_rate, const size_t max_num_samples) {
         sample_rate_ = sample_rate;
-        mag_analyzer_sender_.prepare(sample_rate, max_num_samples, {2, 2, 2}, 0.1);
-        for (size_t i = 0; i < 3; ++i) {
+        mag_analyzer_sender_.prepare(sample_rate, max_num_samples, {2, 2, 2, 2}, 0.1);
+        for (size_t i = 0; i < kAnalyzerStreamNum; ++i) {
             mag_analyzer_sender_.setON(i, true);
         }
         lufs_matcher_.prepare(sample_rate, 2);
@@ -31,6 +31,10 @@ namespace zlp {
         post_buffer_[1].resize(max_num_samples);
         post_pointers_[0] = post_buffer_[0].data();
         post_pointers_[1] = post_buffer_[1].data();
+        analyzer_side_buffer_[0].resize(max_num_samples);
+        analyzer_side_buffer_[1].resize(max_num_samples);
+        analyzer_side_pointers_[0] = analyzer_side_buffer_[0].data();
+        analyzer_side_pointers_[1] = analyzer_side_buffer_[1].data();
         // allocate memories for up to max oversampling
         for (auto& t : rms_tracker_) {
             t.setMaximumMomentarySeconds(
@@ -61,24 +65,24 @@ namespace zlp {
 #endif
 
 #if ZL_MAX_OVERSAMPLE_RATE == 0
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2, 0.f);
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4, 0.f);
 #elif ZL_MAX_OVERSAMPLE_RATE == 1
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4,
                                   static_cast<float>(over_sampler2_.getLatency()) / static_cast<float>(sample_rate));
 #elif ZL_MAX_OVERSAMPLE_RATE == 2
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4,
                                   static_cast<float>(over_sampler4_.getLatency()) / static_cast<float>(sample_rate));
 #elif ZL_MAX_OVERSAMPLE_RATE == 3
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4,
                                   static_cast<float>(over_sampler8_.getLatency()) / static_cast<float>(sample_rate));
 #elif ZL_MAX_OVERSAMPLE_RATE == 4
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4,
                                   static_cast<float>(over_sampler16_.getLatency()) / static_cast<float>(sample_rate));
 #elif ZL_MAX_OVERSAMPLE_RATE == 5
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4,
                                   static_cast<float>(over_sampler32_.getLatency()) / static_cast<float>(sample_rate));
 #elif ZL_MAX_OVERSAMPLE_RATE == 6
-        oversample_delay_.prepare(sample_rate, max_num_samples, 2,
+        oversample_delay_.prepare(sample_rate, max_num_samples, 4,
                                   static_cast<float>(over_sampler64_.getLatency()) / static_cast<float>(sample_rate));
 #endif
         oversample_delay_.setDelayInSamples(0);
@@ -361,6 +365,9 @@ namespace zlp {
             break;
         }
         }
+        if (c_mag_analyzer_on_) {
+            zldsp::vector::copy<float>(analyzer_side_pointers_, side_pointers, num_samples);
+        }
         // process the pre lufs matcher
         if (c_lufs_matcher_on_) {
             lufs_matcher_.processPre(main_pointers, num_samples);
@@ -376,6 +383,8 @@ namespace zlp {
         }
         // upsample side buffer
         std::array<float*, 4> pointers{main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1]};
+        std::array<float*, 4> analyzer_pointers{
+            pre_pointers_[0], pre_pointers_[1], analyzer_side_pointers_[0], analyzer_side_pointers_[1]};
         switch (c_oversample_idx_) {
         case 0: {
             processBuffer(main_pointers[0], main_pointers[1], side_pointers[0], side_pointers[1], num_samples,
@@ -388,7 +397,9 @@ namespace zlp {
             auto& os_pointers = over_sampler2_.getOSPointer();
             processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 1, bypass);
             over_sampler2_.downsample(pointers, num_samples);
-            oversample_delay_.process(pre_pointers_, num_samples);
+            if (c_copy_pre) {
+                oversample_delay_.process(analyzer_pointers, num_samples);
+            }
             break;
         }
 #endif
@@ -398,7 +409,9 @@ namespace zlp {
             auto& os_pointers = over_sampler4_.getOSPointer();
             processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 2, bypass);
             over_sampler4_.downsample(pointers, num_samples);
-            oversample_delay_.process(pre_pointers_, num_samples);
+            if (c_copy_pre) {
+                oversample_delay_.process(analyzer_pointers, num_samples);
+            }
             break;
         }
 #endif
@@ -408,7 +421,9 @@ namespace zlp {
             auto& os_pointers = over_sampler8_.getOSPointer();
             processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 3, bypass);
             over_sampler8_.downsample(pointers, num_samples);
-            oversample_delay_.process(pre_pointers_, num_samples);
+            if (c_copy_pre) {
+                oversample_delay_.process(analyzer_pointers, num_samples);
+            }
             break;
         }
 #endif
@@ -418,7 +433,9 @@ namespace zlp {
             auto& os_pointers = over_sampler16_.getOSPointer();
             processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 4, bypass);
             over_sampler16_.downsample(pointers, num_samples);
-            oversample_delay_.process(pre_pointers_, num_samples);
+            if (c_copy_pre) {
+                oversample_delay_.process(analyzer_pointers, num_samples);
+            }
             break;
         }
 #endif
@@ -428,7 +445,9 @@ namespace zlp {
             auto& os_pointers = over_sampler32_.getOSPointer();
             processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 5, bypass);
             over_sampler32_.downsample(pointers, num_samples);
-            oversample_delay_.process(pre_pointers_, num_samples);
+            if (c_copy_pre) {
+                oversample_delay_.process(analyzer_pointers, num_samples);
+            }
             break;
         }
 #endif
@@ -438,7 +457,9 @@ namespace zlp {
             auto& os_pointers = over_sampler64_.getOSPointer();
             processBuffer(os_pointers[0], os_pointers[1], os_pointers[2], os_pointers[3], num_samples << 6, bypass);
             over_sampler64_.downsample(pointers, num_samples);
-            oversample_delay_.process(pre_pointers_, num_samples);
+            if (c_copy_pre) {
+                oversample_delay_.process(analyzer_pointers, num_samples);
+            }
             break;
         }
 #endif
@@ -460,7 +481,8 @@ namespace zlp {
         }
         // mag analyzer
         if (c_mag_analyzer_on_) {
-            mag_analyzer_sender_.process({pre_pointers_, post_pointers_, main_pointers}, num_samples);
+            mag_analyzer_sender_.process(
+                {pre_pointers_, post_pointers_, main_pointers, analyzer_side_pointers_}, num_samples);
         }
         // delta
         if (c_is_delta_) {

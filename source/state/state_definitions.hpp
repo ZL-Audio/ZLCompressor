@@ -192,6 +192,13 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
+    class PSideChainCurveDisplay : public BoolParameters<PSideChainCurveDisplay> {
+    public:
+        auto static constexpr kID = "side_chain_curve_display";
+        auto static constexpr kName = "";
+        auto static constexpr kDefaultV = false;
+    };
+
     class PRMSAnalyzerDisplay : public ChoiceParameters<PRMSAnalyzerDisplay> {
     public:
         auto static constexpr kID = "rms_analyzer_display";
@@ -218,7 +225,8 @@ namespace zlstate {
                    PAnalyzerMagType::get(), PAnalyzerMinDB::get(), PAnalyzerTimeLength::get(),
                    PAnalyzerStereo::get(),
                    PSideControlDisplay::get(), PSideEQDisplay::get(),
-                   PComputerCurveDisplay::get(), PRMSAnalyzerDisplay::get(), PMeterDisplay::get());
+                   PComputerCurveDisplay::get(), PSideChainCurveDisplay::get(),
+                   PRMSAnalyzerDisplay::get(), PMeterDisplay::get());
         return layout;
     }
 
@@ -464,10 +472,10 @@ namespace zlstate {
         }
     }
 
-    static constexpr std::array<std::string_view, 9> kColourNames{
+    static constexpr std::array<std::string_view, 10> kColourNames{
         "text", "background",
         "shadow", "glow",
-        "pre", "post", "reduction",
+        "pre", "post", "reduction", "sidechain",
         "computer", "grid"
     };
 
@@ -477,7 +485,7 @@ namespace zlstate {
         float opacity;
     };
 
-    static constexpr std::array<ColourDefaultSetting, 9> kColourDefaults{
+    static constexpr std::array<ColourDefaultSetting, 10> kColourDefaults{
         ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, 1.f},
         ColourDefaultSetting{(255 - 214) / 2, (255 - 223) / 2, (255 - 236) / 2, true, 1.f},
         ColourDefaultSetting{0, 0, 0, true, 1.f},
@@ -485,6 +493,7 @@ namespace zlstate {
         ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, .25f},
         ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, 1.f},
         ColourDefaultSetting{252, 18, 197, true, 1.f},
+        ColourDefaultSetting{23, 255, 244, true, 1.f},
         ColourDefaultSetting{255, 165, 0, true, 1.f},
         ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, .1f}
     };

@@ -30,6 +30,11 @@ namespace zlp {
     public:
         static constexpr size_t kAnalyzerPointNum = 251;
         static constexpr size_t kAvgAnalyzerPointNum = 120;
+        static constexpr size_t kAnalyzerPreStream = 0;
+        static constexpr size_t kAnalyzerCompressedStream = 1;
+        static constexpr size_t kAnalyzerPostStream = 2;
+        static constexpr size_t kAnalyzerSideChainStream = 3;
+        static constexpr size_t kAnalyzerStreamNum = 4;
 
         explicit CompressController(juce::AudioProcessor& processor);
 
@@ -204,8 +209,8 @@ namespace zlp {
     private:
         juce::AudioProcessor& processor_ref_;
         double sample_rate_{48000.0};
-        std::array<zldsp::vector::aligned_vector<float>, 2> pre_buffer_, post_buffer_;
-        std::array<float*, 2> pre_pointers_{}, post_pointers_{};
+        std::array<zldsp::vector::aligned_vector<float>, 2> pre_buffer_, post_buffer_, analyzer_side_buffer_;
+        std::array<float*, 2> pre_pointers_{}, post_pointers_{}, analyzer_side_pointers_{};
         // global parameter update flag
         zlchore::thread::Notifier to_update_{true};
         // on and delta
@@ -215,7 +220,7 @@ namespace zlp {
         // magnitude analyzer
         std::atomic<bool> mag_analyzer_on_{true};
         bool c_mag_analyzer_on_{true};
-        zldsp::analyzer::AnalyzerSenderBase<float, 3> mag_analyzer_sender_{};
+        zldsp::analyzer::AnalyzerSenderBase<float, kAnalyzerStreamNum> mag_analyzer_sender_{};
         // lufs matcher
         std::atomic<bool> lufs_matcher_on_{false};
         bool c_lufs_matcher_on_{false};

@@ -72,13 +72,19 @@ namespace zlpanel {
                          tooltip_helper.getToolTipText(multilingual::kSideOut)),
         side_out_attachment_(side_out_button_.getButton(), p.parameters_,
                              zlp::PSideOut::kID, updater_),
+        side_chain_curve_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_computer_svg,
+                                                                       BinaryData::dline_computer_svgSize)),
+        side_chain_curve_button_(base_, side_chain_curve_drawable_.get(), side_chain_curve_drawable_.get(),
+                                 ""),
+        side_chain_curve_attachment_(side_chain_curve_button_.getButton(), p.na_parameters_,
+                                     zlstate::PSideChainCurveDisplay::kID, updater_),
         eq_bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
                                                                 BinaryData::bypass_svgSize)),
         eq_bypass_button_(base_, eq_bypass_drawable_.get(), eq_bypass_drawable_.get(),
                           ""),
         eq_bypass_attachment_(eq_bypass_button_.getButton(), p.parameters_,
                               zlp::PSideEQBypass::kID, updater_) {
-        for (auto &b: {&stereo_swap_button_, &ext_side_button_, &side_out_button_}) {
+        for (auto &b: {&stereo_swap_button_, &ext_side_button_, &side_out_button_, &side_chain_curve_button_}) {
             b->setImageAlpha(.5f, .75f, 1.f, 1.f);
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
@@ -200,6 +206,7 @@ namespace zlpanel {
             const auto spacing = (t_bound.getWidth() - 2 * button_height) / 3;
             t_bound.removeFromLeft(spacing);
             t_bound.removeFromRight(spacing);
+            side_chain_curve_button_.setBounds(t_bound.removeFromLeft(button_height));
             eq_bypass_button_.setBounds(t_bound.removeFromRight(button_height));
         }
 

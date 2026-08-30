@@ -30,7 +30,7 @@ namespace zlpanel {
         void paint(juce::Graphics& g) override;
 
         void run(double next_time_stamp, RMSPanel& rms_panel,
-            zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+            zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
             size_t consumer_id);
 
         void resized() override;
@@ -42,6 +42,7 @@ namespace zlpanel {
         zlgui::UIBase& base_;
 
         std::atomic<float>& comp_direction_ref_;
+        std::atomic<float>& side_chain_curve_display_ref_;
         std::atomic<float>& analyzer_stereo_type_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
         std::atomic<float>& analyzer_min_db_ref_;
@@ -49,9 +50,9 @@ namespace zlpanel {
 
         AtomicBound<float> atomic_bound_;
 
-        float pre_db_{-240.f}, out_db_{-240.f}, reduction_db_{0.f};
-        zldsp::vector::aligned_vector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{};
-        BufferedUI<juce::Path> in_path_, out_path_, reduction_path_;
+        float pre_db_{-240.f}, out_db_{-240.f}, side_chain_db_{-240.f}, reduction_db_{0.f};
+        zldsp::vector::aligned_vector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{}, side_chain_ys_{};
+        BufferedUI<juce::Path> in_path_, out_path_, side_chain_path_, reduction_path_;
 
         float curve_thickness_{0.f};
 

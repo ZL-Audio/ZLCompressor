@@ -105,7 +105,7 @@ namespace zlpanel {
     }
 
     void MeterDisplayPanel::run(const double next_time_stamp,
-                                zldsp::analyzer::FIFOTransferBuffer<3>& transfer_buffer,
+                                zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
                                 const size_t consumer_id) {
         if (is_first_point_) {
             is_first_point_ = false;
@@ -130,9 +130,14 @@ namespace zlpanel {
             : std::min(num_ready, delta_num_samples);
 
         const auto range = fifo.prepareToRead(consumer_id, num_to_read);
-        reduction_receiver_.run(range, transfer_buffer.getSampleFIFOs()[0], transfer_buffer.getSampleFIFOs()[1]);
-        pre_receiver_.run(range, transfer_buffer.getSampleFIFOs()[0], mag_type);
-        out_receiver_.run(range, transfer_buffer.getSampleFIFOs()[2], mag_type);
+        reduction_receiver_.run(
+            range,
+            transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
+            transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerCompressedStream]);
+        pre_receiver_.run(
+            range, transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream], mag_type);
+        out_receiver_.run(
+            range, transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPostStream], mag_type);
         fifo.finishRead(consumer_id, num_to_read);
 
         const auto& reduction_dbs{reduction_receiver_.getReductions()};

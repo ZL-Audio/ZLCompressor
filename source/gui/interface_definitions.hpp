@@ -23,6 +23,7 @@ namespace zlgui {
         kPreColour,
         kPostColour,
         kReductionColour,
+        kSideChainColour,
         kComputerColour,
         kGridColour,
         kColourNum
