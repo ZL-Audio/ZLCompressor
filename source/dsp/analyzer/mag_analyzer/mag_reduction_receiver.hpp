@@ -19,23 +19,27 @@ namespace zldsp::analyzer {
 
         void run(const zldsp::container::FIFORange range,
                  const std::vector<std::vector<float>>& pre_fifo,
-                 const std::vector<std::vector<float>>& post_fifo) {
-            assert(pre_fifo.size() == post_fifo.size());
-            reductions_.resize(pre_fifo.size());
+                 const std::vector<std::vector<float>>& post_fifo,
+                 const MagType mag_type) {
+            pre_receiver_.run(range, pre_fifo, mag_type);
+            post_receiver_.run(range, post_fifo, mag_type);
 
-            for (size_t chan = 0; chan < pre_fifo.size(); ++chan) {
-                const float pre_ms  = MagAnalyzerOps::calculateMS(range, pre_fifo[chan]);
-                const float post_ms = MagAnalyzerOps::calculateMS(range, post_fifo[chan]);
-                reductions_[chan] = chore::squareGainToDecibels(post_ms) - chore::squareGainToDecibels(pre_ms);
+            const auto& pre_dbs = pre_receiver_.getDBs();
+            const auto& post_dbs = post_receiver_.getDBs();
+            assert(pre_dbs.size() == post_dbs.size());
+            reductions_.resize(pre_dbs.size());
+            for (size_t chan = 0; chan < reductions_.size(); ++chan) {
+                reductions_[chan] = post_dbs[chan] - pre_dbs[chan];
             }
         }
 
         static float calculateReduction(const zldsp::container::FIFORange range,
                                         const std::vector<std::vector<float>>& pre_fifo,
                                         const std::vector<std::vector<float>>& post_fifo,
+                                        const MagType mag_type,
                                         const StereoType stereo_type) {
-            const float pre_db = MagReceiver::calculate(range, pre_fifo, MagType::kRMS, stereo_type);
-            const float post_db = MagReceiver::calculate(range, post_fifo, MagType::kRMS, stereo_type);
+            const float pre_db = MagReceiver::calculate(range, pre_fifo, mag_type, stereo_type);
+            const float post_db = MagReceiver::calculate(range, post_fifo, mag_type, stereo_type);
 
             return post_db - pre_db;
         }
@@ -43,6 +47,7 @@ namespace zldsp::analyzer {
         auto& getReductions() { return reductions_; }
 
     protected:
+        MagReceiver pre_receiver_{}, post_receiver_{};
         std::vector<float> reductions_;
     };
 }

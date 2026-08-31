@@ -133,7 +133,8 @@ namespace zlpanel {
         reduction_receiver_.run(
             range,
             transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
-            transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerCompressedStream]);
+            transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerCompressedStream],
+            mag_type);
         pre_receiver_.run(
             range, transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream], mag_type);
         out_receiver_.run(

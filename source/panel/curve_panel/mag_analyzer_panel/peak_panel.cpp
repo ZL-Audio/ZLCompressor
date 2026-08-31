@@ -129,7 +129,7 @@ namespace zlpanel {
                         range,
                         transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
                         transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerCompressedStream],
-                        stereo_type);
+                        mag_type, stereo_type);
                     fifo.finishRead(consumer_id, num_samples_per_point_);
                     num_missing_points_ = 0;
                 } else {
