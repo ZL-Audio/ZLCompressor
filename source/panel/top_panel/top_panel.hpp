@@ -30,6 +30,8 @@ namespace zlpanel {
     private:
         zlgui::UIBase& base_;
         LogoPanel logo_panel_;
+        const std::unique_ptr<juce::Drawable> preset_drawable_;
+        zlgui::button::ClickButton preset_button_;
         TopControlPanel top_control_panel_;
     };
 }

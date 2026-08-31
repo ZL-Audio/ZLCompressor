@@ -250,6 +250,16 @@ namespace zlstate {
         inline auto static const kRange = juce::NormalisableRange<float>(minV, maxV, 1.f);
     };
 
+    class PWindowSizeFix : public ChoiceParameters<PWindowSizeFix> {
+    public:
+        auto static constexpr kID = "window_size_fix";
+        auto static constexpr kName = "";
+        inline auto static const kChoices = juce::StringArray{
+            "Off", "On"
+        };
+        int static constexpr kDefaultI = 0;
+    };
+
     class PFontMode : public ChoiceParameters<PFontMode> {
     public:
         static constexpr auto kID = "font_mode";
@@ -316,6 +326,14 @@ namespace zlstate {
         auto static constexpr kName = "";
         inline auto static const kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
         auto static constexpr kDefaultV = .25f;
+    };
+
+    class PWheelComboboxSensitivity : public FloatParameters<PWheelComboboxSensitivity> {
+    public:
+        auto static constexpr kID = "wheel_combobox_sensitivity";
+        auto static constexpr kName = "";
+        inline auto static const kRange = juce::NormalisableRange<float>(0.f, 1.f, 0.01f);
+        auto static constexpr kDefaultV = .5f;
     };
 
     class PRotaryStyle : public ChoiceParameters<PRotaryStyle> {
@@ -550,10 +568,10 @@ namespace zlstate {
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout getStateParameterLayout() {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
-        layout.add(PWindowW::get(), PWindowH::get(),
+        layout.add(PWindowW::get(), PWindowH::get(), PWindowSizeFix::get(),
                    PFontMode::get(), PFontScale::get(), PStaticFontSize::get(),
                    PWheelSensitivity::get(), PWheelFineSensitivity::get(), PWheelShiftReverse::get(),
-                   PDragSensitivity::get(), PDragFineSensitivity::get(),
+                   PDragSensitivity::get(), PDragFineSensitivity::get(), PWheelComboboxSensitivity::get(),
                    PRotaryStyle::get(), PRotaryDragSensitivity::get(),
                    PSliderDoubleClickFunc::get(),
                    PEnterSoloMouse::get(), PEnterSoloKey::get(),

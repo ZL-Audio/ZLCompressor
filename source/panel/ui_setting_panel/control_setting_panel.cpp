@@ -18,7 +18,8 @@ namespace zlpanel {
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base)
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Menu", base)
               }
           },
           wheel_reverse_box_(zlstate::PWheelShiftReverse::kChoices, base),
@@ -53,6 +54,7 @@ namespace zlpanel {
         sensitivity_sliders_[1].getSlider().setDoubleClickReturnValue(true, 0.12);
         sensitivity_sliders_[2].getSlider().setDoubleClickReturnValue(true, 1.0);
         sensitivity_sliders_[3].getSlider().setDoubleClickReturnValue(true, 0.25);
+        sensitivity_sliders_[4].getSlider().setDoubleClickReturnValue(true, 0.5);
         rotary_style_label_.setText("Rotary Slider Style", juce::dontSendNotification);
         rotary_style_label_.setJustificationType(juce::Justification::centredRight);
         rotary_style_label_.setLookAndFeel(&name_laf_);
@@ -77,16 +79,6 @@ namespace zlpanel {
             addAndMakeVisible(solo_action_key_boxes_[i]);
         }
 
-        import_label_.setText("Import Controls", juce::dontSendNotification);
-        import_label_.setJustificationType(juce::Justification::centred);
-        import_label_.setLookAndFeel(&name_laf_);
-        import_label_.addMouseListener(this, false);
-        addAndMakeVisible(import_label_);
-        export_label_.setText("Export Controls", juce::dontSendNotification);
-        export_label_.setJustificationType(juce::Justification::centred);
-        export_label_.setLookAndFeel(&name_laf_);
-        export_label_.addMouseListener(this, false);
-        addAndMakeVisible(export_label_);
     }
 
     ControlSettingPanel::~ControlSettingPanel() = default;
@@ -135,7 +127,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
-        return padding * 8 + slider_height * 7;
+        return padding * 7 + slider_height * 6;
     }
 
     void ControlSettingPanel::resized() {
@@ -153,6 +145,8 @@ namespace zlpanel {
             sensitivity_sliders_[0].setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
             sensitivity_sliders_[1].setBounds(local_bound.removeFromLeft(slider_width));
+            local_bound.removeFromLeft(padding);
+            sensitivity_sliders_[4].setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
             wheel_reverse_box_.setBounds(local_bound.removeFromLeft(slider_width + padding).reduced(0, padding / 3));
         }
@@ -192,120 +186,6 @@ namespace zlpanel {
             solo_action_key_boxes_[i].setBounds(
                 local_bound.removeFromLeft(slider_width * 2).reduced(0, padding / 3));
         }
-        {
-            bound.removeFromTop(padding);
-            const auto label_width = bound.getWidth() / 2;
-            auto local_bound = bound.removeFromTop(slider_height);
-            import_label_.setBounds(local_bound.removeFromLeft(label_width));
-            export_label_.setBounds(local_bound.removeFromRight(label_width));
-        }
     }
 
-    void ControlSettingPanel::mouseDown(const juce::MouseEvent& event) {
-        if (event.originalComponent == &import_label_) {
-            importControls();
-        }
-        else if (event.originalComponent == &export_label_) {
-            exportControls();
-        }
-    }
-
-    void ControlSettingPanel::importControls() {
-        chooser_ = std::make_unique<juce::FileChooser>(
-            "Load the control settings...", kSettingDirectory, "*.xml",
-            true, false, nullptr);
-        constexpr auto setting_open_flags = juce::FileBrowserComponent::openMode |
-            juce::FileBrowserComponent::canSelectFiles;
-        chooser_->launchAsync(setting_open_flags, [this](const juce::FileChooser& chooser) {
-            if (chooser.getResults().size() <= 0) { return; }
-            const juce::File settingFile(chooser.getResult());
-            if (const auto xml_input = juce::XmlDocument::parse(settingFile)) {
-                if (const auto* xml_element = xml_input->getChildByName("drag_fine_sensitivity")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setSensitivity(static_cast<float>(x), zlgui::SensitivityIdx::kMouseDragFine);
-                }
-                if (const auto* xml_element = xml_input->getChildByName("drag_sensitivity")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setSensitivity(static_cast<float>(x), zlgui::SensitivityIdx::kMouseDrag);
-                }
-                if (const auto* xml_element = xml_input->getChildByName("wheel_fine_sensitivity")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setSensitivity(static_cast<float>(x), zlgui::SensitivityIdx::kMouseWheelFine);
-                }
-                if (const auto* xml_element = xml_input->getChildByName("wheel_sensitivity")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setSensitivity(static_cast<float>(x), zlgui::SensitivityIdx::kMouseWheel);
-                }
-                if (const auto* xml_element = xml_input->getChildByName("rotary_drag_sensitivity")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setRotaryDragSensitivity(static_cast<float>(x));
-                }
-                if (const auto* xml_element = xml_input->getChildByName("rotary_style")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setRotaryStyleID(static_cast<size_t>(x));
-                }
-                if (const auto* xml_element = xml_input->getChildByName("slider_double_click_func")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setIsSliderDoubleClickOpenEditor(x > 0.5);
-                }
-                if (const auto* xml_element = xml_input->getChildByName("wheel_shift_reverse")) {
-                    const auto x = xml_element->getDoubleAttribute("value");
-                    base_.setIsMouseWheelShiftReverse(x > 0.5);
-                }
-                base_.saveToAPVTS();
-                loadSetting();
-            }
-        });
-    }
-
-    void ControlSettingPanel::exportControls() {
-        chooser_ = std::make_unique<juce::FileChooser>(
-            "Save the control settings...", kSettingDirectory.getChildFile("control.xml"), "*.xml",
-            true, false, nullptr);
-        constexpr auto setting_save_flags = juce::FileBrowserComponent::saveMode |
-            juce::FileBrowserComponent::warnAboutOverwriting;
-        chooser_->launchAsync(setting_save_flags, [this](const juce::FileChooser& chooser) {
-            if (chooser.getResults().size() <= 0) { return; }
-            juce::File setting_file(chooser.getResult().withFileExtension("xml"));
-            if (setting_file.create()) {
-                saveSetting();
-                juce::XmlElement xml_output{"colour_setting"};
-                {
-                    auto* xml_element = xml_output.createNewChildElement("drag_fine_sensitivity");
-                    xml_element->setAttribute("value", base_.getSensitivity(zlgui::kMouseDragFine));
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("drag_sensitivity");
-                    xml_element->setAttribute("value", base_.getSensitivity(zlgui::kMouseDrag));
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("wheel_fine_sensitivity");
-                    xml_element->setAttribute("value", base_.getSensitivity(zlgui::kMouseWheelFine));
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("wheel_sensitivity");
-                    xml_element->setAttribute("value", base_.getSensitivity(zlgui::kMouseWheel));
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("rotary_drag_sensitivity");
-                    xml_element->setAttribute("value", base_.getRotaryDragSensitivity());
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("rotary_style");
-                    xml_element->setAttribute("value", static_cast<double>(base_.getRotaryStyleID()));
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("slider_double_click_func");
-                    xml_element->
-                        setAttribute("value", static_cast<double>(base_.getIsSliderDoubleClickOpenEditor()));
-                }
-                {
-                    auto* xml_element = xml_output.createNewChildElement("wheel_shift_reverse");
-                    xml_element->setAttribute("value", static_cast<double>(base_.getIsMouseWheelShiftReverse()));
-                }
-                const auto result = xml_output.writeTo(setting_file);
-                juce::ignoreUnused(result);
-            }
-        });
-    }
 } // zlpanel

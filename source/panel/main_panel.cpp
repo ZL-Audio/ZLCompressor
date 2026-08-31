@@ -19,6 +19,7 @@ namespace zlpanel {
         curve_panel_(processor, base_, tooltip_helper_),
         control_panel_(processor, base_, tooltip_helper_),
         top_panel_(processor, base_, tooltip_helper_),
+        preset_browser_(processor, base_),
         ui_setting_panel_(processor, base_),
         tooltipLAF(base_), tooltipWindow(&curve_panel_),
         refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
@@ -27,6 +28,9 @@ namespace zlpanel {
         addAndMakeVisible(control_panel_);
         addAndMakeVisible(top_panel_);
         addChildComponent(ui_setting_panel_);
+        preset_browser_.setBufferedToImage(true);
+        addChildComponent(preset_browser_);
+        preset_browser_.toFront(false);
 
         tooltipWindow.setLookAndFeel(&tooltipLAF);
         tooltipWindow.setOpaque(false);
@@ -61,8 +65,7 @@ namespace zlpanel {
             ? max_font_size * std::clamp(base_.getFontScale(), 0.25f, 0.9f)
             : std::clamp(base_.getStaticFontSize(), max_font_size * .25f, max_font_size * 0.9f);
         base_.setFontSize(font_size);
-
-        ui_setting_panel_.setBounds(bound);
+        const auto main_bound = bound;
 
         // set control panel bound
         const auto button_size = getButtonSize(font_size);
@@ -72,6 +75,19 @@ namespace zlpanel {
         top_panel_.setBounds(bound.removeFromTop(top_panel_.getIdealHeight()));
 
         curve_panel_.setBounds(bound);
+
+        const auto padding = getPaddingSize(font_size);
+        const auto setting_width = juce::jmax(0, juce::jmin(ui_setting_panel_.getIdealWidth(),
+                                                            main_bound.getWidth() - 4 * padding));
+        const auto setting_height = juce::jmax(0, juce::jmin(ui_setting_panel_.getIdealHeight(),
+                                                             main_bound.getHeight() - 4 * padding));
+        ui_setting_panel_.setBounds(main_bound.withSizeKeepingCentre(setting_width, setting_height));
+
+        const auto preset_width = juce::jmax(0, juce::jmin(preset_browser_.getIdealWidth(),
+                                                           main_bound.getWidth() - 4 * padding));
+        const auto preset_height = juce::jmax(0, juce::jmin(preset_browser_.getIdealHeight(),
+                                                            main_bound.getHeight() - 4 * padding));
+        preset_browser_.setBounds(main_bound.withSizeKeepingCentre(preset_width, preset_height));
     }
 
     void MainPanel::repaintCallBack(const double time_stamp) {
@@ -83,6 +99,12 @@ namespace zlpanel {
                 curve_panel_.repaintCallBackSlow();
             }
 
+            if (ui_setting_panel_.isVisible()) {
+                ui_setting_panel_.flushPendingScroll();
+            }
+            if (preset_browser_.isVisible()) {
+                preset_browser_.flushPendingScroll();
+            }
             curve_panel_.repaintCallBack(time_stamp);
 
             const auto c_refresh_rate = refresh_handler_.getActualRefreshRate();
@@ -97,8 +119,10 @@ namespace zlpanel {
         if (base_.isPanelIdentifier(zlgui::PanelSettingIdx::kUISettingPanel, property)) {
             const auto ui_setting_visibility = static_cast<bool>(base_.getPanelProperty(
                 zlgui::PanelSettingIdx::kUISettingPanel));
-            curve_panel_.setVisible(!ui_setting_visibility);
             ui_setting_panel_.setVisible(ui_setting_visibility);
+            if (ui_setting_visibility) {
+                ui_setting_panel_.toFront(false);
+            }
         }
     }
 

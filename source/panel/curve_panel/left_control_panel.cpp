@@ -84,6 +84,7 @@ namespace zlpanel {
         const auto popup_option = juce::PopupMenu::Options().withPreferredPopupDirection(
             juce::PopupMenu::Options::PopupDirection::upwards);
         for (auto& box : {&time_length_box_, &mag_stereo_box_, &mag_type_box_, &min_db_box_}) {
+            box->setScrollEnabled(true);
             box->getLAF().setFontScale(1.f);
             box->getLAF().setOption(popup_option);
             box->setAlpha(.5f);

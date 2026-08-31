@@ -32,7 +32,6 @@ namespace zlpanel {
 
         void resized() override;
 
-        void mouseDown(const juce::MouseEvent& event) override;
 
     private:
         PluginProcessor& pRef;
@@ -46,14 +45,5 @@ namespace zlpanel {
         juce::Label c_map1_label_, c_map2_label_;
         zlgui::colour_selector::ColourMapSelector c_map1_selector_, c_map2_selector_;
 
-        juce::Label import_label_, export_label_;
-
-        std::unique_ptr<juce::FileChooser> chooser_;
-        const juce::File kSettingDirectory =
-            juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-            .getChildFile("Audio")
-            .getChildFile("Presets")
-            .getChildFile(JucePlugin_Manufacturer)
-            .getChildFile("Shared Settings");
     };
 }

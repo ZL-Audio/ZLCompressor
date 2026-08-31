@@ -42,6 +42,7 @@ namespace zlpanel {
             addAndMakeVisible(l);
         }
 
+        style_box_.setScrollEnabled(true);
         style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
 

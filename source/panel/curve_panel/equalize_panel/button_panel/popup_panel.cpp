@@ -45,6 +45,7 @@ namespace zlpanel {
         addAndMakeVisible(close_button_);
 
         for (auto& box : {&ftype_box_, &slope_box_}) {
+            box->setScrollEnabled(true);
             box->getLAF().setFontScale(1.125f);
             box->setBufferedToImage(true);
             addAndMakeVisible(box);

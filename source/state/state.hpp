@@ -11,4 +11,5 @@
 
 #include "dummy_processor.hpp"
 #include "property.hpp"
+#include "state_schema.hpp"
 #include "state_definitions.hpp"

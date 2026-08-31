@@ -259,10 +259,12 @@ namespace zlgui {
         font_mode_ = static_cast<size_t>(std::round(loadPara(zlstate::PFontMode::kID)));
         font_scale_ = loadPara(zlstate::PFontScale::kID);
         static_font_size_ = loadPara(zlstate::PStaticFontSize::kID);
+        window_size_fix_ = loadPara(zlstate::PWindowSizeFix::kID) > .5f;
         wheel_sensitivity_[0] = state.getRawParameterValue(zlstate::PWheelSensitivity::kID)->load();
         wheel_sensitivity_[1] = state.getRawParameterValue(zlstate::PWheelFineSensitivity::kID)->load();
         wheel_sensitivity_[2] = state.getRawParameterValue(zlstate::PDragSensitivity::kID)->load();
         wheel_sensitivity_[3] = state.getRawParameterValue(zlstate::PDragFineSensitivity::kID)->load();
+        wheel_sensitivity_[4] = loadPara(zlstate::PWheelComboboxSensitivity::kID);
         is_mouse_wheel_shift_reverse_.store(state.getRawParameterValue(zlstate::PWheelShiftReverse::kID)->load() > .5f);
         rotary_style_id_ = static_cast<size_t>(state.getRawParameterValue(zlstate::PRotaryStyle::kID)->load());
         rotary_drag_sensitivity_ = state.getRawParameterValue(zlstate::PRotaryDragSensitivity::kID)->load();
@@ -304,10 +306,12 @@ namespace zlgui {
         savePara(zlstate::PFontMode::kID, static_cast<float>(font_mode_));
         savePara(zlstate::PFontScale::kID, font_scale_);
         savePara(zlstate::PStaticFontSize::kID, static_font_size_);
+        savePara(zlstate::PWindowSizeFix::kID, window_size_fix_);
         savePara(zlstate::PWheelSensitivity::kID, wheel_sensitivity_[0]);
         savePara(zlstate::PWheelFineSensitivity::kID, wheel_sensitivity_[1]);
         savePara(zlstate::PDragSensitivity::kID, wheel_sensitivity_[2]);
         savePara(zlstate::PDragFineSensitivity::kID, wheel_sensitivity_[3]);
+        savePara(zlstate::PWheelComboboxSensitivity::kID, wheel_sensitivity_[4]);
         savePara(zlstate::PWheelShiftReverse::kID,
                  static_cast<float>(is_mouse_wheel_shift_reverse_.load(std::memory_order::relaxed)));
         savePara(zlstate::PRotaryStyle::kID, static_cast<float>(rotary_style_id_));

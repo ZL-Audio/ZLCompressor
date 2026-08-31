@@ -64,6 +64,7 @@ namespace zlpanel {
         lookahead_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLookahead));
         addAndMakeVisible(lookahead_label_);
 
+        oversample_box_.setScrollEnabled(true);
         oversample_box_.getLAF().setFontScale(1.5f);
         oversample_box_.setBufferedToImage(true);
         addAndMakeVisible(oversample_box_);
@@ -85,6 +86,7 @@ namespace zlpanel {
         clipper_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper));
         addAndMakeVisible(clipper_label_);
 
+        direction_box_.setScrollEnabled(true);
         direction_box_.setAlpha(.5f);
         direction_box_.setBufferedToImage(true);
         direction_box_.getBox().onChange = [this]() {

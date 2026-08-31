@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include <functional>
+#include <utility>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../interface_definitions.hpp"
@@ -16,23 +19,26 @@
 namespace zlgui {
     class ClickTextButtonLookAndFeel final : public juce::LookAndFeel_V4 {
     public:
+        using BackgroundPainter = std::function<void(juce::Graphics&, juce::Button&, bool, bool)>;
+
         explicit ClickTextButtonLookAndFeel(UIBase& base) : base_(base) {
         }
 
-        void drawButtonBackground(juce::Graphics&, juce::Button&,
-                                  const juce::Colour&, bool, bool) override {
-            // g.fillAll(base_.getBackgroundColour());
+        void drawButtonBackground(juce::Graphics& g, juce::Button& button,
+                                  const juce::Colour&, const bool highlight,
+                                  const bool down) override {
+            if (background_painter_) {
+                background_painter_(g, button, highlight, down);
+            }
         }
 
         void drawButtonText(juce::Graphics& g, juce::TextButton& button,
                             const bool highlight, const bool down) override {
             if (down || button.getToggleState()) {
                 g.setColour(base_.getTextColour());
-            }
-            else if (highlight) {
+            } else if (highlight) {
                 g.setColour(base_.getTextColour().withAlpha(.75f));
-            }
-            else {
+            } else {
                 g.setColour(base_.getTextColour().withAlpha(.5f));
             }
             g.setFont(base_.getFontSize() * font_scale_);
@@ -47,10 +53,15 @@ namespace zlgui {
             font_scale_ = font_scale;
         }
 
+        void setBackgroundPainter(BackgroundPainter painter) {
+            background_painter_ = std::move(painter);
+        }
+
     private:
         UIBase& base_;
 
         float font_scale_{1.f};
         juce::Justification justification_{juce::Justification::centredLeft};
+        BackgroundPainter background_painter_;
     };
 }

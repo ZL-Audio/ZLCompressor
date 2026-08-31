@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "click_text_button_laf.hpp"
 
 namespace zlgui::button {
@@ -40,8 +42,13 @@ namespace zlgui::button {
 
         ClickTextButtonLookAndFeel& getLAF() { return look_and_feel_; }
 
+        void setBackgroundPainter(ClickTextButtonLookAndFeel::BackgroundPainter painter) {
+            look_and_feel_.setBackgroundPainter(std::move(painter));
+            button_.repaint();
+        }
+
     private:
         ClickTextButtonLookAndFeel look_and_feel_;
         juce::TextButton button_;
     };
-} // zlgui
+}

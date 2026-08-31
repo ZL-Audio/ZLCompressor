@@ -48,6 +48,7 @@ namespace zlgui {
         kMouseWheelFine,
         kMouseDrag,
         kMouseDragFine,
+        kMouseWheelCombobox,
         kSensitivityNum
     };
 
@@ -58,6 +59,7 @@ namespace zlgui {
         kUISettingPanel,
         kUISettingChanged,
         kFFTFrozen,
+        kPresetBrowser,
         kPanelSettingNum
     };
 
@@ -65,7 +67,8 @@ namespace zlgui {
         juce::Identifier("lufs_learn_button"),
         juce::Identifier("ui_setting_panel"),
         juce::Identifier("ui_setting_changed"),
-        juce::Identifier("fft_frozen")
+        juce::Identifier("fft_frozen"),
+        juce::Identifier("preset_browser")
     };
 
     static constexpr size_t kColourMap1Size = 10;
@@ -408,6 +411,10 @@ namespace zlgui {
 
         juce::ValueTree& getPanelValueTree() { return panel_value_tree_; }
 
+        void setWindowSizeFix(const bool should_fix) { window_size_fix_ = should_fix; }
+
+        bool getWindowSizeFix() const { return window_size_fix_; }
+
         bool isPanelIdentifier(const PanelSettingIdx idx, const juce::Identifier& identifier) const {
             return identifier == kPanelSettingIdentifiers[static_cast<size_t>(idx)];
         }
@@ -457,8 +464,9 @@ namespace zlgui {
         size_t font_mode_{0};
         float font_scale_{9.f};
         float static_font_size_{0.f};
+        bool window_size_fix_{false};
         std::array<juce::Colour, kColourNum> custom_colours_;
-        std::array<float, kSensitivityNum> wheel_sensitivity_{1.f, 0.12f, 1.f, .25f};
+        std::array<float, kSensitivityNum> wheel_sensitivity_{1.f, 0.12f, 1.f, .25f, .5f};
         size_t rotary_style_id_{0};
         std::atomic<size_t> refresh_rate_id_{2};
         float rotary_drag_sensitivity_{1.f};

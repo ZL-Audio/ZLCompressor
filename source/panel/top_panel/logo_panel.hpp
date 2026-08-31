@@ -31,6 +31,6 @@ namespace zlpanel {
 
         void mouseExit(const juce::MouseEvent& event) override;
 
-        void mouseDoubleClick(const juce::MouseEvent& event) override;
+        void mouseDown(const juce::MouseEvent& event) override;
     };
 }

@@ -48,7 +48,7 @@ PluginEditor::PluginEditor(PluginProcessor& p) :
     last_ui_height_.referTo(p.state_.getParameterAsValue(zlstate::PWindowH::kID));
     setSize(last_ui_width_.getValue(), last_ui_height_.getValue());
 
-    startTimerHz(2);
+    startTimer(kVisibilityTimer, 500);
     updateIsShowing();
 
     base_.setPanelProperty(zlgui::kUISettingChanged, true);
@@ -57,8 +57,9 @@ PluginEditor::PluginEditor(PluginProcessor& p) :
 
 PluginEditor::~PluginEditor() {
     base_.getPanelValueTree().removeListener(this);
+    flushPendingPropertySave();
     vblank_.reset();
-    stopTimer();
+    stopTimer(kVisibilityTimer);
     p_ref_.getCompressController().setMagAnalyzerOn(false);
 }
 
@@ -68,9 +69,18 @@ void PluginEditor::paint(juce::Graphics& g) {
 
 void PluginEditor::resized() {
     main_panel_.setBounds(getLocalBounds());
-    last_ui_width_ = getWidth();
-    last_ui_height_ = getHeight();
-    triggerAsyncUpdate();
+    if (!base_.getWindowSizeFix()) {
+        const auto width = getWidth();
+        const auto height = getHeight();
+        const auto size_changed = width != static_cast<int>(last_ui_width_.getValue()) ||
+            height != static_cast<int>(last_ui_height_.getValue());
+        last_ui_width_ = width;
+        last_ui_height_ = height;
+        triggerAsyncUpdate();
+        if (size_changed) {
+            schedulePropertySave();
+        }
+    }
 }
 
 void PluginEditor::visibilityChanged() {
@@ -87,17 +97,32 @@ void PluginEditor::minimisationStateChanged(bool) {
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) {
     if (base_.isPanelIdentifier(zlgui::kUISettingChanged, property)) {
-        sendLookAndFeelChange();
         triggerAsyncUpdate();
+        schedulePropertySave();
     }
 }
 
 void PluginEditor::handleAsyncUpdate() {
-    property_.saveAPVTS(p_ref_.state_);
+    sendLookAndFeelChange();
 }
 
-void PluginEditor::timerCallback() {
-    updateIsShowing();
+void PluginEditor::timerCallback(const int timer_id) {
+    if (timer_id == kVisibilityTimer) {
+        updateIsShowing();
+    } else if (timer_id == kPropertySaveTimer) {
+        flushPendingPropertySave();
+    }
+}
+
+void PluginEditor::schedulePropertySave() {
+    startTimer(kPropertySaveTimer, kPropertySaveDelayMS);
+}
+
+void PluginEditor::flushPendingPropertySave() {
+    if (isTimerRunning(kPropertySaveTimer)) {
+        stopTimer(kPropertySaveTimer);
+        property_.saveAPVTS(p_ref_.state_);
+    }
 }
 
 void PluginEditor::updateIsShowing() {

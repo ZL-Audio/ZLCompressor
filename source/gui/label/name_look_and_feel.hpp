@@ -26,7 +26,12 @@ namespace zlgui::label {
             }
             g.setColour(base_.getTextColour());
             g.setFont(base_.getFontSize() * font_scale_);
-            g.drawText(label.getText(), label.getLocalBounds().toFloat(), label.getJustificationType());
+            if (maximum_number_of_lines_ > 1) {
+                g.drawFittedText(label.getText(), label.getLocalBounds(), label.getJustificationType(),
+                                 maximum_number_of_lines_, label.getMinimumHorizontalScale());
+            } else {
+                g.drawText(label.getText(), label.getLocalBounds().toFloat(), label.getJustificationType());
+            }
         }
 
         void drawTextEditorOutline(juce::Graphics& g, const int width, const int height,
@@ -45,9 +50,14 @@ namespace zlgui::label {
 
         inline void setFontScale(const float x) { font_scale_ = x; }
 
+        inline void setMaximumNumberOfLines(const int maximum_number_of_lines) {
+            maximum_number_of_lines_ = juce::jmax(1, maximum_number_of_lines);
+        }
+
     private:
         UIBase& base_;
 
         float font_scale_{kFontNormal};
+        int maximum_number_of_lines_{1};
     };
 }

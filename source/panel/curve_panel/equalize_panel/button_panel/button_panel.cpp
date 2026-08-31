@@ -30,6 +30,7 @@ namespace zlpanel {
             .withParentComponent(this)
             .withPreferredPopupDirection(juce::PopupMenu::Options::PopupDirection::downwards);
         for (auto& box : {&eq_db_box_}) {
+            box->setScrollEnabled(true);
             box->getLAF().setFontScale(1.f);
             box->getLAF().setOption(popup_option);
             box->setAlpha(.5f);

@@ -41,14 +41,15 @@ namespace zlpanel {
     }
 
     void LogoPanel::mouseEnter(const juce::MouseEvent&) {
-        setAlpha(1.f);
+        setAlpha(.75f);
     }
 
     void LogoPanel::mouseExit(const juce::MouseEvent&) {
         setAlpha(.5f);
     }
 
-    void LogoPanel::mouseDoubleClick(const juce::MouseEvent&) {
-        base_.setPanelProperty(zlgui::kUISettingPanel, true);
+    void LogoPanel::mouseDown(const juce::MouseEvent&) {
+        const auto panel_open = static_cast<float>(base_.getPanelProperty(zlgui::kUISettingPanel));
+        base_.setPanelProperty(zlgui::kUISettingPanel, panel_open < .5f ? 1.f : 0.f);
     }
 }

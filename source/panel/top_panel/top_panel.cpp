@@ -8,14 +8,27 @@
 // You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
 #include "top_panel.hpp"
+#include "BinaryData.h"
 
 namespace zlpanel {
     TopPanel::TopPanel(PluginProcessor& p, zlgui::UIBase& base,
                        multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           logo_panel_(p, base_, tooltip_helper),
+          preset_drawable_(juce::Drawable::createFromImageData(BinaryData::collections_bookmark_svg,
+                                                               BinaryData::collections_bookmark_svgSize)),
+          preset_button_(base_, preset_drawable_.get(), nullptr, ""),
           top_control_panel_(p, base_, tooltip_helper) {
         addAndMakeVisible(logo_panel_);
+        preset_button_.getButton().onClick = [this]() {
+            const auto panel_open = static_cast<float>(
+                base_.getPanelProperty(zlgui::PanelSettingIdx::kPresetBrowser));
+            base_.setPanelProperty(zlgui::PanelSettingIdx::kPresetBrowser,
+                                   panel_open < .5f ? 1.f : 0.f);
+        };
+        preset_button_.setImageAlpha(.5f, .75f, 1.f, 1.f);
+        preset_button_.setBufferedToImage(true);
+        addAndMakeVisible(preset_button_);
         addAndMakeVisible(top_control_panel_);
 
         setBufferedToImage(true);
@@ -37,6 +50,11 @@ namespace zlpanel {
         bound.reduce(padding / 2, padding / 2);
 
         logo_panel_.setBounds(bound.removeFromLeft(bound.getHeight() * 2 + padding));
+
+        bound.removeFromLeft(padding);
+        preset_button_.setBounds(bound.removeFromLeft(bound.getHeight()));
+        preset_button_.getButton().setEdgeIndent(static_cast<int>(std::round(font_size * .15f)));
+        bound.removeFromLeft(padding);
 
         top_control_panel_.setBounds(bound);
     }

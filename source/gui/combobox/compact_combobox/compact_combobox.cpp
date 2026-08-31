@@ -17,8 +17,7 @@ namespace zlgui::combobox {
         box_laf_(base) {
         if (item_labels.size() < static_cast<size_t>(choices.size())) {
             combo_box_.addItemList(choices, 1);
-        }
-        else {
+        } else {
             const auto menu = combo_box_.getRootMenu();
             for (int i = 0; i < choices.size(); ++i) {
                 juce::PopupMenu::Item item;
@@ -127,5 +126,36 @@ namespace zlgui::combobox {
 
     void CompactCombobox::mouseMove(const juce::MouseEvent& event) {
         combo_box_.mouseMove(event);
+    }
+
+    void CompactCombobox::mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails& wheel) {
+        if (!is_scroll_enabled_) {
+            return;
+        }
+        if (wheel.deltaY * cumulative_y_ < 0.f) {
+            cumulative_y_ = 0.f;
+        }
+        cumulative_y_ += wheel.deltaY * base_.getSensitivity(kMouseWheelCombobox) * 4.f;
+        while (std::abs(cumulative_y_) > 1.f) {
+            const auto selected_index = combo_box_.getSelectedItemIndex();
+            const auto num_items = combo_box_.getNumItems();
+            if (cumulative_y_ > 0) {
+                for (int next_index = selected_index + 1; next_index < num_items; next_index++) {
+                    if (combo_box_.isItemEnabled(combo_box_.getItemId(next_index))) {
+                        combo_box_.setSelectedItemIndex(next_index, juce::sendNotificationSync);
+                        break;
+                    }
+                }
+                cumulative_y_ -= 1.f;
+            } else {
+                for (int next_index = selected_index - 1; next_index >= 0; next_index--) {
+                    if (combo_box_.isItemEnabled(combo_box_.getItemId(next_index))) {
+                        combo_box_.setSelectedItemIndex(next_index, juce::sendNotificationSync);
+                        break;
+                    }
+                }
+                cumulative_y_ += 1.f;
+            }
+        }
     }
 }

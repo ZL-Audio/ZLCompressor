@@ -10,6 +10,25 @@
 #include "PluginProcessor.hpp"
 #include "PluginEditor.hpp"
 
+namespace {
+    juce::ValueTree copyWithType(const juce::ValueTree& source, const juce::Identifier& type) {
+        if (!source.isValid()) {
+            return {};
+        }
+
+        juce::ValueTree result(type);
+        result.copyPropertiesAndChildrenFrom(source, nullptr);
+        return result;
+    }
+
+    juce::ValueTree getChildWithLegacyFallback(const juce::ValueTree& parent,
+                                               const juce::Identifier& type,
+                                               const juce::Identifier& legacy_type) {
+        const auto child = parent.getChildWithName(type);
+        return child.isValid() ? child : parent.getChildWithName(legacy_type);
+    }
+}
+
 //==============================================================================
 PluginProcessor::PluginProcessor() :
     AudioProcessor(BusesProperties()
@@ -19,13 +38,13 @@ PluginProcessor::PluginProcessor() :
         ),
     dummy_processor_(),
     parameters_(*this, nullptr,
-                juce::Identifier("ZLCompressorParameters"),
+                juce::Identifier(zlstate::schema::kParameterState),
                 zlp::getParameterLayout()),
     na_parameters_(dummy_processor_, nullptr,
-                   juce::Identifier("ZLCompressorNAParameters"),
+                   juce::Identifier(zlstate::schema::kNonAutomatableState),
                    zlstate::getNAParameterLayout()),
     state_(dummy_processor_, nullptr,
-           juce::Identifier("ZLCompressorState"),
+           juce::Identifier(zlstate::schema::kUISettings),
            zlstate::getStateParameterLayout()),
     property_(state_),
     compress_controller_(*this),
@@ -489,7 +508,7 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor() {
 }
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock& dest_data) {
-    auto temp_tree = juce::ValueTree("ZLCompressorParaState");
+    auto temp_tree = juce::ValueTree(zlstate::schema::kProcessorState);
     temp_tree.appendChild(parameters_.copyState(), nullptr);
     temp_tree.appendChild(na_parameters_.copyState(), nullptr);
     const std::unique_ptr<juce::XmlElement> xml(temp_tree.createXml());
@@ -498,11 +517,29 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock& dest_data) {
 
 void PluginProcessor::setStateInformation(const void* data, int size_in_bytes) {
     std::unique_ptr<juce::XmlElement> xml_state(getXmlFromBinary(data, size_in_bytes));
-    if (xml_state != nullptr && xml_state->hasTagName("ZLCompressorParaState")) {
-        const auto temp_tree = juce::ValueTree::fromXml(*xml_state);
-        parameters_.replaceState(temp_tree.getChildWithName(parameters_.state.getType()));
-        na_parameters_.replaceState(temp_tree.getChildWithName(na_parameters_.state.getType()));
+    if (xml_state == nullptr ||
+        (!xml_state->hasTagName(zlstate::schema::kProcessorState) &&
+            !xml_state->hasTagName(zlstate::schema::legacy::kProcessorState))) {
+        return;
     }
+
+    const auto temp_tree = juce::ValueTree::fromXml(*xml_state);
+    const auto parameter_state = getChildWithLegacyFallback(
+        temp_tree,
+        juce::Identifier(zlstate::schema::kParameterState),
+        juce::Identifier(zlstate::schema::legacy::kParameterState));
+    const auto non_automatable_state = getChildWithLegacyFallback(
+        temp_tree,
+        juce::Identifier(zlstate::schema::kNonAutomatableState),
+        juce::Identifier(zlstate::schema::legacy::kNonAutomatableState));
+    if (!parameter_state.isValid() || !non_automatable_state.isValid()) {
+        return;
+    }
+
+    parameters_.replaceState(copyWithType(parameter_state,
+                                          juce::Identifier(zlstate::schema::kParameterState)));
+    na_parameters_.replaceState(copyWithType(non_automatable_state,
+                                             juce::Identifier(zlstate::schema::kNonAutomatableState)));
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE
