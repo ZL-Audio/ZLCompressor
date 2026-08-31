@@ -9,13 +9,16 @@
 
 #pragma once
 
+#include <array>
+#include <atomic>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace zlpanel {
     template <typename C>
     class BufferedUI {
     public:
-        explicit BufferedUI() = default;
+        BufferedUI() = default;
 
         /**
          * pull new object before reading

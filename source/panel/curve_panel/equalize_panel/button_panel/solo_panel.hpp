@@ -9,23 +9,24 @@
 
 #pragma once
 
-#include "../../../../PluginProcessor.hpp"
+#include <juce_gui_basics/juce_gui_basics.h>
+
 #include "../../../../gui/gui.hpp"
-#include "dragger_panel.hpp"
 
 namespace zlpanel {
     class SoloPanel final : public juce::Component {
     public:
-        explicit SoloPanel(PluginProcessor& processor, zlgui::UIBase& base,
-                           size_t& selected_band_idx,
-                           std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum>& dragger_panels);
+        explicit SoloPanel(zlgui::UIBase& base);
 
         void paint(juce::Graphics& g) override;
 
+        void updateX(float left_x, float right_x) {
+            left_x_ = left_x;
+            right_x_ = right_x;
+        }
+
     private:
-        PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
-        size_t& selected_band_idx_;
-        std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum>& dragger_panels_;
+        float left_x_{0.f}, right_x_{1e15f};
     };
-} // zlpanel
+}

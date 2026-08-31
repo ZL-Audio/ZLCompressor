@@ -54,7 +54,6 @@ namespace zlpanel {
 
         std::array<std::atomic<zlp::EqualizeController::FilterStatus>, zlp::kBandNum> filter_status_{};
         std::atomic<bool> to_update_filter_status_{false};
-        std::atomic<bool> to_update_visibility_{false};
 
         int popup_update_wait_count_{0};
 

@@ -13,9 +13,9 @@ namespace zlpanel {
     FFTAnalyzerPanel::FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIBase& base) :
         p_ref_(processor),
         base_(base) {
-        constexpr auto preallocateSpace = static_cast<int>(zlp::EqualizeController::kAnalyzerPointNum) * 3 + 1;
+        constexpr auto preallocate_space = static_cast<int>(zlp::EqualizeController::kAnalyzerPointNum) * 3 + 1;
         for (auto& path : out_path_.get_buffer()) {
-            path.preallocateSpace(preallocateSpace);
+            path.preallocateSpace(preallocate_space);
         }
         receiver_.setON(true);
         setInterceptsMouseClicks(false, false);
@@ -40,130 +40,174 @@ namespace zlpanel {
     void FFTAnalyzerPanel::resized() {
         const auto bound = getLocalBounds().toFloat();
         atomic_bound_.store(bound);
+        font_size_.store(base_.getFontSize(), std::memory_order::relaxed);
         skip_next_repaint_ = true;
+        to_update_xs_.signal();
+        to_update_ys_.signal();
     }
 
-    void FFTAnalyzerPanel::run() {
+    void FFTAnalyzerPanel::run(const juce::Thread& thread) {
+        juce::ScopedNoDenormals no_denormals;
         const auto bound = atomic_bound_.load();
-        bool to_update_xs_{false};
         auto& sender{p_ref_.getEqualizeController().getFFTAnalyzerSender()};
         if (!sender.getLock().try_lock()) {
             return;
         }
+
         const auto sample_rate = sender.getSampleRate();
         if (std::abs(c_sample_rate_ - sample_rate) > 0.1) {
             c_sample_rate_ = sample_rate;
-            to_update_tilt_.store(true, std::memory_order::relaxed);
+            to_update_tilt_.signal();
+            to_update_decay_.signal();
 
-            int fft_order;
-            if (sample_rate <= 50000) {
-                fft_order = 12;
-            } else if (sample_rate <= 100000) {
-                fft_order = 13;
-            } else if (sample_rate <= 200000) {
-                fft_order = 14;
+            int middle_fft_order;
+            if (sample_rate <= 50000.0) {
+                middle_fft_order = 12;
+            } else if (sample_rate <= 100000.0) {
+                middle_fft_order = 13;
+            } else if (sample_rate <= 200000.0) {
+                middle_fft_order = 14;
             } else {
-                fft_order = 15;
+                middle_fft_order = 15;
             }
-            fft_size_ = 1 << fft_order;
-            processor_.prepare(fft_order);
-            receiver_.prepare(1);
-            spectrum_smoother_.prepare(static_cast<size_t>(fft_size_));
-            spectrum_smoother_.setSmooth(0.5, sample_rate, zldsp::analyzer::SpectrumSmoother::SmoothMethod::kERB);
-            spectrum_tilter_.prepare(static_cast<size_t>(fft_size_));
-            spectrum_decayer_.prepare(static_cast<size_t>(fft_size_));
+            const std::array fft_orders{
+                middle_fft_order + 2, middle_fft_order, middle_fft_order - 2
+            };
+            for (size_t i = 0; i < processors_.size(); ++i) {
+                processors_[i].prepare(fft_orders[i]);
+            }
 
-            xs_.resize(static_cast<size_t>(fft_size_) / 2 + 1);
-            ys_.resize(static_cast<size_t>(fft_size_) / 2 + 1);
+            const auto reference_window_power = processors_[kMiddleResolution].getWindowSqrSum();
+            for (size_t i = 0; i < processors_.size(); ++i) {
+                noise_power_scales_[i] = static_cast<float>(
+                    reference_window_power / processors_[i].getWindowSqrSum());
+            }
 
-            to_update_xs_ = true;
+            history_size_ = static_cast<int>(processors_[kLowResolution].getFFTSize());
+            receiver_.prepare(2);
+            for (size_t i = 0; i < spectrum_smoothers_.size(); ++i) {
+                spectrum_smoothers_[i].prepare(processors_[i].getFFTSize());
+                spectrum_smoothers_[i].setSmooth(
+                    0.5, sample_rate, zldsp::analyzer::SpectrumSmoother::SmoothMethod::kERB);
+                resolution_spectra_[i].resize(processors_[i].getFFTSize() / 2 + 1);
+            }
+
+            frequencies_ = zldsp::analyzer::SpectrumBlender::createFrequencyGrid(
+                processors_[kLowResolution].getFFTSize(),
+                processors_[kMiddleResolution].getFFTSize(),
+                processors_[kHighResolution].getFFTSize(), sample_rate);
+            spectrum_tilter_.prepareSpectrum(frequencies_.size());
+            spectrum_decayer_.prepareSpectrum(frequencies_.size());
+            spectrum_.resize(frequencies_.size());
+            xs_.resize(frequencies_.size());
+            ys_.resize(frequencies_.size());
+
+            to_update_xs_.signal();
+            to_update_ys_.signal();
         }
 
         auto& fifo{sender.getAbstractFIFO()};
-        auto num_read = fifo.getNumReady();
-        if (num_read > static_cast<int>(processor_.getFFTSize())) {
-            (void)fifo.prepareToRead(num_read - static_cast<int>(processor_.getFFTSize()));
-            fifo.finishRead(num_read - static_cast<int>(processor_.getFFTSize()));
-            num_read = static_cast<int>(processor_.getFFTSize());
+        auto num_read = fifo.getNumReady() / 4 * 3;
+        if (num_read > history_size_) {
+            (void)fifo.prepareToRead(num_read - history_size_);
+            fifo.finishRead(num_read - history_size_);
+            num_read = history_size_;
         }
         const auto range = fifo.prepareToRead(num_read);
         receiver_.pull(range, sender.getSampleFIFOs()[0]);
         fifo.finishRead(num_read);
         sender.getLock().unlock();
 
-        if (fft_size_ <= 0) {
+        if (thread.threadShouldExit() || history_size_ <= 0
+            || bound.getWidth() <= 0.f || bound.getHeight() <= 0.f) {
             return;
         }
-        receiver_.forward(zldsp::analyzer::StereoType::kStereo);
 
-        auto& spectrum{receiver_.getAbsSqrFFTBuffer()};
-        spectrum_smoother_.smooth(spectrum);
-
-        if (to_update_tilt_.exchange(false, std::memory_order::acquire)) {
-            spectrum_tilter_.setTiltSlope(sample_rate, spectrum_tilt_slope_.load(std::memory_order::relaxed));
+        if (to_update_tilt_.check()) {
+            spectrum_tilter_.setTiltSlope(
+                frequencies_, spectrum_tilt_slope_.load(std::memory_order::relaxed));
         }
-        if (to_update_xs_ || std::abs(bound.getWidth() - c_width_) > 0.01f) {
+        if (to_update_decay_.check()) {
+            const auto decay_speed = spectrum_extra_decay_speed_.load(std::memory_order::relaxed);
+            spectrum_decayer_.setDecaySpeed(refresh_rate_.load(std::memory_order::relaxed),
+                                             -72.f, 0.15f / decay_speed);
+        }
+        if (to_update_xs_.check()) {
             c_width_ = bound.getWidth();
-            const auto delta_freq = static_cast<float>(sample_rate / static_cast<double>(fft_size_));
             const auto fft_max = static_cast<float>(zlp::getEQFFTMax(sample_rate));
-            const auto temp_scale = static_cast<float>(1.0 / std::log(fft_max / zlp::kEQMinFreq)) * bound.getWidth();
+            const auto temp_scale = static_cast<float>(
+                1.0 / std::log(fft_max / zlp::kEQMinFreq)) * c_width_;
             const auto temp_bias = std::log(zlp::kEQMinFreq) * temp_scale;
             num_point_ = xs_.size();
+            xs_[0] = std::log(frequencies_[1] * .5f) * temp_scale - temp_bias;
             for (size_t i = 1; i < xs_.size(); ++i) {
-                const auto freq = delta_freq * static_cast<float>(i);
-                xs_[i] = std::log(freq) * temp_scale - temp_bias;
-                if (freq > fft_max) {
-                    num_point_ = i;
+                xs_[i] = std::log(frequencies_[i]) * temp_scale - temp_bias;
+                if (xs_[i] > c_width_) {
+                    num_point_ = i + 1;
                     break;
                 }
             }
-            xs_[0] = std::min(0.f, xs_[2] - 2.f * xs_[1]);
         }
-        if (to_update_decay_.exchange(false, std::memory_order::acquire)) {
-            const auto decay_speed = std::max(
-                0.1f, -spectrum_decay_speed_.load(std::memory_order::relaxed) / 20.f);
-            spectrum_decayer_.setDecaySpeed(refresh_rate_.load(std::memory_order::relaxed),
-                                             -72.f, 0.15f / decay_speed);
+        if (to_update_ys_.check()) {
+            c_height_ = bound.getHeight();
+            const auto inset = font_size_.load(std::memory_order::relaxed);
+            const auto plot_height = std::max(c_height_ - 2.f * inset, 0.f);
+            y_scale_ = plot_height / -72.f;
+            y_bias_ = inset;
         }
 
         if (num_point_ < 3) {
             return;
         }
-        zldsp::vector::sqr_mag_to_db(spectrum.data(), num_point_);
-        spectrum_tilter_.tilt(std::span{spectrum.data(), num_point_});
-        spectrum_decayer_.decay(std::span{spectrum.data(), num_point_},
+
+        for (size_t resolution = 0; resolution < kNumResolutions; ++resolution) {
+            auto& resolution_spectrum = resolution_spectra_[resolution];
+            receiver_.forward(processors_[resolution], zldsp::analyzer::StereoType::kStereo,
+                              resolution_spectrum);
+            zldsp::vector::multiply(resolution_spectrum.data(), noise_power_scales_[resolution],
+                                    resolution_spectrum.size());
+            spectrum_smoothers_[resolution].smooth(resolution_spectrum);
+        }
+        zldsp::analyzer::SpectrumBlender::blend(
+            spectrum_, frequencies_,
+            resolution_spectra_[kLowResolution],
+            resolution_spectra_[kMiddleResolution],
+            resolution_spectra_[kHighResolution], sample_rate);
+        zldsp::vector::sqr_mag_to_db(spectrum_.data(), spectrum_.size());
+        spectrum_tilter_.tilt(std::span{spectrum_.data(), spectrum_.size()});
+        spectrum_decayer_.decay(std::span{spectrum_.data(), spectrum_.size()},
                                 is_fft_frozen_.load(std::memory_order::relaxed));
-        zldsp::vector::multiply(ys_.data(), spectrum.data(), bound.getHeight() / -72.f, num_point_);
+        zldsp::vector::fma(ys_.data(), spectrum_.data(), y_scale_, y_bias_, num_point_);
 
         auto& next_out_path{out_path_.get_writer()};
         next_out_path.clear();
-        PathMinimizer<10> minimizer{next_out_path};
-        const auto num_accu = static_cast<size_t>(std::sqrt(static_cast<float>(num_point_)));
-        next_out_path.startNewSubPath(xs_.front() - .1f, bound.getBottom() * 1.5f);
-        for (size_t i = 0; i < num_accu; ++i) {
-            next_out_path.lineTo(xs_[i], ys_[i]);
-        }
-        minimizer.startNewSubPath<false>(xs_[num_accu], ys_[num_accu]);
-        for (size_t i = num_accu + 1; i < num_point_; ++i) {
+        PathMinimizer<5> minimizer{next_out_path};
+        next_out_path.startNewSubPath(xs_.front() - .1f, c_height_ * 1.5f);
+        minimizer.startNewSubPath<false>(xs_.front(), ys_.front());
+        for (size_t i = 1; i < num_point_; ++i) {
             minimizer.lineTo(xs_[i], ys_[i]);
         }
         minimizer.finish();
-        next_out_path.lineTo(xs_[num_point_ - 1] + .1f, bound.getBottom() * 1.5f);
+        next_out_path.lineTo(xs_[num_point_ - 1] + .1f, c_height_ * 1.5f);
         next_out_path.closeSubPath();
+        if (thread.threadShouldExit()) {
+            return;
+        }
         out_path_.publish();
     }
 
     void FFTAnalyzerPanel::setRefreshRate(const double refresh_rate) {
         refresh_rate_.store(static_cast<float>(refresh_rate), std::memory_order::relaxed);
-        to_update_decay_.store(true, std::memory_order::release);
+        to_update_decay_.signal();
     }
 
     void FFTAnalyzerPanel::lookAndFeelChanged() {
-        spectrum_decay_speed_.store(base_.getFFTExtraSpeed() * (-20.f), std::memory_order::relaxed);
-        to_update_decay_.store(true, std::memory_order::release);
+        const auto extra_speed = base_.getFFTExtraSpeed();
+        spectrum_extra_decay_speed_.store(extra_speed * extra_speed + .1f, std::memory_order::relaxed);
+        to_update_decay_.signal();
 
         spectrum_tilt_slope_.store(4.5f + base_.getFFTExtraTilt(), std::memory_order::relaxed);
-        to_update_tilt_.store(true, std::memory_order::release);
+        to_update_tilt_.signal();
     }
 
     void FFTAnalyzerPanel::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) {

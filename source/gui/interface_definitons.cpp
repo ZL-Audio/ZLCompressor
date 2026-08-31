@@ -277,6 +277,10 @@ namespace zlgui {
             static_cast<size_t>(std::round(state.getRawParameterValue(zlstate::PTooltipLang::kID)->load())));
         colour_map1_idx_ = static_cast<size_t>(loadPara(zlstate::PColourMap1Idx::kID));
         colour_map2_idx_ = static_cast<size_t>(loadPara(zlstate::PColourMap2Idx::kID));
+        enter_solo_mouse_ = static_cast<MouseActionType>(std::round(loadPara(zlstate::PEnterSoloMouse::kID)));
+        enter_solo_key_ = static_cast<KeyActionType>(std::round(loadPara(zlstate::PEnterSoloKey::kID)));
+        exit_solo_mouse_ = static_cast<MouseActionType>(std::round(loadPara(zlstate::PExitSoloMouse::kID)));
+        exit_solo_key_ = static_cast<KeyActionType>(std::round(loadPara(zlstate::PExitSoloKey::kID)));
     }
 
     void UIBase::saveToAPVTS() const {
@@ -319,5 +323,29 @@ namespace zlgui {
         savePara(zlstate::PTooltipLang::kID, static_cast<float>(tooltip_lang_id_));
         savePara(zlstate::PColourMap1Idx::kID, static_cast<float>(colour_map1_idx_));
         savePara(zlstate::PColourMap2Idx::kID, static_cast<float>(colour_map2_idx_));
+        savePara(zlstate::PEnterSoloMouse::kID, static_cast<float>(enter_solo_mouse_));
+        savePara(zlstate::PEnterSoloKey::kID, static_cast<float>(enter_solo_key_));
+        savePara(zlstate::PExitSoloMouse::kID, static_cast<float>(exit_solo_mouse_));
+        savePara(zlstate::PExitSoloKey::kID, static_cast<float>(exit_solo_key_));
+    }
+
+    bool UIBase::checkMouseKeyMatch(const MouseActionType action_type, const juce::ModifierKeys& mods,
+                                    const MouseActionType mouse_option, const KeyActionType key_option) const {
+        bool key_match{false};
+        switch (key_option) {
+        case KeyActionType::kNone:
+            key_match = !mods.isCommandDown() && !mods.isShiftDown() && !mods.isAltDown();
+            break;
+        case KeyActionType::kCmdCtrl:
+            key_match = mods.isCommandDown();
+            break;
+        case KeyActionType::kShift:
+            key_match = mods.isShiftDown();
+            break;
+        case KeyActionType::kAlt:
+            key_match = mods.isAltDown();
+            break;
+        }
+        return key_match && action_type == mouse_option;
     }
 }

@@ -352,6 +352,56 @@ namespace zlstate {
         int static constexpr kDefaultI = 1;
     };
 
+    class PMouseOption {
+    public:
+        inline static const auto kChoices = juce::StringArray{
+            "Left Click", "Right Click", "Left Double Click", "Right Double Click"
+        };
+    };
+
+    class PKeyOption {
+    public:
+        inline static const auto kChoices = juce::StringArray{
+#if JUCE_MAC
+            "None", "Command", "Shift", "Option"
+#else
+            "None", "Ctrl", "Shift", "Alt"
+#endif
+        };
+    };
+
+    class PEnterSoloMouse : public ChoiceParameters<PEnterSoloMouse> {
+    public:
+        static constexpr auto kID = "enter_solo_mouse";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = PMouseOption::kChoices;
+        static constexpr int kDefaultI = 1;
+    };
+
+    class PEnterSoloKey : public ChoiceParameters<PEnterSoloKey> {
+    public:
+        static constexpr auto kID = "enter_solo_key";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = PKeyOption::kChoices;
+        static constexpr int kDefaultI = 0;
+    };
+
+    class PExitSoloMouse : public ChoiceParameters<PExitSoloMouse> {
+    public:
+        static constexpr auto kID = "exit_solo_mouse";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = PMouseOption::kChoices;
+        static constexpr int kDefaultI = 1;
+    };
+
+    class PExitSoloKey : public ChoiceParameters<PExitSoloKey> {
+    public:
+        static constexpr auto kID = "exit_solo_key";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = PKeyOption::kChoices;
+        static constexpr int kDefaultI = 0;
+    };
+
     class PTargetRefreshSpeed : public ChoiceParameters<PTargetRefreshSpeed> {
     public:
         auto static constexpr kID = "target_refresh_speed_id";
@@ -506,6 +556,8 @@ namespace zlstate {
                    PDragSensitivity::get(), PDragFineSensitivity::get(),
                    PRotaryStyle::get(), PRotaryDragSensitivity::get(),
                    PSliderDoubleClickFunc::get(),
+                   PEnterSoloMouse::get(), PEnterSoloKey::get(),
+                   PExitSoloMouse::get(), PExitSoloKey::get(),
                    PTargetRefreshSpeed::get(),
                    PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
                    PMagCurveThickness::get(), PEQCurveThickness::get(),

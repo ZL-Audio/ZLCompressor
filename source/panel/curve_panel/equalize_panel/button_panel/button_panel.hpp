@@ -70,6 +70,10 @@ namespace zlpanel {
 
         void turnOffSolo();
 
+        void updateSoloRange(float left_x, float right_x) {
+            solo_panel_.updateX(left_x, right_x);
+        }
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
@@ -113,6 +117,9 @@ namespace zlpanel {
         std::array<float, 4> previous_paras_{};
         std::array<std::unique_ptr<zlp::juce_helper::ParaUpdater>, zlp::kBandNum> status_updaters_, freq_updaters_;
         std::array<std::unique_ptr<zlp::juce_helper::ParaUpdater>, zlp::kBandNum> gain_updaters_, q_updaters_;
+        size_t solo_band_{zlp::kBandNum};
+        bool solo_gain_drag_active_{false};
+        bool exit_solo_on_mouse_up_{false};
 
         void timerCallback() override;
 
@@ -123,5 +130,15 @@ namespace zlpanel {
         void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
         void loadSelectedParas();
+
+        [[nodiscard]] size_t findEventBand(const juce::Component* component) const;
+
+        [[nodiscard]] bool isEnterSoloTriggered(zlgui::MouseActionType type,
+                                                const juce::ModifierKeys& mods) const;
+
+        [[nodiscard]] bool isExitSoloTriggered(zlgui::MouseActionType type,
+                                               const juce::ModifierKeys& mods) const;
+
+        bool handleSoloAction(zlgui::MouseActionType type, const juce::ModifierKeys& mods, size_t band);
     };
 } // zlpanel

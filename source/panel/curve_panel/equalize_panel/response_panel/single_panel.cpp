@@ -9,103 +9,182 @@
 
 #include "single_panel.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 namespace zlpanel {
     SinglePanel::SinglePanel(zlgui::UIBase& base,
-                             const size_t band_idx,
-                             zldsp::filter::Ideal<float, 16>& filter) :
-        base_(base), band_idx_(band_idx), filter_(filter) {
-        button_pos_.store({0.f, -1e6f});
-        for (auto& path : path_.get_buffer()) {
-            path.preallocateSpace(400 * 3 + 12);
+                             size_t& selected_band_idx,
+                             std::vector<size_t>& not_off_indices) :
+        base_(base), selected_band_idx_(selected_band_idx), not_off_indices_(not_off_indices) {
+        temp_y_.resize(kNumPoints);
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            for (auto& path : paths_[band].get_buffer()) {
+                path.preallocateSpace(static_cast<int>(kNumPoints * 3 + 12));
+            }
+            for (auto& path : fills_[band].get_buffer()) {
+                path.preallocateSpace(static_cast<int>(kNumPoints * 3 + 18));
+            }
         }
-
         setInterceptsMouseClicks(false, false);
     }
 
     void SinglePanel::paint(juce::Graphics& g) {
-        path_.pull();
-        g.setColour(base_.getColourMap1(band_idx_));
-        g.strokePath(path_.get_reader(), juce::PathStrokeType(curve_thickness_ * curve_thickness_scale,
-                                                              juce::PathStrokeType::curved,
-                                                              juce::PathStrokeType::rounded));
-        line_.pull();
-        g.drawLine(line_.get_reader(), line_thickness_);
+        const auto selected_band = selected_band_idx_;
+        if (selected_band < zlp::kBandNum) {
+            for (const auto band : not_off_indices_) {
+                if (band != selected_band) {
+                    drawBand<false>(g, band);
+                }
+            }
+            drawBand<true>(g, selected_band);
+        } else {
+            for (const auto band : not_off_indices_) {
+                drawBand<false>(g, band);
+            }
+        }
     }
 
     void SinglePanel::resized() {
+        const auto height = static_cast<float>(getHeight());
+        center_y_.store(height * .5f, std::memory_order::relaxed);
+        height_.store(height, std::memory_order::relaxed);
         lookAndFeelChanged();
     }
 
-    void SinglePanel::lookAndFeelChanged() {
-        curve_thickness_ = base_.getFontSize() * .15f * base_.getEQCurveThickness();
-        line_thickness_ = base_.getFontSize() * .075f * base_.getEQCurveThickness();
-    }
-
-    void SinglePanel::run(const std::span<const float> xs, const std::span<const float> dbs,
-                          const juce::Rectangle<float>& bound, const float max_db,
-                          const double sample_rate, const double fft_max) {
-        const auto center_freq = filter_.getFreq();
-        const auto center_gain = filter_.getGain();
-        const auto filter_type = filter_.getFilterType();
-        const auto scale = -bound.getHeight() * .5f / max_db;
-        const auto bias = bound.getCentreY();
-        ys_.resize(dbs.size());
-        for (size_t i = 0; i < dbs.size(); ++i) {
-            ys_[i] = dbs[i] * scale + bias;
+    void SinglePanel::updateDrawingParameters(
+        const size_t band,
+        const zlp::EqualizeController::FilterStatus filter_status) {
+        if (filter_status == zlp::EqualizeController::kOff) {
+            fill_alpha_[band] = 0.f;
+            stroke_alpha_[band] = 0.f;
+            return;
         }
 
-        auto& next_path{path_.get_writer()};
+        float multiplier = 1.f;
+        if (filter_status == zlp::EqualizeController::kBypass) {
+            multiplier *= kBypassAlphaMultiplier;
+        }
+
+        const auto is_selected = band == selected_band_idx_;
+        if (is_selected) {
+            fill_alpha_[band] = kFillingAlpha * multiplier;
+        } else {
+            fill_alpha_[band] = 0.f;
+            if (selected_band_idx_ >= zlp::kBandNum) {
+                multiplier *= kNoBandSelectedAlphaMultiplier;
+            }
+            multiplier *= kNotSelectedAlphaMultiplier;
+        }
+        stroke_alpha_[band] = multiplier;
+        stroke_colour_[band] = base_.getColourBlendedWithBackground(base_.getColourMap1(band), multiplier);
+    }
+
+    void SinglePanel::run(const size_t band,
+                          const zlp::EqualizeController::FilterStatus filter_status,
+                          const bool to_update,
+                          const std::span<const float> xs, const float scale, const float bias,
+                          const std::span<const float> magnitudes,
+                          const float center_x, const float center_curve_y, const float button_y,
+                          const float left_x, const float right_x,
+                          const bool is_all_pass, const bool is_first_order) {
+        if (!to_update) {
+            return;
+        }
+
+        auto& next_path = paths_[band].get_writer();
+        auto& next_fill = fills_[band].get_writer();
+        auto& next_button_line = button_lines_[band].get_writer();
+        auto& next_all_pass_line = all_pass_lines_[band].get_writer();
+
         next_path.clear();
-        PathMinimizer<1> minimizer(next_path);
-        minimizer.startNewSubPath(xs[0], ys_[0]);
-        for (size_t i = 1; i < std::min(xs.size(), ys_.size()); ++i) {
-            minimizer.lineTo(xs[i], ys_[i]);
-        }
-        minimizer.finish();
+        next_fill.clear();
+        next_button_line.setStart(-100.f, -100.f);
+        next_button_line.setEnd(-100.f, -100.f);
+        next_all_pass_line.setStart(-100.f, -100.f);
+        next_all_pass_line.setEnd(-100.f, -100.f);
 
-        const auto center_w = static_cast<float>(center_freq * 2.0 * std::numbers::pi / sample_rate);
-        const auto button_curve_x = static_cast<float>(
-            bound.getX() + bound.getWidth() * std::log(center_freq / zlp::kEQMinFreq)
-            / std::log(fft_max / zlp::kEQMinFreq));
-        const auto button_db = zldsp::chore::squareGainToDecibels(
-            filter_.getCenterMagnitudeSquare(center_w));
-        const auto button_curve_y = button_db * scale + bias;
+        if (filter_status != zlp::EqualizeController::kOff && !xs.empty()) {
+            if (is_all_pass) {
+                next_path.startNewSubPath(center_x, 0.f);
+                next_path.lineTo(center_x, height_.load(std::memory_order::relaxed));
+                if (!is_first_order) {
+                    next_all_pass_line.setStart(left_x, 0.f);
+                    next_all_pass_line.setEnd(right_x, 0.f);
+                }
+            } else if (magnitudes.size() == xs.size()) {
+                temp_y_.resize(magnitudes.size());
+                for (size_t i = 0; i < magnitudes.size(); ++i) {
+                    temp_y_[i] = magnitudes[i] * scale + bias;
+                }
 
-        const auto button_x = button_curve_x;
-        float button_y{bias};
-        switch (filter_type) {
-        case zldsp::filter::FilterType::kPeak:
-        case zldsp::filter::FilterType::kLowShelf:
-        case zldsp::filter::FilterType::kHighShelf:
-        case zldsp::filter::FilterType::kFlatTilt: {
-            button_y = button_curve_y;
-            break;
-        }
-        case zldsp::filter::FilterType::kTiltShelf: {
-            button_y = static_cast<float>(center_gain * static_cast<double>(scale) * .5 + bias);
-            break;
-        }
-        case zldsp::filter::FilterType::kLowPass:
-        case zldsp::filter::FilterType::kHighPass:
-        case zldsp::filter::FilterType::kBandPass:
-        case zldsp::filter::FilterType::kNotch:
-        case zldsp::filter::FilterType::kAllPass: {
-            button_y = bias;
-            break;
-        }
-        }
-        auto& next_line{line_.get_writer()};
-        next_line = juce::Line<float>(button_x, button_y, button_curve_x, button_curve_y);
-        button_pos_.store({static_cast<float>(button_x), button_y});
+                PathMinimizer<1> minimizer(next_path);
+                minimizer.drawPath(xs, std::span<const float>(temp_y_));
 
-        path_.publish();
-        line_.publish();
+                next_fill = next_path;
+                const auto center_y = center_y_.load(std::memory_order::relaxed);
+                next_fill.lineTo(xs.back(), center_y);
+                next_fill.lineTo(xs.front(), center_y);
+                next_fill.closeSubPath();
+
+                if (std::abs(center_curve_y - button_y) > 1e-6f) {
+                    next_button_line.setStart(center_x, center_curve_y);
+                    next_button_line.setEnd(center_x, button_y);
+                }
+            }
+        }
+
+        paths_[band].publish();
+        fills_[band].publish();
+        button_lines_[band].publish();
+        all_pass_lines_[band].publish();
     }
 
-    void SinglePanel::visibilityChanged() {
-        if (!isVisible()) {
-            const auto bound = getLocalBounds();
-            button_pos_.store({0.f, -static_cast<float>(bound.getHeight() * 2)});
+    template <bool thick>
+    void SinglePanel::drawBand(juce::Graphics& g, const size_t band) {
+        if (fill_alpha_[band] > .01f) {
+            g.setColour(base_.getColourMap1(band).withAlpha(fill_alpha_[band]));
+            fills_[band].pull();
+            g.fillPath(fills_[band].get_reader());
+        }
+
+        if (stroke_alpha_[band] <= .01f) {
+            return;
+        }
+
+        const auto thickness = thick ? curve_thickness_ * kThickMultiplier : curve_thickness_;
+        g.setColour(stroke_colour_[band]);
+        paths_[band].pull();
+        g.strokePath(paths_[band].get_reader(), juce::PathStrokeType(thickness,
+                                                                     juce::PathStrokeType::curved,
+                                                                     juce::PathStrokeType::square));
+
+        button_lines_[band].pull();
+        if (const auto line = button_lines_[band].get_reader(); line.getEndX() > 0.f) {
+            const auto top = std::min(line.getStartY(), line.getEndY());
+            const auto bottom = std::max(line.getStartY(), line.getEndY());
+            g.fillRect(line.getStartX() - thickness * .35f, top,
+                       thickness * .7f, bottom - top);
+        }
+
+        if constexpr (thick) {
+            all_pass_lines_[band].pull();
+            const auto line = all_pass_lines_[band].get_reader();
+            if (line.getEndX() > 0.f) {
+                const auto center_y = center_y_.load(std::memory_order::relaxed);
+                g.fillRect(line.getStartX() - thickness * .35f, center_y * .5f,
+                           thickness * .7f, center_y);
+                g.fillRect(line.getEndX() - thickness * .35f, center_y * .5f,
+                           thickness * .7f, center_y);
+            }
+        }
+    }
+
+    void SinglePanel::lookAndFeelChanged() {
+        curve_thickness_ = base_.getFontSize() * .175f * base_.getEQCurveThickness();
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            stroke_colour_[band] = base_.getColourBlendedWithBackground(
+                base_.getColourMap1(band), stroke_alpha_[band]);
         }
     }
 }

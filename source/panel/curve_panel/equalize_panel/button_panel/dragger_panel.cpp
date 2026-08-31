@@ -68,6 +68,23 @@ namespace zlpanel {
         rebuildAttachments();
     }
 
+    void DraggerPanel::setSoloActive(const bool active) {
+        solo_active_ = active;
+        if (solo_active_) {
+            dragger_.check_center_ = [this](const juce::Point<float> current,
+                                            const juce::Point<float> next) {
+                return updateSoloGain(current, next);
+            };
+        } else {
+            dragger_.check_center_ = nullptr;
+        }
+        updateDraggerBound();
+    }
+
+    void DraggerPanel::startSoloGainDrag() {
+        solo_gain_at_drag_start_ = static_cast<float>(p_ref_.getEqualizeController().getSoloGain());
+    }
+
     void DraggerPanel::updateSampleRate(const double sample_rate) {
         sample_rate_ = sample_rate;
         freq_range_ = makeFreqRange(static_cast<float>(zlp::getEQFreqMax(sample_rate)));
@@ -98,10 +115,11 @@ namespace zlpanel {
         const auto width_portion = std::clamp(
             std::log(slider_max / zlp::kEQMinFreq) / std::log(fft_max / zlp::kEQMinFreq), 0.f, 1.f);
         bound.removeFromRight((1.f - width_portion) * bound.getWidth());
+        solo_gain_drag_height_ = std::max(bound.getHeight() - 2.f * base_.getFontSize(), 1.f);
         const auto filter_type = static_cast<zldsp::filter::FilterType>(filter_type_);
         switch (filter_type) {
         case zldsp::filter::FilterType::kPeak: {
-            dragger_.setXYEnabled(true, true);
+            dragger_y_enabled_ = true;
             dragger_.setButtonArea(
                 bound.withSizeKeepingCentre(
                     bound.getWidth(), bound.getHeight() - 2 * base_.getFontSize()));
@@ -111,7 +129,7 @@ namespace zlpanel {
         case zldsp::filter::FilterType::kHighShelf:
         case zldsp::filter::FilterType::kTiltShelf:
         case zldsp::filter::FilterType::kFlatTilt: {
-            dragger_.setXYEnabled(true, true);
+            dragger_y_enabled_ = true;
             dragger_.setButtonArea(
                 bound.withSizeKeepingCentre(
                     bound.getWidth(), bound.getHeight() * .5f - base_.getFontSize()));
@@ -122,12 +140,22 @@ namespace zlpanel {
         case zldsp::filter::FilterType::kHighPass:
         case zldsp::filter::FilterType::kBandPass:
         case zldsp::filter::FilterType::kAllPass: {
-            dragger_.setXYEnabled(true, false);
+            dragger_y_enabled_ = false;
             dragger_.setButtonArea(bound.withSizeKeepingCentre(
                 bound.getWidth(), kScale * base_.getFontSize()));
             break;
         }
         }
+        dragger_.setXYEnabled(true, dragger_y_enabled_ || solo_active_);
+    }
+
+    juce::Point<float> DraggerPanel::updateSoloGain(const juce::Point<float> current,
+                                                    const juce::Point<float> next) const {
+        const auto db_per_pixel = 2.f * eq_max_db_ / solo_gain_drag_height_;
+        const auto gain = std::clamp(solo_gain_at_drag_start_ + (current.y - next.y) * db_per_pixel,
+                                     zlp::PGain::kRange.start, zlp::PGain::kRange.end);
+        p_ref_.getEqualizeController().setSoloGain(gain);
+        return {next.x, current.y};
     }
 
     void DraggerPanel::lookAndFeelChanged() {

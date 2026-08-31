@@ -30,6 +30,7 @@ namespace zlp {
             solo_pointers_[chan] = solo_buffers_[chan].data();
         }
         solo_filter_.prepare(sample_rate, 2, max_num_samples);
+        solo_gain_.prepare(sample_rate, max_num_samples, 0.5);
     }
 
     void EqualizeController::prepareBuffer() {
@@ -61,13 +62,21 @@ namespace zlp {
             }
         }
         c_fft_analyzer_on_ = fft_analyzer_on_.load(std::memory_order::relaxed);
-        if (to_update_solo_.check()) {
+        const auto solo_status_updated = to_update_solo_.check();
+        if (solo_status_updated) {
             c_solo_band_ = solo_band_.load(std::memory_order::relaxed);
             c_solo_on_ = c_solo_band_ < kBandNum;
             if (c_solo_on_) {
                 solo_filter_.reset();
                 updateSoloFilter(filter_paras_[c_solo_band_], true);
             }
+        }
+        const auto solo_gain_reset_requested = to_reset_solo_gain_.check();
+        if (solo_status_updated || (solo_gain_reset_requested && !c_solo_on_)) {
+            solo_gain_.reset();
+        }
+        if (to_update_solo_gain_.check()) {
+            solo_gain_.setGainDecibels(solo_gain_db_.load(std::memory_order::relaxed));
         }
         for (const auto& i : on_indices_) {
             if (empty_update_flags_[i].check()) {
@@ -95,6 +104,7 @@ namespace zlp {
             zldsp::vector::copy(solo_pointers_[0], pointers[0], num_samples);
             zldsp::vector::copy(solo_pointers_[1], pointers[1], num_samples);
             solo_filter_.template process<false>(solo_pointers_, num_samples);
+            solo_gain_.template process<false>(solo_pointers_, num_samples);
         }
         for (const auto& i : on_indices_) {
             switch (c_filter_status_[i]) {

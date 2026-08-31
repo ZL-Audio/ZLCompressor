@@ -24,7 +24,15 @@ namespace zlpanel {
           wheel_reverse_box_(zlstate::PWheelShiftReverse::kChoices, base),
           rotary_style_box_(zlstate::PRotaryStyle::kChoices, base),
           rotary_drag_sensitivity_slider_("Distance", base),
-          slider_double_click_box_(zlstate::PSliderDoubleClickFunc::kChoices, base) {
+          slider_double_click_box_(zlstate::PSliderDoubleClickFunc::kChoices, base),
+          solo_action_mouse_boxes_{
+              zlgui::combobox::CompactCombobox(zlstate::PEnterSoloMouse::kChoices, base),
+              zlgui::combobox::CompactCombobox(zlstate::PExitSoloMouse::kChoices, base)
+          },
+          solo_action_key_boxes_{
+              zlgui::combobox::CompactCombobox(zlstate::PEnterSoloKey::kChoices, base),
+              zlgui::combobox::CompactCombobox(zlstate::PExitSoloKey::kChoices, base)
+          } {
         juce::ignoreUnused(p_ref_);
         name_laf_.setFontScale(zlgui::kFontHuge);
 
@@ -59,6 +67,16 @@ namespace zlpanel {
         addAndMakeVisible(slider_double_click_label_);
         addAndMakeVisible(slider_double_click_box_);
 
+        solo_action_labels_[0].setText("Enter Solo", juce::dontSendNotification);
+        solo_action_labels_[1].setText("Exit Solo", juce::dontSendNotification);
+        for (size_t i = 0; i < solo_action_labels_.size(); ++i) {
+            solo_action_labels_[i].setJustificationType(juce::Justification::centredRight);
+            solo_action_labels_[i].setLookAndFeel(&name_laf_);
+            addAndMakeVisible(solo_action_labels_[i]);
+            addAndMakeVisible(solo_action_mouse_boxes_[i]);
+            addAndMakeVisible(solo_action_key_boxes_[i]);
+        }
+
         import_label_.setText("Import Controls", juce::dontSendNotification);
         import_label_.setJustificationType(juce::Justification::centred);
         import_label_.setLookAndFeel(&name_laf_);
@@ -83,6 +101,10 @@ namespace zlpanel {
         rotary_drag_sensitivity_slider_.getSlider().setValue(static_cast<double>(base_.getRotaryDragSensitivity()));
         slider_double_click_box_.getBox().setSelectedId(
             static_cast<int>(base_.getIsSliderDoubleClickOpenEditor()) + 1);
+        solo_action_mouse_boxes_[0].getBox().setSelectedItemIndex(static_cast<int>(base_.getEnterSoloMouse()));
+        solo_action_key_boxes_[0].getBox().setSelectedItemIndex(static_cast<int>(base_.getEnterSoloKey()));
+        solo_action_mouse_boxes_[1].getBox().setSelectedItemIndex(static_cast<int>(base_.getExitSoloMouse()));
+        solo_action_key_boxes_[1].getBox().setSelectedItemIndex(static_cast<int>(base_.getExitSoloKey()));
     }
 
     void ControlSettingPanel::saveSetting() {
@@ -95,6 +117,14 @@ namespace zlpanel {
         base_.setRotaryDragSensitivity(static_cast<float>(rotary_drag_sensitivity_slider_.getSlider().getValue()));
         base_.setIsSliderDoubleClickOpenEditor(
             static_cast<bool>(slider_double_click_box_.getBox().getSelectedId() - 1));
+        base_.setEnterSoloMouse(static_cast<zlgui::MouseActionType>(
+            solo_action_mouse_boxes_[0].getBox().getSelectedItemIndex()));
+        base_.setEnterSoloKey(static_cast<zlgui::KeyActionType>(
+            solo_action_key_boxes_[0].getBox().getSelectedItemIndex()));
+        base_.setExitSoloMouse(static_cast<zlgui::MouseActionType>(
+            solo_action_mouse_boxes_[1].getBox().getSelectedItemIndex()));
+        base_.setExitSoloKey(static_cast<zlgui::KeyActionType>(
+            solo_action_key_boxes_[1].getBox().getSelectedItemIndex()));
         base_.saveToAPVTS();
     }
 
@@ -105,7 +135,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
-        return padding * 6 + slider_height * 5;
+        return padding * 8 + slider_height * 7;
     }
 
     void ControlSettingPanel::resized() {
@@ -150,6 +180,17 @@ namespace zlpanel {
             slider_double_click_label_.setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
             local_bound.removeFromLeft(padding);
             slider_double_click_box_.setBounds(local_bound.removeFromLeft(slider_width * 2).reduced(0, padding / 3));
+        }
+        for (size_t i = 0; i < solo_action_labels_.size(); ++i) {
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            solo_action_labels_[i].setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
+            local_bound.removeFromLeft(padding);
+            solo_action_mouse_boxes_[i].setBounds(
+                local_bound.removeFromLeft(slider_width * 2).reduced(0, padding / 3));
+            local_bound.removeFromLeft(padding);
+            solo_action_key_boxes_[i].setBounds(
+                local_bound.removeFromLeft(slider_width * 2).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);

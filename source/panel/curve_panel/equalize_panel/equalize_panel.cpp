@@ -14,14 +14,14 @@ namespace zlpanel {
         : p_ref_(processor), base_{base},
           background_panel_(processor, base),
           fft_analyzer_panel_(processor, base),
-          response_panel_(processor, base),
+          response_panel_(processor, base, selected_band_idx_),
           button_panel_(processor, base, selected_band_idx_) {
         juce::ignoreUnused(base_);
 
         addAndMakeVisible(background_panel_);
         addAndMakeVisible(fft_analyzer_panel_);
         addAndMakeVisible(response_panel_);
-        addChildComponent(button_panel_);
+        addAndMakeVisible(button_panel_);
 
         setInterceptsMouseClicks(true, true);
 
@@ -30,9 +30,13 @@ namespace zlpanel {
             p_ref_.parameters_.addParameterListener(para_ID, this);
             parameterChanged(para_ID, p_ref_.parameters_.getRawParameterValue(para_ID)->load());
         }
+        response_panel_.startThread(juce::Thread::Priority::low);
     }
 
     EqualizePanel::~EqualizePanel() {
+        if (response_panel_.isThreadRunning()) {
+            response_panel_.stopThread(-1);
+        }
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             auto para_ID = zlp::PFilterStatus::kID + std::to_string(band);
             p_ref_.parameters_.removeParameterListener(para_ID, this);
@@ -41,14 +45,10 @@ namespace zlpanel {
     }
 
     void EqualizePanel::run(juce::Thread& thread) {
-        if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
-            to_update_visibility_.store(true, std::memory_order::release);
-        }
-        fft_analyzer_panel_.run();
+        fft_analyzer_panel_.run(thread);
         if (thread.threadShouldExit()) {
             return;
         }
-        response_panel_.run(thread);
     }
 
     void EqualizePanel::resized() {
@@ -70,9 +70,7 @@ namespace zlpanel {
         button_panel_.repaintCallBackSlow();
 
         const auto mouse_over = isMouseOverOrDragging(true);
-        response_panel_.setMouseOver(mouse_over);
         background_panel_.setMouseOver(mouse_over);
-        button_panel_.setVisible(mouse_over);
     }
 
     void EqualizePanel::repaintCallBack(double) {
@@ -80,19 +78,20 @@ namespace zlpanel {
             previous_band_idx_ = selected_band_idx_;
             button_panel_.updateBand();
             button_panel_.getPopupPanel().setVisible(false);
-            response_panel_.updateBand(selected_band_idx_);
+            response_panel_.updateBand();
             popup_update_wait_count_ = 2;
         }
-        if (to_update_visibility_.exchange(false, std::memory_order::acquire)) {
+        response_panel_.repaintCallBack();
+
+        if (to_update_filter_status_.exchange(false, std::memory_order::acquire)) {
             std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum> c_filter_status{};
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 c_filter_status[band] = filter_status_[band].load(std::memory_order::relaxed);
             }
-            response_panel_.setBandStatus(c_filter_status);
             button_panel_.setBandStatus(c_filter_status);
         }
 
-        if (button_panel_.isVisible()) {
+        {
             juce::Point<float> popup_target_pos{0.f, -1e6f};
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 const auto button_pos = response_panel_.getBandButtonPos(band);
@@ -100,6 +99,10 @@ namespace zlpanel {
                 if (band == selected_band_idx_) {
                     popup_target_pos = button_pos;
                 }
+            }
+            if (selected_band_idx_ < zlp::kBandNum) {
+                const auto [left_x, right_x] = response_panel_.getBandSoloRange(selected_band_idx_);
+                button_panel_.updateSoloRange(left_x, right_x);
             }
 
             if (popup_update_wait_count_ > 0) {
@@ -133,6 +136,7 @@ namespace zlpanel {
 
     void EqualizePanel::repaintCallBackAfter() {
         button_panel_.repaintCallBackAfter();
+        response_panel_.notify();
     }
 
     void EqualizePanel::updateSampleRate(const double sample_rate) {

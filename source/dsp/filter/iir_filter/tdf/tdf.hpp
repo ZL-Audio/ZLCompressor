@@ -96,29 +96,29 @@ namespace zldsp::filter {
             if constexpr (order == 1) {
                 const auto& coeff{IIR<kFilterSize>::coeffs_[0]};
                 auto& s1{s1s_[channel_offset]};
-                const auto output = sample * coeff[2] + s1;
-                s1 = (sample * coeff[3]) - (output * coeff[0]);
-                sample = output;
+                const auto output = static_cast<double>(sample) * coeff[2] + static_cast<double>(s1);
+                s1 = static_cast<FloatType>(static_cast<double>(sample) * coeff[3] - output * coeff[0]);
+                sample = static_cast<FloatType>(output);
                 return sample;
             }
             if constexpr (order == 2) {
                 const auto& coeff{IIR<kFilterSize>::coeffs_[0]};
                 auto& s1{s1s_[channel_offset]};
                 auto& s2{s2s_[channel_offset]};
-                const auto output = sample * coeff[2] + s1;
-                s1 = (sample * coeff[3]) - (output * coeff[0]) + s2;
-                s2 = (sample * coeff[4]) - (output * coeff[1]);
-                sample = output;
+                const auto output = static_cast<double>(sample) * coeff[2] + static_cast<double>(s1);
+                s1 = static_cast<FloatType>(static_cast<double>(sample) * coeff[3] - output * coeff[0]) + s2;
+                s2 = static_cast<FloatType>(sample * coeff[4] - output * coeff[1]);
+                sample = static_cast<FloatType>(output);
                 return sample;
             }
             for (size_t filter_idx = 0; filter_idx < this->current_filter_num_; ++filter_idx) {
                 const auto& coeff{IIR<kFilterSize>::coeffs_[filter_idx]};
                 auto& s1{s1s_[channel_offset + filter_idx]};
                 auto& s2{s2s_[channel_offset + filter_idx]};
-                const auto output = sample * coeff[2] + s1;
-                s1 = (sample * coeff[3]) - (output * coeff[0]) + s2;
-                s2 = (sample * coeff[4]) - (output * coeff[1]);
-                sample = output;
+                const auto output = static_cast<double>(sample) * coeff[2] + static_cast<double>(s1);
+                s1 = static_cast<FloatType>(static_cast<double>(sample) * coeff[3] - output * coeff[0]) + s2;
+                s2 = static_cast<FloatType>(sample * coeff[4] - output * coeff[1]);
+                sample = static_cast<FloatType>(output);
             }
             return sample;
         }

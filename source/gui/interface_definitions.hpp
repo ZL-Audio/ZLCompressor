@@ -15,6 +15,20 @@
 #include "../state/state_definitions.hpp"
 
 namespace zlgui {
+    enum class MouseActionType {
+        kLeftClick,
+        kRightClick,
+        kLeftDoubleClick,
+        kRightDoubleClick,
+    };
+
+    enum class KeyActionType {
+        kNone,
+        kCmdCtrl,
+        kShift,
+        kAlt,
+    };
+
     enum ColourIdx {
         kTextColour,
         kBackgroundColour,
@@ -408,6 +422,33 @@ namespace zlgui {
 
         juce::SelectedItemSet<size_t>& getSelectedBandSet() { return selected_band_set_; }
 
+        bool checkMouseKeyMatch(MouseActionType action_type, const juce::ModifierKeys& mods,
+                                MouseActionType mouse_option, KeyActionType key_option) const;
+
+        bool isEnterSoloTriggered(const MouseActionType type, const juce::ModifierKeys& mods) const {
+            return checkMouseKeyMatch(type, mods, enter_solo_mouse_, enter_solo_key_);
+        }
+
+        bool isExitSoloTriggered(const MouseActionType type, const juce::ModifierKeys& mods) const {
+            return checkMouseKeyMatch(type, mods, exit_solo_mouse_, exit_solo_key_);
+        }
+
+        MouseActionType getEnterSoloMouse() const { return enter_solo_mouse_; }
+
+        void setEnterSoloMouse(const MouseActionType x) { enter_solo_mouse_ = x; }
+
+        KeyActionType getEnterSoloKey() const { return enter_solo_key_; }
+
+        void setEnterSoloKey(const KeyActionType x) { enter_solo_key_ = x; }
+
+        MouseActionType getExitSoloMouse() const { return exit_solo_mouse_; }
+
+        void setExitSoloMouse(const MouseActionType x) { exit_solo_mouse_ = x; }
+
+        KeyActionType getExitSoloKey() const { return exit_solo_key_; }
+
+        void setExitSoloKey(const KeyActionType x) { exit_solo_key_ = x; }
+
     private:
         juce::AudioProcessorValueTreeState& state;
         juce::ValueTree panel_value_tree_{"panel_setting"};
@@ -430,6 +471,11 @@ namespace zlgui {
         bool is_editor_showing_{false};
 
         juce::SelectedItemSet<size_t> selected_band_set_;
+
+        MouseActionType enter_solo_mouse_{MouseActionType::kRightClick};
+        KeyActionType enter_solo_key_{KeyActionType::kNone};
+        MouseActionType exit_solo_mouse_{MouseActionType::kRightClick};
+        KeyActionType exit_solo_key_{KeyActionType::kNone};
 
         float loadPara(const std::string& id) const {
             return state.getRawParameterValue(id)->load(std::memory_order::relaxed);

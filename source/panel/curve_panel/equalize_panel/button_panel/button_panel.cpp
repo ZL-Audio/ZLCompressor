@@ -20,7 +20,7 @@ namespace zlpanel {
         para_panel_(p, base, selected_band_idx),
         popup_panel_(p, base, selected_band_idx),
         right_click_panel_(p, base, selected_band_idx),
-        solo_panel_(p, base, selected_band_idx, dragger_panels_),
+        solo_panel_(base),
         items_set_(base.getSelectedBandSet()) {
         addChildComponent(q_slider_);
         slope_slider_.setSliderStyle(juce::Slider::SliderStyle::Rotary);
@@ -145,7 +145,9 @@ namespace zlpanel {
 
     void ButtonPanel::updateBand() {
         if (previous_band_idx_ != selected_band_idx_) {
-            turnOffSolo();
+            if (solo_band_ != selected_band_idx_) {
+                turnOffSolo();
+            }
             if (previous_band_idx_ != zlp::kBandNum) {
                 dragger_panels_[previous_band_idx_]->getDragger().getButton().setToggleState(
                     false, juce::sendNotificationSync);
@@ -179,6 +181,8 @@ namespace zlpanel {
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
             const auto f = status[band] != zlp::EqualizeController::FilterStatus::kOff;
             dragger_panels_[band]->setVisible(f);
+            dragger_panels_[band]->setAlpha(
+                status[band] == zlp::EqualizeController::FilterStatus::kBypass ? .75f : 1.f);
             if (f) {
                 dragger_panels_[band]->getDragger().getButton().repaint();
             }
@@ -186,7 +190,20 @@ namespace zlpanel {
     }
 
     void ButtonPanel::mouseDown(const juce::MouseEvent& event) {
-        if (event.mods.isRightButtonDown() && !event.mods.isCommandDown()) {
+        solo_gain_drag_active_ = false;
+        exit_solo_on_mouse_up_ = false;
+
+        const auto event_band = findEventBand(event.originalComponent);
+        const auto action_type = event.mods.isRightButtonDown()
+                                     ? zlgui::MouseActionType::kRightClick
+                                     : zlgui::MouseActionType::kLeftClick;
+        const auto solo_action_handled = event_band < zlp::kBandNum
+                                             && handleSoloAction(action_type, event.mods, event_band);
+        const auto context_menu_triggered = event.mods.isRightButtonDown()
+                                            && event.mods.isAltDown()
+                                            && !solo_action_handled;
+
+        if (context_menu_triggered) {
             const auto bound = getLocalBounds().toFloat();
             auto target_point = bound.getTopLeft();
             if (event.originalComponent == this) {
@@ -228,10 +245,17 @@ namespace zlpanel {
     }
 
     void ButtonPanel::mouseUp(const juce::MouseEvent& event) {
+        if (solo_gain_drag_active_) {
+            p_ref_.getEqualizeController().resetSoloGain();
+            solo_gain_drag_active_ = false;
+        }
         if (event.originalComponent == this) {
             lasso_component_.endLasso();
             lasso_component_.setVisible(false);
+        } else if (exit_solo_on_mouse_up_) {
+            turnOffSolo();
         }
+        exit_solo_on_mouse_up_ = false;
     }
 
     void ButtonPanel::mouseDrag(const juce::MouseEvent& event) {
@@ -242,13 +266,12 @@ namespace zlpanel {
 
     void ButtonPanel::mouseDoubleClick(const juce::MouseEvent& event) {
         if (event.originalComponent != this) {
-            if (event.mods.isLeftButtonDown()) {
-                for (size_t i = 0; i < zlp::kBandNum; ++i) {
-                    if (dragger_panels_[i]->isParentOf(event.originalComponent)) {
-                        turnOnSolo(i);
-                        break;
-                    }
-                }
+            const auto event_band = findEventBand(event.originalComponent);
+            if (event_band < zlp::kBandNum) {
+                const auto action_type = event.mods.isRightButtonDown()
+                                             ? zlgui::MouseActionType::kRightDoubleClick
+                                             : zlgui::MouseActionType::kLeftDoubleClick;
+                handleSoloAction(action_type, event.mods, event_band);
             }
             return;
         }
@@ -332,13 +355,77 @@ namespace zlpanel {
     }
 
     void ButtonPanel::turnOnSolo(const size_t band) {
+        if (solo_band_ < zlp::kBandNum && solo_band_ != band) {
+            dragger_panels_[solo_band_]->setSoloActive(false);
+        }
+        solo_band_ = band;
+        dragger_panels_[solo_band_]->setSoloActive(true);
         p_ref_.getEqualizeController().setSoloBand(band);
         solo_panel_.setVisible(true);
     }
 
     void ButtonPanel::turnOffSolo() {
+        if (solo_band_ < zlp::kBandNum) {
+            dragger_panels_[solo_band_]->setSoloActive(false);
+        }
+        solo_band_ = zlp::kBandNum;
         solo_panel_.setVisible(false);
+        p_ref_.getEqualizeController().resetSoloGain();
         p_ref_.getEqualizeController().setSoloBand(zlp::kBandNum);
+    }
+
+    size_t ButtonPanel::findEventBand(const juce::Component* component) const {
+        if (component == nullptr) {
+            return zlp::kBandNum;
+        }
+        for (size_t band = 0; band < zlp::kBandNum; ++band) {
+            if (component == dragger_panels_[band].get() || dragger_panels_[band]->isParentOf(component)) {
+                return band;
+            }
+        }
+        return zlp::kBandNum;
+    }
+
+    bool ButtonPanel::isEnterSoloTriggered(const zlgui::MouseActionType type,
+                                           const juce::ModifierKeys& mods) const {
+        if (base_.isEnterSoloTriggered(type, mods)) {
+            return true;
+        }
+        constexpr auto drag_modifiers = juce::ModifierKeys::commandModifier
+                                        | juce::ModifierKeys::shiftModifier;
+        return base_.getEnterSoloKey() == zlgui::KeyActionType::kNone
+               && base_.isEnterSoloTriggered(type, mods.withoutFlags(drag_modifiers));
+    }
+
+    bool ButtonPanel::isExitSoloTriggered(const zlgui::MouseActionType type,
+                                          const juce::ModifierKeys& mods) const {
+        if (base_.isExitSoloTriggered(type, mods)) {
+            return true;
+        }
+        constexpr auto drag_modifiers = juce::ModifierKeys::commandModifier
+                                        | juce::ModifierKeys::shiftModifier;
+        return base_.getExitSoloKey() == zlgui::KeyActionType::kNone
+               && base_.isExitSoloTriggered(type, mods.withoutFlags(drag_modifiers));
+    }
+
+    bool ButtonPanel::handleSoloAction(const zlgui::MouseActionType type,
+                                       const juce::ModifierKeys& mods,
+                                       const size_t band) {
+        const auto enter_solo_triggered = isEnterSoloTriggered(type, mods);
+        const auto exit_solo_triggered = isExitSoloTriggered(type, mods);
+        exit_solo_on_mouse_up_ = exit_solo_triggered;
+
+        if (enter_solo_triggered) {
+            turnOnSolo(band);
+        } else if (exit_solo_triggered) {
+            turnOffSolo();
+        }
+
+        if (p_ref_.getEqualizeController().getSoloBand() == band) {
+            dragger_panels_[band]->startSoloGainDrag();
+            solo_gain_drag_active_ = true;
+        }
+        return enter_solo_triggered || exit_solo_triggered;
     }
 
     void ButtonPanel::mouseEnter(const juce::MouseEvent& event) {

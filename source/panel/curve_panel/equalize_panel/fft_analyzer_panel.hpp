@@ -18,6 +18,8 @@
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_smoother.hpp"
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_tilter.hpp"
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_decayer.hpp"
+#include "../../../dsp/analyzer/fft_analyzer/spectrum_blender.hpp"
+#include "../../../chore/thread/notifier.hpp"
 
 namespace zlpanel {
     class FFTAnalyzerPanel final : public juce::Component,
@@ -29,41 +31,52 @@ namespace zlpanel {
 
         void paint(juce::Graphics& g) override;
 
-        void run();
+        void run(const juce::Thread& thread);
 
         void resized() override;
 
         void setRefreshRate(double refresh_rate);
 
     private:
+        static constexpr size_t kNumResolutions = 3;
+        static constexpr size_t kLowResolution = 0;
+        static constexpr size_t kMiddleResolution = 1;
+        static constexpr size_t kHighResolution = 2;
+
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
 
         bool skip_next_repaint_{false};
         AtomicBound<float> atomic_bound_;
 
-        std::vector<float> xs_{}, ys_{};
+        std::vector<float> xs_{}, ys_{}, frequencies_{};
         BufferedUI<juce::Path> out_path_;
 
         double c_sample_rate_{};
-        int fft_size_{0};
-        float c_width_{};
+        int history_size_{0};
+        float c_width_{}, c_height_{}, y_scale_{}, y_bias_{};
         size_t num_point_{0};
+        std::atomic<float> font_size_{0.1f};
+        zlchore::thread::Notifier to_update_xs_{true};
+        zlchore::thread::Notifier to_update_ys_{true};
 
         std::atomic<float> refresh_rate_{30.0};
-        std::atomic<float> spectrum_decay_speed_{-20.f};
-        std::atomic<bool> to_update_decay_{false};
+        std::atomic<float> spectrum_extra_decay_speed_{1.1f};
+        zlchore::thread::Notifier to_update_decay_{true};
 
         std::atomic<float> spectrum_tilt_slope_{4.5f};
-        std::atomic<bool> to_update_tilt_{false};
+        zlchore::thread::Notifier to_update_tilt_{true};
 
         std::atomic<bool> is_fft_frozen_{false};
 
-        zldsp::analyzer::FFTAnalyzerProcessor processor_;
-        zldsp::analyzer::FFTAnalyzerReceiver receiver_{processor_};
-        zldsp::analyzer::SpectrumSmoother spectrum_smoother_;
+        std::array<zldsp::analyzer::FFTAnalyzerProcessor, kNumResolutions> processors_;
+        zldsp::analyzer::FFTAnalyzerReceiver receiver_{processors_[kLowResolution]};
+        std::array<zldsp::analyzer::SpectrumSmoother, kNumResolutions> spectrum_smoothers_;
         zldsp::analyzer::SpectrumTilter spectrum_tilter_;
         zldsp::analyzer::SpectrumDecayer spectrum_decayer_;
+        std::array<zldsp::vector::aligned_vector<float>, kNumResolutions> resolution_spectra_;
+        zldsp::vector::aligned_vector<float> spectrum_;
+        std::array<float, kNumResolutions> noise_power_scales_{};
 
         void lookAndFeelChanged() override;
 

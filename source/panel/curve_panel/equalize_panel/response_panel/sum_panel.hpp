@@ -9,8 +9,11 @@
 
 #pragma once
 
+#include <array>
 #include <span>
 #include <vector>
+
+#include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../../gui/gui.hpp"
 #include "../../../../zlp/equalize_controller.hpp"
@@ -21,25 +24,22 @@ namespace zlpanel {
     public:
         explicit SumPanel(zlgui::UIBase& base);
 
-        ~SumPanel() override;
-
         void paint(juce::Graphics& g) override;
 
         void resized() override;
 
-        void run(std::span<const float> xs,
-                 const std::array<zldsp::vector::aligned_vector<float>, zlp::kBandNum>& mags,
-                 const std::array<zlp::EqualizeController::FilterStatus, zlp::kBandNum>& filter_status,
-                 const juce::Rectangle<float>& bound, float max_db);
+        void run(bool to_update, bool has_not_off_filter,
+                 std::span<const size_t> on_indices,
+                 std::span<const float> xs, float scale, float bias,
+                 const std::array<zldsp::vector::aligned_vector<float>, zlp::kBandNum>& magnitudes);
 
     private:
+        static constexpr size_t kNumPoints = 400;
+
         zlgui::UIBase& base_;
-
-        std::vector<float> ys_;
-
-        BufferedUI<juce::Path> path_;
-
+        BufferedUI<juce::Path> path_{};
         float curve_thickness_{0.f};
+        std::vector<float> temp_y_{};
 
         void lookAndFeelChanged() override;
     };

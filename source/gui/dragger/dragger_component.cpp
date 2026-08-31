@@ -63,6 +63,9 @@ namespace zlgui::dragger {
         if (e.mods.isShiftDown()) {
             shift.setX(shift.getX() * base_.getSensitivity(SensitivityIdx::kMouseDragFine));
             shift.setY(shift.getY() * base_.getSensitivity(SensitivityIdx::kMouseDragFine));
+        } else {
+            shift.setX(shift.getX() * base_.getSensitivity(SensitivityIdx::kMouseDrag));
+            shift.setY(shift.getY() * base_.getSensitivity(SensitivityIdx::kMouseDrag));
         }
         if (e.mods.isCommandDown()) {
             if (e.mods.isLeftButtonDown()) {
@@ -91,9 +94,13 @@ namespace zlgui::dragger {
         const auto actual_shift = current_pos_ - old_current_pos;
         if (std::abs(shift.x) > 1e-10f) {
             global_pos_.x += actual_shift.x / shift.x * old_shift.x;
+        } else {
+            global_pos_.x += old_shift.x;
         }
         if (std::abs(shift.y) > 1e-10f) {
             global_pos_.y += actual_shift.y / shift.y * old_shift.y;
+        } else {
+            global_pos_.y += old_shift.y;
         }
         // update x/y portion
         x_portion_ = (current_pos_.getX() - button_area_.getX()) / button_area_.getWidth();

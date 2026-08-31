@@ -10,60 +10,19 @@
 #include "solo_panel.hpp"
 
 namespace zlpanel {
-    SoloPanel::SoloPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx,
-                         std::array<std::unique_ptr<DraggerPanel>, zlp::kBandNum>& dragger_panels)
-        : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-          dragger_panels_(dragger_panels) {
+    SoloPanel::SoloPanel(zlgui::UIBase& base) : base_(base) {
         setInterceptsMouseClicks(false, false);
     }
 
     void SoloPanel::paint(juce::Graphics& g) {
-        if (selected_band_idx_ >= zlp::kBandNum) {
-            return;
+        const auto bound = getLocalBounds().toFloat();
+        g.setColour(base_.getBackgroundColour().withAlpha(.625f));
+        if (left_x_ > 0.f) {
+            g.fillRect(juce::Rectangle<float>{0.f, 0.f, left_x_, bound.getHeight()});
         }
-        auto& equalize_controller{p_ref_.getEqualizeController()};
-        const auto filter_type = equalize_controller.getFilterType(selected_band_idx_);
-        g.setColour(base_.getBackgroundColour().withAlpha(.75f));
-        switch (filter_type) {
-        case zldsp::filter::FilterType::kLowShelf:
-        case zldsp::filter::FilterType::kHighPass: {
-            const auto x = dragger_panels_[selected_band_idx_]->getDragger().getButtonPos().x;
-
-            auto bound = getLocalBounds().toFloat();
-            bound.removeFromLeft(x);
-            g.fillRect(bound);
-            break;
-        }
-        case zldsp::filter::FilterType::kHighShelf:
-        case zldsp::filter::FilterType::kLowPass: {
-            const auto x = dragger_panels_[selected_band_idx_]->getDragger().getButtonPos().x;
-
-            auto bound = getLocalBounds().toFloat();
-            bound = bound.removeFromLeft(x);
-            g.fillRect(bound);
-            break;
-        }
-        case zldsp::filter::FilterType::kPeak:
-        case zldsp::filter::FilterType::kNotch:
-        case zldsp::filter::FilterType::kBandPass:
-        case zldsp::filter::FilterType::kAllPass: {
-            const auto x = dragger_panels_[selected_band_idx_]->getDragger().getButtonPos().x;
-            const auto solo_q = equalize_controller.getFilterQ(selected_band_idx_);
-            const auto bw = static_cast<float>(std::asinh(0.5f / solo_q) / std::log(2200.f));
-
-            auto bound = getLocalBounds().toFloat();
-            const auto bound_width = bound.getWidth();
-            const auto left_width = x - bw * bound_width;
-            const auto right_width = bound_width - x - bw * bound_width;
-            const auto left_area = bound.removeFromLeft(left_width);
-            const auto right_area = bound.removeFromRight(right_width);
-            g.fillRect(left_area);
-            g.fillRect(right_area);
-            break;
-        }
-        case zldsp::filter::FilterType::kTiltShelf:
-        case zldsp::filter::FilterType::kFlatTilt: {
-        }
+        if (right_x_ < bound.getWidth()) {
+            g.fillRect(juce::Rectangle<float>{right_x_, 0.f,
+                                              bound.getWidth() - right_x_, bound.getHeight()});
         }
     }
-} // zlpanel
+}

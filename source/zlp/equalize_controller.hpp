@@ -110,6 +110,23 @@ namespace zlp {
             return c_solo_on_;
         }
 
+        void setSoloGain(const double gain) {
+            solo_gain_db_.store(gain, std::memory_order::relaxed);
+            to_update_solo_gain_.signal();
+            to_update_.signal();
+        }
+
+        [[nodiscard]] double getSoloGain() const {
+            return solo_gain_db_.load(std::memory_order::relaxed);
+        }
+
+        void resetSoloGain() {
+            solo_gain_db_.store(0.0, std::memory_order::relaxed);
+            to_reset_solo_gain_.signal();
+            to_update_solo_gain_.signal();
+            to_update_.signal();
+        }
+
         std::array<double*, 2>& getSoloPointers() {
             return solo_pointers_;
         }
@@ -147,6 +164,10 @@ namespace zlp {
         bool c_solo_on_{false};
         std::array<std::vector<double>, 2> solo_buffers_;
         std::array<double*, 2> solo_pointers_{};
+        zlchore::thread::Notifier to_reset_solo_gain_{false};
+        zlchore::thread::Notifier to_update_solo_gain_{false};
+        std::atomic<double> solo_gain_db_{0.0};
+        zldsp::gain::Gain<double> solo_gain_{};
 
         std::atomic<bool> a_eq_bypass_{false};
         bool eq_bypass_{false};
