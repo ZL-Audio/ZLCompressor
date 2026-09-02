@@ -28,8 +28,6 @@ namespace zlp {
 
     class CompressController final : private juce::AsyncUpdater {
     public:
-        static constexpr size_t kAnalyzerPointNum = 251;
-        static constexpr size_t kAvgAnalyzerPointNum = 120;
         static constexpr size_t kAnalyzerPreStream = 0;
         static constexpr size_t kAnalyzerCompressedStream = 1;
         static constexpr size_t kAnalyzerPostStream = 2;

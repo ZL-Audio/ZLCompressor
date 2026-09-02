@@ -9,6 +9,27 @@
 
 #include "peak_panel.hpp"
 
+namespace {
+    constexpr auto kMaxAnalyzerPointNum = 300;
+
+    constexpr int chooseNumPointsPerSecond(const int sample_rate,
+                                           const int preferred_num_points_per_second,
+                                           const int time_length) {
+        if (sample_rate <= 0 || preferred_num_points_per_second <= 0 || time_length <= 0) {
+            return preferred_num_points_per_second;
+        }
+
+        const auto max_num_points_per_second = static_cast<int>(kMaxAnalyzerPointNum) / time_length;
+        for (auto candidate = preferred_num_points_per_second;
+             candidate <= max_num_points_per_second; ++candidate) {
+            if (sample_rate % candidate == 0) {
+                return candidate;
+            }
+        }
+        return preferred_num_points_per_second;
+    }
+}
+
 namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor& p, zlgui::UIBase& base) :
         base_(base),
@@ -19,7 +40,7 @@ namespace zlpanel {
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
         analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)) {
-        constexpr auto preallocateSpace = static_cast<int>(zlp::CompressController::kAnalyzerPointNum) * 3 + 1;
+        constexpr auto preallocateSpace = static_cast<int>(kMaxAnalyzerPointNum) * 3 + 1;
         for (auto& path : in_path_.get_buffer()) {
             path.preallocateSpace(preallocateSpace);
         }
@@ -70,7 +91,8 @@ namespace zlpanel {
     }
 
     void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel,
-                        zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
+                        zldsp::analyzer::FIFOTransferBuffer<
+                            zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
                         const size_t consumer_id) {
         const auto bound = atomic_bound_.load();
         const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
@@ -91,9 +113,11 @@ namespace zlpanel {
             max_num_samples_ = max_num_samples;
             time_length_idx_ = time_length_idx;
             const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
-            num_points_per_second_ = kNumPointsPerSecond[time_idx];
-            num_samples_per_point_ = static_cast<int>(sample_rate_) / num_points_per_second_;
             time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
+            const auto rounded_sample_rate = static_cast<int>(std::round(sample_rate_));
+            num_points_per_second_ = chooseNumPointsPerSecond(
+                rounded_sample_rate, kNumPointsPerSecond[time_idx], static_cast<int>(std::round(time_length_)));
+            num_samples_per_point_ = rounded_sample_rate / num_points_per_second_;
             is_first_point_ = true;
             num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
             second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
