@@ -52,7 +52,7 @@ namespace zlpanel {
         const auto c_mag_min_db_id = mag_min_db_id_ref_.load(std::memory_order::relaxed);
         if (std::abs(c_mag_min_db_id - mag_min_db_id_) > 1e-3f) {
             mag_min_db_id_ = std::round(c_mag_min_db_id);
-            mag_min_db_ = zlstate::PAnalyzerMinDB::getMinDBFromIndex(c_mag_min_db_id);
+            mag_min_db_ = zlstate::PAnalyzerMinDB::getDBFromIndex(c_mag_min_db_id);
             repaint();
         }
     }

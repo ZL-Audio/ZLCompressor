@@ -104,7 +104,7 @@ namespace zlpanel {
 
     template <typename C, bool is_downward>
     void ComputerPanel::updateComputerPath(C& c) {
-        const auto current_min_db = zlstate::PAnalyzerMinDB::getMinDBFromIndex(
+        const auto current_min_db = zlstate::PAnalyzerMinDB::getDBFromIndex(
             min_db_ref_.load(std::memory_order::relaxed));
         c.prepareBuffer();
         const auto bound = atomic_bound_.load();

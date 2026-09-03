@@ -74,7 +74,7 @@ namespace zlpanel {
 
     void ClipperPanel::parameterChanged(const juce::String& parameter_ID, const float new_value) {
         if (parameter_ID == zlstate::PAnalyzerMinDB::kID) {
-            mag_min_db_.store(zlstate::PAnalyzerMinDB::getMinDBFromIndex(new_value), std::memory_order::relaxed);
+            mag_min_db_.store(zlstate::PAnalyzerMinDB::getDBFromIndex(new_value), std::memory_order::relaxed);
         } else if (parameter_ID == zlp::PThreshold::kID) {
             computer_.setThreshold(new_value);
         } else if (parameter_ID == zlp::PRatio::kID) {
