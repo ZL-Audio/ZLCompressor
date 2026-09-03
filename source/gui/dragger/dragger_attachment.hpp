@@ -53,8 +53,7 @@ namespace zlgui::attachment {
                         dragger_.setXPortion(new_p);
                         dragger_.updateButton();
                     }
-                }
-                else {
+                } else {
                     if (std::abs(dragger_.getYPortion() - new_p) > 0.001f) {
                         dragger_.setYPortion(new_p);
                         dragger_.updateButton();
@@ -74,7 +73,7 @@ namespace zlgui::attachment {
         void parameterChanged(const juce::String&, const float value) override {
             if constexpr (kUpdateFromAPVTS) {
                 atomic_.store(value, std::memory_order::relaxed);
-                updater_ref_.getFlag().store(true, std::memory_order::release);
+                updater_ref_.getFlag().signal();
             }
         }
 
@@ -91,8 +90,7 @@ namespace zlgui::attachment {
                 parameter_ref_.setValueNotifyingHost(
                     parameter_ref_.convertTo0to1(normalisable_range_.convertFrom0to1(
                         std::clamp(dragger_.getXPortion(), 0.f, 1.f))));
-            }
-            else {
+            } else {
                 parameter_ref_.setValueNotifyingHost(
                     parameter_ref_.convertTo0to1(normalisable_range_.convertFrom0to1(
                         std::clamp(dragger_.getYPortion(), 0.f, 1.f))));

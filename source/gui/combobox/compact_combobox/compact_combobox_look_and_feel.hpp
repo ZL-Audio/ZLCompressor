@@ -40,7 +40,8 @@ namespace zlgui::combobox {
             if (!icons_.empty() && box.getSelectedItemIndex() >= 0) {
                 const auto fig = icons_[static_cast<size_t>(box.getSelectedItemIndex())]->createCopy();
                 fig->replaceColour(juce::Colours::black, base_.getTextColour());
-                fig->drawWithin(g, box.getLocalBounds().toFloat(), juce::RectanglePlacement::centred, 1.f);
+                fig->drawWithin(g, box.getLocalBounds().toFloat().reduced(padding_, 0.f),
+                                juce::RectanglePlacement::centred, 1.f);
             }
         }
 
@@ -104,7 +105,8 @@ namespace zlgui::combobox {
             } else {
                 const auto fig = icon->createCopy();
                 fig->replaceColour(juce::Colours::black, base_.getTextColour());
-                fig->drawWithin(g, area.toFloat(), juce::RectanglePlacement::centred, alpha);
+                fig->drawWithin(g, area.toFloat().reduced(padding_, 0.f),
+                                juce::RectanglePlacement::centred, alpha);
             }
         }
 

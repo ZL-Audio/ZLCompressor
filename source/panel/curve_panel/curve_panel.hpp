@@ -13,6 +13,7 @@
 #include "equalize_panel/equalize_panel.hpp"
 #include "left_control_panel.hpp"
 #include "side_control_panel.hpp"
+#include "analyzer_setting_panel/analyzer_setting_panel.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -49,6 +50,7 @@ namespace zlpanel {
         EqualizePanel equalize_panel_;
         LeftControlPanel left_control_panel_;
         SideControlPanel side_control_panel_;
+        AnalyzerSettingPanel analyzer_setting_panel_;
 
         juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
 

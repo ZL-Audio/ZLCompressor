@@ -269,7 +269,7 @@ namespace zlstate {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add(PEQMaxDB::get(),
                    PAnalyzerMagType::get(), PAnalyzerStereo::get(), PAnalyzerMoveType::get(),
-                   PPreCurveDisplay::get(), PPreCurveDisplay::get(),
+                   PPreCurveDisplay::get(), PPostCurveDisplay::get(),
                    PDeltaCurveDisplay::get(), PSideChainCurveDisplay::get(),
                    PAnalyzerTimeLength::get(), PAnalyzerMaxDB::get(), PAnalyzerMinDB::get(),
                    PSideControlDisplay::get(), PSideEQDisplay::get(),
@@ -338,7 +338,7 @@ namespace zlstate {
     public:
         static constexpr auto kID = "wheel_sensitivity";
         static constexpr auto kName = "";
-        inline static const auto kRange = juce::NormalisableRange<float>(0.f, 1.f, 0.01f);
+        inline static const auto kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
         static constexpr auto kDefaultV = 1.f;
     };
 
@@ -360,17 +360,33 @@ namespace zlstate {
         static constexpr int kDefaultI = 0;
     };
 
-    class PDragSensitivity : public FloatParameters<PDragSensitivity> {
+    class PSliderSensitivity : public FloatParameters<PSliderSensitivity> {
     public:
-        static constexpr auto kID = "drag_sensitivity";
+        static constexpr auto kID = "slider_sensitivity";
         static constexpr auto kName = "";
-        inline static const auto kRange = juce::NormalisableRange<float>(0.f, 1.f, 0.01f);
+        inline static const auto kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
         static constexpr auto kDefaultV = 1.f;
     };
 
-    class PDragFineSensitivity : public FloatParameters<PDragFineSensitivity> {
+    class PSliderFineSensitivity : public FloatParameters<PSliderFineSensitivity> {
     public:
-        static constexpr auto kID = "drag_fine_sensitivity";
+        static constexpr auto kID = "slider_fine_sensitivity";
+        static constexpr auto kName = "";
+        inline static const auto kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
+        static constexpr auto kDefaultV = .25f;
+    };
+
+    class PDraggerSensitivity : public FloatParameters<PDraggerSensitivity> {
+    public:
+        static constexpr auto kID = "dragger_sensitivity";
+        static constexpr auto kName = "";
+        inline static const auto kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
+        static constexpr auto kDefaultV = 1.f;
+    };
+
+    class PDraggerFineSensitivity : public FloatParameters<PDraggerFineSensitivity> {
+    public:
+        static constexpr auto kID = "dragger_fine_sensitivity";
         static constexpr auto kName = "";
         inline static const auto kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
         static constexpr auto kDefaultV = .25f;
@@ -380,7 +396,7 @@ namespace zlstate {
     public:
         static constexpr auto kID = "wheel_combobox_sensitivity";
         static constexpr auto kName = "";
-        inline static const auto kRange = juce::NormalisableRange<float>(0.f, 1.f, 0.01f);
+        inline static const auto kRange = juce::NormalisableRange<float>(0.01f, 1.f, 0.01f);
         static constexpr auto kDefaultV = .5f;
     };
 
@@ -619,7 +635,9 @@ namespace zlstate {
         layout.add(PWindowW::get(), PWindowH::get(), PWindowSizeFix::get(),
                    PFontMode::get(), PFontScale::get(), PStaticFontSize::get(),
                    PWheelSensitivity::get(), PWheelFineSensitivity::get(), PWheelShiftReverse::get(),
-                   PDragSensitivity::get(), PDragFineSensitivity::get(), PWheelComboboxSensitivity::get(),
+                   PSliderSensitivity::get(), PSliderFineSensitivity::get(),
+                   PDraggerSensitivity::get(), PDraggerFineSensitivity::get(),
+                   PWheelComboboxSensitivity::get(),
                    PRotaryStyle::get(), PRotaryDragSensitivity::get(),
                    PSliderDoubleClickFunc::get(),
                    PEnterSoloMouse::get(), PEnterSoloKey::get(),

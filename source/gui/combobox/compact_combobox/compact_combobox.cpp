@@ -85,13 +85,17 @@ namespace zlgui::combobox {
     void CompactCombobox::paint(juce::Graphics& g) {
         g.setFont(box_laf_.getFontScale() * base_.getFontSize());
         float max_text_width = 0.f;
+        bool has_text = false;
         for (int i = 0; i < combo_box_.getNumItems(); ++i) {
             const auto text = combo_box_.getItemText(i);
+            has_text = has_text || text.isNotEmpty();
             const auto text_width = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), text);
             max_text_width = std::max(max_text_width, text_width);
         }
-        const auto padding = (static_cast<float>(getLocalBounds().getWidth()) - max_text_width) * .5f;
-        box_laf_.setPadding(padding * .975f);
+        if (has_text) {
+            const auto padding = (static_cast<float>(getLocalBounds().getWidth()) - max_text_width) * .5f;
+            box_laf_.setPadding(padding * .975f);
+        }
     }
 
     void CompactCombobox::resized() {

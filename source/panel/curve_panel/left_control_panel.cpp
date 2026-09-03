@@ -61,7 +61,7 @@ namespace zlpanel {
             analyzer_setting_show_button_.setBufferedToImage(true);
             analyzer_setting_show_button_.getButton().onClick = [this] {
                 base_.setPanelProperty(zlgui::PanelSettingIdx::kAnalyzerSettingPanel,
-                                       analyzer_setting_show_button_.getToggleState() ? 1.f : 0.f);
+                                       analyzer_setting_show_button_.getToggleState() ? 1. : 0.);
             };
             addAndMakeVisible(analyzer_setting_show_button_);
         }

@@ -15,18 +15,22 @@
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
 #include "../../multilingual/tooltip_helper.hpp"
+#include "../../background/panel_background.hpp"
 
 namespace zlpanel {
-    class AnalyzerSettingPanel final : public juce::Component {
+    class AnalyzerSettingPanel final : public juce::Component,
+                                       private juce::ValueTree::Listener {
     public:
         explicit AnalyzerSettingPanel(PluginProcessor& p, zlgui::UIBase& base,
                                       multilingual::TooltipHelper& tooltip_helper);
 
-        void resized() override;
+        ~AnalyzerSettingPanel() override;
 
         int getIdealWidth() const;
 
         int getIdealHeight() const;
+
+        void resized() override;
 
         void repaintCallBackSlow();
 
@@ -34,16 +38,42 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
-        zlgui::combobox::CompactCombobox time_length_box_;
-        zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
-
-        zlgui::combobox::CompactCombobox mag_stereo_box_;
-        zlgui::attachment::ComboBoxAttachment<true> mag_stereo_attachment_;
+        PanelBackground control_background_;
 
         zlgui::combobox::CompactCombobox mag_type_box_;
         zlgui::attachment::ComboBoxAttachment<true> mag_type_attachment_;
 
+        zlgui::combobox::CompactCombobox mag_stereo_box_;
+        zlgui::attachment::ComboBoxAttachment<true> mag_stereo_attachment_;
+
+        zlgui::combobox::CompactCombobox move_type_box_;
+        zlgui::attachment::ComboBoxAttachment<true> move_type_attachment_;
+
+        zlgui::button::ClickTextButton pre_button_;
+        zlgui::attachment::ButtonAttachment<true> pre_button_attachment_;
+
+        zlgui::button::ClickTextButton post_button_;
+        zlgui::attachment::ButtonAttachment<true> post_button_attachment_;
+
+        zlgui::button::ClickTextButton delta_button_;
+        zlgui::attachment::ButtonAttachment<true> delta_button_attachment_;
+
+        zlgui::button::ClickTextButton side_button_;
+        zlgui::attachment::ButtonAttachment<true> side_button_attachment_;
+
+        zlgui::combobox::CompactCombobox time_length_box_;
+        zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
+
+        zlgui::combobox::CompactCombobox max_db_box_;
+        zlgui::attachment::ComboBoxAttachment<true> max_db_attachment_;
+
         zlgui::combobox::CompactCombobox min_db_box_;
         zlgui::attachment::ComboBoxAttachment<true> min_db_attachment_;
+
+        zlgui::label::NameLookAndFeel label_laf_;
+        juce::Label delimiter_label_;
+        juce::Label db_label_;
+
+        void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) override;
     };
 }

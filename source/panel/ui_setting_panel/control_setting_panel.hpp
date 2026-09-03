@@ -39,12 +39,9 @@ namespace zlpanel {
         zlgui::label::NameLookAndFeel name_laf_;
 
         juce::Label wheel_label_;
-        juce::Label drag_label_;
-        std::array<zlgui::slider::CompactLinearSlider < true, true, true>
-        ,
-        5
-        >
-        sensitivity_sliders_;
+        juce::Label slider_label_;
+        juce::Label dragger_label_;
+        std::array<zlgui::slider::CompactLinearSlider<true, true, true>, 7> sensitivity_sliders_;
         zlgui::combobox::CompactCombobox wheel_reverse_box_;
         juce::Label rotary_style_label_;
         zlgui::combobox::CompactCombobox rotary_style_box_;

@@ -19,6 +19,8 @@ namespace zlpanel {
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
                   zlgui::slider::CompactLinearSlider < true, true, true > ("Menu", base)
               }
           },
@@ -41,12 +43,16 @@ namespace zlpanel {
         wheel_label_.setJustificationType(juce::Justification::centredRight);
         wheel_label_.setLookAndFeel(&name_laf_);
         addAndMakeVisible(wheel_label_);
-        drag_label_.setText("Drag Sensitivity", juce::dontSendNotification);
-        drag_label_.setJustificationType(juce::Justification::centredRight);
-        drag_label_.setLookAndFeel(&name_laf_);
-        addAndMakeVisible(drag_label_);
+        slider_label_.setText("Slider Sensitivity", juce::dontSendNotification);
+        slider_label_.setJustificationType(juce::Justification::centredRight);
+        slider_label_.setLookAndFeel(&name_laf_);
+        addAndMakeVisible(slider_label_);
+        dragger_label_.setText("Dragger Sensitivity", juce::dontSendNotification);
+        dragger_label_.setJustificationType(juce::Justification::centredRight);
+        dragger_label_.setLookAndFeel(&name_laf_);
+        addAndMakeVisible(dragger_label_);
         for (auto& s : sensitivity_sliders_) {
-            s.getSlider().setRange(0.0, 1.0, 0.01);
+            s.getSlider().setRange(0.01, 1.0, 0.01);
             addAndMakeVisible(s);
         }
         addAndMakeVisible(wheel_reverse_box_);
@@ -54,7 +60,9 @@ namespace zlpanel {
         sensitivity_sliders_[1].getSlider().setDoubleClickReturnValue(true, 0.12);
         sensitivity_sliders_[2].getSlider().setDoubleClickReturnValue(true, 1.0);
         sensitivity_sliders_[3].getSlider().setDoubleClickReturnValue(true, 0.25);
-        sensitivity_sliders_[4].getSlider().setDoubleClickReturnValue(true, 0.5);
+        sensitivity_sliders_[4].getSlider().setDoubleClickReturnValue(true, 1.0);
+        sensitivity_sliders_[5].getSlider().setDoubleClickReturnValue(true, 0.25);
+        sensitivity_sliders_[6].getSlider().setDoubleClickReturnValue(true, 0.5);
         rotary_style_label_.setText("Rotary Slider Style", juce::dontSendNotification);
         rotary_style_label_.setJustificationType(juce::Justification::centredRight);
         rotary_style_label_.setLookAndFeel(&name_laf_);
@@ -127,7 +135,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
-        return padding * 7 + slider_height * 6;
+        return padding * 8 + slider_height * 7;
     }
 
     void ControlSettingPanel::resized() {
@@ -146,18 +154,27 @@ namespace zlpanel {
             local_bound.removeFromLeft(padding);
             sensitivity_sliders_[1].setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
-            sensitivity_sliders_[4].setBounds(local_bound.removeFromLeft(slider_width));
+            sensitivity_sliders_[6].setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
             wheel_reverse_box_.setBounds(local_bound.removeFromLeft(slider_width + padding).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);
             auto local_bound = bound.removeFromTop(slider_height);
-            drag_label_.setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
+            slider_label_.setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
             local_bound.removeFromLeft(padding);
             sensitivity_sliders_[2].setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
             sensitivity_sliders_[3].setBounds(local_bound.removeFromLeft(slider_width));
+        }
+        {
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            dragger_label_.setBounds(local_bound.removeFromLeft(slider_width * kLabelWidth));
+            local_bound.removeFromLeft(padding);
+            sensitivity_sliders_[4].setBounds(local_bound.removeFromLeft(slider_width));
+            local_bound.removeFromLeft(padding);
+            sensitivity_sliders_[5].setBounds(local_bound.removeFromLeft(slider_width));
         }
         {
             bound.removeFromTop(padding);
