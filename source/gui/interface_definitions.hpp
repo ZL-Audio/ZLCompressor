@@ -60,6 +60,7 @@ namespace zlgui {
         kUISettingChanged,
         kFFTFrozen,
         kPresetBrowser,
+        kAnalyzerSettingPanel,
         kPanelSettingNum
     };
 
@@ -68,7 +69,8 @@ namespace zlgui {
         juce::Identifier("ui_setting_panel"),
         juce::Identifier("ui_setting_changed"),
         juce::Identifier("fft_frozen"),
-        juce::Identifier("preset_browser")
+        juce::Identifier("preset_browser"),
+        juce::Identifier("analyzer_setting_panel"),
     };
 
     static constexpr size_t kColourMap1Size = 10;

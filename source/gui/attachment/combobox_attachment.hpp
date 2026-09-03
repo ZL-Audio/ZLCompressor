@@ -37,8 +37,7 @@ namespace zlgui::attachment {
                                  parameter_ref_.getParameterID())->load(std::memory_order::relaxed));
             if constexpr (kUpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
-            }
-            else {
+            } else {
                 updateComponent();
             }
         }
@@ -54,6 +53,7 @@ namespace zlgui::attachment {
         void updateComponent() override {
             const auto current_index = atomic_index_.load(std::memory_order::relaxed);
             if (current_index != box_.getSelectedItemIndex()) {
+                const auto parameter_update = beginParameterUpdate();
                 box_.setSelectedItemIndex(current_index, notification_type_);
             }
         }
@@ -68,13 +68,20 @@ namespace zlgui::attachment {
 
         void parameterChanged(const juce::String&, const float new_value) override {
             atomic_index_.store(static_cast<int>(new_value), std::memory_order::relaxed);
-            updater_ref_.getFlag().store(true, std::memory_order::release);
+            updater_ref_.getFlag().signal();
         }
 
         void comboBoxChanged(juce::ComboBox*) override {
+            if (isUpdatingFromParameter()) {
+                return;
+            }
+            const auto normalized_value = parameter_ref_.convertTo0to1(
+                static_cast<float>(box_.getSelectedItemIndex()));
+            if (std::abs(normalized_value - parameter_ref_.getValue()) <= 1e-6f) {
+                return;
+            }
             parameter_ref_.beginChangeGesture();
-            parameter_ref_.setValueNotifyingHost(
-                parameter_ref_.convertTo0to1(static_cast<float>(box_.getSelectedItemIndex())));
+            parameter_ref_.setValueNotifyingHost(normalized_value);
             parameter_ref_.endChangeGesture();
         }
     };

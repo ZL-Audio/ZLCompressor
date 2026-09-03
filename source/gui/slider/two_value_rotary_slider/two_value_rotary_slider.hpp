@@ -49,8 +49,8 @@ namespace zlgui::slider {
                 bounds = bounds.withSizeKeepingCentre(diameter, diameter);
                 juce::Path mask;
                 mask.addPieSegment(bounds, kStartAngle - juce::MathConstants<float>::pi * 1.5f,
-                                     kEndAngle - juce::MathConstants<float>::pi * 1.5f,
-                                     0);
+                                   kEndAngle - juce::MathConstants<float>::pi * 1.5f,
+                                   0);
                 g.saveState();
                 g.reduceClipRegion(mask);
                 // draw knob background
@@ -275,11 +275,7 @@ namespace zlgui::slider {
             } else if (show_slider2_ && event.mods.isRightButtonDown()) {
                 slider2_.mouseDown(event);
             }
-            const auto current_shift_pressed = event.mods.isShiftDown();
-            if (current_shift_pressed != is_shift_pressed_) {
-                is_shift_pressed_ = current_shift_pressed;
-                updateDragDistance();
-            }
+            updateDragDistance(event.mods.isShiftDown());
         }
 
         void mouseDrag(const juce::MouseEvent& event) override {
@@ -410,7 +406,6 @@ namespace zlgui::slider {
 
         void setMouseDragSensitivity(const int x) {
             drag_distance_ = x;
-            updateDragDistance();
         }
 
         void setPrecision(const int x) {
@@ -432,7 +427,6 @@ namespace zlgui::slider {
         bool show_slider2_{false};
 
         int drag_distance_{10};
-        bool is_shift_pressed_{false};
 
         int precision_{4};
 
@@ -501,7 +495,7 @@ namespace zlgui::slider {
             editor.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
             editor.setColour(juce::TextEditor::focusedOutlineColourId, base_.getTextColour().withAlpha(.5f));
             editor.setColour(juce::TextEditor::highlightedTextColourId, base_.getTextColour());
-            
+
             const juce::FontOptions font_opt{base_.getFontSize() * kFontHuge};
             editor.setFont(font_opt);
             editor.applyFontToAllText(font_opt);
@@ -556,14 +550,14 @@ namespace zlgui::slider {
             }
         }
 
-        void updateDragDistance() {
+        void updateDragDistance(const bool is_shift_pressed) {
             int actual_drag_distance;
-            if (is_shift_pressed_) {
+            if (is_shift_pressed) {
                 actual_drag_distance = juce::roundToInt(
-                    static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDragFine));
+                    static_cast<float>(drag_distance_) * 10.f / base_.getSensitivity(SensitivityIdx::kMouseSliderFine));
             } else {
                 actual_drag_distance = juce::roundToInt(
-                    static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseDrag));
+                    static_cast<float>(drag_distance_) / base_.getSensitivity(SensitivityIdx::kMouseSlider));
             }
             actual_drag_distance = std::max(actual_drag_distance, 1);
             slider1_.setMouseDragSensitivity(actual_drag_distance);

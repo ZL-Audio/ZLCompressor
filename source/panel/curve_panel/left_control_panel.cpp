@@ -43,34 +43,10 @@ namespace zlpanel {
                            tooltip_helper.getToolTipText(multilingual::kMeterPanel)),
         meter_show_attachment_(meter_show_button_.getButton(), p.na_parameters_,
                                zlstate::PMeterDisplay::kID, updater_),
-        time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base,
-                         tooltip_helper.getToolTipText(multilingual::kMagAnalyzerTimeLength)),
-        time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
-                                zlstate::PAnalyzerTimeLength::kID, updater_),
-        mag_stereo_box_([]() -> std::vector<std::unique_ptr<juce::Drawable>> {
-            std::vector<std::unique_ptr<juce::Drawable>> icons;
-            icons.emplace_back(
-                juce::Drawable::createFromImageData(BinaryData::stereo_svg, BinaryData::stereo_svgSize));
-            icons.emplace_back(
-                juce::Drawable::createFromImageData(BinaryData::left_svg, BinaryData::left_svgSize));
-            icons.emplace_back(
-                juce::Drawable::createFromImageData(BinaryData::right_svg, BinaryData::right_svgSize));
-            icons.emplace_back(
-                juce::Drawable::createFromImageData(BinaryData::mid_svg, BinaryData::mid_svgSize));
-            icons.emplace_back(
-                juce::Drawable::createFromImageData(BinaryData::side_svg, BinaryData::side_svgSize));
-            return icons;
-        }(), base, tooltip_helper.getToolTipText(multilingual::kMagMeasureStereo)),
-        mag_stereo_attachment_(mag_stereo_box_.getBox(), p.na_parameters_,
-                               zlstate::PAnalyzerStereo::kID, updater_),
-        mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base,
-                      tooltip_helper.getToolTipText(multilingual::kMagMeasureMethod)),
-        mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
-                             zlstate::PAnalyzerMagType::kID, updater_),
-        min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base,
-                    tooltip_helper.getToolTipText(multilingual::kMagAnalyzerMinDB)),
-        min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
-                           zlstate::PAnalyzerMinDB::kID, updater_) {
+        analyzer_setting_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_magnitude_svg,
+                                                                            BinaryData::dline_magnitude_svgSize)),
+        analyzer_setting_show_button_(base, analyzer_setting_show_drawable_.get(),
+                                      analyzer_setting_show_drawable_.get(), "") {
         juce::ignoreUnused(tooltip_helper);
 
         for (auto& b : {&side_control_show_button_, &equalize_show_button_,
@@ -80,16 +56,14 @@ namespace zlpanel {
             b->setBufferedToImage(true);
             addAndMakeVisible(b);
         }
-
-        const auto popup_option = juce::PopupMenu::Options().withPreferredPopupDirection(
-            juce::PopupMenu::Options::PopupDirection::upwards);
-        for (auto& box : {&time_length_box_, &mag_stereo_box_, &mag_type_box_, &min_db_box_}) {
-            box->setScrollEnabled(true);
-            box->getLAF().setFontScale(1.f);
-            box->getLAF().setOption(popup_option);
-            box->setAlpha(.5f);
-            box->setBufferedToImage(true);
-            addAndMakeVisible(box);
+        {
+            analyzer_setting_show_button_.setImageAlpha(1.f, 1.f, 1.f, 1.f);
+            analyzer_setting_show_button_.setBufferedToImage(true);
+            analyzer_setting_show_button_.getButton().onClick = [this] {
+                base_.setPanelProperty(zlgui::PanelSettingIdx::kAnalyzerSettingPanel,
+                                       analyzer_setting_show_button_.getToggleState() ? 1.f : 0.f);
+            };
+            addAndMakeVisible(analyzer_setting_show_button_);
         }
 
         setBufferedToImage(true);
@@ -97,10 +71,11 @@ namespace zlpanel {
 
     void LeftControlPanel::resized() {
         auto bound = getLocalBounds();
-        auto setting_bound = bound.removeFromBottom(getControlPanelHeight(base_.getFontSize()));
         const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
         const auto height = (bound.getHeight() - kButtonNum * button_height) / kButtonNum;
         bound.removeFromBottom(height / 2);
+        meter_show_button_.setBounds(bound.removeFromBottom(button_height));
+        bound.removeFromBottom(height);
         side_control_show_button_.setBounds(bound.removeFromBottom(button_height));
         bound.removeFromBottom(height);
         equalize_show_button_.setBounds(bound.removeFromBottom(button_height));
@@ -109,14 +84,7 @@ namespace zlpanel {
         bound.removeFromBottom(height);
         rms_show_button_.setBounds(bound.removeFromBottom(button_height));
         bound.removeFromBottom(height);
-        meter_show_button_.setBounds(bound.removeFromBottom(button_height));
-
-        const auto box_height = setting_bound.getHeight() / 6;
-        const auto box_padding = setting_bound.getHeight() / 12;
-        for (auto& box : {&min_db_box_, &time_length_box_, &mag_stereo_box_, &mag_type_box_}) {
-            box->setBounds(setting_bound.removeFromBottom(box_height));
-            setting_bound.removeFromBottom(box_padding);
-        }
+        analyzer_setting_show_button_.setBounds(bound.removeFromBottom(button_height));
     }
 
     void LeftControlPanel::repaintCallBackSlow() {

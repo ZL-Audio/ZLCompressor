@@ -36,8 +36,7 @@ namespace zlgui::attachment {
                                  parameter_ref_.getParameterID())->load(std::memory_order::relaxed));
             if constexpr (kUpdateFromAPVTS) {
                 updater_ref_.addAttachment(*this);
-            }
-            else {
+            } else {
                 updateComponent();
             }
         }
@@ -53,6 +52,7 @@ namespace zlgui::attachment {
         void updateComponent() override {
             const auto current_flag = atomic_flag_.load(std::memory_order::relaxed);
             if (current_flag != button_.getToggleState()) {
+                const auto parameter_update = beginParameterUpdate();
                 button_.setToggleState(current_flag, notification_type_);
             }
         }
@@ -67,12 +67,19 @@ namespace zlgui::attachment {
 
         void parameterChanged(const juce::String&, const float new_value) override {
             atomic_flag_.store(new_value > .5f, std::memory_order::relaxed);
-            updater_ref_.getFlag().store(true, std::memory_order::release);
+            updater_ref_.getFlag().signal();
         }
 
         void buttonStateChanged(juce::Button*) override {
+            if (isUpdatingFromParameter()) {
+                return;
+            }
+            const auto normalized_value = static_cast<float>(button_.getToggleState());
+            if (std::abs(normalized_value - parameter_ref_.getValue()) <= 1e-6f) {
+                return;
+            }
             parameter_ref_.beginChangeGesture();
-            parameter_ref_.setValueNotifyingHost(static_cast<float>(button_.getToggleState()));
+            parameter_ref_.setValueNotifyingHost(normalized_value);
             parameter_ref_.endChangeGesture();
         }
 

@@ -26,7 +26,7 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        constexpr static int kButtonNum = 5;
+        constexpr static int kButtonNum = 6;
 
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
@@ -51,16 +51,7 @@ namespace zlpanel {
         zlgui::button::ClickButton meter_show_button_;
         zlgui::attachment::ButtonAttachment<true> meter_show_attachment_;
 
-        zlgui::combobox::CompactCombobox time_length_box_;
-        zlgui::attachment::ComboBoxAttachment<true> time_length_attachment_;
-
-        zlgui::combobox::CompactCombobox mag_stereo_box_;
-        zlgui::attachment::ComboBoxAttachment<true> mag_stereo_attachment_;
-
-        zlgui::combobox::CompactCombobox mag_type_box_;
-        zlgui::attachment::ComboBoxAttachment<true> mag_type_attachment_;
-
-        zlgui::combobox::CompactCombobox min_db_box_;
-        zlgui::attachment::ComboBoxAttachment<true> min_db_attachment_;
+        const std::unique_ptr<juce::Drawable> analyzer_setting_show_drawable_;
+        zlgui::button::ClickButton analyzer_setting_show_button_;
     };
 }
