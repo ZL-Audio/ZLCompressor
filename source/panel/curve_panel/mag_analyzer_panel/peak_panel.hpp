@@ -30,8 +30,8 @@ namespace zlpanel {
         void paint(juce::Graphics& g) override;
 
         void run(double next_time_stamp, RMSPanel& rms_panel,
-            zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
-            size_t consumer_id);
+                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
+                 size_t consumer_id);
 
         void resized() override;
 
@@ -42,7 +42,10 @@ namespace zlpanel {
         zlgui::UIBase& base_;
 
         std::atomic<float>& comp_direction_ref_;
-        std::atomic<float>& side_chain_curve_display_ref_;
+        std::atomic<float>& pre_curve_display_ref_;
+        std::atomic<float>& post_curve_display_ref_;
+        std::atomic<float>& delta_curve_display_ref_;
+        std::atomic<float>& side_curve_display_ref_;
         std::atomic<float>& analyzer_stereo_type_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
         std::atomic<float>& analyzer_min_db_ref_;

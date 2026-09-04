@@ -13,6 +13,10 @@ namespace zlpanel {
     LeftControlPanel::LeftControlPanel(PluginProcessor& p, zlgui::UIBase& base,
                                        multilingual::TooltipHelper& tooltip_helper) :
         base_(base),
+        pre_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PPreCurveDisplay::kID)),
+        post_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PPostCurveDisplay::kID)),
+        delta_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PDeltaCurveDisplay::kID)),
+        side_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideChainCurveDisplay::kID)),
         side_control_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_link_svg,
                                                                         BinaryData::dline_link_svgSize)),
         side_control_show_button_(base, side_control_show_drawable_.get(), side_control_show_drawable_.get(),
@@ -89,5 +93,15 @@ namespace zlpanel {
 
     void LeftControlPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+        const auto pre_on = pre_curve_display_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto post_on = post_curve_display_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto delta_on = delta_curve_display_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto side_on = side_curve_display_ref_.load(std::memory_order::relaxed) > .5f;
+        const auto curve_on = pre_on || post_on || delta_on || side_on;
+        if (curve_on && analyzer_setting_show_button_.getAlpha() < .9f) {
+            analyzer_setting_show_button_.setAlpha(1.f);
+        } else if (!curve_on && analyzer_setting_show_button_.getAlpha() > .6f) {
+            analyzer_setting_show_button_.setAlpha(.5f);
+        }
     }
 }

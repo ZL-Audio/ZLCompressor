@@ -31,6 +31,11 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
+        std::atomic<float>& pre_curve_display_ref_;
+        std::atomic<float>& post_curve_display_ref_;
+        std::atomic<float>& delta_curve_display_ref_;
+        std::atomic<float>& side_curve_display_ref_;
+
         const std::unique_ptr<juce::Drawable> side_control_show_drawable_;
         zlgui::button::ClickButton side_control_show_button_;
         zlgui::attachment::ButtonAttachment<true> side_control_show_attachment_;

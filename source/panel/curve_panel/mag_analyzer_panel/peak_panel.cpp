@@ -34,8 +34,10 @@ namespace zlpanel {
     PeakPanel::PeakPanel(PluginProcessor& p, zlgui::UIBase& base) :
         base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
-        side_chain_curve_display_ref_(*p.na_parameters_.getRawParameterValue(
-            zlstate::PSideChainCurveDisplay::kID)),
+        pre_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PPreCurveDisplay::kID)),
+        post_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PPostCurveDisplay::kID)),
+        delta_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PDeltaCurveDisplay::kID)),
+        side_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideChainCurveDisplay::kID)),
         analyzer_stereo_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
         analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
@@ -59,29 +61,35 @@ namespace zlpanel {
     PeakPanel::~PeakPanel() = default;
 
     void PeakPanel::paint(juce::Graphics& g) {
-        in_path_.pull();
-        out_path_.pull();
-        side_chain_path_.pull();
-        reduction_path_.pull();
-        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPreColour));
-        g.fillPath(in_path_.get_reader());
-        if (side_chain_curve_display_ref_.load(std::memory_order::relaxed) > .5f) {
+        if (pre_curve_display_ref_.load(std::memory_order::relaxed) > .5f) {
+            in_path_.pull();
+            g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPreColour));
+            g.fillPath(in_path_.get_reader());
+        }
+        if (side_curve_display_ref_.load(std::memory_order::relaxed) > .5f) {
+            side_chain_path_.pull();
             g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kSideChainColour));
             g.strokePath(side_chain_path_.get_reader(),
                          juce::PathStrokeType(curve_thickness_,
                                               juce::PathStrokeType::curved,
                                               juce::PathStrokeType::rounded));
         }
-        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPostColour));
-        g.strokePath(out_path_.get_reader(),
-                     juce::PathStrokeType(curve_thickness_,
-                                          juce::PathStrokeType::curved,
-                                          juce::PathStrokeType::rounded));
-        g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
-        g.strokePath(reduction_path_.get_reader(),
-                     juce::PathStrokeType(curve_thickness_,
-                                          juce::PathStrokeType::curved,
-                                          juce::PathStrokeType::rounded));
+        if (post_curve_display_ref_.load(std::memory_order::relaxed) > .5f) {
+            out_path_.pull();
+            g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kPostColour));
+            g.strokePath(out_path_.get_reader(),
+                         juce::PathStrokeType(curve_thickness_,
+                                              juce::PathStrokeType::curved,
+                                              juce::PathStrokeType::rounded));
+        }
+        if (delta_curve_display_ref_.load(std::memory_order::relaxed) > .5f) {
+            reduction_path_.pull();
+            g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
+            g.strokePath(reduction_path_.get_reader(),
+                         juce::PathStrokeType(curve_thickness_,
+                                              juce::PathStrokeType::curved,
+                                              juce::PathStrokeType::rounded));
+        }
     }
 
     void PeakPanel::resized() {
