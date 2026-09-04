@@ -11,6 +11,7 @@
 
 namespace {
     constexpr auto kMaxAnalyzerPointNum = 300;
+    constexpr auto kMissingDB = -10000.f;
 
     constexpr int chooseNumPointsPerSecond(const int sample_rate,
                                            const int preferred_num_points_per_second,
@@ -40,7 +41,6 @@ namespace zlpanel {
         side_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideChainCurveDisplay::kID)),
         analyzer_stereo_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
-        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
         analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)) {
         constexpr auto preallocateSpace = static_cast<int>(kMaxAnalyzerPointNum) * 3 + 1;
         for (auto& path : in_path_.get_buffer()) {
@@ -101,14 +101,16 @@ namespace zlpanel {
     void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel,
                         zldsp::analyzer::FIFOTransferBuffer<
                             zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
-                        const size_t consumer_id) {
+                        const size_t consumer_id, const MagDBRange& db_range) {
         const auto bound = atomic_bound_.load();
         const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
             analyzer_stereo_type_ref_.load(std::memory_order::relaxed)));
         const auto mag_type = static_cast<zldsp::analyzer::MagType>(std::round(
             analyzer_mag_type_ref_.load(std::memory_order::relaxed)));
-        const auto min_db = zlstate::PAnalyzerMinDB::kDBs[static_cast<size_t>(std::round(
-            analyzer_min_db_ref_.load(std::memory_order::relaxed)))];
+        const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
+            comp_direction_ref_.load(std::memory_order::relaxed)));
+        const auto center_reduction = direction == zlp::PCompDirection::kInflate ||
+                                      direction == zlp::PCompDirection::kShape;
         const auto time_length_idx = analyzer_time_length_ref_.load(std::memory_order::relaxed);
 
         const auto sample_rate = transfer_buffer.getSampleRate();
@@ -137,6 +139,9 @@ namespace zlpanel {
             reduction_ys_.resize(num_points_ + 2);
         }
 
+        updateYMapping(bound, db_range, center_reduction);
+        const auto missing_y = std::fma(kMissingDB, db_to_y_scale_, db_to_y_bias_);
+
         auto& fifo{transfer_buffer.getMulticastFIFO()};
         if (!is_first_point_) {
             // update ys
@@ -144,7 +149,7 @@ namespace zlpanel {
                 // if not enough samples
                 if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                     const auto range = fifo.prepareToRead(consumer_id, num_samples_per_point_);
-                    rms_panel.run(sample_rate_, range, transfer_buffer);
+                    rms_panel.run(sample_rate_, range, transfer_buffer, db_range);
                     pre_db_ = zldsp::analyzer::MagReceiver::calculate(
                         range,
                         transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
@@ -170,23 +175,30 @@ namespace zlpanel {
                     } else if (num_missing_points_ == kPausedThreshold) {
                         const auto shift = static_cast<ptrdiff_t>(
                             pre_ys_.size() - static_cast<size_t>(kPausedThreshold));
-                        std::ranges::fill(pre_ys_.begin() + shift, pre_ys_.end(), 10000.f);
-                        std::ranges::fill(out_ys_.begin() + shift, out_ys_.end(), 10000.f);
-                        std::ranges::fill(side_chain_ys_.begin() + shift, side_chain_ys_.end(), 10000.f);
-                        std::ranges::fill(reduction_ys_.begin() + shift, reduction_ys_.end(), 0.f);
+                        std::ranges::fill(pre_ys_.begin() + shift, pre_ys_.end(), missing_y);
+                        std::ranges::fill(out_ys_.begin() + shift, out_ys_.end(), missing_y);
+                        std::ranges::fill(side_chain_ys_.begin() + shift, side_chain_ys_.end(), missing_y);
+                        std::ranges::fill(reduction_ys_.begin() + shift, reduction_ys_.end(), reduction_y_bias_);
                     }
                 }
                 {
                     const auto too_many_missing = num_missing_points_ >= kPausedThreshold;
-                    const auto scale = bound.getHeight() / min_db;
                     std::ranges::rotate(pre_ys_, pre_ys_.begin() + 1);
-                    pre_ys_.back() = too_many_missing ? 10000.f : pre_db_ * scale;
+                    pre_ys_.back() = too_many_missing
+                                         ? missing_y
+                                         : std::fma(pre_db_, db_to_y_scale_, db_to_y_bias_);
                     std::ranges::rotate(out_ys_, out_ys_.begin() + 1);
-                    out_ys_.back() = too_many_missing ? 10000.f : out_db_ * scale;
+                    out_ys_.back() = too_many_missing
+                                         ? missing_y
+                                         : std::fma(out_db_, db_to_y_scale_, db_to_y_bias_);
                     std::ranges::rotate(side_chain_ys_, side_chain_ys_.begin() + 1);
-                    side_chain_ys_.back() = too_many_missing ? 10000.f : side_chain_db_ * scale;
+                    side_chain_ys_.back() = too_many_missing
+                                                ? missing_y
+                                                : std::fma(side_chain_db_, db_to_y_scale_, db_to_y_bias_);
                     std::ranges::rotate(reduction_ys_, reduction_ys_.begin() + 1);
-                    reduction_ys_.back() = too_many_missing ? 0.f : reduction_db_ * scale;
+                    reduction_ys_.back() = too_many_missing
+                                               ? reduction_y_bias_
+                                               : std::fma(reduction_db_, db_to_y_scale_, reduction_y_bias_);
                 }
                 start_time_ += second_per_point_;
             }
@@ -207,10 +219,10 @@ namespace zlpanel {
             if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                 is_first_point_ = false;
                 start_time_ = next_time_stamp;
-                std::ranges::fill(pre_ys_, 100000.f);
-                std::ranges::fill(out_ys_, 100000.f);
-                std::ranges::fill(side_chain_ys_, 100000.f);
-                std::ranges::fill(reduction_ys_, 0.f);
+                std::ranges::fill(pre_ys_, missing_y);
+                std::ranges::fill(out_ys_, missing_y);
+                std::ranges::fill(side_chain_ys_, missing_y);
+                std::ranges::fill(reduction_ys_, reduction_y_bias_);
             }
         }
 
@@ -226,13 +238,7 @@ namespace zlpanel {
         }
 
         if (!is_first_point_) {
-            const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
-                comp_direction_ref_.load(std::memory_order::relaxed)));
-            if (direction == zlp::PCompDirection::kInflate || direction == zlp::PCompDirection::kShape) {
-                updatePaths<true>(bound);
-            } else {
-                updatePaths<false>(bound);
-            }
+            updatePaths(bound);
             in_path_.publish();
             out_path_.publish();
             side_chain_path_.publish();
@@ -240,7 +246,44 @@ namespace zlpanel {
         }
     }
 
-    template <bool center>
+    void PeakPanel::updateYMapping(const juce::Rectangle<float> bound,
+                                   const MagDBRange& db_range,
+                                   const bool center_reduction) {
+        const auto range_db = db_range.getRangeDB();
+        const auto effective_height = std::max(bound.getHeight(), 1.f);
+        const auto next_scale = std::abs(range_db) > std::numeric_limits<float>::epsilon()
+                                    ? effective_height / range_db
+                                    : 0.f;
+        const auto next_bias = std::fma(-db_range.getMaxDB(), next_scale, bound.getY());
+        const auto next_reduction_bias = center_reduction ? bound.getCentreY() : bound.getY();
+
+        if (is_y_mapping_initialized_ && !is_first_point_) {
+            const auto scale_changed = std::abs(next_scale - db_to_y_scale_) > 1e-6f;
+            const auto bias_changed = std::abs(next_bias - db_to_y_bias_) > 1e-6f;
+            const auto reduction_bias_changed = std::abs(next_reduction_bias - reduction_y_bias_) > 1e-6f;
+            if ((scale_changed || bias_changed || reduction_bias_changed) &&
+                std::abs(db_to_y_scale_) > std::numeric_limits<float>::epsilon()) {
+                const auto scale = next_scale / db_to_y_scale_;
+                const auto size = pre_ys_.size();
+                if (scale_changed || bias_changed) {
+                    const auto magnitude_bias = std::fma(-db_to_y_bias_, scale, next_bias);
+                    zldsp::vector::fma(pre_ys_.data(), scale, magnitude_bias, size);
+                    zldsp::vector::fma(out_ys_.data(), scale, magnitude_bias, size);
+                    zldsp::vector::fma(side_chain_ys_.data(), scale, magnitude_bias, size);
+                }
+                if (scale_changed || reduction_bias_changed) {
+                    const auto reduction_bias = std::fma(-reduction_y_bias_, scale, next_reduction_bias);
+                    zldsp::vector::fma(reduction_ys_.data(), scale, reduction_bias, size);
+                }
+            }
+        }
+
+        db_to_y_scale_ = next_scale;
+        db_to_y_bias_ = next_bias;
+        reduction_y_bias_ = next_reduction_bias;
+        is_y_mapping_initialized_ = true;
+    }
+
     void PeakPanel::updatePaths(const juce::Rectangle<float> bound) {
         auto& next_in_path{in_path_.get_writer()};
         auto& next_out_path{out_path_.get_writer()};
@@ -251,23 +294,20 @@ namespace zlpanel {
         next_side_chain_path.clear();
         next_reduction_path.clear();
 
+        const auto size = pre_ys_.size();
+
         next_in_path.startNewSubPath(xs_[0], bound.getBottom());
         next_in_path.lineTo(xs_[0], pre_ys_[0]);
         next_out_path.startNewSubPath(xs_[0], out_ys_[0]);
         next_side_chain_path.startNewSubPath(xs_[0], side_chain_ys_[0]);
         next_reduction_path.startNewSubPath(xs_[0], reduction_ys_[0]);
-        const auto center_y = bound.getCentreY();
-        for (size_t i = 1; i < xs_.size(); ++i) {
+        for (size_t i = 1; i < size; ++i) {
             next_in_path.lineTo(xs_[i], pre_ys_[i]);
             next_out_path.lineTo(xs_[i], out_ys_[i]);
             next_side_chain_path.lineTo(xs_[i], side_chain_ys_[i]);
-            if constexpr (center) {
-                next_reduction_path.lineTo(xs_[i], reduction_ys_[i] + center_y);
-            } else {
-                next_reduction_path.lineTo(xs_[i], reduction_ys_[i]);
-            }
+            next_reduction_path.lineTo(xs_[i], reduction_ys_[i]);
         }
-        next_in_path.lineTo(xs_[xs_.size() - 1], bound.getBottom());
+        next_in_path.lineTo(xs_[size - 1], bound.getBottom());
     }
 
     void PeakPanel::lookAndFeelChanged() {

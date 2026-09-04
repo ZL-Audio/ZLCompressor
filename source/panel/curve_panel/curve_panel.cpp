@@ -13,6 +13,8 @@ namespace zlpanel {
     CurvePanel::CurvePanel(PluginProcessor& p, zlgui::UIBase& base,
                            multilingual::TooltipHelper& tooltip_helper) :
         Thread("curve_panel"), p_ref_(p), base_(base),
+        analyzer_max_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMaxDB::kID)),
+        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)),
         mag_analyzer_panel_(p, base),
         separate_panel_(base),
         equalize_panel_(p, base),
@@ -101,7 +103,12 @@ namespace zlpanel {
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
-            mag_analyzer_panel_.run(*this);
+            const MagDBRange mag_db_range{
+                zlstate::PAnalyzerMaxDB::getDBFromIndex(
+                    analyzer_max_db_ref_.load(std::memory_order::relaxed)),
+                zlstate::PAnalyzerMinDB::getDBFromIndex(
+                    analyzer_min_db_ref_.load(std::memory_order::relaxed))};
+            mag_analyzer_panel_.run(*this, mag_db_range);
             if (threadShouldExit()) {
                 return;
             }

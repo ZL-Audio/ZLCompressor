@@ -14,6 +14,7 @@
 #include "left_control_panel.hpp"
 #include "side_control_panel.hpp"
 #include "analyzer_setting_panel/analyzer_setting_panel.hpp"
+#include "mag_db_range.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -45,6 +46,9 @@ namespace zlpanel {
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
+        std::atomic<float>& analyzer_max_db_ref_;
+        std::atomic<float>& analyzer_min_db_ref_;
+
         MagAnalyzerPanel mag_analyzer_panel_;
         SeparatePanel separate_panel_;
         EqualizePanel equalize_panel_;

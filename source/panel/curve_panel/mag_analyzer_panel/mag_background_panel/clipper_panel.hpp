@@ -29,10 +29,15 @@ namespace zlpanel {
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
         std::atomic<float>& comp_direction_ref_;
+        std::atomic<float>& mag_max_db_id_ref_;
+        std::atomic<float>& mag_min_db_id_ref_;
 
         float rel_position_{0.f};
 
-        std::atomic<float> mag_min_db_{-54.0};
+        float mag_max_db_id_{-1.f};
+        float mag_min_db_id_{-1.f};
+        float mag_max_db_{0.f};
+        float mag_range_db_{-54.f};
         std::atomic<bool> to_update_path_{false};
 
         zldsp::compressor::CompressionComputer<float, true> computer_{};
@@ -42,10 +47,6 @@ namespace zlpanel {
             zlp::PCompDirection::kID,
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID,
             zlp::PClipperDrive::kID
-        };
-
-        static constexpr std::array kNAIDs{
-            zlstate::PAnalyzerMinDB::kID
         };
 
         void parameterChanged(const juce::String& parameter_ID, float new_value) override;

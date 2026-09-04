@@ -16,16 +16,18 @@
 #include "../../helper/helper.hpp"
 #include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_rms_hist_receiver.hpp"
+#include "../mag_db_range.hpp"
 
 namespace zlpanel {
     class RMSPanel final : public juce::Component {
     public:
-        explicit RMSPanel(PluginProcessor& p, zlgui::UIBase& base);
+        explicit RMSPanel(zlgui::UIBase& base);
 
         void paint(juce::Graphics& g) override;
 
         void run(double sample_rate, zldsp::container::FIFORange range,
-                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer);
+                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
+                 const MagDBRange& db_range);
 
         void resized() override;
 
@@ -38,8 +40,6 @@ namespace zlpanel {
 
         zlgui::UIBase& base_;
 
-        std::atomic<float>& analyzer_min_db_ref_;
-
         zldsp::analyzer::MagRMSHistReceiver in_receiver_{}, out_receiver_{};
 
         AtomicBound<float> atomic_bound_;
@@ -48,7 +48,8 @@ namespace zlpanel {
 
         float curve_thickness_{0.f};
 
-        float min_db_idx_{0.f};
+        float max_db_{0.f};
+        float min_db_{-54.f};
 
         float height_{0.f};
 

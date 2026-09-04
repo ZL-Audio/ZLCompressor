@@ -69,10 +69,13 @@ namespace zlpanel {
 
         zlgui::combobox::CompactCombobox min_db_box_;
         zlgui::attachment::ComboBoxAttachment<true> min_db_attachment_;
+        int c_max_db_idx_{-1};
 
         zlgui::label::NameLookAndFeel label_laf_;
         juce::Label delimiter_label_;
         juce::Label db_label_;
+
+        void updateMinDBChoices(int max_db_idx);
 
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) override;
     };

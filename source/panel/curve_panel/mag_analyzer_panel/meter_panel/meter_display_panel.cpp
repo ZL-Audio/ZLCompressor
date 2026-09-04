@@ -14,8 +14,7 @@ namespace zlpanel {
         base_(base),
         meter_top_panel_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
-        analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
-        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
+        analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)) {
 
         const auto target_refresh_id = p.state_.getRawParameterValue(
             zlstate::PTargetRefreshSpeed::kID)->load(std::memory_order::relaxed);
@@ -106,7 +105,7 @@ namespace zlpanel {
 
     void MeterDisplayPanel::run(const double next_time_stamp,
                                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
-                                const size_t consumer_id) {
+                                const size_t consumer_id, const MagDBRange& db_range) {
         if (is_first_point_) {
             is_first_point_ = false;
             start_time_ = next_time_stamp;
@@ -114,8 +113,6 @@ namespace zlpanel {
         }
         const auto mag_type = static_cast<zldsp::analyzer::MagType>(std::round(
             analyzer_mag_type_ref_.load(std::memory_order::relaxed)));
-        const auto min_db = zlstate::PAnalyzerMinDB::kDBs[static_cast<size_t>(std::round(
-            analyzer_min_db_ref_.load(std::memory_order::relaxed)))];
 
         const auto delta_time = std::clamp(next_time_stamp - start_time_, 0.01, 1.0);
         start_time_ = next_time_stamp;
@@ -169,7 +166,8 @@ namespace zlpanel {
                     previous_reduction - static_cast<float>(delta_time) * kReductionDecayPerSecond,
                     current_reduction);
                 const auto reduction_rect = reduction_rect_[chan].load();
-                const auto reduction_height = std::abs(previous_reduction_[chan] / min_db) * bound.getHeight();
+                const auto reduction_height = std::abs(
+                    db_range.getReductionYProportion(previous_reduction_[chan])) * bound.getHeight();
                 if (previous_reduction_[chan] > 0.f) {
                     reduction_rect_[chan].store({
                         reduction_rect.getX(), .5f * bound.getHeight() - reduction_height,
@@ -186,7 +184,8 @@ namespace zlpanel {
                 const auto reduction_rect = reduction_rect_[chan].load();
                 reduction_rect_[chan].store({
                     reduction_rect.getX(), 0.f,
-                    reduction_rect.getWidth(), previous_reduction_[chan] / min_db * bound.getHeight()});
+                    reduction_rect.getWidth(),
+                    db_range.getReductionYProportion(previous_reduction_[chan]) * bound.getHeight()});
             }
         }
         // update reduction short-term max display
@@ -195,11 +194,11 @@ namespace zlpanel {
         if (is_upwards_) {
             reduction_max_value = std::max(0.f, std::max(reduction_dbs[0], reduction_dbs[1]));
             reduction_max_value = circular_min_max_.push(reduction_max_value);
-            reduction_max_pos = (.5f + reduction_max_value / min_db) * bound.getHeight();
+            reduction_max_pos = (.5f + db_range.getReductionYProportion(reduction_max_value)) * bound.getHeight();
         } else {
             reduction_max_value = std::max(0.f, std::max(-reduction_dbs[0], -reduction_dbs[1]));
             reduction_max_value = circular_min_max_.push(reduction_max_value);
-            reduction_max_pos = -reduction_max_value / min_db * bound.getHeight();
+            reduction_max_pos = -db_range.getReductionYProportion(reduction_max_value) * bound.getHeight();
         }
         reduction_max_rect_.setY(reduction_max_pos - reduction_max_rect_.getHeight() * .5f);
         reduction_max_value_.store(reduction_max_value, std::memory_order::relaxed);
@@ -216,9 +215,10 @@ namespace zlpanel {
                     current_pre);
                 pre_decay_mul_[chan] = std::min(pre_decay_mul_[chan] * (1.f + 3.f * static_cast<float>(delta_time)), 10.f);
             }
-            const auto pre_height = (1.f - previous_pre_[chan] / min_db) * bound.getHeight();
-            pre_rect_[chan].setY(bound.getHeight() - pre_height);
-            pre_rect_[chan].setHeight(pre_height);
+            const auto pre_y = std::clamp(db_range.getYProportion(previous_pre_[chan]), 0.f, 1.f) *
+                               bound.getHeight();
+            pre_rect_[chan].setY(pre_y);
+            pre_rect_[chan].setHeight(bound.getHeight() - pre_y);
         }
         // update out peak
         const auto out_peak = std::max(out_dbs[0], out_dbs[1]);
@@ -237,9 +237,10 @@ namespace zlpanel {
                     current_out);
                 out_decay_mul_[chan] = std::min(out_decay_mul_[chan] * (1.f + 3.f * static_cast<float>(delta_time)), 10.f);
             }
-            const auto out_height = (1.f - previous_out_[chan] / min_db) * bound.getHeight();
-            out_rect_[chan].setY(bound.getHeight() - out_height);
-            out_rect_[chan].setHeight(out_height);
+            const auto out_y = std::clamp(db_range.getYProportion(previous_out_[chan]), 0.f, 1.f) *
+                               bound.getHeight();
+            out_rect_[chan].setY(out_y);
+            out_rect_[chan].setHeight(bound.getHeight() - out_y);
         }
     }
 

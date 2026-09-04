@@ -10,9 +10,7 @@
 #include "rms_panel.hpp"
 
 namespace zlpanel {
-    RMSPanel::RMSPanel(PluginProcessor& p, zlgui::UIBase& base) :
-        base_(base),
-        analyzer_min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
+    RMSPanel::RMSPanel(zlgui::UIBase& base) : base_(base) {
         for (auto& receiver : {&in_receiver_, &out_receiver_}) {
             receiver->setHistSize(kNumPoints);
         }
@@ -35,7 +33,8 @@ namespace zlpanel {
 
     void RMSPanel::run(const double sample_rate, const zldsp::container::FIFORange range,
                        zldsp::analyzer::FIFOTransferBuffer<
-                           zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer) {
+                           zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
+                       const MagDBRange& db_range) {
         const auto bound = atomic_bound_.load();
         if (std::abs(bound.getHeight() - height_) > .1f) {
             height_ = bound.getHeight();
@@ -54,11 +53,12 @@ namespace zlpanel {
                 receiver->setMaxNumSamples(max_num_samples);
             }
         }
-        if (std::abs(min_db_idx_ - analyzer_min_db_ref_.load(std::memory_order::relaxed)) > .1f) {
-            min_db_idx_ = analyzer_min_db_ref_.load(std::memory_order::relaxed);
-            const auto min_db = zlstate::PAnalyzerMinDB::kDBs[static_cast<size_t>(std::round(min_db_idx_))];
+        if (std::abs(max_db_ - db_range.getMaxDB()) > 1e-3f ||
+            std::abs(min_db_ - db_range.getMinDB()) > 1e-3f) {
+            max_db_ = db_range.getMaxDB();
+            min_db_ = db_range.getMinDB();
             for (auto& receiver : {&in_receiver_, &out_receiver_}) {
-                receiver->setMinDB(min_db);
+                receiver->reset();
             }
         }
         if (to_reset_.exchange(false, std::memory_order::relaxed)) {
@@ -67,9 +67,11 @@ namespace zlpanel {
             }
         }
         in_receiver_.run(range,
-                         transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream]);
+                         transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPreStream],
+                         db_range.getMinDB(), db_range.getMaxDB());
         if (out_receiver_.run(range,
-                              transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPostStream])) {
+                              transfer_buffer.getSampleFIFOs()[zlp::CompressController::kAnalyzerPostStream],
+                              db_range.getMinDB(), db_range.getMaxDB())) {
             in_receiver_.updateHeight(bound.getWidth(), in_xs_);
             out_receiver_.updateHeight(bound.getWidth(), out_xs_);
 

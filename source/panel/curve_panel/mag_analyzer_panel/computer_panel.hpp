@@ -12,6 +12,7 @@
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
+#include "../mag_db_range.hpp"
 
 namespace zlpanel {
     class ComputerPanel final : public juce::Component,
@@ -25,7 +26,7 @@ namespace zlpanel {
 
         void paint(juce::Graphics& g) override;
 
-        void run();
+        void run(const MagDBRange& db_range);
 
         void resized() override;
 
@@ -36,10 +37,10 @@ namespace zlpanel {
             zlp::PCompDirection::kID,
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID, zlp::PFloor::kID
         };
-        static constexpr std::array kNAIDs{zlstate::PAnalyzerMinDB::kID};
 
         std::atomic<float>& comp_direction_ref_;
-        std::atomic<float>& min_db_ref_;
+        float max_db_{0.f};
+        float range_db_{-54.f};
 
         zldsp::compressor::CompressionComputer<float> compression_computer_{};
         zldsp::compressor::ExpansionComputer<float> expansion_computer_{};
@@ -56,6 +57,6 @@ namespace zlpanel {
         void parameterChanged(const juce::String& parameter_ID, float value) override;
 
         template <typename C, bool is_downward>
-        void updateComputerPath(C& c);
+        void updateComputerPath(C& c, const MagDBRange& db_range);
     };
 }

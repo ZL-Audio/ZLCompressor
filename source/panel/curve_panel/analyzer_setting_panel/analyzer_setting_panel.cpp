@@ -162,6 +162,25 @@ namespace zlpanel {
 
     void AnalyzerSettingPanel::repaintCallBackSlow() {
         updater_.updateComponents();
+        updateMinDBChoices(max_db_box_.getBox().getSelectedItemIndex());
+    }
+
+    void AnalyzerSettingPanel::updateMinDBChoices(const int max_db_idx) {
+        if (max_db_idx < 0 || max_db_idx == c_max_db_idx_) {
+            return;
+        }
+
+        auto& box = min_db_box_.getBox();
+        const auto selected_idx = box.getSelectedItemIndex();
+        const auto max_db = zlstate::PAnalyzerMaxDB::kDBs[static_cast<size_t>(max_db_idx)];
+        // The parameter stores a span; present the absolute floor produced by the selected maximum.
+        for (size_t i = 0; i < zlstate::PAnalyzerMinDB::kDBs.size(); ++i) {
+            const auto min_db = static_cast<int>(std::round(max_db + zlstate::PAnalyzerMinDB::kDBs[i]));
+            box.changeItemText(static_cast<int>(i + 1), juce::String(min_db));
+        }
+        box.setSelectedItemIndex(selected_idx, juce::dontSendNotification);
+        min_db_box_.repaint();
+        c_max_db_idx_ = max_db_idx;
     }
 
     void AnalyzerSettingPanel::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& property) {

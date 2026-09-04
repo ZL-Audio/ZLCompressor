@@ -15,6 +15,7 @@
 #include "../../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../../dsp/analyzer/mag_analyzer/mag_receiver.hpp"
 #include "../../../../dsp/analyzer/mag_analyzer/mag_reduction_receiver.hpp"
+#include "../../mag_db_range.hpp"
 #include "meter_top_panel.hpp"
 
 namespace zlpanel {
@@ -28,7 +29,7 @@ namespace zlpanel {
 
         void run(double next_time_stamp,
                  zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
-                 size_t consumer_id);
+                 size_t consumer_id, const MagDBRange& db_range);
 
         void resized() override;
 
@@ -42,7 +43,6 @@ namespace zlpanel {
 
         std::atomic<float>& comp_direction_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
-        std::atomic<float>& analyzer_min_db_ref_;
 
         AtomicBound<float> bound_;
         std::array<float, 2> previous_reduction_{0.f, 0.f};

@@ -12,8 +12,7 @@
 namespace zlpanel {
     ComputerPanel::ComputerPanel(PluginProcessor& p, zlgui::UIBase& base) :
         p_ref_(p), base_(base),
-        comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
-        min_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMinDB::kID)) {
+        comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)) {
         for (auto& path: comp_path_.get_buffer()) {
             path.preallocateSpace(static_cast<int>(kNumPoint) * 3);
         }
@@ -21,19 +20,12 @@ namespace zlpanel {
             p_ref_.parameters_.addParameterListener(ID, this);
             parameterChanged(ID, p_ref_.parameters_.getRawParameterValue(ID)->load(std::memory_order::relaxed));
         }
-        for (auto& ID : kNAIDs) {
-            p_ref_.na_parameters_.addParameterListener(ID, this);
-        }
-
         setInterceptsMouseClicks(false, false);
     }
 
     ComputerPanel::~ComputerPanel() {
         for (auto& ID : kComputerIDs) {
             p_ref_.parameters_.removeParameterListener(ID, this);
-        }
-        for (auto& ID : kNAIDs) {
-            p_ref_.na_parameters_.removeParameterListener(ID, this);
         }
     }
 
@@ -46,25 +38,31 @@ namespace zlpanel {
                                           juce::PathStrokeType::rounded));
     }
 
-    void ComputerPanel::run() {
+    void ComputerPanel::run(const MagDBRange& db_range) {
+        if (std::abs(max_db_ - db_range.getMaxDB()) > 1e-3f ||
+            std::abs(range_db_ - db_range.getRangeDB()) > 1e-3f) {
+            max_db_ = db_range.getMaxDB();
+            range_db_ = db_range.getRangeDB();
+            to_update_.store(true, std::memory_order::release);
+        }
         if (!to_update_.exchange(false, std::memory_order::acquire)) { return; }
         const auto direction = static_cast<zlp::PCompDirection::Direction>(std::round(
             comp_direction_ref_.load(std::memory_order::relaxed)));
         switch (direction) {
         case zlp::PCompDirection::kCompress: {
-            updateComputerPath<zldsp::compressor::CompressionComputer<float>, true>(compression_computer_);
+            updateComputerPath<zldsp::compressor::CompressionComputer<float>, true>(compression_computer_, db_range);
             break;
         }
         case zlp::PCompDirection::kInflate: {
-            updateComputerPath<zldsp::compressor::InflationComputer<float>, false>(inflation_computer_);
+            updateComputerPath<zldsp::compressor::InflationComputer<float>, false>(inflation_computer_, db_range);
             break;
         }
         case zlp::PCompDirection::kExpand: {
-            updateComputerPath<zldsp::compressor::ExpansionComputer<float>, true>(expansion_computer_);
+            updateComputerPath<zldsp::compressor::ExpansionComputer<float>, true>(expansion_computer_, db_range);
             break;
         }
         case zlp::PCompDirection::kShape: {
-            updateComputerPath<zldsp::compressor::CompressionComputer<float>, false>(compression_computer_);
+            updateComputerPath<zldsp::compressor::CompressionComputer<float>, false>(compression_computer_, db_range);
             break;
         }
         }
@@ -103,26 +101,24 @@ namespace zlpanel {
     }
 
     template <typename C, bool is_downward>
-    void ComputerPanel::updateComputerPath(C& c) {
-        const auto current_min_db = zlstate::PAnalyzerMinDB::getDBFromIndex(
-            min_db_ref_.load(std::memory_order::relaxed));
+    void ComputerPanel::updateComputerPath(C& c, const MagDBRange& db_range) {
         c.prepareBuffer();
         const auto bound = atomic_bound_.load();
-        auto db_in = current_min_db;
-        const auto delta_db_in = -current_min_db / static_cast<float>(kNumPoint - 1);
+        auto db_in = db_range.getMinDB();
+        const auto delta_db_in = -db_range.getRangeDB() / static_cast<float>(kNumPoint - 1);
         const auto delta_y = bound.getHeight() / static_cast<float>(kNumPoint - 1);
         auto x = bound.getX();
         const auto delta_x = delta_y;
 
         auto& next_comp_path{comp_path_.get_writer()};
         next_comp_path.clear();
-        const auto mul = bound.getHeight() / current_min_db;
         PathMinimizer<1> minimizer{next_comp_path};
         minimizer.startNewSubPath(x - bound.getHeight(),
-                                  c.eval(current_min_db * 2.f) * mul + bound.getY());
+                                  db_range.getYProportion(c.eval(db_range.getDBAtYProportion(2.f))) *
+                                  bound.getHeight() + bound.getY());
         for (size_t i = 0; i < kNumPoint; ++i) {
             const auto db_out = is_downward ? c.eval(db_in) : db_in + db_in - c.eval(db_in);
-            const auto y = db_out * mul + bound.getY();
+            const auto y = db_range.getYProportion(db_out) * bound.getHeight() + bound.getY();
             minimizer.lineTo(x, y);
             x += delta_x;
             db_in += delta_db_in;

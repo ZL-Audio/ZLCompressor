@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <limits>
+
 #include "../../vector/vector.hpp"
 #include "../../container/fifo/fifo_base.hpp"
 #include "../../chore/decibels.hpp"
@@ -22,10 +24,13 @@ namespace zldsp::analyzer {
          * pull data from the given FIFO range and push RMS values into the hist
          * @param range
          * @param fifo
+         * @param min_db
+         * @param max_db
          * @return whether the hist has been updated
          */
         bool run(const zldsp::container::FIFORange range,
-                 std::vector<std::vector<float>>& fifo) {
+                 std::vector<std::vector<float>>& fifo,
+                 const float min_db, const float max_db) {
             bool update_flag = false;
             auto process_segment = [&](size_t start, size_t size) {
                 while (size > max_num_samples_ - current_num_samples_) {
@@ -34,7 +39,7 @@ namespace zldsp::analyzer {
                         sqr_sum_ += vector::sum_sqr(fifo[ch].data() + start, shift);
                     }
 
-                    addToHist();
+                    addToHist(min_db, max_db);
 
                     update_flag = true;
                     start += shift;
@@ -54,11 +59,6 @@ namespace zldsp::analyzer {
             process_segment(static_cast<size_t>(range.start_index2), static_cast<size_t>(range.block_size2));
 
             return update_flag;
-        }
-
-        void setMinDB(const float min_db) {
-            min_db_ = min_db;
-            reset();
         }
 
         void setHistSize(const size_t hist_size) {
@@ -93,14 +93,19 @@ namespace zldsp::analyzer {
         size_t current_num_samples_{0};
 
         std::vector<double> hist_;
-        double min_db_{0.};
 
-        void addToHist() {
+        void addToHist(const float min_db, const float max_db) {
             const auto db = chore::squareGainToDecibels(sqr_sum_ / static_cast<double>(max_num_samples_));
-            if (db <= min_db_) {
+            if (db <= static_cast<double>(min_db)) {
                 return;
             }
-            const auto idx = static_cast<size_t>(std::floor(db / min_db_ * static_cast<double>(hist_.size())));
+            const auto range_db = static_cast<double>(min_db - max_db);
+            if (std::abs(range_db) < std::numeric_limits<double>::epsilon()) {
+                return;
+            }
+            const auto proportion = std::clamp(
+                (db - static_cast<double>(max_db)) / range_db, 0.0, 1.0);
+            const auto idx = static_cast<size_t>(std::floor(proportion * static_cast<double>(hist_.size())));
             hist_[std::clamp(idx, static_cast<size_t>(0), hist_.size() - static_cast<size_t>(1))] += 1.0;
         }
     };

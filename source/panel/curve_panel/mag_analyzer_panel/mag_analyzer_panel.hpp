@@ -15,6 +15,7 @@
 #include "rms_panel.hpp"
 #include "separate_panel.hpp"
 #include "meter_panel/meter_panel.hpp"
+#include "../mag_db_range.hpp"
 
 namespace zlpanel {
     class MagAnalyzerPanel final : public juce::Component {
@@ -29,7 +30,7 @@ namespace zlpanel {
 
         void repaintCallBack(double time_stamp);
 
-        void run(const juce::Thread& thread);
+        void run(const juce::Thread& thread, const MagDBRange& db_range);
 
         RMSPanel& getRMSPanel() noexcept {
             return rms_panel_;

@@ -15,7 +15,7 @@ namespace zlpanel {
         meter_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PMeterDisplay::kID)),
         background_panel_(p, base),
         peak_panel_(p, base),
-        rms_panel_(p, base),
+        rms_panel_(base),
         computer_panel_(p, base),
         separate_panel_(base),
         meter_panel_(p, base),
@@ -47,7 +47,7 @@ namespace zlpanel {
         updateBounds();
     }
 
-    void MagAnalyzerPanel::run(const juce::Thread& thread) {
+    void MagAnalyzerPanel::run(const juce::Thread& thread, const MagDBRange& db_range) {
         juce::ScopedNoDenormals no_denormals;
         const auto time_stamp = next_stamp_.load(std::memory_order::relaxed);
         auto& sender{p_ref_.getCompressController().getMagAnalyzerSender()};
@@ -65,16 +65,16 @@ namespace zlpanel {
             return;
         }
         if (sample_rate_ > 20000.0 && max_sum_samples_ > 0) {
-            peak_panel_.run(time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_);
+            peak_panel_.run(time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_, db_range);
             if (thread.threadShouldExit()) {
                 return;
             }
-            meter_panel_.getDisplayPanel().run(time_stamp, transfer_buffer_, meter_consumer_id_);
+            meter_panel_.getDisplayPanel().run(time_stamp, transfer_buffer_, meter_consumer_id_, db_range);
         }
         if (thread.threadShouldExit()) {
             return;
         }
-        computer_panel_.run();
+        computer_panel_.run(db_range);
     }
 
     void MagAnalyzerPanel::repaintCallBackSlow() {

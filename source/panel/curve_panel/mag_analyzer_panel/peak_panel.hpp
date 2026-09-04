@@ -17,6 +17,7 @@
 #include "../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_receiver.hpp"
 #include "../../../dsp/analyzer/mag_analyzer/mag_reduction_receiver.hpp"
+#include "../mag_db_range.hpp"
 
 #include "rms_panel.hpp"
 
@@ -31,7 +32,7 @@ namespace zlpanel {
 
         void run(double next_time_stamp, RMSPanel& rms_panel,
                  zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
-                 size_t consumer_id);
+                 size_t consumer_id, const MagDBRange& db_range);
 
         void resized() override;
 
@@ -48,7 +49,6 @@ namespace zlpanel {
         std::atomic<float>& side_curve_display_ref_;
         std::atomic<float>& analyzer_stereo_type_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
-        std::atomic<float>& analyzer_min_db_ref_;
         std::atomic<float>& analyzer_time_length_ref_;
 
         AtomicBound<float> atomic_bound_;
@@ -56,6 +56,11 @@ namespace zlpanel {
         float pre_db_{-240.f}, out_db_{-240.f}, side_chain_db_{-240.f}, reduction_db_{0.f};
         zldsp::vector::aligned_vector<float> xs_{}, pre_ys_{}, reduction_ys_{}, out_ys_{}, side_chain_ys_{};
         BufferedUI<juce::Path> in_path_, out_path_, side_chain_path_, reduction_path_;
+
+        float db_to_y_scale_{0.f};
+        float db_to_y_bias_{0.f};
+        float reduction_y_bias_{0.f};
+        bool is_y_mapping_initialized_{false};
 
         float curve_thickness_{0.f};
 
@@ -74,7 +79,9 @@ namespace zlpanel {
         int num_points_per_second_{0};
         double second_per_point_{0};
 
-        template <bool center>
+        void updateYMapping(juce::Rectangle<float> bound, const MagDBRange& db_range,
+                            bool center_reduction);
+
         void updatePaths(juce::Rectangle<float> bound);
 
         void lookAndFeelChanged() override;

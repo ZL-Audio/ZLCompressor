@@ -141,9 +141,9 @@ namespace zlstate {
         static constexpr auto kID = "analyzer_max_db";
         static constexpr auto kName = "";
         inline static const auto kChoices = juce::StringArray{
-            "6", "0", "-6", "-12", "-18", "-24", "-36"
+            "6", "0", "-6", "-12", "-24"
         };
-        static constexpr std::array kDBs = {6.f, 0.f, -6.f, -12.f, -18.f, -24.f, -36.f};
+        static constexpr std::array kDBs = {6.f, 0.f, -6.f, -12.f, -24.f};
         static constexpr int kDefaultI = 1;
 
         static constexpr float getDBFromIndex(const float x) {
