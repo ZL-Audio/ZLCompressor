@@ -26,4 +26,4 @@ namespace zlpanel {
         zlgui::UIBase& base_;
         juce::ColourGradient gradient_;
     };
-} // zlpanel
+}

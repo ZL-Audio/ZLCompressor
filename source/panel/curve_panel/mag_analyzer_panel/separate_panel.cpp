@@ -34,4 +34,4 @@ namespace zlpanel {
         gradient_.addColour(1.0,
                             base_.getBackgroundColour().withAlpha(0.f));
     }
-} // zlpanel
+}

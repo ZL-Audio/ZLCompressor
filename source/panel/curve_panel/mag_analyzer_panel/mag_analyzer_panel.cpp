@@ -120,7 +120,7 @@ namespace zlpanel {
         peak_panel_.setBounds(bound);
         rms_panel_.setBounds(bound.withWidth(juce::roundToInt(static_cast<float>(bound.getWidth()) * .15f)));
         const auto r = std::min(bound.getWidth(), bound.getHeight());
-        separate_panel_.setBounds(bound.withSize(r, r));
+        separate_panel_.setBounds(bound.withSize(r / 2, r));
         computer_panel_.setBounds(bound.withSize(r, r));
         threshold_slider_.setBounds(bound);
         ratio_slider_.setBounds(bound);

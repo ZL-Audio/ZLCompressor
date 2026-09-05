@@ -50,6 +50,7 @@ namespace zlpanel {
         std::atomic<float>& analyzer_stereo_type_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
         std::atomic<float>& analyzer_time_length_ref_;
+        std::atomic<float>& analyzer_move_type_ref_;
 
         AtomicBound<float> atomic_bound_;
 
@@ -65,6 +66,12 @@ namespace zlpanel {
         float curve_thickness_{0.f};
 
         double start_time_{0.0};
+        double motion_start_time_{0.0};
+
+        // Matches PAnalyzerMoveType's choice order.
+        enum class MoveType { kSync, kSlow, kRoll };
+        MoveType move_type_{MoveType::kSync};
+        size_t roll_next_point_{0};
 
         bool is_first_point_{true};
         int too_much_samples_{0};
@@ -83,6 +90,8 @@ namespace zlpanel {
                             bool center_reduction);
 
         void updatePaths(juce::Rectangle<float> bound);
+
+        void updateXs(juce::Rectangle<float> bound, double next_time_stamp);
 
         void lookAndFeelChanged() override;
     };

@@ -41,7 +41,8 @@ namespace zlpanel {
         side_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideChainCurveDisplay::kID)),
         analyzer_stereo_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerStereo::kID)),
         analyzer_mag_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMagType::kID)),
-        analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)) {
+        analyzer_time_length_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerTimeLength::kID)),
+        analyzer_move_type_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMoveType::kID)) {
         constexpr auto preallocateSpace = static_cast<int>(kMaxAnalyzerPointNum) * 3 + 1;
         for (auto& path : in_path_.get_buffer()) {
             path.preallocateSpace(preallocateSpace);
@@ -112,16 +113,19 @@ namespace zlpanel {
         const auto center_reduction = direction == zlp::PCompDirection::kInflate ||
                                       direction == zlp::PCompDirection::kShape;
         const auto time_length_idx = analyzer_time_length_ref_.load(std::memory_order::relaxed);
+        const auto move_type = static_cast<MoveType>(std::round(
+            analyzer_move_type_ref_.load(std::memory_order::relaxed)));
 
         const auto sample_rate = transfer_buffer.getSampleRate();
         const auto max_num_samples = transfer_buffer.getMaxNumSamples();
 
         if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
             max_num_samples_ != max_num_samples ||
-            std::abs(time_length_idx_ - time_length_idx) > 0.1) {
+            std::abs(time_length_idx_ - time_length_idx) > 0.1 || move_type_ != move_type) {
             sample_rate_ = sample_rate;
             max_num_samples_ = max_num_samples;
             time_length_idx_ = time_length_idx;
+            move_type_ = move_type;
             const auto time_idx = static_cast<size_t>(std::round(time_length_idx_));
             time_length_ = zlstate::PAnalyzerTimeLength::kLength[time_idx];
             const auto rounded_sample_rate = static_cast<int>(std::round(sample_rate_));
@@ -129,14 +133,18 @@ namespace zlpanel {
                 rounded_sample_rate, kNumPointsPerSecond[time_idx], static_cast<int>(std::round(time_length_)));
             num_samples_per_point_ = rounded_sample_rate / num_points_per_second_;
             is_first_point_ = true;
+            num_missing_points_ = 0;
+            too_much_samples_ = 0;
+            roll_next_point_ = 0;
             num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
             second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
 
-            xs_.resize(num_points_ + 2);
-            pre_ys_.resize(num_points_ + 2);
-            out_ys_.resize(num_points_ + 2);
-            side_chain_ys_.resize(num_points_ + 2);
-            reduction_ys_.resize(num_points_ + 2);
+            const auto history_size = move_type_ == MoveType::kRoll ? num_points_ : num_points_ + 2;
+            xs_.resize(history_size);
+            pre_ys_.resize(history_size);
+            out_ys_.resize(history_size);
+            side_chain_ys_.resize(history_size);
+            reduction_ys_.resize(history_size);
         }
 
         updateYMapping(bound, db_range, center_reduction);
@@ -200,6 +208,9 @@ namespace zlpanel {
                                                ? reduction_y_bias_
                                                : std::fma(reduction_db_, db_to_y_scale_, reduction_y_bias_);
                 }
+                if (move_type_ == MoveType::kRoll) {
+                    roll_next_point_ = (roll_next_point_ + 1) % xs_.size();
+                }
                 start_time_ += second_per_point_;
             }
             // if too much samples
@@ -219,6 +230,7 @@ namespace zlpanel {
             if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                 is_first_point_ = false;
                 start_time_ = next_time_stamp;
+                motion_start_time_ = next_time_stamp;
                 std::ranges::fill(pre_ys_, missing_y);
                 std::ranges::fill(out_ys_, missing_y);
                 std::ranges::fill(side_chain_ys_, missing_y);
@@ -226,23 +238,50 @@ namespace zlpanel {
             }
         }
 
-        // update xs
         if (!is_first_point_) {
-            const auto x_scale = static_cast<double>(bound.getWidth()) / static_cast<double>(time_length_);
-            auto x0 = -(next_time_stamp - start_time_) * x_scale;
-            const auto delta_x = second_per_point_ * x_scale;
+            updateXs(bound, next_time_stamp);
+            updatePaths(bound);
+        } else {
+            in_path_.get_writer().clear();
+            out_path_.get_writer().clear();
+            side_chain_path_.get_writer().clear();
+            reduction_path_.get_writer().clear();
+        }
+        in_path_.publish();
+        out_path_.publish();
+        side_chain_path_.publish();
+        reduction_path_.publish();
+    }
+
+    void PeakPanel::updateXs(const juce::Rectangle<float> bound, const double next_time_stamp) {
+        if (move_type_ == MoveType::kRoll) {
+            const auto delta_x = static_cast<double>(bound.getWidth()) / static_cast<double>(xs_.size() - 1);
             for (size_t i = 0; i < xs_.size(); ++i) {
-                xs_[i] = static_cast<float>(x0);
-                x0 += delta_x;
+                xs_[i] = bound.getX() + static_cast<float>(
+                    static_cast<double>((roll_next_point_ + i) % xs_.size()) * delta_x);
             }
+            return;
         }
 
-        if (!is_first_point_) {
-            updatePaths(bound);
-            in_path_.publish();
-            out_path_.publish();
-            side_chain_path_.publish();
-            reduction_path_.publish();
+        const auto length = static_cast<double>(time_length_);
+        const auto x_scale = static_cast<double>(bound.getWidth()) / length;
+        const auto delta_x = second_per_point_ * x_scale;
+        auto x0 = static_cast<double>(bound.getX()) - (next_time_stamp - start_time_) * x_scale;
+        if (move_type_ == MoveType::kSlow) {
+            constexpr auto fast_length = 0.5;
+            constexpr auto restart_position = 0.25;
+            const auto slow_length = length - fast_length;
+            const auto phase = std::fmod(std::max(0.0, next_time_stamp - motion_start_time_), length);
+            constexpr auto sweep = 1.0 - restart_position;
+            const auto head = phase < slow_length
+                                  ? restart_position + sweep * phase / slow_length
+                                  : 1.0 - sweep * (phase - slow_length) / fast_length;
+            x0 += head * static_cast<double>(bound.getWidth()) -
+                  static_cast<double>(xs_.size() - 1) * delta_x;
+        }
+        for (size_t i = 0; i < xs_.size(); ++i) {
+            xs_[i] = static_cast<float>(x0);
+            x0 += delta_x;
         }
     }
 
@@ -302,6 +341,16 @@ namespace zlpanel {
         next_side_chain_path.startNewSubPath(xs_[0], side_chain_ys_[0]);
         next_reduction_path.startNewSubPath(xs_[0], reduction_ys_[0]);
         for (size_t i = 1; i < size; ++i) {
+            if (xs_[i] < xs_[i - 1]) {
+                next_in_path.lineTo(xs_[i - 1], bound.getBottom());
+                next_in_path.closeSubPath();
+                next_in_path.startNewSubPath(xs_[i], bound.getBottom());
+                next_in_path.lineTo(xs_[i], pre_ys_[i]);
+                next_out_path.startNewSubPath(xs_[i], out_ys_[i]);
+                next_side_chain_path.startNewSubPath(xs_[i], side_chain_ys_[i]);
+                next_reduction_path.startNewSubPath(xs_[i], reduction_ys_[i]);
+                continue;
+            }
             next_in_path.lineTo(xs_[i], pre_ys_[i]);
             next_out_path.lineTo(xs_[i], out_ys_[i]);
             next_side_chain_path.lineTo(xs_[i], side_chain_ys_[i]);
