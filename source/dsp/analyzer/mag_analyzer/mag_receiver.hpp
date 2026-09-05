@@ -40,12 +40,16 @@ namespace zldsp::analyzer {
             if (range.block_size1 + range.block_size2 == 0) {
                 return 0.f;
             }
-            if (fifo.size() != 2 || stereo_type == StereoType::kStereo) {
+            if (fifo.size() != 2 || stereo_type == StereoType::kStereoLR ||
+                (stereo_type == StereoType::kStereoMS && mag_type == MagType::kRMS)) {
                 switch (mag_type) {
                 case MagType::kRMS: {
                     float sum_sqr{0.f};
                     for (size_t chan = 0; chan < fifo.size(); ++chan) {
                         sum_sqr += MagAnalyzerOps::calculateMS(range, fifo[chan]);
+                    }
+                    if (fifo.size() == 2 && stereo_type == StereoType::kStereoMS) {
+                        sum_sqr *= 0.5f;
                     }
                     return chore::squareGainToDecibels(sum_sqr);
                 }
@@ -85,7 +89,7 @@ namespace zldsp::analyzer {
                 case StereoType::kMid: {
                     static constexpr hn::ScalableTag<float> d;
                     static constexpr size_t lanes = hn::MaxLanes(d);
-                    const auto v_sqrt2_over_2 = hn::Set(d, kSqrt2Over2);
+                    const auto v_half = hn::Set(d, 0.5f);
                     const float* __restrict in0 = fifo[0].data() + start;
                     const float* __restrict in1 = fifo[1].data() + start;
                     if (mag_type == MagType::kPeak) {
@@ -94,14 +98,14 @@ namespace zldsp::analyzer {
                         for (; i + lanes <= size; i += lanes) {
                             const auto v_in0 = hn::LoadU(d, in0 + i);
                             const auto v_in1 = hn::LoadU(d, in1 + i);
-                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Add(v_in0, v_in1));
+                            const auto v_mid = hn::Mul(v_half, hn::Add(v_in0, v_in1));
                             v_max_abs = hn::Max(hn::Abs(v_mid), v_max_abs);
                         }
                         float scalar_max_abs = hn::ReduceMax(d, v_max_abs);
                         for (; i < size; ++i) {
                             const auto v_in0 = in0[i];
                             const auto v_in1 = in1[i];
-                            const auto v_mid = kSqrt2Over2 * (v_in0 + v_in1);
+                            const auto v_mid = 0.5f * (v_in0 + v_in1);
                             scalar_max_abs = std::max(std::abs(v_mid), scalar_max_abs);
                         }
                         value = std::max(value, scalar_max_abs);
@@ -111,14 +115,14 @@ namespace zldsp::analyzer {
                         for (; i + lanes <= size; i += lanes) {
                             const auto v_in0 = hn::LoadU(d, in0 + i);
                             const auto v_in1 = hn::LoadU(d, in1 + i);
-                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Add(v_in0, v_in1));
+                            const auto v_mid = hn::Mul(v_half, hn::Add(v_in0, v_in1));
                             v_sum = hn::MulAdd(v_mid, v_mid, v_sum);
                         }
                         float scalar_sum = hn::ReduceSum(d, v_sum);
                         for (; i < size; ++i) {
                             const auto v_in0 = in0[i];
                             const auto v_in1 = in1[i];
-                            const auto v_mid = kSqrt2Over2 * (v_in0 + v_in1);
+                            const auto v_mid = 0.5f * (v_in0 + v_in1);
                             scalar_sum += v_mid * v_mid;
                         }
                         value += scalar_sum;
@@ -128,7 +132,7 @@ namespace zldsp::analyzer {
                 case StereoType::kSide: {
                     static constexpr hn::ScalableTag<float> d;
                     static constexpr size_t lanes = hn::MaxLanes(d);
-                    const auto v_sqrt2_over_2 = hn::Set(d, kSqrt2Over2);
+                    const auto v_half = hn::Set(d, 0.5f);
                     const float* __restrict in0 = fifo[0].data() + start;
                     const float* __restrict in1 = fifo[1].data() + start;
                     if (mag_type == MagType::kPeak) {
@@ -137,15 +141,15 @@ namespace zldsp::analyzer {
                         for (; i + lanes <= size; i += lanes) {
                             const auto v_in0 = hn::LoadU(d, in0 + i);
                             const auto v_in1 = hn::LoadU(d, in1 + i);
-                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Sub(v_in0, v_in1));
-                            v_max_abs = hn::Max(hn::Abs(v_mid), v_max_abs);
+                            const auto v_side = hn::Sub(hn::Mul(v_half, hn::Add(v_in0, v_in1)), v_in1);
+                            v_max_abs = hn::Max(hn::Abs(v_side), v_max_abs);
                         }
                         float scalar_max_abs = hn::ReduceMax(d, v_max_abs);
                         for (; i < size; ++i) {
                             const auto v_in0 = in0[i];
                             const auto v_in1 = in1[i];
-                            const auto v_mid = kSqrt2Over2 * (v_in0 - v_in1);
-                            scalar_max_abs = std::max(std::abs(v_mid), scalar_max_abs);
+                            const auto v_side = 0.5f * (v_in0 + v_in1) - v_in1;
+                            scalar_max_abs = std::max(std::abs(v_side), scalar_max_abs);
                         }
                         value = std::max(value, scalar_max_abs);
                     } else {
@@ -154,21 +158,45 @@ namespace zldsp::analyzer {
                         for (; i + lanes <= size; i += lanes) {
                             const auto v_in0 = hn::LoadU(d, in0 + i);
                             const auto v_in1 = hn::LoadU(d, in1 + i);
-                            const auto v_mid = hn::Mul(v_sqrt2_over_2,hn::Sub(v_in0, v_in1));
-                            v_sum = hn::MulAdd(v_mid, v_mid, v_sum);
+                            const auto v_side = hn::Sub(hn::Mul(v_half, hn::Add(v_in0, v_in1)), v_in1);
+                            v_sum = hn::MulAdd(v_side, v_side, v_sum);
                         }
                         float scalar_sum = hn::ReduceSum(d, v_sum);
                         for (; i < size; ++i) {
                             const auto v_in0 = in0[i];
                             const auto v_in1 = in1[i];
-                            const auto v_mid = kSqrt2Over2 * (v_in0 - v_in1);
-                            scalar_sum += v_mid * v_mid;
+                            const auto v_side = 0.5f * (v_in0 + v_in1) - v_in1;
+                            scalar_sum += v_side * v_side;
                         }
                         value += scalar_sum;
                     }
                     break;
                 }
-                case StereoType::kStereo:
+                case StereoType::kStereoMS: {
+                    static constexpr hn::ScalableTag<float> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    const auto v_half = hn::Set(d, 0.5f);
+                    const float* __restrict in0 = fifo[0].data() + start;
+                    const float* __restrict in1 = fifo[1].data() + start;
+                    auto v_max_abs = hn::Zero(d);
+                    size_t i = 0;
+                    for (; i + lanes <= size; i += lanes) {
+                        const auto v_left = hn::LoadU(d, in0 + i);
+                        const auto v_right = hn::LoadU(d, in1 + i);
+                        const auto v_mid = hn::Mul(v_half, hn::Add(v_left, v_right));
+                        const auto v_side = hn::Sub(v_mid, v_right);
+                        v_max_abs = hn::Max(v_max_abs, hn::Max(hn::Abs(v_mid), hn::Abs(v_side)));
+                    }
+                    float peak = hn::ReduceMax(d, v_max_abs);
+                    for (; i < size; ++i) {
+                        const auto mid = 0.5f * (in0[i] + in1[i]);
+                        const auto side = mid - in1[i];
+                        peak = std::max(peak, std::max(std::abs(mid), std::abs(side)));
+                    }
+                    value = std::max(value, peak);
+                    break;
+                }
+                case StereoType::kStereoLR:
                 default:
                     break;
                 }

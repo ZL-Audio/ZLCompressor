@@ -162,7 +162,7 @@ namespace zlpanel {
 
         for (size_t resolution = 0; resolution < kNumResolutions; ++resolution) {
             auto& resolution_spectrum = resolution_spectra_[resolution];
-            receiver_.forward(processors_[resolution], zldsp::analyzer::StereoType::kStereo,
+            receiver_.forward(processors_[resolution], zldsp::analyzer::StereoType::kStereoLR,
                               resolution_spectrum);
             zldsp::vector::multiply(resolution_spectrum.data(), noise_power_scales_[resolution],
                                     resolution_spectrum.size());

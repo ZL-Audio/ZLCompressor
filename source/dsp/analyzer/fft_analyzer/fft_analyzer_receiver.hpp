@@ -108,7 +108,8 @@ namespace zldsp::analyzer {
             auto& fft_in{processor.getFFTIn()};
             auto& fft_out{processor.getFFTOut()};
             const auto& window{processor.getWindow()};
-            if (circular_buffer_.size() != 2 || stereo_type == StereoType::kStereo) {
+            if (circular_buffer_.size() != 2 ||
+                stereo_type == StereoType::kStereoMS || stereo_type == StereoType::kStereoLR) {
                 for (size_t chan = 0; chan < circular_buffer_.size(); ++chan) {
                     vector::multiply(fft_in.data(), circular_buffer_[chan].data() + input_offset,
                                      window.data(), window.size());

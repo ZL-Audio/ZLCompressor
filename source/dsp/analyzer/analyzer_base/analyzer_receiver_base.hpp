@@ -15,7 +15,7 @@ namespace zldsp::analyzer {
     };
 
     enum class StereoType {
-        kStereo, kLeft, kRight, kMid, kSide
+        kStereoMS, kStereoLR, kLeft, kRight, kMid, kSide
     };
 
     inline constexpr float kSqrt2Over2 = static_cast<float>(

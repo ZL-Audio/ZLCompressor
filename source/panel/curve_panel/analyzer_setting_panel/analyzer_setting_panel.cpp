@@ -21,7 +21,9 @@ namespace zlpanel {
         mag_stereo_box_([]() -> std::vector<std::unique_ptr<juce::Drawable>> {
             std::vector<std::unique_ptr<juce::Drawable>> icons;
             icons.emplace_back(
-                juce::Drawable::createFromImageData(BinaryData::stereo_svg, BinaryData::stereo_svgSize));
+                juce::Drawable::createFromImageData(BinaryData::midside_svg, BinaryData::midside_svgSize));
+            icons.emplace_back(
+                juce::Drawable::createFromImageData(BinaryData::leftright_svg, BinaryData::leftright_svgSize));
             icons.emplace_back(
                 juce::Drawable::createFromImageData(BinaryData::left_svg, BinaryData::left_svgSize));
             icons.emplace_back(
@@ -31,7 +33,8 @@ namespace zlpanel {
             icons.emplace_back(
                 juce::Drawable::createFromImageData(BinaryData::side_svg, BinaryData::side_svgSize));
             return icons;
-        }(), base, tooltip_helper.getToolTipText(multilingual::kMagMeasureStereo)),
+        }(), base, tooltip_helper.getToolTipText(multilingual::kMagMeasureStereo),
+        {zlstate::PAnalyzerStereo::kChoices.begin(), zlstate::PAnalyzerStereo::kChoices.end()}),
         mag_stereo_attachment_(mag_stereo_box_.getBox(), p.na_parameters_,
                                zlstate::PAnalyzerStereo::kID, updater_),
         move_type_box_(zlstate::PAnalyzerMoveType::kChoices, base, ""),
@@ -136,7 +139,7 @@ namespace zlpanel {
             const auto box_width = t_bound.getWidth() / 3;
             mag_type_box_.setBounds(t_bound.removeFromLeft(box_width));
             move_type_box_.setBounds(t_bound.removeFromRight(box_width));
-            mag_stereo_box_.getLAF().setPadding(font_size * 1.75f);
+            mag_stereo_box_.getLAF().setPadding(font_size * 1.66666f);
             mag_stereo_box_.setBounds(t_bound);
         }
         bound.removeFromTop(padding);
