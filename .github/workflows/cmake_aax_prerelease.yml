@@ -3,15 +3,18 @@ name: AAX Pre Release
 on:
   workflow_dispatch:
 
+# When pushing new commits, cancel any running builds on that branch
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   BUILD_TYPE: Release
   BUILD_DIR: Builds
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  DISPLAY: :0
   HOMEBREW_NO_INSTALL_CLEANUP: 1
 
 jobs:
@@ -23,17 +26,17 @@ jobs:
       matrix:
         include:
           - name: macOS-x86-64
-            os: macos-latest
+            os: macos-26
             cmake_extra_flags: -DCMAKE_OSX_ARCHITECTURES="x86_64" -DZL_JUCE_FORMATS="AAX" -DZL_HWY_STATIC_TARGET="SSE4"
           - name: macOS-arm64
-            os: macos-latest
+            os: macos-26
             cmake_extra_flags: -DCMAKE_OSX_ARCHITECTURES="arm64" -DZL_JUCE_FORMATS="AAX" -DZL_HWY_STATIC_TARGET="NEON"
           - name: Windows-x86-64
-            os: windows-latest
+            os: windows-2025
             vcvars_script: vcvars64.bat
             cmake_extra_flags: -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DZL_JUCE_FORMATS="AAX" -DZL_HWY_STATIC_TARGET="SSE2"
           - name: Windows-x86-64-AVX2
-            os: windows-latest
+            os: windows-2025
             vcvars_script: vcvars64.bat
             cmake_extra_flags: -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DZL_JUCE_FORMATS="AAX" -DZL_HWY_STATIC_TARGET="AVX2"
 
@@ -116,4 +119,4 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.AAX_RELEASE_PAT }} 
       run: |
-        gh release upload ZLCompressor upload_ready/*.zip --repo "ZL-Audio/ZLAAX" --clobber
+        gh release upload ${{ github.event.repository.name }} upload_ready/*.zip --repo "ZL-Audio/ZLAAX" --clobber
