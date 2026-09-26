@@ -495,6 +495,15 @@ namespace zlstate {
         static constexpr int kDefaultI = 3;
     };
 
+    class PFFTQuality : public ChoiceParameters<PFFTQuality> {
+    public:
+        static constexpr auto kID = "fft_quality";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = juce::StringArray{"Normal", "High"};
+        enum { kNormal, kHigh };
+        static constexpr int kDefaultI = kNormal;
+    };
+
     class PFFTExtraTilt : public FloatParameters<PFFTExtraTilt> {
     public:
         static constexpr auto kID = "fft_extra_tilt";
@@ -643,7 +652,7 @@ namespace zlstate {
                    PEnterSoloMouse::get(), PEnterSoloKey::get(),
                    PExitSoloMouse::get(), PExitSoloKey::get(),
                    PTargetRefreshSpeed::get(),
-                   PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
+                   PFFTQuality::get(), PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
                    PMagCurveThickness::get(), PEQCurveThickness::get(),
                    PTooltipLang::get());
 

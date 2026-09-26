@@ -55,8 +55,12 @@ namespace zlpanel {
         }
 
         const auto sample_rate = sender.getSampleRate();
-        if (std::abs(c_sample_rate_ - sample_rate) > 0.1) {
+        const auto high_quality = base_.getFFTQuality() == zlstate::PFFTQuality::kHigh;
+        const auto first_resolution = high_quality ? kLowResolution : kMiddleResolution;
+        const auto end_resolution = high_quality ? kNumResolutions : kMiddleResolution + 1;
+        if (std::abs(c_sample_rate_ - sample_rate) > 0.1 || high_quality != c_high_quality_) {
             c_sample_rate_ = sample_rate;
+            c_high_quality_ = high_quality;
             to_update_tilt_.signal();
             to_update_decay_.signal();
 
@@ -73,34 +77,49 @@ namespace zlpanel {
             const std::array fft_orders{
                 middle_fft_order + 2, middle_fft_order, middle_fft_order - 2
             };
-            for (size_t i = 0; i < processors_.size(); ++i) {
+            for (size_t i = first_resolution; i < end_resolution; ++i) {
                 processors_[i].prepare(fft_orders[i]);
             }
 
             const auto reference_window_power = processors_[kMiddleResolution].getWindowSqrSum();
-            for (size_t i = 0; i < processors_.size(); ++i) {
+            for (size_t i = first_resolution; i < end_resolution; ++i) {
                 noise_power_scales_[i] = static_cast<float>(
                     reference_window_power / processors_[i].getWindowSqrSum());
             }
 
-            history_size_ = static_cast<int>(processors_[kLowResolution].getFFTSize());
-            receiver_.prepare(2);
-            for (size_t i = 0; i < spectrum_smoothers_.size(); ++i) {
+            history_size_ = static_cast<int>(processors_[first_resolution].getFFTSize());
+            receiver_.prepare(2, static_cast<size_t>(history_size_));
+            for (size_t i = first_resolution; i < end_resolution; ++i) {
                 spectrum_smoothers_[i].prepare(processors_[i].getFFTSize());
                 spectrum_smoothers_[i].setSmooth(
                     0.5, sample_rate, zldsp::analyzer::SpectrumSmoother::SmoothMethod::kERB);
                 resolution_spectra_[i].resize(processors_[i].getFFTSize() / 2 + 1);
             }
 
-            frequencies_ = zldsp::analyzer::SpectrumBlender::createFrequencyGrid(
-                processors_[kLowResolution].getFFTSize(),
-                processors_[kMiddleResolution].getFFTSize(),
-                processors_[kHighResolution].getFFTSize(), sample_rate);
+            if (high_quality) {
+                frequencies_ = zldsp::analyzer::SpectrumBlender::createFrequencyGrid(
+                    processors_[kLowResolution].getFFTSize(),
+                    processors_[kMiddleResolution].getFFTSize(),
+                    processors_[kHighResolution].getFFTSize(), sample_rate);
+            } else {
+                const auto fft_size = processors_[kMiddleResolution].getFFTSize();
+                const auto delta_freq = static_cast<float>(sample_rate / static_cast<double>(fft_size));
+                frequencies_.resize(fft_size / 2 + 1);
+                for (size_t i = 0; i < frequencies_.size(); ++i) {
+                    frequencies_[i] = static_cast<float>(i) * delta_freq;
+                }
+            }
             spectrum_tilter_.prepareSpectrum(frequencies_.size());
             spectrum_decayer_.prepareSpectrum(frequencies_.size());
             spectrum_.resize(frequencies_.size());
             xs_.resize(frequencies_.size());
             ys_.resize(frequencies_.size());
+            if (high_quality) {
+                inter_.reset();
+            } else {
+                inter_ = std::make_unique<zldsp::interpolation::SeqMakima<float>>(
+                    xs_.data(), ys_.data(), kInterSize / 2 + 2, 0.f, 0.f);
+            }
 
             to_update_xs_.signal();
             to_update_ys_.signal();
@@ -124,8 +143,12 @@ namespace zlpanel {
         }
 
         if (to_update_tilt_.check()) {
-            spectrum_tilter_.setTiltSlope(
-                frequencies_, spectrum_tilt_slope_.load(std::memory_order::relaxed));
+            const auto slope = spectrum_tilt_slope_.load(std::memory_order::relaxed);
+            if (high_quality) {
+                spectrum_tilter_.setTiltSlope(frequencies_, slope);
+            } else {
+                spectrum_tilter_.setTiltSlope(sample_rate, slope);
+            }
         }
         if (to_update_decay_.check()) {
             const auto decay_speed = spectrum_extra_decay_speed_.load(std::memory_order::relaxed);
@@ -147,6 +170,15 @@ namespace zlpanel {
                     break;
                 }
             }
+            if (!high_quality) {
+                inter_xs_[0] = xs_[0];
+                inter_xs_[kInterSize] = xs_[kInterSize / 2];
+                inter_xs_[kInterSize + 1] = xs_[kInterSize / 2 + 1];
+                const auto delta_inter_x = (xs_[kInterSize / 2 - 1] - xs_[0]) / static_cast<float>(kInterSize - 1);
+                for (size_t i = 1; i < kInterSize; ++i) {
+                    inter_xs_[i] = inter_xs_[i - 1] + delta_inter_x;
+                }
+            }
         }
         if (to_update_ys_.check()) {
             c_height_ = bound.getHeight();
@@ -160,19 +192,25 @@ namespace zlpanel {
             return;
         }
 
-        for (size_t resolution = 0; resolution < kNumResolutions; ++resolution) {
-            auto& resolution_spectrum = resolution_spectra_[resolution];
-            receiver_.forward(processors_[resolution], zldsp::analyzer::StereoType::kStereoLR,
-                              resolution_spectrum);
-            zldsp::vector::multiply(resolution_spectrum.data(), noise_power_scales_[resolution],
-                                    resolution_spectrum.size());
-            spectrum_smoothers_[resolution].smooth(resolution_spectrum);
+        if (high_quality) {
+            for (size_t resolution = 0; resolution < kNumResolutions; ++resolution) {
+                auto& resolution_spectrum = resolution_spectra_[resolution];
+                receiver_.forward(processors_[resolution], zldsp::analyzer::StereoType::kStereoLR,
+                                  resolution_spectrum);
+                zldsp::vector::multiply(resolution_spectrum.data(), noise_power_scales_[resolution],
+                                        resolution_spectrum.size());
+                spectrum_smoothers_[resolution].smooth(resolution_spectrum);
+            }
+            zldsp::analyzer::SpectrumBlender::blend(
+                spectrum_, frequencies_,
+                resolution_spectra_[kLowResolution],
+                resolution_spectra_[kMiddleResolution],
+                resolution_spectra_[kHighResolution], sample_rate);
+        } else {
+            receiver_.forward(processors_[kMiddleResolution], zldsp::analyzer::StereoType::kStereoLR,
+                              spectrum_);
+            spectrum_smoothers_[kMiddleResolution].smooth(spectrum_);
         }
-        zldsp::analyzer::SpectrumBlender::blend(
-            spectrum_, frequencies_,
-            resolution_spectra_[kLowResolution],
-            resolution_spectra_[kMiddleResolution],
-            resolution_spectra_[kHighResolution], sample_rate);
         zldsp::vector::sqr_mag_to_db(spectrum_.data(), spectrum_.size());
         spectrum_tilter_.tilt(std::span{spectrum_.data(), spectrum_.size()});
         spectrum_decayer_.decay(std::span{spectrum_.data(), spectrum_.size()},
@@ -183,8 +221,19 @@ namespace zlpanel {
         next_out_path.clear();
         PathMinimizer<5> minimizer{next_out_path};
         next_out_path.startNewSubPath(xs_.front() - .1f, c_height_ * 1.5f);
-        minimizer.startNewSubPath<false>(xs_.front(), ys_.front());
-        for (size_t i = 1; i < num_point_; ++i) {
+        size_t first_point{0};
+        if (!high_quality) {
+            inter_->prepare();
+            inter_->eval(inter_xs_.data(), inter_ys_.data(), inter_xs_.size());
+            next_out_path.lineTo(inter_xs_[0], inter_ys_[0]);
+            for (size_t i = 1; i < kInterSize; i += 2) {
+                next_out_path.quadraticTo(inter_xs_[i], inter_ys_[i], inter_xs_[i + 1], inter_ys_[i + 1]);
+            }
+            next_out_path.lineTo(inter_xs_[kInterSize], inter_ys_[kInterSize]);
+            first_point = kInterSize / 2;
+        }
+        minimizer.startNewSubPath<false>(xs_[first_point], ys_[first_point]);
+        for (size_t i = first_point + 1; i < num_point_; ++i) {
             minimizer.lineTo(xs_[i], ys_[i]);
         }
         minimizer.finish();

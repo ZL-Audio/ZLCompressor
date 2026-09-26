@@ -19,6 +19,7 @@
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_tilter.hpp"
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_decayer.hpp"
 #include "../../../dsp/analyzer/fft_analyzer/spectrum_blender.hpp"
+#include "../../../dsp/interpolation/seq_makima.hpp"
 #include "../../../chore/thread/notifier.hpp"
 
 namespace zlpanel {
@@ -42,6 +43,7 @@ namespace zlpanel {
         static constexpr size_t kLowResolution = 0;
         static constexpr size_t kMiddleResolution = 1;
         static constexpr size_t kHighResolution = 2;
+        static constexpr size_t kInterSize = 64;
 
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;
@@ -50,9 +52,12 @@ namespace zlpanel {
         AtomicBound<float> atomic_bound_;
 
         std::vector<float> xs_{}, ys_{}, frequencies_{};
+        std::array<float, kInterSize + 2> inter_xs_{}, inter_ys_{};
+        std::unique_ptr<zldsp::interpolation::SeqMakima<float>> inter_;
         BufferedUI<juce::Path> out_path_;
 
         double c_sample_rate_{};
+        bool c_high_quality_{false};
         int history_size_{0};
         float c_width_{}, c_height_{}, y_scale_{}, y_bias_{};
         size_t num_point_{0};
@@ -70,7 +75,7 @@ namespace zlpanel {
         std::atomic<bool> is_fft_frozen_{false};
 
         std::array<zldsp::analyzer::FFTAnalyzerProcessor, kNumResolutions> processors_;
-        zldsp::analyzer::FFTAnalyzerReceiver receiver_{processors_[kLowResolution]};
+        zldsp::analyzer::FFTAnalyzerReceiver receiver_{processors_[kMiddleResolution]};
         std::array<zldsp::analyzer::SpectrumSmoother, kNumResolutions> spectrum_smoothers_;
         zldsp::analyzer::SpectrumTilter spectrum_tilter_;
         zldsp::analyzer::SpectrumDecayer spectrum_decayer_;
