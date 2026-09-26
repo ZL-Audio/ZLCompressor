@@ -64,6 +64,7 @@ namespace zlpanel {
         lookahead_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLookahead));
         addAndMakeVisible(lookahead_label_);
 
+        oversample_box_.getLAF().setAlignment(zlgui::combobox::Alignment::kRight);
         oversample_box_.setScrollEnabled(true);
         oversample_box_.getLAF().setFontScale(1.5f);
         oversample_box_.setBufferedToImage(true);
@@ -86,6 +87,8 @@ namespace zlpanel {
         clipper_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper));
         addAndMakeVisible(clipper_label_);
 
+        const auto box_alignment = combobox_helper::getAlignment(base_.getComboboxAlignment());
+        direction_box_.getLAF().setItemAlignment(box_alignment);
         direction_box_.setScrollEnabled(true);
         direction_box_.setAlpha(.5f);
         direction_box_.setBufferedToImage(true);

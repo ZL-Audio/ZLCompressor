@@ -1,11 +1,11 @@
 // Copyright (C) 2026 - zsliu98
-// This file is part of ZLCompressor
+// This file is part of ZLEqualizer
 //
-// ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
+// ZLEqualizer is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
 //
-// ZLCompressor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+// ZLEqualizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Affero General Public License along with ZLEqualizer. If not, see <https://www.gnu.org/licenses/>.
 
 #include "compact_combobox.hpp"
 
@@ -82,25 +82,10 @@ namespace zlgui::combobox {
         combo_box_.setLookAndFeel(nullptr);
     }
 
-    void CompactCombobox::paint(juce::Graphics& g) {
-        g.setFont(box_laf_.getFontScale() * base_.getFontSize());
-        float max_text_width = 0.f;
-        bool has_text = false;
-        for (int i = 0; i < combo_box_.getNumItems(); ++i) {
-            const auto text = combo_box_.getItemText(i);
-            has_text = has_text || text.isNotEmpty();
-            const auto text_width = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), text);
-            max_text_width = std::max(max_text_width, text_width);
-        }
-        if (has_text) {
-            const auto padding = (static_cast<float>(getLocalBounds().getWidth()) - max_text_width) * .5f;
-            box_laf_.setPadding(padding * .975f);
-        }
-    }
-
     void CompactCombobox::resized() {
         auto bound = getLocalBounds();
         box_laf_.setItemSize(bound.getWidth(), bound.getHeight());
+        box_laf_.updateTextWidth(combo_box_);
         combo_box_.setBounds(getLocalBounds());
     }
 

@@ -520,6 +520,15 @@ namespace zlstate {
         static constexpr auto kDefaultV = 1.f;
     };
 
+    class PComboboxAlignment : public ChoiceParameters<PComboboxAlignment> {
+    public:
+        static constexpr auto kID = "combobox_alignment";
+        static constexpr auto kName = "";
+        inline static const auto kChoices = juce::StringArray{"Left", "Center", "Right"};
+        enum { kLeft, kCenter, kRight };
+        static constexpr int kDefaultI = kCenter;
+    };
+
     class PMagCurveThickness : public FloatParameters<PMagCurveThickness> {
     public:
         static constexpr auto kID = "mag_curve_thickness";
@@ -653,6 +662,7 @@ namespace zlstate {
                    PExitSoloMouse::get(), PExitSoloKey::get(),
                    PTargetRefreshSpeed::get(),
                    PFFTQuality::get(), PFFTExtraTilt::get(), PFFTExtraSpeed::get(),
+                   PComboboxAlignment::get(),
                    PMagCurveThickness::get(), PEQCurveThickness::get(),
                    PTooltipLang::get());
 

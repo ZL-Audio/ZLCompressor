@@ -72,6 +72,9 @@ namespace zlpanel {
 
         const auto popup_option = juce::PopupMenu::Options().withPreferredPopupDirection(
             juce::PopupMenu::Options::PopupDirection::downwards);
+        const auto box_alignment = combobox_helper::getAlignment(base_.getComboboxAlignment());
+        mag_type_box_.getLAF().setItemAlignment(box_alignment);
+        move_type_box_.getLAF().setItemAlignment(box_alignment);
         for (auto& box : {&mag_type_box_, &mag_stereo_box_, &move_type_box_}) {
             box->setScrollEnabled(true);
             box->getLAF().setOption(popup_option);
@@ -87,6 +90,7 @@ namespace zlpanel {
             addAndMakeVisible(button);
         }
         for (auto& box : {&time_length_box_, &max_db_box_, &min_db_box_}) {
+            box->getLAF().setAlignment(zlgui::combobox::Alignment::kRight);
             box->setScrollEnabled(true);
             box->getLAF().setOption(popup_option);
             box->setBufferedToImage(true);
@@ -139,8 +143,7 @@ namespace zlpanel {
             const auto box_width = t_bound.getWidth() / 3;
             mag_type_box_.setBounds(t_bound.removeFromLeft(box_width));
             move_type_box_.setBounds(t_bound.removeFromRight(box_width));
-            mag_stereo_box_.getLAF().setPadding(font_size * 1.66666f);
-            mag_stereo_box_.setBounds(t_bound);
+            mag_stereo_box_.setBounds(t_bound.reduced(juce::roundToInt(font_size * 1.66666f), 0));
         }
         bound.removeFromTop(padding);
         {
@@ -182,6 +185,7 @@ namespace zlpanel {
             box.changeItemText(static_cast<int>(i + 1), juce::String(min_db));
         }
         box.setSelectedItemIndex(selected_idx, juce::dontSendNotification);
+        min_db_box_.resized();
         min_db_box_.repaint();
         c_max_db_idx_ = max_db_idx;
     }

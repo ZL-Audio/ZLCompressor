@@ -17,6 +17,7 @@ namespace zlpanel {
           fft_quality_box_(zlstate::PFFTQuality::kChoices, base),
           fft_tilt_slider_("Tilt", base),
           fft_speed_slider_("Speed", base),
+          combobox_alignment_box_(zlstate::PComboboxAlignment::kChoices, base),
           mag_curve_slider_("Mag", base),
           eq_curve_slider_("EQ", base),
           tooltip_box_(zlstate::PTooltipLang::kChoices, base),
@@ -49,6 +50,12 @@ namespace zlpanel {
         fft_speed_slider_.getSlider().setNormalisableRange(juce::NormalisableRange<double>(0., 2., .01));
         fft_speed_slider_.getSlider().setDoubleClickReturnValue(true, 1.0);
         addAndMakeVisible(fft_speed_slider_);
+
+        combobox_alignment_label_.setText("Combobox Alignment", juce::dontSendNotification);
+        combobox_alignment_label_.setJustificationType(juce::Justification::centredRight);
+        combobox_alignment_label_.setLookAndFeel(&name_laf_);
+        addAndMakeVisible(combobox_alignment_label_);
+        addAndMakeVisible(combobox_alignment_box_);
 
         curve_thick_label_.setText("Curve Thickness", juce::dontSendNotification);
         curve_thick_label_.setJustificationType(juce::Justification::centredRight);
@@ -91,6 +98,7 @@ namespace zlpanel {
         fft_quality_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getFFTQuality()));
         fft_tilt_slider_.getSlider().setValue(static_cast<double>(base_.getFFTExtraTilt()));
         fft_speed_slider_.getSlider().setValue(static_cast<double>(base_.getFFTExtraSpeed()));
+        combobox_alignment_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getComboboxAlignment()));
         mag_curve_slider_.getSlider().setValue(base_.getMagCurveThickness());
         tooltip_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getTooltipLangID()));
         eq_curve_slider_.getSlider().setValue(base_.getEQCurveThickness());
@@ -106,6 +114,7 @@ namespace zlpanel {
         base_.setFFTQuality(static_cast<size_t>(fft_quality_box_.getBox().getSelectedItemIndex()));
         base_.setFFTExtraTilt(static_cast<float>(fft_tilt_slider_.getSlider().getValue()));
         base_.setFFTExtraSpeed(static_cast<float>(fft_speed_slider_.getSlider().getValue()));
+        base_.setComboboxAlignment(static_cast<size_t>(combobox_alignment_box_.getBox().getSelectedItemIndex()));
         base_.setMagCurveThickness(static_cast<float>(mag_curve_slider_.getSlider().getValue()));
         base_.setEQCurveThickness(static_cast<float>(eq_curve_slider_.getSlider().getValue()));
         base_.setTooltipLandID(static_cast<size_t>(tooltip_box_.getBox().getSelectedItemIndex()));
@@ -123,7 +132,7 @@ namespace zlpanel {
         const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
         const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
 
-        return padding * 8 + slider_height * 7;
+        return padding * 9 + slider_height * 8;
     }
 
     void OtherUISettingPanel::resized() {
@@ -154,6 +163,13 @@ namespace zlpanel {
             fft_tilt_slider_.setBounds(local_bound.removeFromLeft(slider_width));
             local_bound.removeFromLeft(padding);
             fft_speed_slider_.setBounds(local_bound.removeFromLeft(slider_width));
+        }
+        {
+            bound.removeFromTop(padding);
+            auto local_bound = bound.removeFromTop(slider_height);
+            combobox_alignment_label_.setBounds(local_bound.removeFromLeft(slider_width * 2));
+            local_bound.removeFromLeft(padding);
+            combobox_alignment_box_.setBounds(local_bound.removeFromLeft(slider_width).reduced(0, padding / 3));
         }
         {
             bound.removeFromTop(padding);

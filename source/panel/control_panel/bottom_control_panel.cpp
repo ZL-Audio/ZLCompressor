@@ -42,6 +42,8 @@ namespace zlpanel {
             addAndMakeVisible(l);
         }
 
+        const auto box_alignment = combobox_helper::getAlignment(base_.getComboboxAlignment());
+        style_box_.getLAF().setItemAlignment(box_alignment);
         style_box_.setScrollEnabled(true);
         style_box_.setBufferedToImage(true);
         addAndMakeVisible(style_box_);
