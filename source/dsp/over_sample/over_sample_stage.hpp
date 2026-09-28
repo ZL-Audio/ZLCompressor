@@ -9,18 +9,19 @@
 
 #pragma once
 
-#include <span>
 #include <algorithm>
-#include <vector>
 #include <cstring>
+#include <span>
+#include <vector>
+
+#include "../vector/vector.hpp"
 
 namespace zldsp::oversample {
     namespace hn = hwy::HWY_NAMESPACE;
     template <typename FloatType>
     class OverSampleStage {
     public:
-        explicit OverSampleStage(std::span<const FloatType> up_coeff,
-                                 std::span<const FloatType> down_coeff) {
+        explicit OverSampleStage(std::span<const FloatType> up_coeff, std::span<const FloatType> down_coeff) {
             up_coeff_.resize(up_coeff.size() / 2);
             for (size_t i = 1; i < up_coeff.size(); i += 2) {
                 up_coeff_[i >> 1] = up_coeff[i] * FloatType(2);
@@ -55,7 +56,7 @@ namespace zldsp::oversample {
 
             down_center_delay_lines_.resize(num_channels);
             for (auto& d : down_center_delay_lines_) {
-                d.resize(down_coeff_.size() / 2);
+                d.resize(down_coeff_.size() / 2 + max_num_samples);
             }
 
             os_buffers_.resize(num_channels);
@@ -71,7 +72,6 @@ namespace zldsp::oversample {
         }
 
         void reset() {
-            down_center_pos_ = 0;
             for (auto& d : up_delay_lines_) {
                 std::fill(d.begin(), d.end(), FloatType(0));
             }
@@ -83,84 +83,140 @@ namespace zldsp::oversample {
             }
         }
 
-        [[nodiscard]] size_t getLatency() const { return latency_; }
+        [[nodiscard]] size_t getLatency() const {
+            return latency_;
+        }
 
         template <bool use_simd = false>
         void upsample(std::span<FloatType*> buffer, const size_t num_samples) {
-            const auto symmetric_size = up_coeff_.size() >> 1;
-            const auto symmetric_shift = up_coeff_.size() - 1;
-
             for (size_t chan = 0; chan < buffer.size(); ++chan) {
                 auto delay_line = up_delay_lines_[chan].data();
                 auto os_data = os_buffers_[chan].data();
                 auto chan_data = buffer[chan];
-                for (size_t i = 0; i < num_samples; ++i) {
-                    os_data[i << 1] = delay_line[up_coeff_center_pos_ + i] * up_coeff_center_;
-                    delay_line[up_coeff_.size() + i] = chan_data[i];
-                    if constexpr (use_simd) {
-                        os_data[(i << 1) + 1] = vector::dot_product(&delay_line[i + 1], up_coeff_.data(), up_coeff_.size());
-                    } else {
-                        FloatType output{FloatType(0)};
-                        const auto shifted_delay_line = &delay_line[i + 1];
-                        for (size_t k = 0; k < symmetric_size; ++k) {
-                            output += (shifted_delay_line[k] + shifted_delay_line[symmetric_shift - k]) * up_coeff_[k];
-                        }
-                        os_data[(i << 1) + 1] = output;
+                std::memcpy(delay_line + up_coeff_.size(), chan_data, num_samples * sizeof(FloatType));
+
+                size_t i = 0;
+                if constexpr (use_simd) {
+                    static constexpr hn::ScalableTag<FloatType> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    const auto center_coeff = hn::Set(d, up_coeff_center_);
+                    for (; i + lanes <= num_samples; i += lanes) {
+                        const auto center = hn::Mul(hn::LoadU(d, delay_line + up_coeff_center_pos_ + i), center_coeff);
+                        const auto filtered =
+                            convolveSymmetric(d, delay_line + i + 1, up_coeff_.data(), up_coeff_.size());
+                        hn::StoreInterleaved2(center, filtered, d, os_data + (i << 1));
                     }
                 }
-            }
+                for (; i < num_samples; ++i) {
+                    os_data[i << 1] = delay_line[up_coeff_center_pos_ + i] * up_coeff_center_;
+                    os_data[(i << 1) + 1] = convolveSymmetric(delay_line + i + 1, up_coeff_.data(), up_coeff_.size());
+                }
 
-            const auto memmove_size = up_coeff_.size() * sizeof(FloatType);
-            for (auto& delay_line : up_delay_lines_) {
-                std::memmove(delay_line.data(), delay_line.data() + num_samples, memmove_size);
+                std::memmove(delay_line, delay_line + num_samples, up_coeff_.size() * sizeof(FloatType));
             }
         }
 
         template <bool use_simd = false>
         void downsample(std::span<FloatType*> buffer, const size_t num_samples) {
-            const auto symmetric_size = down_coeff_.size() >> 1;
-            const auto symmetric_shift = down_coeff_.size() - 1;
-
-            size_t center_pos{down_center_pos_};
             for (size_t chan = 0; chan < buffer.size(); ++chan) {
                 auto delay_line = down_delay_lines_[chan].data();
                 auto center_delay_line = down_center_delay_lines_[chan].data();
                 auto os_data = os_buffers_[chan].data();
                 auto chan_data = buffer[chan];
-                center_pos = down_center_pos_;
-                for (size_t i = 0; i < num_samples; ++i) {
-                    if constexpr (use_simd) {
-                        FloatType output = center_delay_line[center_pos] * down_coeff_center_;
-                        chan_data[i] = output + vector::dot_product(&delay_line[i], down_coeff_.data(), down_coeff_.size());
-                    } else {
-                        FloatType output = center_delay_line[center_pos] * down_coeff_center_;
-                        const auto shifted_delay_line = &delay_line[i];
-                        for (size_t k = 0; k < symmetric_size; ++k) {
-                            output += (shifted_delay_line[k] + shifted_delay_line[symmetric_shift - k]) * down_coeff_[
-                                k];
-                        }
-                        chan_data[i] = output;
+
+                size_t i = 0;
+                if constexpr (use_simd) {
+                    static constexpr hn::ScalableTag<FloatType> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    for (; i + lanes <= num_samples; i += lanes) {
+                        auto center = hn::Zero(d);
+                        auto filtered = hn::Zero(d);
+                        hn::LoadInterleaved2(d, os_data + (i << 1), center, filtered);
+                        hn::StoreU(center, d, center_delay_line + down_coeff_.size() / 2 + i);
+                        hn::StoreU(filtered, d, delay_line + down_coeff_.size() + i);
                     }
-                    delay_line[down_coeff_.size() + i] = os_data[(i << 1) + 1];
-                    center_delay_line[center_pos] = os_data[i << 1];
-
-                    center_pos = (center_pos == 0) ? down_center_delay_lines_[chan].size() - 1 : center_pos - 1;
                 }
-            }
+                for (; i < num_samples; ++i) {
+                    center_delay_line[down_coeff_.size() / 2 + i] = os_data[i << 1];
+                    delay_line[down_coeff_.size() + i] = os_data[(i << 1) + 1];
+                }
 
-            down_center_pos_ = center_pos;
+                i = 0;
+                if constexpr (use_simd) {
+                    static constexpr hn::ScalableTag<FloatType> d;
+                    static constexpr size_t lanes = hn::MaxLanes(d);
+                    const auto center_coeff = hn::Set(d, down_coeff_center_);
+                    for (; i + lanes <= num_samples; i += lanes) {
+                        const auto center = hn::Mul(hn::LoadU(d, center_delay_line + i), center_coeff);
+                        const auto filtered =
+                            convolveSymmetric(d, delay_line + i, down_coeff_.data(), down_coeff_.size());
+                        hn::StoreU(hn::Add(center, filtered), d, chan_data + i);
+                    }
+                }
+                for (; i < num_samples; ++i) {
+                    chan_data[i] = center_delay_line[i] * down_coeff_center_ +
+                        convolveSymmetric(delay_line + i, down_coeff_.data(), down_coeff_.size());
+                }
 
-            const auto memmove_size = down_coeff_.size() * sizeof(FloatType);
-            for (auto& delay_line : down_delay_lines_) {
-                std::memmove(delay_line.data(), delay_line.data() + num_samples, memmove_size);
+                std::memmove(delay_line, delay_line + num_samples, down_coeff_.size() * sizeof(FloatType));
+                std::memmove(center_delay_line, center_delay_line + num_samples,
+                             down_coeff_.size() / 2 * sizeof(FloatType));
             }
         }
 
-        std::vector<std::vector<FloatType>>& getOSBuffer() { return os_buffers_; }
+        std::vector<std::vector<FloatType>>& getOSBuffer() {
+            return os_buffers_;
+        }
 
-        std::vector<FloatType*>& getOSPointer() { return os_pointers_; }
+        std::vector<FloatType*>& getOSPointer() {
+            return os_pointers_;
+        }
 
     private:
+        static HWY_INLINE FloatType convolveSymmetric(const FloatType* HWY_RESTRICT input,
+                                                      const FloatType* HWY_RESTRICT coeff, const size_t size) {
+            FloatType output{FloatType(0)};
+            const auto symmetric_size = size >> 1;
+            const auto symmetric_shift = size - 1;
+            for (size_t i = 0; i < symmetric_size; ++i) {
+                output += (input[i] + input[symmetric_shift - i]) * coeff[i];
+            }
+            return output;
+        }
+
+        template <typename D>
+        static HWY_INLINE auto convolveSymmetric(const D d, const FloatType* HWY_RESTRICT input,
+                                                 const FloatType* HWY_RESTRICT coeff, const size_t size) {
+            auto sum0 = hn::Zero(d);
+            auto sum1 = hn::Zero(d);
+            auto sum2 = hn::Zero(d);
+            auto sum3 = hn::Zero(d);
+            const auto symmetric_size = size >> 1;
+            const auto symmetric_shift = size - 1;
+
+            size_t i = 0;
+            for (; i + 4 <= symmetric_size; i += 4) {
+                const auto samples0 = hn::Add(hn::LoadU(d, input + i), hn::LoadU(d, input + symmetric_shift - i));
+                const auto samples1 =
+                    hn::Add(hn::LoadU(d, input + i + 1), hn::LoadU(d, input + symmetric_shift - i - 1));
+                const auto samples2 =
+                    hn::Add(hn::LoadU(d, input + i + 2), hn::LoadU(d, input + symmetric_shift - i - 2));
+                const auto samples3 =
+                    hn::Add(hn::LoadU(d, input + i + 3), hn::LoadU(d, input + symmetric_shift - i - 3));
+                sum0 = hn::MulAdd(samples0, hn::Set(d, coeff[i]), sum0);
+                sum1 = hn::MulAdd(samples1, hn::Set(d, coeff[i + 1]), sum1);
+                sum2 = hn::MulAdd(samples2, hn::Set(d, coeff[i + 2]), sum2);
+                sum3 = hn::MulAdd(samples3, hn::Set(d, coeff[i + 3]), sum3);
+            }
+
+            auto output = hn::Add(hn::Add(sum0, sum1), hn::Add(sum2, sum3));
+            for (; i < symmetric_size; ++i) {
+                const auto samples = hn::Add(hn::LoadU(d, input + i), hn::LoadU(d, input + symmetric_shift - i));
+                output = hn::MulAdd(samples, hn::Set(d, coeff[i]), output);
+            }
+            return output;
+        }
+
         vector::aligned_vector<FloatType> up_coeff_{};
         FloatType up_coeff_center_{FloatType(0)};
         size_t up_coeff_center_pos_{0};
@@ -169,7 +225,6 @@ namespace zldsp::oversample {
         vector::aligned_vector<FloatType> down_coeff_{};
         FloatType down_coeff_center_{FloatType(0)};
         std::vector<vector::aligned_vector<FloatType>> down_delay_lines_{};
-        size_t down_center_pos_{0};
         std::vector<vector::aligned_vector<FloatType>> down_center_delay_lines_{};
 
         size_t latency_{0};

@@ -9,6 +9,11 @@
 
 #pragma once
 
+#include <array>
+#include <cstddef>
+#include <span>
+#include <vector>
+
 #include "over_sample_stage.hpp"
 #include "halfband_coeffs.hpp"
 
@@ -83,7 +88,7 @@ namespace zldsp::oversample {
             stages_[0].template upsample<true>(buffer, stage_num_sample);
             for (size_t i = 1; i < NumStage; ++i) {
                 stage_num_sample = stage_num_sample << 1;
-                stages_[i].template upsample<false>(stages_[i - 1].getOSPointer(), stage_num_sample);
+                stages_[i].template upsample<true>(stages_[i - 1].getOSPointer(), stage_num_sample);
             }
         }
 
@@ -95,7 +100,7 @@ namespace zldsp::oversample {
         void downsample(std::span<FloatType*> buffer, const size_t num_samples) {
             auto stage_num_sample = num_samples << (NumStage - 1);
             for (size_t i = NumStage - 1; i > 0; --i) {
-                stages_[i].template downsample<false>(stages_[i - 1].getOSPointer(), stage_num_sample);
+                stages_[i].template downsample<true>(stages_[i - 1].getOSPointer(), stage_num_sample);
                 stage_num_sample = stage_num_sample >> 1;
             }
             stages_[0].template downsample<true>(buffer, num_samples);
