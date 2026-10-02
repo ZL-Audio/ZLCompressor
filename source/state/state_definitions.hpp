@@ -641,7 +641,7 @@ namespace zlstate {
         ColourDefaultSetting{0, 0, 0, true, 1.f},
         ColourDefaultSetting{70, 66, 62, true, 1.f},
         ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, .25f},
-        ColourDefaultSetting{255 - 8, 255 - 9, 255 - 11, true, 1.f},
+        ColourDefaultSetting{205, 205, 205, true, 1.f},
         ColourDefaultSetting{252, 18, 197, true, 1.f},
         ColourDefaultSetting{23, 255, 244, true, 1.f},
         ColourDefaultSetting{255, 165, 0, true, 1.f},
