@@ -15,7 +15,8 @@
 namespace zlgui::tooltip {
     class TooltipLookAndFeel final : public juce::LookAndFeel_V4 {
     public:
-        explicit TooltipLookAndFeel(UIBase& base) : base_(base) {
+        explicit TooltipLookAndFeel(UIBase& base) :
+            base_(base) {
         }
 
         juce::Rectangle<int> getTooltipBounds(const juce::String& tip_text,
@@ -26,15 +27,14 @@ namespace zlgui::tooltip {
                                              static_cast<float>(parent_area.getHeight()) * .4f);
             const auto w = static_cast<int>(std::ceil(tl.getWidth() + base_.getFontSize() * .25f));
             const auto h = static_cast<int>(std::ceil(tl.getHeight() + base_.getFontSize() * .25f));
-            const auto padding = static_cast<int>(std::round(base_.getFontSize() * kPaddingScale));
-            if (screen_pos.x > parent_area.getCentreX() && screen_pos.y < parent_area.getCentreY()) {
+            const auto padding = 2 * static_cast<int>(std::round(base_.getFontSize() * kPaddingScale));
+            if (screen_pos.x > parent_area.getCentreX()) {
                 return {
                     parent_area.getX(),
                     parent_area.getY(),
                     w + 2 * padding, h + 2 * padding
                 };
-            }
-            else {
+            } else {
                 return {
                     parent_area.getRight() - w - 2 * padding,
                     parent_area.getY(),
@@ -44,12 +44,22 @@ namespace zlgui::tooltip {
         }
 
         void drawTooltip(juce::Graphics& g, const juce::String& text, const int width, const int height) override {
-            juce::Rectangle<float> bound{static_cast<float>(width), static_cast<float>(height)};
-
-            g.setColour(base_.getBackgroundColour().withAlpha(.875f));
-            g.fillRect(bound);
-
             const auto padding = std::round(base_.getFontSize() * kPaddingScale);
+            juce::Rectangle<float> bound{padding, 0.f,
+                                         static_cast<float>(width) - 2.f * padding,
+                                         static_cast<float>(height) - padding};
+            const juce::DropShadow shadow{base_.getBackgroundColour().withAlpha(.9f),
+                                          std::max(1, static_cast<int>(std::ceil(padding))),
+                                          {0, 0}};
+
+            const auto corner_size = std::max(1.f, padding);
+            juce::Path path;
+            path.addRoundedRectangle(padding, 0.f,
+                                     static_cast<float>(width) - 2.f * padding, static_cast<float>(height) - padding,
+                                     corner_size, corner_size,
+                                     false, false, true, true);
+            shadow.drawForPath(g, path);
+
             bound = bound.reduced(padding);
             const auto tl = getTipTextLayout(text, bound.getWidth(), bound.getHeight());
             tl.draw(g, bound);

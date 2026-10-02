@@ -20,6 +20,7 @@ namespace zlpanel {
         equalize_panel_(p, base),
         left_control_panel_(p, base, tooltip_helper),
         side_control_panel_(p, base, tooltip_helper),
+        top_panel_(p, base, tooltip_helper),
         analyzer_setting_panel_(p, base, tooltip_helper),
         equalize_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideEQDisplay::kID)),
         side_control_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
@@ -31,6 +32,7 @@ namespace zlpanel {
 
         addChildComponent(equalize_panel_);
         addChildComponent(side_control_panel_);
+        addAndMakeVisible(top_panel_);
         addChildComponent(analyzer_setting_panel_);
         startThread(juce::Thread::Priority::low);
     }
@@ -56,19 +58,27 @@ namespace zlpanel {
         const auto padding = getPaddingSize(font_size);
         const auto slider_width = getSliderWidth(font_size);
         const auto button_size = getButtonSize(font_size);
+        const auto top_height = getTopPanelHeight(font_size);
         const auto small_slider_width = getSmallSliderWidth(font_size);
         const auto left_padding = (getWidth() - (padding * 11 + slider_width * 7 + small_slider_width * 2)) / 2;
         {
             auto bound = getLocalBounds();
             bound.removeFromLeft(button_size);
-            mag_analyzer_panel_.setBounds(bound);
+            if (mag_analyzer_panel_.getBounds() == bound) {
+                mag_analyzer_panel_.resized();
+            } else {
+                mag_analyzer_panel_.setBounds(bound);
+            }
         }
+        updateTopPanelBounds();
         {
             auto bound = getLocalBounds();
+            bound.removeFromTop(top_height);
             left_control_panel_.setBounds(bound.removeFromLeft(button_size));
         }
         {
             auto bound = getLocalBounds();
+            bound.removeFromTop(top_height);
             bound.removeFromBottom(getControlPanelHeight(font_size) - padding);
             bound.removeFromLeft(button_size);
 
@@ -92,6 +102,7 @@ namespace zlpanel {
         }
         {
             auto bound = getLocalBounds();
+            bound.removeFromTop(top_height);
             bound.removeFromLeft(button_size);
             bound = bound.removeFromLeft(analyzer_setting_panel_.getIdealWidth());
             analyzer_setting_panel_.setBounds(bound.removeFromTop(analyzer_setting_panel_.getIdealHeight()));
@@ -148,6 +159,8 @@ namespace zlpanel {
         left_control_panel_.repaintCallBackSlow();
         side_control_panel_.repaintCallBackSlow();
         mag_analyzer_panel_.repaintCallBackSlow();
+        updateTopPanelBounds();
+        top_panel_.repaintCallBackSlow();
         equalize_panel_.repaintCallBackSlow();
         analyzer_setting_panel_.repaintCallBackSlow();
     }
@@ -157,5 +170,10 @@ namespace zlpanel {
         if (equalize_panel_.isVisible()) {
             equalize_panel_.repaintCallBack(time_stamp);
         }
+    }
+
+    void CurvePanel::updateTopPanelBounds() {
+        top_panel_.setBounds(getLocalBounds().withTrimmedRight(mag_analyzer_panel_.getMeterWidth())
+                            .withHeight(top_panel_.getIdealHeight()));
     }
 }

@@ -15,6 +15,7 @@
 #include "side_control_panel.hpp"
 #include "analyzer_setting_panel/analyzer_setting_panel.hpp"
 #include "mag_db_range.hpp"
+#include "../top_panel/top_panel.hpp"
 
 namespace zlpanel {
     class CurvePanel final : public juce::Component,
@@ -54,6 +55,7 @@ namespace zlpanel {
         EqualizePanel equalize_panel_;
         LeftControlPanel left_control_panel_;
         SideControlPanel side_control_panel_;
+        TopPanel top_panel_;
         AnalyzerSettingPanel analyzer_setting_panel_;
 
         juce::Rectangle<int> equalize_large_bound_, equalize_small_bound_;
@@ -63,5 +65,7 @@ namespace zlpanel {
         double c_sample_rate_{0.0};
 
         void run() override;
+
+        void updateTopPanelBounds();
     };
 }

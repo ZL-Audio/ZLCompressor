@@ -11,6 +11,7 @@
 
 namespace zlpanel {
     MeterPanel::MeterPanel(PluginProcessor& p, zlgui::UIBase& base) :
+        base_(base),
         meter_background_panel_(p, base),
         meter_display_panel_(p, base) {
 
@@ -22,9 +23,17 @@ namespace zlpanel {
 
     MeterPanel::~MeterPanel() = default;
 
+    int MeterPanel::getIdealWidth() const {
+        return juce::roundToInt(base_.getFontSize() * 6.f);
+    }
+
     void MeterPanel::resized() {
         meter_background_panel_.setBounds(getLocalBounds());
-        meter_display_panel_.setBounds(getLocalBounds());
+        if (meter_display_panel_.getBounds() == getLocalBounds()) {
+            meter_display_panel_.resized();
+        } else {
+            meter_display_panel_.setBounds(getLocalBounds());
+        }
     }
 
     void MeterPanel::repaintCallBackSlow() {

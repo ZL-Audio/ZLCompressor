@@ -30,12 +30,14 @@ namespace zlpanel {
         addAndMakeVisible(peak_panel_);
         addAndMakeVisible(separate_panel_);
         addAndMakeVisible(rms_panel_);
+        computer_panel_.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(computer_panel_);
         addAndMakeVisible(meter_panel_);
+        meter_panel_.setVisible(meter_display_ref_.load(std::memory_order::relaxed) > .5f);
         addChildComponent(threshold_slider_);
         addChildComponent(ratio_slider_);
 
-        setInterceptsMouseClicks(true, false);
+        setInterceptsMouseClicks(true, true);
 
         peak_consumer_id_ = transfer_buffer_.getMulticastFIFO().addConsumer();
         meter_consumer_id_ = transfer_buffer_.getMulticastFIFO().addConsumer();
@@ -114,13 +116,23 @@ namespace zlpanel {
     void MagAnalyzerPanel::updateBounds() {
         auto bound = getLocalBounds();
         if (meter_panel_.isVisible()) {
-            meter_panel_.setBounds(bound.removeFromRight(static_cast<int>(std::round(base_.getFontSize() * 6.f))));
+            const auto meter_bound = bound.removeFromRight(meter_panel_.getIdealWidth());
+            if (meter_panel_.getBounds() == meter_bound) {
+                meter_panel_.resized();
+            } else {
+                meter_panel_.setBounds(meter_bound);
+            }
         }
         background_panel_.setBounds(bound);
-        peak_panel_.setBounds(bound);
+        if (peak_panel_.getBounds() == bound) {
+            peak_panel_.resized();
+        } else {
+            peak_panel_.setBounds(bound);
+        }
+        bound.removeFromTop(getTopPanelHeight(base_.getFontSize()));
         rms_panel_.setBounds(bound.withWidth(juce::roundToInt(static_cast<float>(bound.getWidth()) * .15f)));
         const auto r = std::min(bound.getWidth(), bound.getHeight());
-        separate_panel_.setBounds(bound.withSize(r / 2, r));
+        separate_panel_.setBounds(bound.withSize(r / 2, r).withTop(0));
         computer_panel_.setBounds(bound.withSize(r, r));
         threshold_slider_.setBounds(bound);
         ratio_slider_.setBounds(bound);

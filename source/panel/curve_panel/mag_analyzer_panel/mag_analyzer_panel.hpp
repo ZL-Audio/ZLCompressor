@@ -44,6 +44,10 @@ namespace zlpanel {
             return separate_panel_;
         }
 
+        int getMeterWidth() const {
+            return meter_panel_.isVisible() ? meter_panel_.getIdealWidth() : 0;
+        }
+
     private:
         PluginProcessor& p_ref_;
         zlgui::UIBase& base_;

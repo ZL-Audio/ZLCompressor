@@ -23,11 +23,15 @@ namespace zlpanel {
             return meter_display_panel_;
         }
 
+        int getIdealWidth() const;
+
         void resized() override;
 
         void repaintCallBackSlow();
 
     private:
+        zlgui::UIBase& base_;
+
         MeterBackgroundPanel meter_background_panel_;
         MeterDisplayPanel meter_display_panel_;
     };

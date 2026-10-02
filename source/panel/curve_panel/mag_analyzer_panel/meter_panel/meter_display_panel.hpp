@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../../../../PluginProcessor.hpp"
+#include "../../../../chore/thread/notifier.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
 #include "../../../../dsp/analyzer/analyzer_base/fifo_transfer_buffer.hpp"
@@ -37,22 +38,29 @@ namespace zlpanel {
 
     private:
         static constexpr float kReductionDecayPerSecond = 16.f;
-        static constexpr float kMeterDecayPerSecond = 8.f;
+        static constexpr float kMeterDecayPerSecond = 2.f;
+        static constexpr double kMeterGapConvergenceSeconds = 1.0;
         zlgui::UIBase& base_;
         MeterTopPanel meter_top_panel_;
 
         std::atomic<float>& comp_direction_ref_;
         std::atomic<float>& analyzer_mag_type_ref_;
 
-        AtomicBound<float> bound_;
+        AtomicBound<float> pending_bound_;
+        std::atomic<float> pending_thickness_{0.f};
+        zlchore::thread::Notifier size_changed_{true};
+        juce::Rectangle<float> bound_;
         std::array<float, 2> previous_reduction_{0.f, 0.f};
         std::array<float, 2> previous_pre_{-240.f, -240.f};
         std::array<float, 2> pre_decay_mul_{1.f, 1.f};
         std::array<float, 2> previous_out_{-240.f, -240.f};
         std::array<float, 2> out_decay_mul_{1.f, 1.f};
+        std::array<double, 2> target_gap_db_{0.0, 0.0};
+        std::array<double, 2> gap_remaining_seconds_{0.0, 0.0};
         std::array<AtomicBound<float>, 2> reduction_rect_{};
         std::array<AtomicBound<float>, 2> pre_rect_{};
         std::array<AtomicBound<float>, 2> out_rect_{};
+        std::array<AtomicBound<float>, 2> out_arrow_{};
 
         double start_time_{0.0};
         bool is_first_point_{true};
@@ -67,12 +75,17 @@ namespace zlpanel {
 
         std::atomic<float> reduction_peak_{0.f};
         std::atomic<float> out_peak_{-240.f};
+        std::atomic<bool> reset_peaks_{false};
 
         bool is_upwards_{false};
         std::atomic<bool> a_is_upwards_{false};
 
         void mouseDoubleClick(const juce::MouseEvent& event) override;
 
+        void updateSize();
+
         static std::string formatValue(float value);
+
+        void lookAndFeelChanged() override;
     };
 }

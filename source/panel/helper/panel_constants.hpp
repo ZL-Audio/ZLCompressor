@@ -49,6 +49,10 @@ namespace zlpanel {
         return static_cast<int>(std::round(font_size * kSmallSliderWidthScale));
     }
 
+    inline int getTopPanelHeight(const float font_size) {
+        return 2 * (getPaddingSize(font_size) / 2) + getButtonSize(font_size);
+    }
+
     inline int getControlPanelHeight(const float font_size) {
         return static_cast<int>(std::round(font_size * 7.348f)) + getPaddingSize(font_size) + getButtonSize(font_size);
     }

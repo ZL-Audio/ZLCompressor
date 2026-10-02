@@ -23,11 +23,12 @@ namespace zlpanel {
     void MagGridPanel::paint(juce::Graphics& g) {
         g.fillAll(base_.getBackgroundColour());
 
-        const auto bound = getLocalBounds().toFloat();
+        auto bound = getLocalBounds().toFloat();
+        bound.removeFromTop(static_cast<float>(getTopPanelHeight(base_.getFontSize())));
         const auto thickness = base_.getFontSize() * 0.125f;
         g.setColour(base_.getTextColour().withAlpha(.1f));
-        for (const auto scale : {1.f, 2.f, 3.f, 4.f, 5.f}) {
-            const auto y = bound.getHeight() * scale / 6.f;
+        for (const auto scale : {0.f, 1.f, 2.f, 3.f, 4.f, 5.f}) {
+            const auto y = bound.getHeight() * scale / 6.f + bound.getY() - thickness * .5f;
             const auto rect = juce::Rectangle<float>({bound.getX(), y, bound.getWidth(), thickness});
             g.fillRect(rect);
         }
@@ -39,7 +40,7 @@ namespace zlpanel {
         g.setFont(base_.getFontSize());
         const MagDBRange db_range{mag_max_db_, mag_range_db_};
         for (const auto scale : {1.f, 2.f, 3.f, 4.f, 5.f, 6.f}) {
-            const auto y = bound.getHeight() * scale / 6.f;
+            const auto y = bound.getHeight() * scale / 6.f + bound.getY();
             auto rect = juce::Rectangle<float>({bound.getX(), y - text_height, bound.getWidth(), text_height});
             rect.removeFromRight(right_padding);
             rect = rect.removeFromRight(text_width);

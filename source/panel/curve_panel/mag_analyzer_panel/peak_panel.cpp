@@ -94,7 +94,8 @@ namespace zlpanel {
     }
 
     void PeakPanel::resized() {
-        const auto bound = getLocalBounds();
+        auto bound = getLocalBounds();
+        bound.removeFromTop(getTopPanelHeight(base_.getFontSize()));
         atomic_bound_.store(bound.toFloat());
         lookAndFeelChanged();
     }

@@ -9,6 +9,8 @@
 
 #include "meter_background_panel.hpp"
 
+#include "../../../helper/panel_constants.hpp"
+
 namespace zlpanel {
     MeterBackgroundPanel::MeterBackgroundPanel(PluginProcessor&, zlgui::UIBase& base) :
         base_(base) {
@@ -16,13 +18,14 @@ namespace zlpanel {
     }
 
     void MeterBackgroundPanel::paint(juce::Graphics& g) {
-        g.fillAll(base_.getBackgroundColour());
+        auto bound = getLocalBounds().toFloat();
+        const auto font_size = base_.getFontSize();
+        bound.removeFromTop(static_cast<float>(getTopPanelHeight(font_size)));
 
-        const auto bound = getLocalBounds().toFloat();
         const auto thickness = base_.getFontSize() * 0.125f;
         g.setColour(base_.getTextColour().withAlpha(.1f));
-        for (const auto scale : {1.f, 2.f, 3.f, 4.f, 5.f}) {
-            const auto y = bound.getHeight() * scale / 6.f;
+        for (const auto scale : {0.f, 1.f, 2.f, 3.f, 4.f, 5.f}) {
+            const auto y = bound.getHeight() * scale / 6.f + bound.getY() - thickness * .5f;
             const auto rect = juce::Rectangle<float>({bound.getX(), y, bound.getWidth(), thickness});
             g.fillRect(rect);
         }

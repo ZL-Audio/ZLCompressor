@@ -28,8 +28,7 @@ namespace zlpanel {
         g.setColour(out_value_ < 0.f
             ? base_.getTextColour()
             : base_.getColourByIdx(zlgui::ColourIdx::kReductionColour));
-        if (out_value_ < -120.f) {
-        } else {
+        if (out_value_ > -120.f) {
             g.drawText(formatValue(out_value_), bound.removeFromRight(meter_width),
                        juce::Justification::centred, false);
         }
@@ -46,7 +45,10 @@ namespace zlpanel {
 
     std::string MeterTopPanel::formatValue(const float value) {
         std::stringstream ss;
-        if (std::abs(value) < 100.f) {
+        const auto abs_value = std::abs(value);
+        if (abs_value < 10.f) {
+            ss << std::fixed << std::setprecision(2) << value;
+        } else if (abs_value < 100.f) {
             ss << std::fixed << std::setprecision(1) << value;
         } else {
             ss << std::fixed << std::setprecision(0) << value;

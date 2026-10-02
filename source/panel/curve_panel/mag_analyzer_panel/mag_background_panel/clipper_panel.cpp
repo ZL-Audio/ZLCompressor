@@ -32,7 +32,8 @@ namespace zlpanel {
     }
 
     void ClipperPanel::paint(juce::Graphics& g) {
-        const auto bound = getLocalBounds().toFloat();
+        auto bound = getLocalBounds().toFloat();
+        bound.removeFromTop(static_cast<float>(getTopPanelHeight(base_.getFontSize())));
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour).withAlpha(.5f));
         const auto height = base_.getFontSize() * .15f * base_.getMagCurveThickness();
         g.fillRect(bound.getX(), bound.getY() + bound.getHeight() * rel_position_ - height,
