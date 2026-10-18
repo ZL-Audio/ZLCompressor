@@ -38,13 +38,10 @@ namespace zlpanel {
         tooltipWindow.setBufferedToImage(true);
 
         base_.getPanelValueTree().addListener(this);
-
-        startTimerHz(10);
     }
 
     MainPanel::~MainPanel() {
         base_.getPanelValueTree().removeListener(this);
-        stopTimer();
     }
 
     void MainPanel::resized() {
@@ -127,15 +124,6 @@ namespace zlpanel {
             if (ui_setting_visibility) {
                 ui_setting_panel_.toFront(false);
             }
-        }
-    }
-
-    void MainPanel::timerCallback() {
-        if (juce::Process::isForegroundProcess()) {
-            if (getCurrentlyFocusedComponent() != this) {
-                grabKeyboardFocus();
-            }
-            stopTimer();
         }
     }
 }
