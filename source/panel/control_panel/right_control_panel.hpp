@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
@@ -18,7 +20,7 @@ namespace zlpanel {
     class RightControlPanel final : public juce::Component,
                                     private juce::ValueTree::Listener {
     public:
-        explicit RightControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit RightControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                    const multilingual::TooltipHelper& tooltip_helper);
 
         ~RightControlPanel() override;
@@ -33,7 +35,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::label::NameLookAndFeel label_laf_;
@@ -46,11 +48,9 @@ namespace zlpanel {
         zlgui::slider::TwoValueRotarySlider<false, false, false> wet_slider_;
         zlgui::attachment::SliderAttachment<true> wet_attachment_;
 
-        const std::unique_ptr<juce::Drawable> inf_drawable_;
         zlgui::button::ClickButton inf_button_;
         zlgui::attachment::ButtonAttachment<true> inf_attachment_;
 
-        const std::unique_ptr<juce::Drawable> learn_drawable_;
         zlgui::button::ClickButton learn_button_;
 
         void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& identifier) override;

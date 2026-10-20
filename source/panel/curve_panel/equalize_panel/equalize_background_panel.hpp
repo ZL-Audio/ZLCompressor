@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include "../../../PluginProcessor.hpp"
 #include "../../helper/helper.hpp"
 #include "../../../gui/gui.hpp"
@@ -16,7 +18,7 @@
 namespace zlpanel {
     class EqualizerBackgroundPanel final : public juce::Component {
     public:
-        explicit EqualizerBackgroundPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit EqualizerBackgroundPanel(PluginProcessor& processor, zlgui::UIState& base);
 
         void resized() override;
 
@@ -40,7 +42,7 @@ namespace zlpanel {
 
         class Background1 final : public juce::Component {
         public:
-            explicit Background1(zlgui::UIBase& base);
+            explicit Background1(zlgui::UIState& base);
 
             void paint(juce::Graphics& g) override;
 
@@ -49,7 +51,7 @@ namespace zlpanel {
             void updateFreqMax(double freq_max);
 
         private:
-            zlgui::UIBase& base_;
+            zlgui::UIState& base_;
 
             juce::RectangleList<float> rect_list_;
             std::array<juce::Rectangle<float>, 10> text_bounds_;

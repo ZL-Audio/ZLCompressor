@@ -9,13 +9,15 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "clipper_panel.hpp"
 #include "mag_grid_panel.hpp"
 
 namespace zlpanel {
     class MagBackgroundPanel final : public juce::Component {
     public:
-        explicit MagBackgroundPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit MagBackgroundPanel(PluginProcessor& processor, zlgui::UIState& base);
 
         void repaintCallBackSlow();
 

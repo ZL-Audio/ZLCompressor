@@ -11,25 +11,23 @@
 #include "BinaryData.h"
 
 namespace zlpanel {
-    RightControlPanel::RightControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+    RightControlPanel::RightControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                          const multilingual::TooltipHelper& tooltip_helper) :
-        p_ref_(p), base_(base), label_laf_(base_),
-        gain_slider_("Output Gain", base_,
+        p_ref_(p), base_(base), label_laf_(base_.gui),
+        gain_slider_("Output Gain", base_.gui,
                      tooltip_helper.getToolTipText(multilingual::kMakeup), 1.f),
         gain_attachment_(gain_slider_.getSlider1(), p.parameters_, zlp::POutGain::kID, updater_),
-        wet_slider_("Wet", base_,
+        wet_slider_("Wet", base_.gui,
                     tooltip_helper.getToolTipText(multilingual::kWet), 1.f),
         wet_attachment_(wet_slider_.getSlider1(), p.parameters_, zlp::PWet::kID, updater_),
-        inf_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_inf_svg,
-                                                          BinaryData::dline_inf_svgSize)),
-        inf_button_(base, inf_drawable_.get(), inf_drawable_.get(),
-                    tooltip_helper.getToolTipText(multilingual::kRangeINF)),
+        inf_button_(base.gui,
+                    juce::Drawable::createFromImageData(BinaryData::dline_inf_svg, BinaryData::dline_inf_svgSize),
+                    true, tooltip_helper.getToolTipText(multilingual::kRangeINF)),
         inf_attachment_(inf_button_.getButton(), p.parameters_,
                         zlp::PRangeINF::kID, updater_),
-        learn_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_l_svg,
-                                                            BinaryData::dline_l_svgSize)),
-        learn_button_(base, learn_drawable_.get(), learn_drawable_.get(),
-                      tooltip_helper.getToolTipText(multilingual::kLoudnessMatch)) {
+        learn_button_(base.gui,
+                      juce::Drawable::createFromImageData(BinaryData::dline_l_svg, BinaryData::dline_l_svgSize),
+                      true, tooltip_helper.getToolTipText(multilingual::kLoudnessMatch)) {
         juce::ignoreUnused(p_ref_, base_);
         label_laf_.setFontScale(1.5f);
 
@@ -98,7 +96,7 @@ namespace zlpanel {
     }
 
     int RightControlPanel::getIdealWidth() const {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto small_slider_width = getSmallSliderWidth(font_size);
         const auto button_size = getButtonSize(font_size);
@@ -107,13 +105,13 @@ namespace zlpanel {
 
     void RightControlPanel::resized() {
         auto bound = getLocalBounds();
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto small_slider_width = getSmallSliderWidth(font_size);
         const auto button_size = getButtonSize(font_size);
 
         bound.removeFromBottom(padding);
-        const auto label_height = juce::roundToInt(base_.getFontSize() * 1.5f);
+        const auto label_height = juce::roundToInt(base_.gui.getFontSize() * 1.5f);
         {
             auto t_bound = bound.removeFromLeft(button_size);
             t_bound.removeFromTop(padding);

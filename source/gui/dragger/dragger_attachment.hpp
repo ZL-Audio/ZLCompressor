@@ -29,8 +29,8 @@ namespace zlgui::attachment {
             if constexpr (kUpdateFromAPVTS) {
                 apvts.addParameterListener(parameter_ref_.getParameterID(), this);
                 parameterChanged(parameter_ref_.getParameterID(),
-                                 apvts.getRawParameterValue(parameter_ref_.getParameterID())->load(
-                                     std::memory_order::relaxed));
+                             apvts.getRawParameterValue(parameter_ref_.getParameterID())->load(
+                                 std::memory_order::relaxed));
                 updater_ref_.addAttachment(*this);
             }
             // add dragger listener

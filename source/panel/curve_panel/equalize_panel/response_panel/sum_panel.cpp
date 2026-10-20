@@ -12,7 +12,7 @@
 #include <algorithm>
 
 namespace zlpanel {
-    SumPanel::SumPanel(zlgui::UIBase& base) : base_(base) {
+    SumPanel::SumPanel(zlgui::UIState& base) : base_(base) {
         temp_y_.resize(kNumPoints);
         for (auto& path : path_.get_buffer()) {
             path.preallocateSpace(static_cast<int>(kNumPoints * 3 + 12));
@@ -26,7 +26,7 @@ namespace zlpanel {
         if (path.isEmpty()) {
             return;
         }
-        g.setColour(base_.getColourMap2(0));
+        g.setColour(base_.gui.getColourMap2(0));
         g.strokePath(path, juce::PathStrokeType(curve_thickness_,
                                                 juce::PathStrokeType::curved,
                                                 juce::PathStrokeType::butt));
@@ -73,6 +73,6 @@ namespace zlpanel {
     }
 
     void SumPanel::lookAndFeelChanged() {
-        curve_thickness_ = base_.getFontSize() * .275f * base_.getEQCurveThickness();
+        curve_thickness_ = base_.gui.getFontSize() * .275f * base_.getEQCurveThickness();
     }
 }

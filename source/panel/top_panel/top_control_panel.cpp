@@ -11,33 +11,31 @@
 #include "top_control_panel.hpp"
 
 namespace zlpanel {
-    TopControlPanel::TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+    TopControlPanel::TopControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                      const multilingual::TooltipHelper& tooltip_helper) :
-        p_ref_(p), base_(base), label_laf_(base_),
-        on_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
-                                                         BinaryData::bypass_svgSize)),
-        on_button_(base_, on_drawable_.get(), on_drawable_.get(),
-                   tooltip_helper.getToolTipText(multilingual::TooltipLabel::kBypass)),
+        p_ref_(p), base_(base), label_laf_(base_.gui),
+        on_button_(base_.gui,
+                   juce::Drawable::createFromImageData(BinaryData::bypass_svg, BinaryData::bypass_svgSize),
+                   true, tooltip_helper.getToolTipText(multilingual::TooltipLabel::kBypass)),
         on_attachment_(on_button_.getButton(), p.parameters_, zlp::PCompON::kID, updater_),
-        delta_drawable_(juce::Drawable::createFromImageData(BinaryData::delta_svg,
-                                                            BinaryData::delta_svgSize)),
-        delta_button_(base_, delta_drawable_.get(), delta_drawable_.get(),
-                      tooltip_helper.getToolTipText(multilingual::TooltipLabel::kDelta)),
+        delta_button_(base_.gui,
+                      juce::Drawable::createFromImageData(BinaryData::delta_svg, BinaryData::delta_svgSize),
+                      true, tooltip_helper.getToolTipText(multilingual::TooltipLabel::kDelta)),
         delta_attachment_(delta_button_.getButton(), p.parameters_, zlp::PCompDelta::kID, updater_),
         lookahead_label_("Lookahead", "Lookahead"),
-        lookahead_slider_("", base_,
+        lookahead_slider_("", base_.gui,
                           tooltip_helper.getToolTipText(multilingual::TooltipLabel::kLookahead)),
         lookahead_attachment_(lookahead_slider_.getSlider(), p.parameters_, zlp::PLookAhead::kID, updater_),
         oversample_label_("Oversample", "Oversample"),
-        oversample_box_(zlp::POversample::kChoices, base_,
+        oversample_box_(zlp::POversample::kChoices, base_.gui,
                         tooltip_helper.getToolTipText(multilingual::TooltipLabel::kOversample)),
         oversample_attachment_(oversample_box_.getBox(), p.parameters_, zlp::POversample::kID, updater_),
         clipper_label_("Clipper", "Clipper"),
-        clipper_slider_("", base_,
+        clipper_slider_("", base_.gui,
                         tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper)),
         clipper_attachment_(clipper_slider_.getSlider(), p.parameters_, zlp::PClipperDrive::kID, updater_),
         direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
-        direction_box_(zlp::PCompDirection::kChoices, base, "",
+        direction_box_(zlp::PCompDirection::kChoices, base.gui, "",
                        {tooltip_helper.getToolTipText(multilingual::kDownwardC),
                         tooltip_helper.getToolTipText(multilingual::kUpwardC),
                         tooltip_helper.getToolTipText(multilingual::kDownardE),
@@ -87,7 +85,7 @@ namespace zlpanel {
         clipper_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kClipper));
         addAndMakeVisible(clipper_label_);
 
-        const auto box_alignment = combobox_helper::getAlignment(base_.getComboboxAlignment());
+        const auto box_alignment = combobox_helper::getAlignment(base_.gui.getComboboxAlignment());
         direction_box_.getLAF().setItemAlignment(box_alignment);
         direction_box_.setScrollEnabled(true);
         direction_box_.setAlpha(.5f);
@@ -114,7 +112,7 @@ namespace zlpanel {
     }
 
     void TopControlPanel::resized() {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto button_height = getButtonSize(font_size);
         const auto slider_width = juce::roundToInt(font_size * kSliderWidthScale * 1.25f);

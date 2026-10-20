@@ -10,7 +10,7 @@
 #include "mag_analyzer_panel.hpp"
 
 namespace zlpanel {
-    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base) :
+    MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIState& base) :
         p_ref_(p), base_(base),
         meter_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PMeterDisplay::kID)),
         background_panel_(p, base),
@@ -20,10 +20,10 @@ namespace zlpanel {
         separate_panel_(base),
         meter_panel_(p, base),
         updater_(),
-        threshold_slider_(base),
+        threshold_slider_(base.gui),
         threshold_attachment_(threshold_slider_, p.parameters_,
                               zlp::PThreshold::kID, updater_),
-        ratio_slider_(base),
+        ratio_slider_(base.gui),
         ratio_attachment_(ratio_slider_, p.parameters_,
                           zlp::PRatio::kID, updater_) {
         addAndMakeVisible(background_panel_);
@@ -129,7 +129,7 @@ namespace zlpanel {
         } else {
             peak_panel_.setBounds(bound);
         }
-        bound.removeFromTop(getTopPanelHeight(base_.getFontSize()));
+        bound.removeFromTop(getTopPanelHeight(base_.gui.getFontSize()));
         rms_panel_.setBounds(bound.withWidth(juce::roundToInt(static_cast<float>(bound.getWidth()) * .15f)));
         const auto r = std::min(bound.getWidth(), bound.getHeight());
         separate_panel_.setBounds(bound.withSize(r / 2, r).withTop(0));

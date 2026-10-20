@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "equalize_background_panel.hpp"
@@ -20,7 +22,7 @@ namespace zlpanel {
     class EqualizePanel final : public juce::Component,
                                 private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit EqualizePanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit EqualizePanel(PluginProcessor& processor, zlgui::UIState& base);
 
         ~EqualizePanel() override;
 
@@ -42,7 +44,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         size_t selected_band_idx_{zlp::kBandNum}, previous_band_idx_{zlp::kBandNum};
 
         EqualizerBackgroundPanel background_panel_;

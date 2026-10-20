@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../../gui/gui.hpp"
@@ -16,7 +18,7 @@
 namespace zlpanel {
     class SoloPanel final : public juce::Component {
     public:
-        explicit SoloPanel(zlgui::UIBase& base);
+        explicit SoloPanel(zlgui::UIState& base);
 
         void paint(juce::Graphics& g) override;
 
@@ -26,7 +28,7 @@ namespace zlpanel {
         }
 
     private:
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         float left_x_{0.f}, right_x_{1e15f};
     };
 }

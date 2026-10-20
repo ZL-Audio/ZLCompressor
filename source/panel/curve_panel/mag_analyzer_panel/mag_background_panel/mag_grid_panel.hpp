@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "../../../../PluginProcessor.hpp"
 #include "../../../helper/helper.hpp"
 #include "../../../../gui/gui.hpp"
@@ -16,14 +18,14 @@
 namespace zlpanel {
     class MagGridPanel final : public juce::Component {
     public:
-        explicit MagGridPanel(PluginProcessor& p, zlgui::UIBase& base);
+        explicit MagGridPanel(PluginProcessor& p, zlgui::UIState& base);
 
         void paint(juce::Graphics& g) override;
 
         void repaintCallBackSlow();
 
     private:
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         std::atomic<float>& mag_max_db_id_ref_;
         std::atomic<float>& mag_min_db_id_ref_;
         float mag_max_db_id_{-1.f}, mag_min_db_id_{-1.f};

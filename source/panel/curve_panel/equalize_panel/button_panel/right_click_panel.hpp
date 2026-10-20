@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
@@ -16,7 +18,7 @@
 namespace zlpanel {
     class RightClickPanel final : public juce::Component {
     public:
-        explicit RightClickPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx);
+        explicit RightClickPanel(PluginProcessor& processor, zlgui::UIState& base, size_t& selected_band_idx);
 
         void paint(juce::Graphics& g) override;
 
@@ -24,7 +26,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         size_t& selected_band_idx_;
         zlgui::button::ClickTextButton invert_gain_button_, copy_button_, paste_button_;
 

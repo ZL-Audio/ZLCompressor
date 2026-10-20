@@ -14,7 +14,7 @@
 #include <numbers>
 
 namespace zlpanel {
-    ResponsePanel::ResponsePanel(PluginProcessor& processor, zlgui::UIBase& base,
+    ResponsePanel::ResponsePanel(PluginProcessor& processor, zlgui::UIState& base,
                                  size_t& selected_band_idx) :
         Thread("equalizer response"),
         p_ref_(processor), base_(base),
@@ -63,7 +63,7 @@ namespace zlpanel {
 
         width_.store(static_cast<float>(bound.getWidth()), std::memory_order::relaxed);
         height_.store(static_cast<float>(bound.getHeight()), std::memory_order::relaxed);
-        font_size_.store(base_.getFontSize(), std::memory_order::relaxed);
+        font_size_.store(base_.gui.getFontSize(), std::memory_order::relaxed);
         to_update_bound_.signal();
     }
 

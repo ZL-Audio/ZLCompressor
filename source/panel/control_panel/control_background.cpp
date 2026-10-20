@@ -10,7 +10,7 @@
 #include "control_background.hpp"
 
 namespace zlpanel {
-    ControlBackground::ControlBackground(zlgui::UIBase& base, const float alpha,
+    ControlBackground::ControlBackground(zlgui::UIState& base, const float alpha,
                                          const std::array<bool, 4> hide_shadow) :
         base_(base), alpha_(alpha), hide_shadow_(hide_shadow) {
         setInterceptsMouseClicks(false, false);
@@ -37,14 +37,14 @@ namespace zlpanel {
                 original_bound.setY(-height);
             }
         }
-        const auto padding = getPaddingSize(base_.getFontSize());
+        const auto padding = getPaddingSize(base_.gui.getFontSize());
         const auto bound = original_bound.reduced(padding);
         juce::Path path;
         path.addRoundedRectangle(bound.toFloat(), static_cast<float>(padding));
 
-        const juce::DropShadow shadow{base_.getTextColour().withAlpha(alpha_), padding, {0, 0}};
+        const juce::DropShadow shadow{base_.gui.getTextColour().withAlpha(alpha_), padding, {0, 0}};
         shadow.drawForPath(g, path);
-        g.setColour(base_.getBackgroundColour());
+        g.setColour(base_.gui.getBackgroundColour());
         g.fillPath(path);
     }
 }

@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "BinaryData.h"
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
@@ -18,7 +20,7 @@
 namespace zlpanel {
     class LeftControlPanel final : public juce::Component {
     public:
-        explicit LeftControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit LeftControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                   multilingual::TooltipHelper& tooltip_helper);
 
         void resized() override;
@@ -28,7 +30,7 @@ namespace zlpanel {
     private:
         constexpr static int kButtonNum = 6;
 
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         std::atomic<float>& pre_curve_display_ref_;
@@ -36,27 +38,21 @@ namespace zlpanel {
         std::atomic<float>& delta_curve_display_ref_;
         std::atomic<float>& side_curve_display_ref_;
 
-        const std::unique_ptr<juce::Drawable> side_control_show_drawable_;
         zlgui::button::ClickButton side_control_show_button_;
         zlgui::attachment::ButtonAttachment<true> side_control_show_attachment_;
 
-        const std::unique_ptr<juce::Drawable> equalize_show_drawable_;
         zlgui::button::ClickButton equalize_show_button_;
         zlgui::attachment::ButtonAttachment<true> equalize_show_attachment_;
 
-        const std::unique_ptr<juce::Drawable> computer_show_drawable_;
         zlgui::button::ClickButton computer_show_button_;
         zlgui::attachment::ButtonAttachment<true> computer_show_attachment_;
 
-        const std::unique_ptr<juce::Drawable> rms_show_drawable_;
         zlgui::button::ClickButton rms_show_button_;
         zlgui::attachment::ButtonAttachment<true> rms_show_attachment_;
 
-        const std::unique_ptr<juce::Drawable> meter_show_drawable_;
         zlgui::button::ClickButton meter_show_button_;
         zlgui::attachment::ButtonAttachment<true> meter_show_attachment_;
 
-        const std::unique_ptr<juce::Drawable> analyzer_setting_show_drawable_;
         zlgui::button::ClickButton analyzer_setting_show_button_;
     };
 }

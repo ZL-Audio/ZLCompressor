@@ -10,13 +10,13 @@
 #include "dragger_panel.hpp"
 
 namespace zlpanel {
-    DraggerPanel::DraggerPanel(PluginProcessor& processor, zlgui::UIBase& base,
+    DraggerPanel::DraggerPanel(PluginProcessor& processor, zlgui::UIState& base,
                                size_t band_idx, size_t& selected_band_idx)
         : p_ref_(processor), base_(base),
           band_idx_(band_idx), selected_band_idx_(selected_band_idx),
           filter_type_ref_(*p_ref_.parameters_.getRawParameterValue(
               zlp::PFilterType::kID + std::to_string(band_idx))),
-          dragger_(base) {
+          dragger_(base.gui) {
         dragger_.getButton().setBufferedToImage(true);
         dragger_.setBroughtToFrontOnMouseClick(true);
 
@@ -115,14 +115,14 @@ namespace zlpanel {
         const auto width_portion = std::clamp(
             std::log(slider_max / zlp::kEQMinFreq) / std::log(fft_max / zlp::kEQMinFreq), 0.f, 1.f);
         bound.removeFromRight((1.f - width_portion) * bound.getWidth());
-        solo_gain_drag_height_ = std::max(bound.getHeight() - 2.f * base_.getFontSize(), 1.f);
+        solo_gain_drag_height_ = std::max(bound.getHeight() - 2.f * base_.gui.getFontSize(), 1.f);
         const auto filter_type = static_cast<zldsp::filter::FilterType>(filter_type_);
         switch (filter_type) {
         case zldsp::filter::FilterType::kPeak: {
             dragger_y_enabled_ = true;
             dragger_.setButtonArea(
                 bound.withSizeKeepingCentre(
-                    bound.getWidth(), bound.getHeight() - 2 * base_.getFontSize()));
+                    bound.getWidth(), bound.getHeight() - 2 * base_.gui.getFontSize()));
             break;
         }
         case zldsp::filter::FilterType::kLowShelf:
@@ -132,7 +132,7 @@ namespace zlpanel {
             dragger_y_enabled_ = true;
             dragger_.setButtonArea(
                 bound.withSizeKeepingCentre(
-                    bound.getWidth(), bound.getHeight() * .5f - base_.getFontSize()));
+                    bound.getWidth(), bound.getHeight() * .5f - base_.gui.getFontSize()));
             break;
         }
         case zldsp::filter::FilterType::kNotch:
@@ -142,7 +142,7 @@ namespace zlpanel {
         case zldsp::filter::FilterType::kAllPass: {
             dragger_y_enabled_ = false;
             dragger_.setButtonArea(bound.withSizeKeepingCentre(
-                bound.getWidth(), kScale * base_.getFontSize()));
+                bound.getWidth(), kScale * base_.gui.getFontSize()));
             break;
         }
         }
@@ -159,6 +159,6 @@ namespace zlpanel {
     }
 
     void DraggerPanel::lookAndFeelChanged() {
-        dragger_.getLAF().setColour(base_.getColourMap1(band_idx_));
+        dragger_.getLAF().setColour(base_.gui.getColourMap1(band_idx_));
     }
 } // zlpanel

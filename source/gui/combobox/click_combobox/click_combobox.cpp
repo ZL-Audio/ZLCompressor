@@ -9,6 +9,8 @@
 
 #include "click_combobox.hpp"
 
+#include <utility>
+
 namespace zlgui::combobox {
     ClickCombobox::ClickCombobox(UIBase& base, const std::vector<std::string>& choices,
                                  const juce::String& tooltip_text,
@@ -28,15 +30,14 @@ namespace zlgui::combobox {
         combo_box_.addListener(this);
     }
 
-    ClickCombobox::ClickCombobox(UIBase& base, const std::vector<juce::Drawable*>& choices,
+    ClickCombobox::ClickCombobox(UIBase& base, std::vector<std::unique_ptr<juce::Drawable>> choices,
                                  const juce::String& tooltip_text,
                                  const std::vector<juce::String>& item_labels)
-        : base_(base) {
-        choice_icons_ = choices;
+        : base_(base), choice_icons_(std::move(choices)) {
         if (tooltip_text.length() > 0) {
             SettableTooltipClient::setTooltip(tooltip_text);
         }
-        else if (item_labels.size() >= choices.size()) {
+        else if (item_labels.size() >= choice_icons_.size()) {
             item_labels_ = item_labels;
             SettableTooltipClient::setTooltip(item_labels_[0]);
         }

@@ -11,20 +11,19 @@
 #include "BinaryData.h"
 
 namespace zlpanel {
-    BottomControlPanel::BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+    BottomControlPanel::BottomControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                            const multilingual::TooltipHelper& tooltip_helper) :
         p_ref_(p), base_(base),
         rms_control_panel_(p, base, tooltip_helper),
         rms_on_ref_(*p.parameters_.getRawParameterValue(zlp::PRMSON::kID)),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
-        label_laf_(base),
-        style_box_(zlp::PCompStyle::kChoices, base,
+        label_laf_(base.gui),
+        style_box_(zlp::PCompStyle::kChoices, base.gui,
                    tooltip_helper.getToolTipText(multilingual::kCompressionStyle)),
         style_attachment_(style_box_.getBox(), p.parameters_, zlp::PCompStyle::kID, updater_),
-        rms_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_r_svg,
-                                                          BinaryData::dline_r_svgSize)),
-        rms_button_(base, rms_drawable_.get(), rms_drawable_.get(),
-                    tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
+        rms_button_(base.gui,
+                    juce::Drawable::createFromImageData(BinaryData::dline_r_svg, BinaryData::dline_r_svgSize),
+                    true, tooltip_helper.getToolTipText(multilingual::kRMSCompress)),
         rms_attachment_(rms_button_.getButton(), p.parameters_,
                         zlp::PRMSON::kID, updater_) {
         juce::ignoreUnused(p_ref_, base_);
@@ -42,7 +41,7 @@ namespace zlpanel {
             addAndMakeVisible(l);
         }
 
-        const auto box_alignment = combobox_helper::getAlignment(base_.getComboboxAlignment());
+        const auto box_alignment = combobox_helper::getAlignment(base_.gui.getComboboxAlignment());
         style_box_.getLAF().setItemAlignment(box_alignment);
         style_box_.setScrollEnabled(true);
         style_box_.setBufferedToImage(true);
@@ -82,7 +81,7 @@ namespace zlpanel {
     }
 
     void BottomControlPanel::resized() {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto slider_width = getSliderWidth(font_size);
         const auto button_size = getButtonSize(font_size);
@@ -111,7 +110,7 @@ namespace zlpanel {
     }
 
     int BottomControlPanel::getIdealHeight() const {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         return getButtonSize(font_size);
     }
 }

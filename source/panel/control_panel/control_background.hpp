@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
 
@@ -21,13 +23,13 @@ namespace zlpanel {
          * @param alpha shadow colour alpha
          * @param hide_shadow hide left/top/right/bottom shadow edge
          */
-        explicit ControlBackground(zlgui::UIBase& base, float alpha = .5f,
+        explicit ControlBackground(zlgui::UIState& base, float alpha = .5f,
                                    std::array<bool, 4> hide_shadow = {false, false, false, false});
 
         void paint(juce::Graphics& g) override;
 
     private:
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         const float alpha_;
         // left, top, right, bottom
         std::array<bool, 4> hide_shadow_{false, false, false, false};

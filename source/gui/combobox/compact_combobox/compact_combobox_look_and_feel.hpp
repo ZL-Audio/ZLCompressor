@@ -1,11 +1,11 @@
 // Copyright (C) 2026 - zsliu98
-// This file is part of ZLEqualizer
+// This file is part of ZLCompressor
 //
-// ZLEqualizer is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
+// ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
 //
-// ZLEqualizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+// ZLCompressor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Affero General Public License along with ZLEqualizer. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
@@ -26,7 +26,7 @@ namespace zlgui::combobox {
     public:
         explicit CompactComboboxLookAndFeel(UIBase& base, bool align_label = true) :
             base_(base), align_label_(align_label) {
-            setColour(juce::PopupMenu::backgroundColourId, base_.getBackgroundInactiveColour());
+            setColour(juce::PopupMenu::backgroundColourId, base_.getBackgroundColour().withAlpha(0.8f));
         }
 
         void drawComboBox(juce::Graphics& g, int width, int height, bool isButtonDown, int, int, int, int,
@@ -45,10 +45,20 @@ namespace zlgui::combobox {
                 g.setColour(base_.getTextColour().withAlpha(kHoverAlpha * box_alpha_));
                 g.fillRoundedRectangle(box_bound, corner_size);
             }
-            if (!icons_.empty() && box.getSelectedItemIndex() >= 0) {
-                const auto fig = icons_[static_cast<size_t>(box.getSelectedItemIndex())]->createCopy();
-                fig->replaceColour(juce::Colours::black, base_.getTextColour());
-                fig->drawWithin(g, box.getLocalBounds().toFloat(), juce::RectanglePlacement::centred, 1.f);
+            const auto selected_id = box.getSelectedId();
+            if (selected_id != 0) {
+                for (juce::PopupMenu::MenuItemIterator it(*box.getRootMenu(), true); it.next();) {
+                    const auto& item = it.getItem();
+                    if (item.itemID == selected_id) {
+                        if (item.image != nullptr) {
+                            const auto fig = item.image->createCopy();
+                            fig->replaceColour(juce::Colours::black, base_.getTextColour());
+                            fig->drawWithin(g, getIconBounds(box.getLocalBounds().toFloat()),
+                                            juce::RectanglePlacement::centred, 1.f);
+                        }
+                        break;
+                    }
+                }
             }
         }
 
@@ -114,7 +124,7 @@ namespace zlgui::combobox {
             } else {
                 const auto fig = icon->createCopy();
                 fig->replaceColour(juce::Colours::black, base_.getTextColour());
-                fig->drawWithin(g, area.toFloat(), juce::RectanglePlacement::centred, alpha);
+                fig->drawWithin(g, getIconBounds(area.toFloat()), juce::RectanglePlacement::centred, alpha);
             }
         }
 
@@ -216,16 +226,12 @@ namespace zlgui::combobox {
 
         void setAlignLabel(const bool should_align) { align_label_ = should_align; }
 
-        void setIcons(const std::vector<std::unique_ptr<juce::Drawable>>& icons) {
-            for (size_t i = 0; i < icons.size(); ++i) {
-                icons_.emplace_back(icons[i]->createCopy());
-            }
-        }
-
         void setItemSize(const int width, const int height) {
             item_width_ = width;
             item_height_ = height;
         }
+
+        void setIconSize(const float size) { icon_size_ = size; }
 
         void updateTextWidth(const juce::ComboBox& box) {
             const juce::Font font{juce::FontOptions(base_.getFontSize() * font_scale_)};
@@ -272,7 +278,6 @@ namespace zlgui::combobox {
 
             const auto target = parent->getLocalArea(popup_target_, popup_target_->getLocalBounds().toFloat());
             const auto x = juce::jlimit(available.getX(), available.getRight() - popup.getWidth(), target.getX());
-            // JUCE restores its saved bounds when scrolling; a transform keeps this correction intact.
             window.setTransform(window.getTransform().translated(x - popup.getX(), 0.f));
         }
 
@@ -309,6 +314,14 @@ namespace zlgui::combobox {
             return alignment == Alignment::kLeft ? bounds.withTrimmedLeft(inset) : bounds.withTrimmedRight(inset);
         }
 
+        [[nodiscard]] juce::Rectangle<float> getIconBounds(const juce::Rectangle<float> bounds) const {
+            if (icon_size_ <= 0.f) {
+                return bounds;
+            }
+            return bounds.withSizeKeepingCentre(std::min(bounds.getWidth(), icon_size_),
+                                                std::min(bounds.getHeight(), icon_size_));
+        }
+
         [[nodiscard]] juce::Colour getPopupSurfaceColour() const {
             return base_.getColourBlendedWithBackground(base_.getTextColour(), kSurfaceTint);
         }
@@ -328,6 +341,7 @@ namespace zlgui::combobox {
         }
 
         int item_width_{0}, item_height_{0};
+        float icon_size_{0.f};
         float font_scale_{1.5f}, box_alpha_{0.f};
         float max_text_width_{0.f};
         Alignment label_alignment_{Alignment::kCenter};
@@ -342,7 +356,5 @@ namespace zlgui::combobox {
 
         UIBase& base_;
         bool align_label_{true};
-
-        std::vector<std::unique_ptr<juce::Drawable>> icons_;
     };
 }

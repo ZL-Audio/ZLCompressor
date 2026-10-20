@@ -11,16 +11,15 @@
 #include "popup_panel.hpp"
 
 namespace zlpanel {
-    PopupPanel::PopupPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx) :
+    PopupPanel::PopupPanel(PluginProcessor& processor, zlgui::UIState& base, size_t& selected_band_idx) :
         p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-        bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
-                                                             BinaryData::bypass_svgSize)),
-        bypass_button_(base, bypass_drawable_.get(), bypass_drawable_.get()),
-        close_drawable_(juce::Drawable::createFromImageData(BinaryData::close_svg,
-                                                            BinaryData::close_svgSize)),
-        close_button_(base, close_drawable_.get(), nullptr, ""),
-        ftype_box_(zlp::PFilterType::kChoices, base),
-        slope_box_(zlp::POrder::kChoices, base) {
+        bypass_button_(base.gui,
+                       juce::Drawable::createFromImageData(BinaryData::bypass_svg, BinaryData::bypass_svgSize),
+                       true),
+        close_button_(base.gui,
+                      juce::Drawable::createFromImageData(BinaryData::close_svg, BinaryData::close_svgSize)),
+        ftype_box_(zlp::PFilterType::kChoices, base.gui),
+        slope_box_(zlp::POrder::kChoices, base.gui) {
         bypass_button_.getButton().onClick = [this]() {
             auto* para = p_ref_.parameters_.getParameter(zlp::PFilterStatus::kID + std::to_string(band_));
             para->beginChangeGesture();
@@ -56,27 +55,27 @@ namespace zlpanel {
     }
 
     void PopupPanel::paint(juce::Graphics& g) {
-        g.setColour(base_.getTextColour().withAlpha(.33f));
+        g.setColour(base_.gui.getTextColour().withAlpha(.33f));
         g.fillRoundedRectangle(getLocalBounds().toFloat(),
-                               base_.getFontSize() * .5f);
-        g.setColour(base_.getBackgroundColour().withAlpha(.66f));
+                               base_.gui.getFontSize() * .5f);
+        g.setColour(base_.gui.getBackgroundColour().withAlpha(.66f));
         g.fillRoundedRectangle(getLocalBounds().toFloat(),
-                               base_.getFontSize() * .5f);
+                               base_.gui.getFontSize() * .5f);
     }
 
     int PopupPanel::getIdealWidth() const {
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale * .75f);
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale * .75f);
+        const auto slider_width = juce::roundToInt(base_.gui.getFontSize() * kSliderWidthScale * .75f);
+        const auto button_height = juce::roundToInt(base_.gui.getFontSize() * kButtonScale * .75f);
         return slider_width + button_height;
     }
 
     int PopupPanel::getIdealHeight() const {
-        return 2 * juce::roundToInt(base_.getFontSize() * kButtonScale * .75f);
+        return 2 * juce::roundToInt(base_.gui.getFontSize() * kButtonScale * .75f);
     }
 
     void PopupPanel::resized() {
-        const auto font_size = base_.getFontSize();
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale * .75f);
+        const auto font_size = base_.gui.getFontSize();
+        const auto button_height = juce::roundToInt(base_.gui.getFontSize() * kButtonScale * .75f);
         auto bound = getLocalBounds();
         auto t_bound = bound.removeFromTop(bound.getHeight() / 2);
 

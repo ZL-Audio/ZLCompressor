@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../gui/gui.hpp"
@@ -16,14 +18,14 @@
 namespace zlpanel {
     class SeparatePanel final : public juce::Component {
     public:
-        explicit SeparatePanel(zlgui::UIBase& base);
+        explicit SeparatePanel(zlgui::UIState& base);
 
         void paint(juce::Graphics& g) override;
 
         void resized() override;
 
     private:
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         juce::ColourGradient gradient_;
     };
 }

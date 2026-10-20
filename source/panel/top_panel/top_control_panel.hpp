@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
@@ -18,7 +20,7 @@ namespace zlpanel {
     class TopControlPanel final : public juce::Component,
                                   private juce::Timer {
     public:
-        explicit TopControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit TopControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                  const multilingual::TooltipHelper& tooltip_helper);
 
         void resized() override;
@@ -27,16 +29,14 @@ namespace zlpanel {
 
     private:
         [[maybe_unused]] PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         zlgui::label::NameLookAndFeel label_laf_;
 
-        const std::unique_ptr<juce::Drawable> on_drawable_;
         zlgui::button::ClickButton on_button_;
         zlgui::attachment::ButtonAttachment<true> on_attachment_;
 
-        const std::unique_ptr<juce::Drawable> delta_drawable_;
         zlgui::button::ClickButton delta_button_;
         zlgui::attachment::ButtonAttachment<true> delta_attachment_;
 

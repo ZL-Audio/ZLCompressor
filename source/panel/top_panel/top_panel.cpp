@@ -11,13 +11,13 @@
 #include "BinaryData.h"
 
 namespace zlpanel {
-    TopPanel::TopPanel(PluginProcessor& p, zlgui::UIBase& base,
+    TopPanel::TopPanel(PluginProcessor& p, zlgui::UIState& base,
                        multilingual::TooltipHelper& tooltip_helper)
         : base_(base),
           logo_panel_(p, base_, tooltip_helper),
-          preset_drawable_(juce::Drawable::createFromImageData(BinaryData::collections_bookmark_svg,
-                                                               BinaryData::collections_bookmark_svgSize)),
-          preset_button_(base_, preset_drawable_.get(), nullptr, ""),
+          preset_button_(base_.gui,
+                         juce::Drawable::createFromImageData(
+                             BinaryData::collections_bookmark_svg, BinaryData::collections_bookmark_svgSize)),
           top_control_panel_(p, base_, tooltip_helper) {
         addAndMakeVisible(logo_panel_);
         preset_button_.getButton().onClick = [this]() {
@@ -39,19 +39,19 @@ namespace zlpanel {
         juce::ColourGradient gradient;
         gradient.point1 = bound.getTopLeft();
         gradient.point2 = bound.getBottomLeft();
-        gradient.addColour(0.0, base_.getBackgroundColour().withAlpha(1.f));
+        gradient.addColour(0.0, base_.gui.getBackgroundColour().withAlpha(1.f));
         gradient.addColour(1.0, juce::Colours::transparentBlack);
         g.setGradientFill(gradient);
         g.fillRect(bound);
     }
 
     int TopPanel::getIdealHeight() const {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         return getTopPanelHeight(font_size);
     }
 
     void TopPanel::resized() {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         auto bound = getLocalBounds();
         bound.reduce(padding / 2, padding / 2);

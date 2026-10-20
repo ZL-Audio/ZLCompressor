@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include <array>
 #include <atomic>
 #include <span>
@@ -26,7 +28,7 @@ namespace zlpanel {
                                 public juce::Thread,
                                 private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit ResponsePanel(PluginProcessor& processor, zlgui::UIBase& base,
+        explicit ResponsePanel(PluginProcessor& processor, zlgui::UIState& base,
                                size_t& selected_band_idx);
 
         ~ResponsePanel() override;
@@ -63,7 +65,7 @@ namespace zlpanel {
         };
 
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
 
         std::vector<size_t> message_not_off_indices_{};
         zlchore::thread::Notifier message_to_update_panels_{true};

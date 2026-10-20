@@ -11,7 +11,7 @@
 #include "../../mag_db_range.hpp"
 
 namespace zlpanel {
-    ClipperPanel::ClipperPanel(PluginProcessor& p, zlgui::UIBase& base) :
+    ClipperPanel::ClipperPanel(PluginProcessor& p, zlgui::UIState& base) :
         p_ref_(p), base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)),
         mag_max_db_id_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMaxDB::kID)),
@@ -33,9 +33,9 @@ namespace zlpanel {
 
     void ClipperPanel::paint(juce::Graphics& g) {
         auto bound = getLocalBounds().toFloat();
-        bound.removeFromTop(static_cast<float>(getTopPanelHeight(base_.getFontSize())));
+        bound.removeFromTop(static_cast<float>(getTopPanelHeight(base_.gui.getFontSize())));
         g.setColour(base_.getColourByIdx(zlgui::ColourIdx::kComputerColour).withAlpha(.5f));
-        const auto height = base_.getFontSize() * .15f * base_.getMagCurveThickness();
+        const auto height = base_.gui.getFontSize() * .15f * base_.getMagCurveThickness();
         g.fillRect(bound.getX(), bound.getY() + bound.getHeight() * rel_position_ - height,
                    bound.getWidth(), height);
     }

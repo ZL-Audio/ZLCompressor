@@ -10,22 +10,22 @@
 #include "equalize_background_panel.hpp"
 
 namespace zlpanel {
-    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIBase& base) :
+    EqualizerBackgroundPanel::Background1::Background1(zlgui::UIState& base) :
         base_(base) {
         setInterceptsMouseClicks(false, false);
         setBufferedToImage(true);
     }
 
     void EqualizerBackgroundPanel::Background1::paint(juce::Graphics& g) {
-        g.fillAll(base_.getBackgroundColour().withAlpha(.875f));
-        g.setFont(base_.getFontSize());
-        g.setColour(base_.getTextColour().withAlpha(.375f));
+        g.fillAll(base_.gui.getBackgroundColour().withAlpha(.875f));
+        g.setFont(base_.gui.getFontSize());
+        g.setColour(base_.gui.getTextColour().withAlpha(.375f));
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
             if (visible_freqs_[i]) {
                 g.drawText(std::string(kBackgroundFreqsNames[i]), text_bounds_[i], juce::Justification::bottomRight);
             }
         }
-        g.setColour(base_.getTextColour().withAlpha(.1f));
+        g.setColour(base_.gui.getTextColour().withAlpha(.1f));
         g.fillRectList(rect_list_);
     }
 
@@ -45,7 +45,7 @@ namespace zlpanel {
     void EqualizerBackgroundPanel::Background1::updateLayout() {
         rect_list_.clear();
         auto bound = getLocalBounds().toFloat();
-        const auto thickness = base_.getFontSize() * 0.1f;
+        const auto thickness = base_.gui.getFontSize() * 0.1f;
         for (size_t i = 0; i < kBackgroundFreqs.size(); ++i) {
             visible_freqs_[i] = kBackgroundFreqs[i] <= freq_max_;
             if (!visible_freqs_[i]) {
@@ -55,12 +55,12 @@ namespace zlpanel {
                                               / std::log(freq_max_ / zlp::kEQMinFreq)) * bound.getWidth()
                            + bound.getX();
             rect_list_.add({x - thickness * .5f, bound.getY(), thickness, bound.getHeight()});
-            text_bounds_[i] = juce::Rectangle<float>(x - base_.getFontSize() * 3 - base_.getFontSize() * 0.125f,
-                                                     bound.getBottom() - base_.getFontSize() * 2,
-                                                     base_.getFontSize() * 3, base_.getFontSize() * 2);
+            text_bounds_[i] = juce::Rectangle<float>(x - base_.gui.getFontSize() * 3 - base_.gui.getFontSize() * 0.125f,
+                                                     bound.getBottom() - base_.gui.getFontSize() * 2,
+                                                     base_.gui.getFontSize() * 3, base_.gui.getFontSize() * 2);
         }
 
-        bound = bound.withSizeKeepingCentre(bound.getWidth(), bound.getHeight() - 2 * base_.getFontSize());
+        bound = bound.withSizeKeepingCentre(bound.getWidth(), bound.getHeight() - 2 * base_.gui.getFontSize());
 
         for (auto& d : kBackgroundDBs) {
             const auto y = d * bound.getHeight() + bound.getY();
@@ -68,7 +68,7 @@ namespace zlpanel {
         }
     }
 
-    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor&, zlgui::UIBase& base) :
+    EqualizerBackgroundPanel::EqualizerBackgroundPanel(PluginProcessor&, zlgui::UIState& base) :
         background1_(base) {
         setInterceptsMouseClicks(false, false);
         addAndMakeVisible(background1_);

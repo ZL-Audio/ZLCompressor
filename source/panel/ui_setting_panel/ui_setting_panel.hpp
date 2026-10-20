@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 
@@ -24,7 +26,7 @@
 namespace zlpanel {
     class UISettingPanel final : public juce::Component {
     public:
-        explicit UISettingPanel(PluginProcessor &p, zlgui::UIBase &base);
+        explicit UISettingPanel(PluginProcessor &p, zlgui::UIState &base);
 
         ~UISettingPanel() override;
 
@@ -40,7 +42,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor &p_ref_;
-        zlgui::UIBase &base_;
+        zlgui::UIState &base_;
 
         ColourSettingPanel colour_panel_;
         ControlSettingPanel control_panel_;
@@ -53,7 +55,6 @@ namespace zlpanel {
         UISettingTabBar tab_bar_;
         zlgui::scrolling::ScrollableViewport view_port_;
 
-        const std::unique_ptr<juce::Drawable> save_drawable_, close_drawable_, reset_drawable_, folder_open_drawable_;
         zlgui::button::ClickButton save_button_, close_button_, reset_button_, folder_open_button_;
 
         std::array<double, 4> view_positions_{};

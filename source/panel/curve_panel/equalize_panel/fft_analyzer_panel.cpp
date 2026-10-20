@@ -10,7 +10,7 @@
 #include "fft_analyzer_panel.hpp"
 
 namespace zlpanel {
-    FFTAnalyzerPanel::FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIBase& base) :
+    FFTAnalyzerPanel::FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIState& base) :
         p_ref_(processor),
         base_(base) {
         constexpr auto preallocate_space = static_cast<int>(zlp::EqualizeController::kAnalyzerPointNum) * 3 + 1;
@@ -33,14 +33,14 @@ namespace zlpanel {
             return;
         }
         out_path_.pull();
-        g.setColour(base_.getTextColour().withAlpha(.375f));
+        g.setColour(base_.gui.getTextColour().withAlpha(.375f));
         g.fillPath(out_path_.get_reader());
     }
 
     void FFTAnalyzerPanel::resized() {
         const auto bound = getLocalBounds().toFloat();
         atomic_bound_.store(bound);
-        font_size_.store(base_.getFontSize(), std::memory_order::relaxed);
+        font_size_.store(base_.gui.getFontSize(), std::memory_order::relaxed);
         skip_next_repaint_ = true;
         to_update_xs_.signal();
         to_update_ys_.signal();

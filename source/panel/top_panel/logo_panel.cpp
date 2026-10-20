@@ -11,7 +11,7 @@
 #include "BinaryData.h"
 
 namespace zlpanel {
-    LogoPanel::LogoPanel(PluginProcessor&, zlgui::UIBase& base, multilingual::TooltipHelper& tooltip_helper) :
+    LogoPanel::LogoPanel(PluginProcessor&, zlgui::UIState& base, multilingual::TooltipHelper& tooltip_helper) :
         base_(base),
         brand_drawable_(juce::Drawable::createFromImageData(BinaryData::zlaudio_svg, BinaryData::zlaudio_svgSize)),
         logo_drawable_(juce::Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize)) {
@@ -24,11 +24,11 @@ namespace zlpanel {
     void LogoPanel::paint(juce::Graphics& g) {
         const auto temp_brand = brand_drawable_->createCopy();
         const auto temp_logo = logo_drawable_->createCopy();
-        temp_brand->replaceColour(juce::Colours::black, base_.getTextColour());
-        temp_logo->replaceColour(juce::Colours::black, base_.getTextColour());
-        temp_logo->replaceColour(juce::Colours::black.withAlpha(.5f), base_.getTextColour().withMultipliedAlpha(.5f));
+        temp_brand->replaceColour(juce::Colours::black, base_.gui.getTextColour());
+        temp_logo->replaceColour(juce::Colours::black, base_.gui.getTextColour());
+        temp_logo->replaceColour(juce::Colours::black.withAlpha(.5f), base_.gui.getTextColour().withMultipliedAlpha(.5f));
 
-        const auto padding = getPaddingSize(base_.getFontSize());
+        const auto padding = getPaddingSize(base_.gui.getFontSize());
 
         auto bound = getLocalBounds();
 

@@ -10,7 +10,7 @@
 #include "separate_panel.hpp"
 
 namespace zlpanel {
-    SeparatePanel::SeparatePanel(zlgui::UIBase& base)
+    SeparatePanel::SeparatePanel(zlgui::UIState& base)
         : base_(base) {
         setInterceptsMouseClicks(false, false);
 
@@ -30,8 +30,8 @@ namespace zlpanel {
         gradient_.clearColours();
 
         gradient_.addColour(0.0,
-                            base_.getBackgroundColour().withAlpha(1.f));
+                            base_.gui.getBackgroundColour().withAlpha(1.f));
         gradient_.addColour(1.0,
-                            base_.getBackgroundColour().withAlpha(0.f));
+                            base_.gui.getBackgroundColour().withAlpha(0.f));
     }
 }

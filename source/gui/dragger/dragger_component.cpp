@@ -70,8 +70,7 @@ namespace zlgui::dragger {
         if (e.mods.isCommandDown()) {
             if (e.mods.isLeftButtonDown()) {
                 shift.setX(0.f);
-            }
-            else {
+            } else {
                 shift.setY(0.f);
             }
         }
@@ -85,13 +84,13 @@ namespace zlgui::dragger {
         const auto old_current_pos = current_pos_;
         if (check_center_) {
             current_pos_ = check_center_(current_pos_, current_pos_ + shift);
-        }
-        else {
+        } else {
             current_pos_ = current_pos_ + shift;
         }
         current_pos_ = button_area_.getConstrainedPoint(current_pos_);
         // shift global position accordingly
         const auto actual_shift = current_pos_ - old_current_pos;
+        // consume pointer motion on a locked axis so it is not replayed when the axis is unlocked.
         if (std::abs(shift.x) > 1e-10f) {
             global_pos_.x += actual_shift.x / shift.x * old_shift.x;
         } else {

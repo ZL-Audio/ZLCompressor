@@ -11,23 +11,23 @@
 #include "side_control_panel.hpp"
 
 namespace zlpanel {
-    SideControlPanel::SideControlPanel(PluginProcessor &p, zlgui::UIBase &base,
+    SideControlPanel::SideControlPanel(PluginProcessor &p, zlgui::UIState &base,
                                        multilingual::TooltipHelper &tooltip_helper) : base_(base),
         stereo_mode_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoMode::kID)),
         stereo_swap_ref_(*p.parameters_.getRawParameterValue(zlp::PSideStereoSwap::kID)),
         panel_show_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideControlDisplay::kID)),
-        stereo_mid_side_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_svg,
-                                                                      BinaryData::midside_svgSize)),
-        stereo_left_right_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_svg,
-                                                                        BinaryData::leftright_svgSize)),
-        stereo_mid_side_max_drawable_(juce::Drawable::createFromImageData(BinaryData::midside_max_svg,
-                                                                          BinaryData::midside_max_svgSize)),
-        stereo_left_right_max_drawable_(juce::Drawable::createFromImageData(BinaryData::leftright_max_svg,
-                                                                            BinaryData::leftright_max_svgSize)),
-        stereo_mode_box_(base_, {
-                             stereo_mid_side_drawable_.get(), stereo_left_right_drawable_.get(),
-                             stereo_mid_side_max_drawable_.get(), stereo_left_right_max_drawable_.get()
-                         }, "",
+        stereo_mode_box_(base_.gui, [] {
+                             std::vector<std::unique_ptr<juce::Drawable>> icons;
+                             icons.emplace_back(juce::Drawable::createFromImageData(
+                                 BinaryData::midside_svg, BinaryData::midside_svgSize));
+                             icons.emplace_back(juce::Drawable::createFromImageData(
+                                 BinaryData::leftright_svg, BinaryData::leftright_svgSize));
+                             icons.emplace_back(juce::Drawable::createFromImageData(
+                                 BinaryData::midside_max_svg, BinaryData::midside_max_svgSize));
+                             icons.emplace_back(juce::Drawable::createFromImageData(
+                                 BinaryData::leftright_max_svg, BinaryData::leftright_max_svgSize));
+                             return icons;
+                         }(), "",
                          {
                              tooltip_helper.getToolTipText(multilingual::kStereoMS),
                              tooltip_helper.getToolTipText(multilingual::kStereoLR),
@@ -36,45 +36,43 @@ namespace zlpanel {
                          }),
         stereo_mode_attachment_(stereo_mode_box_.getBox(), p.parameters_,
                                 zlp::PSideStereoMode::kID, updater_),
-        stereo_swap_drawable_(juce::Drawable::createFromImageData(BinaryData::shuffle_svg,
-                                                                  BinaryData::shuffle_svgSize)),
-        stereo_swap_button_(base, stereo_swap_drawable_.get(), stereo_swap_drawable_.get(),
-                            tooltip_helper.getToolTipText(multilingual::kStereoSwap)),
+        stereo_swap_button_(base.gui,
+                            juce::Drawable::createFromImageData(BinaryData::shuffle_svg, BinaryData::shuffle_svgSize),
+                            true, tooltip_helper.getToolTipText(multilingual::kStereoSwap)),
         stereo_swap_attachment_(stereo_swap_button_.getButton(), p.parameters_,
                                 zlp::PSideStereoSwap::kID, updater_),
-        stereo_link_slider_("Link", base_,
+        stereo_link_slider_("Link", base_.gui,
                             tooltip_helper.getToolTipText(multilingual::kStereoLink)),
         stereo_link_attachment_(stereo_link_slider_.getSlider(), p.parameters_,
                                 zlp::PSideStereoLink::kID, updater_),
-        stereo_wet1_slider_("", base_,
+        stereo_wet1_slider_("", base_.gui,
                             tooltip_helper.getToolTipText(multilingual::kStereoWet)),
         stereo_wet1_attachment_(stereo_wet1_slider_.getSlider(), p.parameters_,
                                 zlp::PSideStereoWet1::kID, updater_),
-        stereo_wet2_slider_("", base_,
+        stereo_wet2_slider_("", base_.gui,
                             tooltip_helper.getToolTipText(multilingual::kStereoWet)),
         stereo_wet2_attachment_(stereo_wet2_slider_.getSlider(), p.parameters_,
                                 zlp::PSideStereoWet2::kID, updater_),
-        label_laf_(base_),
+        label_laf_(base_.gui),
         side_in1_label_(), side_in2_label_(), side_out1_label_(), side_out2_label_(),
-        side_gain_slider_("Gain", base_,
+        side_gain_slider_("Gain", base_.gui,
                           tooltip_helper.getToolTipText(multilingual::kSideGain)),
         side_gain_attachment_(side_gain_slider_.getSlider(), p.parameters_,
                               zlp::PSideGain::kID, updater_),
-        ext_side_drawable_(
-            juce::Drawable::createFromImageData(BinaryData::externalside_svg, BinaryData::externalside_svgSize)),
-        ext_side_button_(base, ext_side_drawable_.get(), ext_side_drawable_.get(),
-                         tooltip_helper.getToolTipText(multilingual::kExtSide)),
+        ext_side_button_(base.gui,
+                         juce::Drawable::createFromImageData(
+                             BinaryData::externalside_svg, BinaryData::externalside_svgSize),
+                         true, tooltip_helper.getToolTipText(multilingual::kExtSide)),
         ext_side_attachment_(ext_side_button_.getButton(), p.parameters_,
                              zlp::PExtSide::kID, updater_),
-        side_out_drawable_(
-            juce::Drawable::createFromImageData(BinaryData::solo_svg, BinaryData::solo_svgSize)),
-        side_out_button_(base, side_out_drawable_.get(), side_out_drawable_.get(),
-                         tooltip_helper.getToolTipText(multilingual::kSideOut)),
+        side_out_button_(base.gui,
+                         juce::Drawable::createFromImageData(BinaryData::solo_svg, BinaryData::solo_svgSize),
+                         true, tooltip_helper.getToolTipText(multilingual::kSideOut)),
         side_out_attachment_(side_out_button_.getButton(), p.parameters_,
                              zlp::PSideOut::kID, updater_),
-        eq_bypass_drawable_(juce::Drawable::createFromImageData(BinaryData::bypass_svg,
-                                                                BinaryData::bypass_svgSize)),
-        eq_bypass_button_(base_, eq_bypass_drawable_.get(), eq_bypass_drawable_.get(),
+        eq_bypass_button_(base_.gui,
+                          juce::Drawable::createFromImageData(BinaryData::bypass_svg, BinaryData::bypass_svgSize),
+                          true,
                           ""),
         eq_bypass_attachment_(eq_bypass_button_.getButton(), p.parameters_,
                               zlp::PSideEQBypass::kID, updater_) {
@@ -124,24 +122,24 @@ namespace zlpanel {
     }
 
     void SideControlPanel::paint(juce::Graphics &g) {
-        g.fillAll(base_.getBackgroundColour());
+        g.fillAll(base_.gui.getBackgroundColour());
     }
 
     int SideControlPanel::getIdealHeight() const {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale);
+        const auto slider_height = juce::roundToInt(base_.gui.getFontSize() * kSliderHeightScale);
+        const auto button_height = juce::roundToInt(base_.gui.getFontSize() * kButtonScale);
         return 8 * padding + 2 * slider_height + 5 * button_height;
     }
 
     int SideControlPanel::getIdealWidth() const {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
+        const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale);
+        const auto slider_width = juce::roundToInt(base_.gui.getFontSize() * kSliderWidthScale);
         return 2 * padding + slider_width;
     }
 
     void SideControlPanel::resized() {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto slider_height = getSliderHeight(font_size);
         const auto button_height = getButtonSize(font_size);

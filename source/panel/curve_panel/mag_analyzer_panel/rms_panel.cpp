@@ -10,7 +10,7 @@
 #include "rms_panel.hpp"
 
 namespace zlpanel {
-    RMSPanel::RMSPanel(zlgui::UIBase& base) : base_(base) {
+    RMSPanel::RMSPanel(zlgui::UIState& base) : base_(base) {
         for (auto& receiver : {&in_receiver_, &out_receiver_}) {
             receiver->setHistSize(kNumPoints);
         }
@@ -22,9 +22,9 @@ namespace zlpanel {
     void RMSPanel::paint(juce::Graphics& g) {
         in_path_.pull();
         out_path_.pull();
-        g.setColour(base_.getTextColour().withAlpha(.25f));
+        g.setColour(base_.gui.getTextColour().withAlpha(.25f));
         g.fillPath(in_path_.get_reader());
-        g.setColour(base_.getTextColour().withAlpha(.9f));
+        g.setColour(base_.gui.getTextColour().withAlpha(.9f));
         g.strokePath(out_path_.get_reader(),
                      juce::PathStrokeType(curve_thickness_,
                                           juce::PathStrokeType::curved,
@@ -100,6 +100,6 @@ namespace zlpanel {
     }
 
     void RMSPanel::lookAndFeelChanged() {
-        curve_thickness_ = base_.getFontSize() * .2f * base_.getMagCurveThickness();
+        curve_thickness_ = base_.gui.getFontSize() * .2f * base_.getMagCurveThickness();
     }
 }

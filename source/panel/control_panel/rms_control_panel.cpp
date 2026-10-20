@@ -10,22 +10,22 @@
 #include "rms_control_panel.hpp"
 
 namespace zlpanel {
-    RMSControlPanel::RMSControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+    RMSControlPanel::RMSControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                      const multilingual::TooltipHelper& tooltip_helper) :
         base_(base), updater_(),
-        label_laf_(base),
+        label_laf_(base.gui),
         rms_length_label_("", "Length"),
         rms_speed_label_("", "Speed"),
         rms_mix_label_("", "Mix"),
-        rms_length_slider_("", base,
+        rms_length_slider_("", base.gui,
                            tooltip_helper.getToolTipText(multilingual::kRMSLength)),
         rms_length_attachment_(rms_length_slider_.getSlider(), p.parameters_,
                                zlp::PRMSLength::kID, updater_),
-        rms_speed_slider_("", base,
+        rms_speed_slider_("", base.gui,
                           tooltip_helper.getToolTipText(multilingual::kRMSSpeed)),
         rms_speed_attachment_(rms_speed_slider_.getSlider(), p.parameters_,
                               zlp::PRMSSpeed::kID, updater_),
-        rms_mix_slider_("", base,
+        rms_mix_slider_("", base.gui,
                         tooltip_helper.getToolTipText(multilingual::kRMSMix)),
         rms_mix_attachment_(rms_mix_slider_.getSlider(), p.parameters_,
                             zlp::PRMSMix::kID, updater_) {
@@ -62,7 +62,7 @@ namespace zlpanel {
         rms_mix_label_.setBounds(bound.removeFromLeft(width - 2 * delta));
         rms_mix_slider_.setBounds(bound.removeFromLeft(width));
 
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto dragging_distance = getSliderDraggingDistance(font_size);
         for (auto& s : {&rms_length_slider_, &rms_speed_slider_, &rms_mix_slider_}) {
             s->setMouseDragSensitivity(dragging_distance);

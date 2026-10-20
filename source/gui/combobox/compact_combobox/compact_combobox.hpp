@@ -1,11 +1,11 @@
 // Copyright (C) 2026 - zsliu98
-// This file is part of ZLEqualizer
+// This file is part of ZLCompressor
 //
-// ZLEqualizer is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
+// ZLCompressor is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License Version 3 as published by the Free Software Foundation.
 //
-// ZLEqualizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+// ZLCompressor is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Affero General Public License along with ZLEqualizer. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Affero General Public License along with ZLCompressor. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
@@ -19,7 +19,7 @@ namespace zlgui::combobox {
                         const juce::String& tooltip_text = "",
                         const std::vector<juce::String>& item_labels = {});
 
-        CompactCombobox(const std::vector<std::unique_ptr<juce::Drawable>>& icons, UIBase& base,
+        CompactCombobox(std::vector<std::unique_ptr<juce::Drawable>> icons, UIBase& base,
                         const juce::String& tooltip_text = "",
                         const std::vector<juce::String>& item_labels = {});
 
@@ -54,7 +54,6 @@ namespace zlgui::combobox {
             return box_laf_;
         }
 
-        // Maximum option-text width in pixels, cached by resized().
         [[nodiscard]] float getMaxTextWidth() const noexcept {
             return box_laf_.getMaxTextWidth();
         }

@@ -10,7 +10,7 @@
 #include "equalize_panel.hpp"
 
 namespace zlpanel {
-    EqualizePanel::EqualizePanel(PluginProcessor& processor, zlgui::UIBase& base)
+    EqualizePanel::EqualizePanel(PluginProcessor& processor, zlgui::UIState& base)
         : p_ref_(processor), base_{base},
           background_panel_(processor, base),
           fft_analyzer_panel_(processor, base),
@@ -121,8 +121,8 @@ namespace zlpanel {
                     const auto popup_direction_down = pos_y_scale < .25f || (pos_y_scale > .5f && pos_y_scale < .75f);
 
                     const auto shift_y = popup_direction_down
-                                             ? popup_target_pos.y - popup_top_center_.y + base_.getFontSize()
-                                             : popup_target_pos.y - popup_bottom_center_.y - base_.getFontSize();
+                                             ? popup_target_pos.y - popup_top_center_.y + base_.gui.getFontSize()
+                                             : popup_target_pos.y - popup_bottom_center_.y - base_.gui.getFontSize();
 
                     const float shift_x = std::clamp(popup_target_pos.x - popup_top_center_.x, 0.f, shift_x_max_);
 

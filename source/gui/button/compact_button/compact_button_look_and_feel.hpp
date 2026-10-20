@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../interface_definitions.hpp"
@@ -27,8 +29,7 @@ namespace zlgui {
                 bounds = base_.drawShadowEllipse(g, bounds, base_.getFontSize() * 0.4f * shrink_scale_, {});
                 bounds = base_.drawInnerShadowEllipse(g, bounds, base_.getFontSize() * 0.15f * shrink_scale_,
                                                       {.flip = true});
-            }
-            else {
+            } else {
                 bounds = base_.getShadowEllipseArea(bounds, base_.getFontSize() * 0.3f * shrink_scale_, {});
                 g.setColour(base_.getBackgroundColour());
                 g.fillEllipse(bounds);
@@ -50,20 +51,17 @@ namespace zlgui {
                 const auto textBound = button.getLocalBounds().toFloat();
                 if (is_pressed) {
                     g.setColour(base_.getTextColour().withAlpha(1.f));
-                }
-                else {
+                } else {
                     g.setColour(base_.getTextColour().withAlpha(0.5f));
                 }
                 g.setFont(base_.getFontSize() * scale_);
                 g.drawText(button.getButtonText(), textBound.toNearestInt(), juce::Justification::centred);
-            }
-            else {
+            } else {
                 const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * .5f * scale_;
                 const auto draw_bound = bounds.withSizeKeepingCentre(radius, radius);
                 if (is_pressed) {
                     internal_img_->drawWithin(g, draw_bound, kPlacement, 1.f);
-                }
-                else {
+                } else {
                     internal_img_->drawWithin(g, draw_bound, kPlacement, .5f);
                 }
             }
@@ -73,8 +71,8 @@ namespace zlgui {
 
         inline void setDepth(const float x) { button_depth_ = x; }
 
-        inline void setDrawable(juce::Drawable* x) {
-            drawable_ = x;
+        inline void setDrawable(std::unique_ptr<juce::Drawable> x) {
+            drawable_ = std::move(x);
             updateImages();
         }
 
@@ -90,6 +88,8 @@ namespace zlgui {
             if (drawable_ != nullptr) {
                 internal_img_ = drawable_->createCopy();
                 internal_img_->replaceColour(juce::Colour(0, 0, 0), base_.getTextColour());
+            } else {
+                internal_img_.reset();
             }
         }
 
@@ -100,7 +100,7 @@ namespace zlgui {
 
         bool reverse_{false}, with_shadow_{true};
         float button_depth_{0.f}, shrink_scale_{1.f}, scale_{1.f};
-        juce::Drawable* drawable_ = nullptr;
+        std::unique_ptr<juce::Drawable> drawable_;
         std::unique_ptr<juce::Drawable> internal_img_;
     };
 }

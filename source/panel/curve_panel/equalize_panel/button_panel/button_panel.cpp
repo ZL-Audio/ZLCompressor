@@ -10,12 +10,12 @@
 #include "button_panel.hpp"
 
 namespace zlpanel {
-    ButtonPanel::ButtonPanel(PluginProcessor& p, zlgui::UIBase& base,
+    ButtonPanel::ButtonPanel(PluginProcessor& p, zlgui::UIState& base,
                              size_t& selected_band_idx) :
         p_ref_(p), base_(base), selected_band_idx_(selected_band_idx),
         eq_max_db_id_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PEQMaxDB::kID)),
-        q_slider_(base), slope_slider_(base),
-        eq_db_box_(zlstate::PEQMaxDB::kChoices, base),
+        q_slider_(base.gui), slope_slider_(base.gui),
+        eq_db_box_(zlstate::PEQMaxDB::kChoices, base.gui),
         eq_db_box_attachment_(eq_db_box_.getBox(), p.na_parameters_, zlstate::PEQMaxDB::kID, updater_),
         para_panel_(p, base, selected_band_idx),
         popup_panel_(p, base, selected_band_idx),
@@ -83,8 +83,8 @@ namespace zlpanel {
             });
             right_click_panel_.setBounds({
                 bound.getX(), bound.getY(),
-                juce::roundToInt(base_.getFontSize() * 7.5f),
-                juce::roundToInt(base_.getFontSize() * 4.5f)
+                juce::roundToInt(base_.gui.getFontSize() * 7.5f),
+                juce::roundToInt(base_.gui.getFontSize() * 4.5f)
             });
             for (size_t band = 0; band < zlp::kBandNum; ++band) {
                 dragger_panels_[band]->setBounds(bound);
@@ -96,10 +96,10 @@ namespace zlpanel {
         }
         {
             auto bound = getLocalBounds();
-            const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale);
-            bound = bound.removeFromTop(juce::roundToInt(base_.getFontSize() * 1.25f));
+            const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale);
+            bound = bound.removeFromTop(juce::roundToInt(base_.gui.getFontSize() * 1.25f));
             bound.removeFromRight(padding);
-            bound = bound.removeFromRight(juce::roundToInt(base_.getFontSize() * 2.5f));
+            bound = bound.removeFromRight(juce::roundToInt(base_.gui.getFontSize() * 2.5f));
             eq_db_box_.setBounds(bound);
         }
     }
@@ -237,9 +237,9 @@ namespace zlpanel {
         if (event.originalComponent == this) {
             items_set_.deselectAll();
             lasso_component_.setColour(juce::LassoComponent<size_t>::lassoFillColourId,
-                                       base_.getTextColour().withMultipliedAlpha(.125f));
+                                       base_.gui.getTextColour().withMultipliedAlpha(.125f));
             lasso_component_.setColour(juce::LassoComponent<size_t>::lassoOutlineColourId,
-                                       base_.getTextColour().withMultipliedAlpha(.15f));
+                                       base_.gui.getTextColour().withMultipliedAlpha(.15f));
             lasso_component_.setVisible(true);
             lasso_component_.beginLasso(event, this);
         }
@@ -290,7 +290,7 @@ namespace zlpanel {
         }
 
         auto bound = getLocalBounds().toFloat();
-        bound.reduce(0.f, base_.getFontSize());
+        bound.reduce(0.f, base_.gui.getFontSize());
 
         const auto point = event.getPosition().toFloat();
         const auto x = point.getX(), y = point.getY();

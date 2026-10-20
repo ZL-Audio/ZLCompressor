@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../../gui/dragger/dragger_attachment.hpp"
@@ -17,7 +19,7 @@
 namespace zlpanel {
     class DraggerPanel final : public juce::Component {
     public:
-        explicit DraggerPanel(PluginProcessor& processor, zlgui::UIBase& base,
+        explicit DraggerPanel(PluginProcessor& processor, zlgui::UIState& base,
                               size_t band_idx, size_t& selected_band_idx);
 
         void resized() override;
@@ -40,7 +42,7 @@ namespace zlpanel {
         static constexpr float kScale = 1.f;
 
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         const size_t band_idx_;
         size_t& selected_band_idx_;
         std::atomic<float>& filter_type_ref_;

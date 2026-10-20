@@ -10,7 +10,7 @@
 #include "curve_panel.hpp"
 
 namespace zlpanel {
-    CurvePanel::CurvePanel(PluginProcessor& p, zlgui::UIBase& base,
+    CurvePanel::CurvePanel(PluginProcessor& p, zlgui::UIState& base,
                            multilingual::TooltipHelper& tooltip_helper) :
         Thread("curve_panel"), p_ref_(p), base_(base),
         analyzer_max_db_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PAnalyzerMaxDB::kID)),
@@ -44,7 +44,7 @@ namespace zlpanel {
     }
 
     void CurvePanel::paint(juce::Graphics& g) {
-        g.fillAll(base_.getBackgroundColour());
+        g.fillAll(base_.gui.getBackgroundColour());
     }
 
     void CurvePanel::paintOverChildren(juce::Graphics& g) {
@@ -54,7 +54,7 @@ namespace zlpanel {
     }
 
     void CurvePanel::resized() {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto slider_width = getSliderWidth(font_size);
         const auto button_size = getButtonSize(font_size);

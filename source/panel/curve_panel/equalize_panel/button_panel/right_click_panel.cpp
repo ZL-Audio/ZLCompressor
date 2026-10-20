@@ -10,12 +10,12 @@
 #include "right_click_panel.hpp"
 
 namespace zlpanel {
-    RightClickPanel::RightClickPanel(PluginProcessor& processor, zlgui::UIBase& base,
+    RightClickPanel::RightClickPanel(PluginProcessor& processor, zlgui::UIState& base,
                                      size_t& selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-          invert_gain_button_(base, "Invert Gain", ""),
-          copy_button_(base, "Copy", ""),
-          paste_button_(base, "Paste", ""),
+          invert_gain_button_(base.gui, "Invert Gain", ""),
+          copy_button_(base.gui, "Copy", ""),
+          paste_button_(base.gui, "Paste", ""),
           items_set_(base.getSelectedBandSet()) {
         invert_gain_button_.getButton().onClick = [this]() {
             invertGain();
@@ -34,7 +34,7 @@ namespace zlpanel {
     }
 
     void RightClickPanel::paint(juce::Graphics& g) {
-        g.fillAll(base_.getBackgroundColour());
+        g.fillAll(base_.gui.getBackgroundColour());
     }
 
     void RightClickPanel::updateCopyVisibility(const bool show_copy) {
@@ -50,8 +50,8 @@ namespace zlpanel {
 
     void RightClickPanel::resized() {
         auto bound = getLocalBounds();
-        bound.removeFromLeft(juce::roundToInt(base_.getFontSize()));
-        bound.removeFromRight(juce::roundToInt(base_.getFontSize()));
+        bound.removeFromLeft(juce::roundToInt(base_.gui.getFontSize()));
+        bound.removeFromRight(juce::roundToInt(base_.gui.getFontSize()));
         const auto button_height = bound.getHeight() / 3;
         invert_gain_button_.setBounds(bound.removeFromTop(button_height));
         copy_button_.setBounds(bound.removeFromTop(button_height));

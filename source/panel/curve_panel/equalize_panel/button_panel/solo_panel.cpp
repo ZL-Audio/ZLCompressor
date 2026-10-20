@@ -10,13 +10,13 @@
 #include "solo_panel.hpp"
 
 namespace zlpanel {
-    SoloPanel::SoloPanel(zlgui::UIBase& base) : base_(base) {
+    SoloPanel::SoloPanel(zlgui::UIState& base) : base_(base) {
         setInterceptsMouseClicks(false, false);
     }
 
     void SoloPanel::paint(juce::Graphics& g) {
         const auto bound = getLocalBounds().toFloat();
-        g.setColour(base_.getBackgroundColour().withAlpha(.625f));
+        g.setColour(base_.gui.getBackgroundColour().withAlpha(.625f));
         if (left_x_ > 0.f) {
             g.fillRect(juce::Rectangle<float>{0.f, 0.f, left_x_, bound.getHeight()});
         }

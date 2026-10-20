@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "../../../../PluginProcessor.hpp"
 #include "../../../helper/helper.hpp"
 #include "../../../../gui/gui.hpp"
@@ -17,7 +19,7 @@ namespace zlpanel {
     class ClipperPanel final : public juce::Component,
                                private juce::AudioProcessorValueTreeState::Listener {
     public:
-        explicit ClipperPanel(PluginProcessor& p, zlgui::UIBase& base);
+        explicit ClipperPanel(PluginProcessor& p, zlgui::UIState& base);
 
         ~ClipperPanel() override;
 
@@ -27,7 +29,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         std::atomic<float>& comp_direction_ref_;
         std::atomic<float>& mag_max_db_id_ref_;
         std::atomic<float>& mag_min_db_id_ref_;

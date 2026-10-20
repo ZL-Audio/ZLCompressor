@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include <array>
 #include <span>
 #include <vector>
@@ -22,7 +24,7 @@
 namespace zlpanel {
     class SumPanel final : public juce::Component {
     public:
-        explicit SumPanel(zlgui::UIBase& base);
+        explicit SumPanel(zlgui::UIState& base);
 
         void paint(juce::Graphics& g) override;
 
@@ -36,7 +38,7 @@ namespace zlpanel {
     private:
         static constexpr size_t kNumPoints = 400;
 
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         BufferedUI<juce::Path> path_{};
         float curve_thickness_{0.f};
         std::vector<float> temp_y_{};

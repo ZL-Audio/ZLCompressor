@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
@@ -17,7 +19,7 @@
 namespace zlpanel {
     class SideControlPanel final : public juce::Component {
     public:
-        explicit SideControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit SideControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                   multilingual::TooltipHelper& tooltip_helper);
 
         void paint(juce::Graphics& g) override;
@@ -31,7 +33,7 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         std::atomic<float> &stereo_mode_ref_, &stereo_swap_ref_;
@@ -39,14 +41,9 @@ namespace zlpanel {
 
         std::atomic<float>& panel_show_ref_;
 
-        const std::unique_ptr<juce::Drawable> stereo_mid_side_drawable_;
-        const std::unique_ptr<juce::Drawable> stereo_left_right_drawable_;
-        const std::unique_ptr<juce::Drawable> stereo_mid_side_max_drawable_;
-        const std::unique_ptr<juce::Drawable> stereo_left_right_max_drawable_;
         zlgui::combobox::ClickCombobox stereo_mode_box_;
         zlgui::attachment::ComboBoxAttachment<true> stereo_mode_attachment_;
 
-        const std::unique_ptr<juce::Drawable> stereo_swap_drawable_;
         zlgui::button::ClickButton stereo_swap_button_;
         zlgui::attachment::ButtonAttachment<true> stereo_swap_attachment_;
 
@@ -65,15 +62,12 @@ namespace zlpanel {
         zlgui::slider::CompactLinearSlider<true, true, true> side_gain_slider_;
         zlgui::attachment::SliderAttachment<true> side_gain_attachment_;
 
-        const std::unique_ptr<juce::Drawable> ext_side_drawable_;
         zlgui::button::ClickButton ext_side_button_;
         zlgui::attachment::ButtonAttachment<true> ext_side_attachment_;
 
-        const std::unique_ptr<juce::Drawable> side_out_drawable_;
         zlgui::button::ClickButton side_out_button_;
         zlgui::attachment::ButtonAttachment<true> side_out_attachment_;
 
-        const std::unique_ptr<juce::Drawable> eq_bypass_drawable_;
         zlgui::button::ClickButton eq_bypass_button_;
         zlgui::attachment::ButtonAttachment<true> eq_bypass_attachment_;
 

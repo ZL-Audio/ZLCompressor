@@ -10,7 +10,7 @@
 #include "computer_panel.hpp"
 
 namespace zlpanel {
-    ComputerPanel::ComputerPanel(PluginProcessor& p, zlgui::UIBase& base) :
+    ComputerPanel::ComputerPanel(PluginProcessor& p, zlgui::UIState& base) :
         p_ref_(p), base_(base),
         comp_direction_ref_(*p.parameters_.getRawParameterValue(zlp::PCompDirection::kID)) {
         for (auto& path: comp_path_.get_buffer()) {
@@ -75,7 +75,7 @@ namespace zlpanel {
     }
 
     void ComputerPanel::lookAndFeelChanged() {
-        curve_thickness_ = base_.getFontSize() * .25f * base_.getMagCurveThickness();
+        curve_thickness_ = base_.gui.getFontSize() * .25f * base_.getMagCurveThickness();
     }
 
     void ComputerPanel::parameterChanged(const juce::String& parameter_ID, const float value) {

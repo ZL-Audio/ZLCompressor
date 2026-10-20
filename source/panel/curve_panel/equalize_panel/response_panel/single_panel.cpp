@@ -13,7 +13,7 @@
 #include <cmath>
 
 namespace zlpanel {
-    SinglePanel::SinglePanel(zlgui::UIBase& base,
+    SinglePanel::SinglePanel(zlgui::UIState& base,
                              size_t& selected_band_idx,
                              std::vector<size_t>& not_off_indices) :
         base_(base), selected_band_idx_(selected_band_idx), not_off_indices_(not_off_indices) {
@@ -77,7 +77,7 @@ namespace zlpanel {
             multiplier *= kNotSelectedAlphaMultiplier;
         }
         stroke_alpha_[band] = multiplier;
-        stroke_colour_[band] = base_.getColourBlendedWithBackground(base_.getColourMap1(band), multiplier);
+        stroke_colour_[band] = base_.gui.getColourBlendedWithBackground(base_.gui.getColourMap1(band), multiplier);
     }
 
     void SinglePanel::run(const size_t band,
@@ -143,7 +143,7 @@ namespace zlpanel {
     template <bool thick>
     void SinglePanel::drawBand(juce::Graphics& g, const size_t band) {
         if (fill_alpha_[band] > .01f) {
-            g.setColour(base_.getColourMap1(band).withAlpha(fill_alpha_[band]));
+            g.setColour(base_.gui.getColourMap1(band).withAlpha(fill_alpha_[band]));
             fills_[band].pull();
             g.fillPath(fills_[band].get_reader());
         }
@@ -181,10 +181,10 @@ namespace zlpanel {
     }
 
     void SinglePanel::lookAndFeelChanged() {
-        curve_thickness_ = base_.getFontSize() * .175f * base_.getEQCurveThickness();
+        curve_thickness_ = base_.gui.getFontSize() * .175f * base_.getEQCurveThickness();
         for (size_t band = 0; band < zlp::kBandNum; ++band) {
-            stroke_colour_[band] = base_.getColourBlendedWithBackground(
-                base_.getColourMap1(band), stroke_alpha_[band]);
+            stroke_colour_[band] = base_.gui.getColourBlendedWithBackground(
+                base_.gui.getColourMap1(band), stroke_alpha_[band]);
         }
     }
 }

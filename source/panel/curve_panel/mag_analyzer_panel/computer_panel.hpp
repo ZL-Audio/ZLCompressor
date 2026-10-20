@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include "../../../PluginProcessor.hpp"
 #include "../../../gui/gui.hpp"
 #include "../../helper/helper.hpp"
@@ -20,7 +22,7 @@ namespace zlpanel {
     public:
         static constexpr size_t kNumPoint = 200;
 
-        explicit ComputerPanel(PluginProcessor& p, zlgui::UIBase& base);
+        explicit ComputerPanel(PluginProcessor& p, zlgui::UIState& base);
 
         ~ComputerPanel() override;
 
@@ -32,7 +34,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         static constexpr std::array kComputerIDs{
             zlp::PCompDirection::kID,
             zlp::PThreshold::kID, zlp::PRatio::kID, zlp::PKneeW::kID, zlp::PCurve::kID, zlp::PFloor::kID

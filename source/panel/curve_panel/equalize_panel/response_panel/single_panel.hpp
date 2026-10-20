@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include <array>
 #include <atomic>
 #include <span>
@@ -23,7 +25,7 @@
 namespace zlpanel {
     class SinglePanel final : public juce::Component {
     public:
-        explicit SinglePanel(zlgui::UIBase& base,
+        explicit SinglePanel(zlgui::UIState& base,
                              size_t& selected_band_idx,
                              std::vector<size_t>& not_off_indices);
 
@@ -51,7 +53,7 @@ namespace zlpanel {
         static constexpr float kNoBandSelectedAlphaMultiplier = .75f;
         static constexpr float kThickMultiplier = 1.15f;
 
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         size_t& selected_band_idx_;
         std::vector<size_t>& not_off_indices_;
 

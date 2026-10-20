@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include "BinaryData.h"
 
 #include "../../../PluginProcessor.hpp"
@@ -21,7 +23,7 @@ namespace zlpanel {
     class AnalyzerSettingPanel final : public juce::Component,
                                        private juce::ValueTree::Listener {
     public:
-        explicit AnalyzerSettingPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit AnalyzerSettingPanel(PluginProcessor& p, zlgui::UIState& base,
                                       multilingual::TooltipHelper& tooltip_helper);
 
         ~AnalyzerSettingPanel() override;
@@ -35,7 +37,7 @@ namespace zlpanel {
         void repaintCallBackSlow();
 
     private:
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         PanelBackground control_background_;

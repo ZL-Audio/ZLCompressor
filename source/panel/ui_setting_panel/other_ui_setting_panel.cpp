@@ -10,21 +10,21 @@
 #include "other_ui_setting_panel.hpp"
 
 namespace zlpanel {
-    OtherUISettingPanel::OtherUISettingPanel(PluginProcessor& p, zlgui::UIBase& base)
+    OtherUISettingPanel::OtherUISettingPanel(PluginProcessor& p, zlgui::UIState& base)
         : p_ref_(p),
-          base_(base), name_laf_(base),
-          refresh_rate_box_(zlstate::PTargetRefreshSpeed::kChoices, base),
-          fft_quality_box_(zlstate::PFFTQuality::kChoices, base),
-          fft_tilt_slider_("Tilt", base),
-          fft_speed_slider_("Speed", base),
-          combobox_alignment_box_(zlstate::PComboboxAlignment::kChoices, base),
-          mag_curve_slider_("Mag", base),
-          eq_curve_slider_("EQ", base),
-          tooltip_box_(zlstate::PTooltipLang::kChoices, base),
-          font_mode_box_(zlstate::PFontMode::kChoices, base),
-          font_scale_slider_("Scale", base),
-          static_font_size_slider_("Static", base),
-          window_size_fix_box_(zlstate::PWindowSizeFix::kChoices, base) {
+          base_(base), name_laf_(base.gui),
+          refresh_rate_box_(zlstate::PTargetRefreshSpeed::kChoices, base.gui),
+          fft_quality_box_(zlstate::PFFTQuality::kChoices, base.gui),
+          fft_tilt_slider_("Tilt", base.gui),
+          fft_speed_slider_("Speed", base.gui),
+          combobox_alignment_box_(zlstate::PComboboxAlignment::kChoices, base.gui),
+          mag_curve_slider_("Mag", base.gui),
+          eq_curve_slider_("EQ", base.gui),
+          tooltip_box_(zlstate::PTooltipLang::kChoices, base.gui),
+          font_mode_box_(zlstate::PFontMode::kChoices, base.gui),
+          font_scale_slider_("Scale", base.gui),
+          static_font_size_slider_("Static", base.gui),
+          window_size_fix_box_(zlstate::PWindowSizeFix::kChoices, base.gui) {
         juce::ignoreUnused(p_ref_);
         name_laf_.setFontScale(zlgui::kFontHuge);
 
@@ -98,13 +98,13 @@ namespace zlpanel {
         fft_quality_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getFFTQuality()));
         fft_tilt_slider_.getSlider().setValue(static_cast<double>(base_.getFFTExtraTilt()));
         fft_speed_slider_.getSlider().setValue(static_cast<double>(base_.getFFTExtraSpeed()));
-        combobox_alignment_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getComboboxAlignment()));
+        combobox_alignment_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.gui.getComboboxAlignment()));
         mag_curve_slider_.getSlider().setValue(base_.getMagCurveThickness());
-        tooltip_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getTooltipLangID()));
+        tooltip_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.gui.getTooltipLangID()));
         eq_curve_slider_.getSlider().setValue(base_.getEQCurveThickness());
-        font_mode_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getFontMode()), juce::sendNotificationSync);
-        font_scale_slider_.getSlider().setValue(static_cast<double>(base_.getFontScale()));
-        static_font_size_slider_.getSlider().setValue(static_cast<double>(base_.getFontSize()));
+        font_mode_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.gui.getFontMode()), juce::sendNotificationSync);
+        font_scale_slider_.getSlider().setValue(static_cast<double>(base_.gui.getFontScale()));
+        static_font_size_slider_.getSlider().setValue(static_cast<double>(base_.gui.getFontSize()));
         window_size_fix_box_.getBox().setSelectedItemIndex(static_cast<int>(base_.getWindowSizeFix()));
         comboBoxChanged(&font_mode_box_.getBox());
     }
@@ -114,13 +114,13 @@ namespace zlpanel {
         base_.setFFTQuality(static_cast<size_t>(fft_quality_box_.getBox().getSelectedItemIndex()));
         base_.setFFTExtraTilt(static_cast<float>(fft_tilt_slider_.getSlider().getValue()));
         base_.setFFTExtraSpeed(static_cast<float>(fft_speed_slider_.getSlider().getValue()));
-        base_.setComboboxAlignment(static_cast<size_t>(combobox_alignment_box_.getBox().getSelectedItemIndex()));
+        base_.gui.setComboboxAlignment(static_cast<size_t>(combobox_alignment_box_.getBox().getSelectedItemIndex()));
         base_.setMagCurveThickness(static_cast<float>(mag_curve_slider_.getSlider().getValue()));
         base_.setEQCurveThickness(static_cast<float>(eq_curve_slider_.getSlider().getValue()));
-        base_.setTooltipLandID(static_cast<size_t>(tooltip_box_.getBox().getSelectedItemIndex()));
-        base_.setFontMode(static_cast<size_t>(font_mode_box_.getBox().getSelectedItemIndex()));
-        base_.setFontScale(static_cast<float>(font_scale_slider_.getSlider().getValue()));
-        base_.setStaticFontSize(static_cast<float>(static_font_size_slider_.getSlider().getValue()));
+        base_.gui.setTooltipLandID(static_cast<size_t>(tooltip_box_.getBox().getSelectedItemIndex()));
+        base_.gui.setFontMode(static_cast<size_t>(font_mode_box_.getBox().getSelectedItemIndex()));
+        base_.gui.setFontScale(static_cast<float>(font_scale_slider_.getSlider().getValue()));
+        base_.gui.setStaticFontSize(static_cast<float>(static_font_size_slider_.getSlider().getValue()));
         base_.setWindowSizeFix(window_size_fix_box_.getBox().getSelectedItemIndex() > 0);
         base_.saveToAPVTS();
     }
@@ -129,16 +129,16 @@ namespace zlpanel {
     }
 
     int OtherUISettingPanel::getIdealHeight() const {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+        const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale * 3.f);
+        const auto slider_height = juce::roundToInt(base_.gui.getFontSize() * kSliderHeightScale);
 
         return padding * 9 + slider_height * 8;
     }
 
     void OtherUISettingPanel::resized() {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
-        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+        const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale * 3.f);
+        const auto slider_width = juce::roundToInt(base_.gui.getFontSize() * kSliderWidthScale);
+        const auto slider_height = juce::roundToInt(base_.gui.getFontSize() * kSliderHeightScale);
 
         auto bound = getLocalBounds();
         {

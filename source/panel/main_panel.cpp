@@ -10,7 +10,7 @@
 #include "main_panel.hpp"
 
 namespace zlpanel {
-    MainPanel::MainPanel(PluginProcessor& processor, zlgui::UIBase& base) :
+    MainPanel::MainPanel(PluginProcessor& processor, zlgui::UIState& base) :
         p_ref_(processor), base_(base),
         tooltip_helper_(
             static_cast<multilingual::TooltipLanguage>(std::round(
@@ -20,7 +20,8 @@ namespace zlpanel {
         control_panel_(processor, base_, tooltip_helper_),
         preset_browser_(processor, base_),
         ui_setting_panel_(processor, base_),
-        tooltipLAF(base_), tooltipWindow(&tooltip_target_),
+        tooltipLAF(base_.gui, zlgui::tooltip::TooltipLookAndFeel::Style::kShadowed),
+        tooltipWindow(&tooltip_target_),
         refresh_handler_(zlstate::PTargetRefreshSpeed::kRates[base_.getRefreshRateID()]) {
         juce::ignoreUnused(base_);
         addAndMakeVisible(curve_panel_);
@@ -59,10 +60,10 @@ namespace zlpanel {
         }
 
         const auto max_font_size = static_cast<float>(bound.getWidth()) * kFontSizeOverWidth;
-        const auto font_size = base_.getFontMode() == 0
-            ? max_font_size * std::clamp(base_.getFontScale(), 0.25f, 0.9f)
-            : std::clamp(base_.getStaticFontSize(), max_font_size * .25f, max_font_size * 0.9f);
-        base_.setFontSize(font_size);
+        const auto font_size = base_.gui.getFontMode() == 0
+            ? max_font_size * std::clamp(base_.gui.getFontScale(), 0.25f, 0.9f)
+            : std::clamp(base_.gui.getStaticFontSize(), max_font_size * .25f, max_font_size * 0.9f);
+        base_.gui.setFontSize(font_size);
         const auto main_bound = bound;
         const auto top_height = getTopPanelHeight(font_size);
         tooltip_target_.setBounds(bound.withTrimmedTop(top_height));

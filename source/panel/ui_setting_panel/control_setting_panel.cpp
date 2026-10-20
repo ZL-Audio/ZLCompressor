@@ -10,31 +10,31 @@
 #include "control_setting_panel.hpp"
 
 namespace zlpanel {
-    ControlSettingPanel::ControlSettingPanel(PluginProcessor& p, zlgui::UIBase& base)
+    ControlSettingPanel::ControlSettingPanel(PluginProcessor& p, zlgui::UIState& base)
         : p_ref_(p),
-          base_(base), name_laf_(base),
+          base_(base), name_laf_(base.gui),
           sensitivity_sliders_{
               {
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base),
-                  zlgui::slider::CompactLinearSlider < true, true, true > ("Menu", base)
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base.gui),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base.gui),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base.gui),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base.gui),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Rough", base.gui),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Fine", base.gui),
+                  zlgui::slider::CompactLinearSlider < true, true, true > ("Menu", base.gui)
               }
           },
-          wheel_reverse_box_(zlstate::PWheelShiftReverse::kChoices, base),
-          rotary_style_box_(zlstate::PRotaryStyle::kChoices, base),
-          rotary_drag_sensitivity_slider_("Distance", base),
-          slider_double_click_box_(zlstate::PSliderDoubleClickFunc::kChoices, base),
+          wheel_reverse_box_(zlstate::PWheelShiftReverse::kChoices, base.gui),
+          rotary_style_box_(zlstate::PRotaryStyle::kChoices, base.gui),
+          rotary_drag_sensitivity_slider_("Distance", base.gui),
+          slider_double_click_box_(zlstate::PSliderDoubleClickFunc::kChoices, base.gui),
           solo_action_mouse_boxes_{
-              zlgui::combobox::CompactCombobox(zlstate::PEnterSoloMouse::kChoices, base),
-              zlgui::combobox::CompactCombobox(zlstate::PExitSoloMouse::kChoices, base)
+              zlgui::combobox::CompactCombobox(zlstate::PEnterSoloMouse::kChoices, base.gui),
+              zlgui::combobox::CompactCombobox(zlstate::PExitSoloMouse::kChoices, base.gui)
           },
           solo_action_key_boxes_{
-              zlgui::combobox::CompactCombobox(zlstate::PEnterSoloKey::kChoices, base),
-              zlgui::combobox::CompactCombobox(zlstate::PExitSoloKey::kChoices, base)
+              zlgui::combobox::CompactCombobox(zlstate::PEnterSoloKey::kChoices, base.gui),
+              zlgui::combobox::CompactCombobox(zlstate::PExitSoloKey::kChoices, base.gui)
           } {
         juce::ignoreUnused(p_ref_);
         name_laf_.setFontScale(zlgui::kFontHuge);
@@ -93,14 +93,14 @@ namespace zlpanel {
 
     void ControlSettingPanel::loadSetting() {
         for (size_t i = 0; i < sensitivity_sliders_.size(); ++i) {
-            sensitivity_sliders_[i].getSlider().setValue(static_cast<double>(base_.getSensitivity(
+            sensitivity_sliders_[i].getSlider().setValue(static_cast<double>(base_.gui.getSensitivity(
                 static_cast<zlgui::SensitivityIdx>(i))));
         }
-        wheel_reverse_box_.getBox().setSelectedId(static_cast<int>(base_.getIsMouseWheelShiftReverse()) + 1);
-        rotary_style_box_.getBox().setSelectedId(static_cast<int>(base_.getRotaryStyleID()) + 1);
-        rotary_drag_sensitivity_slider_.getSlider().setValue(static_cast<double>(base_.getRotaryDragSensitivity()));
+        wheel_reverse_box_.getBox().setSelectedId(static_cast<int>(base_.gui.getIsMouseWheelShiftReverse()) + 1);
+        rotary_style_box_.getBox().setSelectedId(static_cast<int>(base_.gui.getRotaryStyleID()) + 1);
+        rotary_drag_sensitivity_slider_.getSlider().setValue(static_cast<double>(base_.gui.getRotaryDragSensitivity()));
         slider_double_click_box_.getBox().setSelectedId(
-            static_cast<int>(base_.getIsSliderDoubleClickOpenEditor()) + 1);
+            static_cast<int>(base_.gui.getIsSliderDoubleClickOpenEditor()) + 1);
         solo_action_mouse_boxes_[0].getBox().setSelectedItemIndex(static_cast<int>(base_.getEnterSoloMouse()));
         solo_action_key_boxes_[0].getBox().setSelectedItemIndex(static_cast<int>(base_.getEnterSoloKey()));
         solo_action_mouse_boxes_[1].getBox().setSelectedItemIndex(static_cast<int>(base_.getExitSoloMouse()));
@@ -109,13 +109,13 @@ namespace zlpanel {
 
     void ControlSettingPanel::saveSetting() {
         for (size_t i = 0; i < sensitivity_sliders_.size(); ++i) {
-            base_.setSensitivity(static_cast<float>(sensitivity_sliders_[i].getSlider().getValue()),
+            base_.gui.setSensitivity(static_cast<float>(sensitivity_sliders_[i].getSlider().getValue()),
                                  static_cast<zlgui::SensitivityIdx>(i));
         }
-        base_.setIsMouseWheelShiftReverse(static_cast<bool>(wheel_reverse_box_.getBox().getSelectedId() - 1));
-        base_.setRotaryStyleID(static_cast<size_t>(rotary_style_box_.getBox().getSelectedId() - 1));
-        base_.setRotaryDragSensitivity(static_cast<float>(rotary_drag_sensitivity_slider_.getSlider().getValue()));
-        base_.setIsSliderDoubleClickOpenEditor(
+        base_.gui.setIsMouseWheelShiftReverse(static_cast<bool>(wheel_reverse_box_.getBox().getSelectedId() - 1));
+        base_.gui.setRotaryStyleID(static_cast<size_t>(rotary_style_box_.getBox().getSelectedId() - 1));
+        base_.gui.setRotaryDragSensitivity(static_cast<float>(rotary_drag_sensitivity_slider_.getSlider().getValue()));
+        base_.gui.setIsSliderDoubleClickOpenEditor(
             static_cast<bool>(slider_double_click_box_.getBox().getSelectedId() - 1));
         base_.setEnterSoloMouse(static_cast<zlgui::MouseActionType>(
             solo_action_mouse_boxes_[0].getBox().getSelectedItemIndex()));
@@ -132,16 +132,16 @@ namespace zlpanel {
     }
 
     int ControlSettingPanel::getIdealHeight() const {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+        const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale * 3.f);
+        const auto slider_height = juce::roundToInt(base_.gui.getFontSize() * kSliderHeightScale);
 
         return padding * 8 + slider_height * 7;
     }
 
     void ControlSettingPanel::resized() {
-        const auto padding = juce::roundToInt(base_.getFontSize() * kPaddingScale * 3.f);
-        const auto slider_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale);
-        const auto slider_height = juce::roundToInt(base_.getFontSize() * kSliderHeightScale);
+        const auto padding = juce::roundToInt(base_.gui.getFontSize() * kPaddingScale * 3.f);
+        const auto slider_width = juce::roundToInt(base_.gui.getFontSize() * kSliderWidthScale);
+        const auto slider_height = juce::roundToInt(base_.gui.getFontSize() * kSliderHeightScale);
         static constexpr int kLabelWidth = 2;
 
         auto bound = getLocalBounds();

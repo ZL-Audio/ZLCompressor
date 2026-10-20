@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../PluginProcessor.hpp"
@@ -21,7 +23,7 @@
 namespace zlpanel {
     class RMSPanel final : public juce::Component {
     public:
-        explicit RMSPanel(zlgui::UIBase& base);
+        explicit RMSPanel(zlgui::UIState& base);
 
         void paint(juce::Graphics& g) override;
 
@@ -38,7 +40,7 @@ namespace zlpanel {
     private:
         static constexpr size_t kNumPoints = 100;
 
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
 
         zldsp::analyzer::MagRMSHistReceiver in_receiver_{}, out_receiver_{};
 

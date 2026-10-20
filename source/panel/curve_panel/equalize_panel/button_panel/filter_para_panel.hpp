@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "../../../../PluginProcessor.hpp"
 #include "../../../../gui/gui.hpp"
 #include "../../../helper/helper.hpp"
@@ -16,7 +18,7 @@
 namespace zlpanel {
     class FilterParaPanel final : public juce::Component {
     public:
-        explicit FilterParaPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx);
+        explicit FilterParaPanel(PluginProcessor& processor, zlgui::UIState& base, size_t& selected_band_idx);
 
         void resized() override;
 
@@ -32,7 +34,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
         size_t& selected_band_idx_;
 

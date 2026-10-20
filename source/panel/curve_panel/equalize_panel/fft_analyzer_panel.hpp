@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../../PluginProcessor.hpp"
@@ -26,7 +28,7 @@ namespace zlpanel {
     class FFTAnalyzerPanel final : public juce::Component,
                                    private juce::ValueTree::Listener {
     public:
-        explicit FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIBase& base);
+        explicit FFTAnalyzerPanel(PluginProcessor& processor, zlgui::UIState& base);
 
         ~FFTAnalyzerPanel() override;
 
@@ -46,7 +48,7 @@ namespace zlpanel {
         static constexpr size_t kInterSize = 64;
 
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
 
         bool skip_next_repaint_{false};
         AtomicBound<float> atomic_bound_;

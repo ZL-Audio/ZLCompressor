@@ -10,13 +10,13 @@
 #include "filter_para_panel.hpp"
 
 namespace zlpanel {
-    FilterParaPanel::FilterParaPanel(PluginProcessor& processor, zlgui::UIBase& base, size_t& selected_band_idx)
+    FilterParaPanel::FilterParaPanel(PluginProcessor& processor, zlgui::UIState& base, size_t& selected_band_idx)
         : p_ref_(processor), base_(base), selected_band_idx_(selected_band_idx),
-          label_laf_(base),
+          label_laf_(base.gui),
           freq_label_("", "Freq "),
           gain_label_("", "Gain "),
-          freq_slider_("", base, ""),
-          gain_slider_("", base, "") {
+          freq_slider_("", base.gui, ""),
+          gain_slider_("", base.gui, "") {
         label_laf_.setFontScale(1.25f);
         for (auto& l : {&freq_label_, &gain_label_}) {
             l->setLookAndFeel(&label_laf_);
@@ -42,23 +42,23 @@ namespace zlpanel {
     }
 
     int FilterParaPanel::getIdealWidth() const {
-        return juce::roundToInt(base_.getFontSize() * kSliderWidthScale * 1.15f);
+        return juce::roundToInt(base_.gui.getFontSize() * kSliderWidthScale * 1.15f);
     }
 
     int FilterParaPanel::getIdealHeight() const {
-        return juce::roundToInt(base_.getFontSize() * kButtonScale * 1.33f);
+        return juce::roundToInt(base_.gui.getFontSize() * kButtonScale * 1.33f);
     }
 
     void FilterParaPanel::resized() {
         auto bound = getLocalBounds();
-        const auto label_width = juce::roundToInt(base_.getFontSize() * kSliderWidthScale * .5f);
+        const auto label_width = juce::roundToInt(base_.gui.getFontSize() * kSliderWidthScale * .5f);
         auto t_bound = bound.removeFromTop(bound.getHeight() / 2);
         freq_label_.setBounds(t_bound.removeFromLeft(label_width));
         freq_slider_.setBounds(t_bound);
         gain_label_.setBounds(bound.removeFromLeft(label_width));
         gain_slider_.setBounds(bound);
 
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto dragging_distance = getSliderDraggingDistance(font_size);
         for (auto& s : {&freq_slider_, &gain_slider_}) {
             s->setMouseDragSensitivity(dragging_distance);

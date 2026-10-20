@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../state/ui_state.hpp"
+
 #include "../../PluginProcessor.hpp"
 #include "../../gui/gui.hpp"
 #include "../helper/helper.hpp"
@@ -18,7 +20,7 @@
 namespace zlpanel {
     class BottomControlPanel final : public juce::Component {
     public:
-        explicit BottomControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit BottomControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                     const multilingual::TooltipHelper& tooltip_helper);
 
         void paint(juce::Graphics& g) override;
@@ -31,7 +33,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         zlgui::attachment::ComponentUpdater updater_;
 
         RMSControlPanel rms_control_panel_;
@@ -47,7 +49,6 @@ namespace zlpanel {
         zlgui::combobox::CompactCombobox style_box_;
         zlgui::attachment::ComboBoxAttachment<true> style_attachment_;
 
-        const std::unique_ptr<juce::Drawable> rms_drawable_;
         zlgui::button::ClickButton rms_button_;
         zlgui::attachment::ButtonAttachment<true> rms_attachment_;
     };

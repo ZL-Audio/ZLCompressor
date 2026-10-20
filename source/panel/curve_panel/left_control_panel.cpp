@@ -10,47 +10,46 @@
 #include "left_control_panel.hpp"
 
 namespace zlpanel {
-    LeftControlPanel::LeftControlPanel(PluginProcessor& p, zlgui::UIBase& base,
+    LeftControlPanel::LeftControlPanel(PluginProcessor& p, zlgui::UIState& base,
                                        multilingual::TooltipHelper& tooltip_helper) :
         base_(base),
         pre_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PPreCurveDisplay::kID)),
         post_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PPostCurveDisplay::kID)),
         delta_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PDeltaCurveDisplay::kID)),
         side_curve_display_ref_(*p.na_parameters_.getRawParameterValue(zlstate::PSideChainCurveDisplay::kID)),
-        side_control_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_link_svg,
-                                                                        BinaryData::dline_link_svgSize)),
-        side_control_show_button_(base, side_control_show_drawable_.get(), side_control_show_drawable_.get(),
-                                  tooltip_helper.getToolTipText(multilingual::kSideControlPanel)),
+        side_control_show_button_(base.gui,
+                                  juce::Drawable::createFromImageData(
+                                      BinaryData::dline_link_svg, BinaryData::dline_link_svgSize),
+                                  true, tooltip_helper.getToolTipText(multilingual::kSideControlPanel)),
         side_control_show_attachment_(side_control_show_button_.getButton(), p.na_parameters_,
                                       zlstate::PSideControlDisplay::kID, updater_),
-        equalize_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_eq_svg,
-                                                                    BinaryData::dline_eq_svgSize)),
-        equalize_show_button_(base, equalize_show_drawable_.get(), equalize_show_drawable_.get(),
-                              tooltip_helper.getToolTipText(multilingual::kSideEQPanel)),
+        equalize_show_button_(base.gui,
+                              juce::Drawable::createFromImageData(
+                                  BinaryData::dline_eq_svg, BinaryData::dline_eq_svgSize),
+                              true, tooltip_helper.getToolTipText(multilingual::kSideEQPanel)),
         equalize_show_attachment_(equalize_show_button_.getButton(), p.na_parameters_,
                                   zlstate::PSideEQDisplay::kID, updater_),
-        computer_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_computer_svg,
-                                                                    BinaryData::dline_computer_svgSize)),
-        computer_show_button_(base, computer_show_drawable_.get(), computer_show_drawable_.get(),
-                              tooltip_helper.getToolTipText(multilingual::kGainTransferPanel)),
+        computer_show_button_(base.gui,
+                              juce::Drawable::createFromImageData(
+                                  BinaryData::dline_computer_svg, BinaryData::dline_computer_svgSize),
+                              true, tooltip_helper.getToolTipText(multilingual::kGainTransferPanel)),
         computer_show_attachment_(computer_show_button_.getButton(), p.na_parameters_,
                                   zlstate::PComputerCurveDisplay::kID, updater_),
-        rms_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_rms_svg,
-                                                               BinaryData::dline_rms_svgSize)),
-        rms_show_button_(base, rms_show_drawable_.get(), rms_show_drawable_.get(),
-                         tooltip_helper.getToolTipText(multilingual::kCumuRMSPanel)),
+        rms_show_button_(base.gui,
+                         juce::Drawable::createFromImageData(BinaryData::dline_rms_svg, BinaryData::dline_rms_svgSize),
+                         true, tooltip_helper.getToolTipText(multilingual::kCumuRMSPanel)),
         rms_show_attachment_(rms_show_button_.getButton(), p.na_parameters_,
                              zlstate::PRMSAnalyzerDisplay::kID, updater_),
-        meter_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_meter_svg,
-                                                                 BinaryData::dline_meter_svgSize)),
-        meter_show_button_(base, meter_show_drawable_.get(), meter_show_drawable_.get(),
-                           tooltip_helper.getToolTipText(multilingual::kMeterPanel)),
+        meter_show_button_(base.gui,
+                           juce::Drawable::createFromImageData(
+                               BinaryData::dline_meter_svg, BinaryData::dline_meter_svgSize),
+                           true, tooltip_helper.getToolTipText(multilingual::kMeterPanel)),
         meter_show_attachment_(meter_show_button_.getButton(), p.na_parameters_,
                                zlstate::PMeterDisplay::kID, updater_),
-        analyzer_setting_show_drawable_(juce::Drawable::createFromImageData(BinaryData::dline_magnitude_svg,
-                                                                            BinaryData::dline_magnitude_svgSize)),
-        analyzer_setting_show_button_(base, analyzer_setting_show_drawable_.get(),
-                                      analyzer_setting_show_drawable_.get(), "") {
+        analyzer_setting_show_button_(base.gui,
+                                      juce::Drawable::createFromImageData(
+                                          BinaryData::dline_magnitude_svg, BinaryData::dline_magnitude_svgSize),
+                                      true) {
         juce::ignoreUnused(tooltip_helper);
 
         for (auto& b : {&side_control_show_button_, &equalize_show_button_,
@@ -75,7 +74,7 @@ namespace zlpanel {
 
     void LeftControlPanel::resized() {
         auto bound = getLocalBounds();
-        const auto button_height = juce::roundToInt(base_.getFontSize() * kButtonScale);
+        const auto button_height = juce::roundToInt(base_.gui.getFontSize() * kButtonScale);
         const auto height = (bound.getHeight() - kButtonNum * button_height) / kButtonNum;
         bound.removeFromBottom(height / 2);
         meter_show_button_.setBounds(bound.removeFromBottom(button_height));

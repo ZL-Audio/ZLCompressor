@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../state/ui_state.hpp"
+
 #include "mag_background_panel/mag_background_panel.hpp"
 #include "computer_panel.hpp"
 #include "peak_panel.hpp"
@@ -20,7 +22,7 @@
 namespace zlpanel {
     class MagAnalyzerPanel final : public juce::Component {
     public:
-        explicit MagAnalyzerPanel(PluginProcessor& p, zlgui::UIBase& base);
+        explicit MagAnalyzerPanel(PluginProcessor& p, zlgui::UIState& base);
 
         ~MagAnalyzerPanel() override;
 
@@ -50,7 +52,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         std::atomic<float>& meter_display_ref_;
 
         zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum> transfer_buffer_{};

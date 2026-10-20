@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../../../../state/ui_state.hpp"
+
 #include "dragger_panel.hpp"
 #include "popup_panel.hpp"
 #include "filter_para_panel.hpp"
@@ -21,7 +23,7 @@ namespace zlpanel {
                               private juce::LassoSource<size_t>,
                               private juce::ChangeListener {
     public:
-        explicit ButtonPanel(PluginProcessor& p, zlgui::UIBase& base,
+        explicit ButtonPanel(PluginProcessor& p, zlgui::UIState& base,
                              size_t& selected_band_idx);
 
         ~ButtonPanel() override;
@@ -76,7 +78,7 @@ namespace zlpanel {
 
     private:
         PluginProcessor& p_ref_;
-        zlgui::UIBase& base_;
+        zlgui::UIState& base_;
         size_t previous_band_idx_{zlp::kBandNum};
         size_t& selected_band_idx_;
 

@@ -10,8 +10,10 @@
 #include "compact_button.hpp"
 
 namespace zlgui::button {
-    CompactButton::CompactButton(const juce::String& labelText, UIBase& base, const juce::String& tooltip_text)
+    CompactButton::CompactButton(const juce::String& labelText, UIBase& base, const juce::String& tooltip_text,
+                                 std::unique_ptr<juce::Drawable> drawable)
         : base_(base), laf_(base_) {
+        laf_.setDrawable(std::move(drawable));
         button_.setToggleable(true);
         button_.setClickingTogglesState(true);
         button_.setButtonText(labelText);
@@ -40,8 +42,7 @@ namespace zlgui::button {
         if (button_.getToggleState() && laf_.getDepth() < 0.1f) {
             laf_.setDepth(1.f);
             button_.repaint();
-        }
-        else if (!button_.getToggleState()) {
+        } else if (!button_.getToggleState()) {
             laf_.setDepth(0.f);
             button_.repaint();
         }

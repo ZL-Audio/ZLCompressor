@@ -10,11 +10,11 @@
 #include "analyzer_setting_panel.hpp"
 
 namespace zlpanel {
-    AnalyzerSettingPanel::AnalyzerSettingPanel(PluginProcessor& p, zlgui::UIBase& base,
+    AnalyzerSettingPanel::AnalyzerSettingPanel(PluginProcessor& p, zlgui::UIState& base,
                                                multilingual::TooltipHelper& tooltip_helper) :
         base_(base), updater_(),
         control_background_(base),
-        mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base,
+        mag_type_box_(zlstate::PAnalyzerMagType::kChoices, base.gui,
                       tooltip_helper.getToolTipText(multilingual::kMagMeasureMethod)),
         mag_type_attachment_(mag_type_box_.getBox(), p.na_parameters_,
                              zlstate::PAnalyzerMagType::kID, updater_),
@@ -33,37 +33,37 @@ namespace zlpanel {
             icons.emplace_back(
                 juce::Drawable::createFromImageData(BinaryData::side_svg, BinaryData::side_svgSize));
             return icons;
-        }(), base, tooltip_helper.getToolTipText(multilingual::kMagMeasureStereo),
+        }(), base.gui, tooltip_helper.getToolTipText(multilingual::kMagMeasureStereo),
         {zlstate::PAnalyzerStereo::kChoices.begin(), zlstate::PAnalyzerStereo::kChoices.end()}),
         mag_stereo_attachment_(mag_stereo_box_.getBox(), p.na_parameters_,
                                zlstate::PAnalyzerStereo::kID, updater_),
-        move_type_box_(zlstate::PAnalyzerMoveType::kChoices, base, ""),
+        move_type_box_(zlstate::PAnalyzerMoveType::kChoices, base.gui, ""),
         move_type_attachment_(move_type_box_.getBox(), p.na_parameters_,
                               zlstate::PAnalyzerMoveType::kID, updater_),
-        pre_button_(base, "Pre", ""),
+        pre_button_(base.gui, "Pre", ""),
         pre_button_attachment_(pre_button_.getButton(), p.na_parameters_,
                                zlstate::PPreCurveDisplay::kID, updater_),
-        post_button_(base, "Post", ""),
+        post_button_(base.gui, "Post", ""),
         post_button_attachment_(post_button_.getButton(), p.na_parameters_,
                                 zlstate::PPostCurveDisplay::kID, updater_),
-        delta_button_(base, "Delta", ""),
+        delta_button_(base.gui, "Delta", ""),
         delta_button_attachment_(delta_button_.getButton(), p.na_parameters_,
                                  zlstate::PDeltaCurveDisplay::kID, updater_),
-        side_button_(base, "Side", ""),
+        side_button_(base.gui, "Side", ""),
         side_button_attachment_(side_button_.getButton(), p.na_parameters_,
                                 zlstate::PSideChainCurveDisplay::kID, updater_),
-        time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base,
+        time_length_box_(zlstate::PAnalyzerTimeLength::kChoices, base.gui,
                          tooltip_helper.getToolTipText(multilingual::kMagAnalyzerTimeLength)),
         time_length_attachment_(time_length_box_.getBox(), p.na_parameters_,
                                 zlstate::PAnalyzerTimeLength::kID, updater_),
-        max_db_box_(zlstate::PAnalyzerMaxDB::kChoices, base, ""),
+        max_db_box_(zlstate::PAnalyzerMaxDB::kChoices, base.gui, ""),
         max_db_attachment_(max_db_box_.getBox(), p.na_parameters_,
                            zlstate::PAnalyzerMaxDB::kID, updater_),
-        min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base,
+        min_db_box_(zlstate::PAnalyzerMinDB::kChoices, base.gui,
                     tooltip_helper.getToolTipText(multilingual::kMagAnalyzerMinDB)),
         min_db_attachment_(min_db_box_.getBox(), p.na_parameters_,
                            zlstate::PAnalyzerMinDB::kID, updater_),
-        label_laf_(base),
+        label_laf_(base.gui),
         delimiter_label_("", "~"),
         db_label_("", "dB") {
 
@@ -72,7 +72,7 @@ namespace zlpanel {
 
         const auto popup_option = juce::PopupMenu::Options().withPreferredPopupDirection(
             juce::PopupMenu::Options::PopupDirection::downwards);
-        const auto box_alignment = combobox_helper::getAlignment(base_.getComboboxAlignment());
+        const auto box_alignment = combobox_helper::getAlignment(base_.gui.getComboboxAlignment());
         mag_type_box_.getLAF().setItemAlignment(box_alignment);
         move_type_box_.getLAF().setItemAlignment(box_alignment);
         for (auto& box : {&mag_type_box_, &mag_stereo_box_, &move_type_box_}) {
@@ -114,7 +114,7 @@ namespace zlpanel {
     }
 
     int AnalyzerSettingPanel::getIdealWidth() const {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto slider_width = getSliderWidth(font_size);
 
@@ -122,7 +122,7 @@ namespace zlpanel {
     }
 
     int AnalyzerSettingPanel::getIdealHeight() const {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto padding = getPaddingSize(font_size);
         const auto button_height = getButtonSize(font_size);
 
@@ -130,7 +130,7 @@ namespace zlpanel {
     }
 
     void AnalyzerSettingPanel::resized() {
-        const auto font_size = base_.getFontSize();
+        const auto font_size = base_.gui.getFontSize();
         const auto button_height = getButtonSize(font_size);
         const auto padding = getPaddingSize(font_size);
 
