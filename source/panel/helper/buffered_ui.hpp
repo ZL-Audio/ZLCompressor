@@ -11,10 +11,14 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace zlpanel {
+    /**
+     * a single-producer, single-consumer buffer retaining the latest publication
+     */
     template <typename C>
     class BufferedUI {
     public:
@@ -25,11 +29,12 @@ namespace zlpanel {
          * @return whether the object has been updated
          */
         bool pull() {
-            if (new_frame_ready_.exchange(false, std::memory_order_acquire)) {
-                read_idx_ = clean_idx_.exchange(read_idx_, std::memory_order_acq_rel);
-                return true;
+            if ((middle_state_.load(std::memory_order::relaxed) & kDirtyBit) == 0) {
+                return false;
             }
-            return false;
+            // only the consumer clears the dirty bit; concurrent publishes keep it set
+            read_idx_ = middle_state_.exchange(read_idx_, std::memory_order_acq_rel) & kIndexMask;
+            return true;
         }
 
         /**
@@ -52,8 +57,7 @@ namespace zlpanel {
          * publish new object after writing
          */
         void publish() {
-            write_idx_ = clean_idx_.exchange(write_idx_, std::memory_order_acq_rel);
-            new_frame_ready_.store(true, std::memory_order_release);
+            write_idx_ = middle_state_.exchange(write_idx_ | kDirtyBit, std::memory_order_acq_rel) & kIndexMask;
         }
 
         std::array<C, 3>& get_buffer() {
@@ -61,12 +65,17 @@ namespace zlpanel {
         }
 
     private:
+        using State = std::uint32_t;
+        static_assert(std::atomic<State>::is_always_lock_free, "BufferedUI requires lock-free atomic std::uint32_t");
+
+        static constexpr State kIndexMask = 0b011u;
+        static constexpr State kDirtyBit = 0b100u;
+
         std::array<C, 3> buffer_;
 
-        alignas(64) std::atomic<int> clean_idx_{2};
-        std::atomic<bool> new_frame_ready_{false};
+        alignas(64) std::atomic<State> middle_state_{2};
 
-        alignas(64) int read_idx_{0};
-        alignas(64) int write_idx_{1};
+        alignas(64) State read_idx_{0};
+        alignas(64) State write_idx_{1};
     };
 }
