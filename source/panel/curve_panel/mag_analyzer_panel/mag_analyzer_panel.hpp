@@ -72,7 +72,7 @@ namespace zlpanel {
         zlgui::slider::SnappingSlider ratio_slider_;
         zlgui::attachment::SliderAttachment<true> ratio_attachment_;
 
-        std::atomic<double> next_stamp_{0.};
+        std::atomic<double> next_stamp_{kUnsetHistoryTimeStamp};
         double rms_previous_stamp_{0.};
 
         double sample_rate_{0.0};

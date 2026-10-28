@@ -9,6 +9,8 @@
 
 #include "meter_display_panel.hpp"
 
+#include "../../../helper/history_timing.hpp"
+
 namespace zlpanel {
     MeterDisplayPanel::MeterDisplayPanel(PluginProcessor& p, zlgui::UIState& base) :
         base_(base),
@@ -111,13 +113,32 @@ namespace zlpanel {
                                      out_peak_.load(std::memory_order::relaxed));
     }
 
+    void MeterDisplayPanel::resetTiming(const double time_stamp) {
+        start_time_ = time_stamp;
+        is_first_point_ = true;
+        previous_reduction_.fill(0.f);
+        previous_pre_.fill(-240.f);
+        previous_out_.fill(-240.f);
+        pre_decay_mul_.fill(1.f);
+        out_decay_mul_.fill(1.f);
+        target_gap_db_.fill(0.0);
+        gap_remaining_seconds_.fill(0.0);
+        circular_min_max_.clear();
+    }
+
     void MeterDisplayPanel::run(const double next_time_stamp,
                                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
                                 const size_t consumer_id, const MagDBRange& db_range) {
+        if (!isValidHistoryTimeStamp(next_time_stamp)) {
+            return;
+        }
         updateSize();
         if (is_first_point_) {
             is_first_point_ = false;
             start_time_ = next_time_stamp;
+            return;
+        }
+        if (next_time_stamp <= start_time_) {
             return;
         }
         if (reset_peaks_.exchange(false, std::memory_order::relaxed)) {

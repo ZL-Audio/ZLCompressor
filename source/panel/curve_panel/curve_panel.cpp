@@ -114,6 +114,9 @@ namespace zlpanel {
         while (!threadShouldExit()) {
             const auto flag = wait(-1);
             juce::ignoreUnused(flag);
+            if (threadShouldExit()) {
+                return;
+            }
             const MagDBRange mag_db_range{
                 zlstate::PAnalyzerMaxDB::getDBFromIndex(
                     analyzer_max_db_ref_.load(std::memory_order::relaxed)),

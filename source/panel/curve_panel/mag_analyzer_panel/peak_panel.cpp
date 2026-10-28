@@ -100,10 +100,48 @@ namespace zlpanel {
         lookAndFeelChanged();
     }
 
-    void PeakPanel::run(const double next_time_stamp, RMSPanel& rms_panel,
+    bool PeakPanel::shouldResetHistory(const double next_time_stamp) const {
+        const auto time_idx = static_cast<size_t>(std::round(
+            analyzer_time_length_ref_.load(std::memory_order::relaxed)));
+        const auto history_length = static_cast<double>(zlstate::PAnalyzerTimeLength::kLength[time_idx]);
+        if (hasHistoryTimeDiscontinuity(next_time_stamp, previous_time_stamp_, history_length)) {
+            return true;
+        }
+        return !is_first_point_ &&
+               (next_time_stamp - start_time_ > history_length ||
+                getHistoryAdvance(next_time_stamp, start_time_, second_per_point_, pre_ys_.size()).needs_reset);
+    }
+
+    void PeakPanel::resetHistory(const double time_stamp) {
+        is_first_point_ = true;
+        start_time_ = time_stamp;
+        motion_start_time_ = time_stamp;
+        previous_time_stamp_ = time_stamp;
+        roll_next_point_ = 0;
+        num_missing_points_ = 0;
+        too_much_samples_ = 0;
+        pre_db_ = -240.f;
+        out_db_ = -240.f;
+        side_chain_db_ = -240.f;
+        reduction_db_ = 0.f;
+        const auto missing_y = std::fma(kMissingDB, db_to_y_scale_, db_to_y_bias_);
+        std::ranges::fill(pre_ys_, missing_y);
+        std::ranges::fill(out_ys_, missing_y);
+        std::ranges::fill(side_chain_ys_, missing_y);
+        std::ranges::fill(reduction_ys_, reduction_y_bias_);
+        for (auto* path : {&in_path_, &out_path_, &side_chain_path_, &reduction_path_}) {
+            path->get_writer().clear();
+            path->publish();
+        }
+    }
+
+    void PeakPanel::run(const juce::Thread& thread, const double next_time_stamp, RMSPanel& rms_panel,
                         zldsp::analyzer::FIFOTransferBuffer<
                             zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
                         const size_t consumer_id, const MagDBRange& db_range) {
+        if (thread.threadShouldExit() || !isValidHistoryTimeStamp(next_time_stamp)) {
+            return;
+        }
         const auto bound = atomic_bound_.load();
         const auto stereo_type = static_cast<zldsp::analyzer::StereoType>(std::round(
             analyzer_stereo_type_ref_.load(std::memory_order::relaxed)));
@@ -120,9 +158,10 @@ namespace zlpanel {
         const auto sample_rate = transfer_buffer.getSampleRate();
         const auto max_num_samples = transfer_buffer.getMaxNumSamples();
 
-        if (std::abs(sample_rate_ - sample_rate) > 0.1 ||
-            max_num_samples_ != max_num_samples ||
-            std::abs(time_length_idx_ - time_length_idx) > 0.1 || move_type_ != move_type) {
+        const auto settings_changed = std::abs(sample_rate_ - sample_rate) > 0.1 ||
+                                      max_num_samples_ != max_num_samples ||
+                                      std::abs(time_length_idx_ - time_length_idx) > 0.1 || move_type_ != move_type;
+        if (settings_changed) {
             sample_rate_ = sample_rate;
             max_num_samples_ = max_num_samples;
             time_length_idx_ = time_length_idx;
@@ -134,9 +173,6 @@ namespace zlpanel {
                 rounded_sample_rate, kNumPointsPerSecond[time_idx], static_cast<int>(std::round(time_length_)));
             num_samples_per_point_ = rounded_sample_rate / num_points_per_second_;
             is_first_point_ = true;
-            num_missing_points_ = 0;
-            too_much_samples_ = 0;
-            roll_next_point_ = 0;
             num_points_ = static_cast<size_t>(num_points_per_second_) * static_cast<size_t>(time_length_);
             second_per_point_ = static_cast<double>(time_length_) / static_cast<double>(num_points_);
 
@@ -149,12 +185,29 @@ namespace zlpanel {
         }
 
         updateYMapping(bound, db_range, center_reduction);
+        if (settings_changed) {
+            resetHistory(next_time_stamp);
+        }
+        previous_time_stamp_ = next_time_stamp;
         const auto missing_y = std::fma(kMissingDB, db_to_y_scale_, db_to_y_bias_);
 
         auto& fifo{transfer_buffer.getMulticastFIFO()};
         if (!is_first_point_) {
+            const auto advance = getHistoryAdvance(next_time_stamp, start_time_, second_per_point_, pre_ys_.size());
+            // reset if the pending update exceeds the history limit
+            if (advance.needs_reset) {
+                resetHistory(next_time_stamp);
+                const auto num_ready = fifo.getNumReady(consumer_id);
+                if (num_ready > 0) {
+                    fifo.finishRead(consumer_id, num_ready);
+                }
+                return;
+            }
             // update ys
-            while (next_time_stamp - start_time_ > second_per_point_) {
+            for (size_t i = 0; i < advance.num_points; ++i) {
+                if (thread.threadShouldExit()) {
+                    return;
+                }
                 // if not enough samples
                 if (fifo.getNumReady(consumer_id) >= num_samples_per_point_) {
                     const auto range = fifo.prepareToRead(consumer_id, num_samples_per_point_);
@@ -212,8 +265,8 @@ namespace zlpanel {
                 if (move_type_ == MoveType::kRoll) {
                     roll_next_point_ = (roll_next_point_ + 1) % xs_.size();
                 }
-                start_time_ += second_per_point_;
             }
+            start_time_ = advance.time_stamp;
             // if too much samples
             const auto num_ready = fifo.getNumReady(consumer_id);
             const auto threshold = 2 * std::max(static_cast<int>(max_num_samples_), num_samples_per_point_);

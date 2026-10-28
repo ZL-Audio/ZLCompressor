@@ -9,6 +9,8 @@
 
 #include "mag_analyzer_panel.hpp"
 
+#include <mutex>
+
 namespace zlpanel {
     MagAnalyzerPanel::MagAnalyzerPanel(PluginProcessor& p, zlgui::UIState& base) :
         p_ref_(p), base_(base),
@@ -52,22 +54,50 @@ namespace zlpanel {
     void MagAnalyzerPanel::run(const juce::Thread& thread, const MagDBRange& db_range) {
         juce::ScopedNoDenormals no_denormals;
         const auto time_stamp = next_stamp_.load(std::memory_order::relaxed);
-        auto& sender{p_ref_.getCompressController().getMagAnalyzerSender()};
-        sender.getLock().lock();
-
-        if (std::abs(sample_rate_ - sender.getSampleRate()) > 1.0 ||
-            max_sum_samples_ != sender.getMaxNumSamples()) {
-            sample_rate_ = sender.getSampleRate();
-            max_sum_samples_ = sender.getMaxNumSamples();
-            transfer_buffer_.prepare(sample_rate_, max_sum_samples_, {2, 2, 2, 2}, 0.5);
+        if (thread.threadShouldExit() || !isValidHistoryTimeStamp(time_stamp)) {
+            return;
         }
-        transfer_buffer_.processTransfer(sender.getAbstractFIFO(), sender.getSampleFIFOs());
-        sender.getLock().unlock();
+        const auto reset_history = peak_panel_.shouldResetHistory(time_stamp);
+        auto& sender{p_ref_.getCompressController().getMagAnalyzerSender()};
+        {
+            const std::unique_lock lock{sender.getLock(), std::try_to_lock};
+            if (!lock.owns_lock() || thread.threadShouldExit()) {
+                return;
+            }
+            if (std::abs(sample_rate_ - sender.getSampleRate()) > 1.0 ||
+                max_sum_samples_ != sender.getMaxNumSamples()) {
+                sample_rate_ = sender.getSampleRate();
+                max_sum_samples_ = sender.getMaxNumSamples();
+                transfer_buffer_.prepare(sample_rate_, max_sum_samples_, {2, 2, 2, 2}, 0.5);
+            }
+            if (reset_history) {
+                // discard stale samples before restarting history
+                auto& sender_fifo{sender.getAbstractFIFO()};
+                const auto num_ready = sender_fifo.getNumReady();
+                (void)sender_fifo.prepareToRead(num_ready);
+                sender_fifo.finishRead(num_ready);
+
+                auto& fifo{transfer_buffer_.getMulticastFIFO()};
+                for (const auto consumer_id : {peak_consumer_id_, meter_consumer_id_}) {
+                    const auto num_pending = fifo.getNumReady(consumer_id);
+                    if (num_pending > 0) {
+                        (void)fifo.prepareToRead(consumer_id, num_pending);
+                        fifo.finishRead(consumer_id, num_pending);
+                    }
+                }
+            } else {
+                transfer_buffer_.processTransfer(sender.getAbstractFIFO(), sender.getSampleFIFOs());
+            }
+        }
         if (thread.threadShouldExit()) {
             return;
         }
+        if (reset_history) {
+            peak_panel_.resetHistory(time_stamp);
+            meter_panel_.getDisplayPanel().resetTiming(time_stamp);
+        }
         if (sample_rate_ > 20000.0 && max_sum_samples_ > 0) {
-            peak_panel_.run(time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_, db_range);
+            peak_panel_.run(thread, time_stamp, rms_panel_, transfer_buffer_, peak_consumer_id_, db_range);
             if (thread.threadShouldExit()) {
                 return;
             }
@@ -93,9 +123,12 @@ namespace zlpanel {
     }
 
     void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {
+        if (!isValidHistoryTimeStamp(time_stamp)) {
+            return;
+        }
         next_stamp_.store(time_stamp, std::memory_order::relaxed);
         repaint();
-        if (time_stamp - rms_previous_stamp_ > 1. && rms_panel_.isVisible()) {
+        if ((time_stamp < rms_previous_stamp_ || time_stamp - rms_previous_stamp_ > 1.) && rms_panel_.isVisible()) {
             rms_panel_.repaint();
             rms_previous_stamp_ = time_stamp;
         }
