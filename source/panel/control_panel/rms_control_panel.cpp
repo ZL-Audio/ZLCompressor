@@ -40,6 +40,8 @@ namespace zlpanel {
             addAndMakeVisible(l);
         }
 
+        rms_length_slider_.setComponentID(zlp::PRMSLength::kID);
+        rms_speed_slider_.setComponentID(zlp::PRMSSpeed::kID);
         rms_mix_slider_.setComponentID(zlp::PRMSMix::kID);
         for (auto& s : {&rms_length_slider_, &rms_speed_slider_, &rms_mix_slider_}) {
             s->setPrecision(3);

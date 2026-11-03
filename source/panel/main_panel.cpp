@@ -107,9 +107,9 @@ namespace zlpanel {
             if (preset_browser_.isVisible()) {
                 preset_browser_.flushPendingScroll();
             }
-            curve_panel_.repaintCallBack(time_stamp);
-
             const auto c_refresh_rate = refresh_handler_.getActualRefreshRate();
+            curve_panel_.repaintCallBack(time_stamp, c_refresh_rate);
+
             if (std::abs(c_refresh_rate - refresh_rate_) > 1e-3) {
                 refresh_rate_ = c_refresh_rate;
                 curve_panel_.getFFTAnalyzerPanel().setRefreshRate(refresh_rate_);

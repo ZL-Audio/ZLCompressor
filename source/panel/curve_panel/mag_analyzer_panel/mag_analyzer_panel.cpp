@@ -101,7 +101,8 @@ namespace zlpanel {
             if (thread.threadShouldExit()) {
                 return;
             }
-            meter_panel_.getDisplayPanel().run(time_stamp, transfer_buffer_, meter_consumer_id_, db_range);
+            meter_panel_.getDisplayPanel().run(time_stamp, transfer_buffer_, meter_consumer_id_, db_range,
+                                               actual_refresh_rate_.load(std::memory_order::relaxed));
         }
         if (thread.threadShouldExit()) {
             return;
@@ -122,10 +123,11 @@ namespace zlpanel {
         }
     }
 
-    void MagAnalyzerPanel::repaintCallBack(const double time_stamp) {
+    void MagAnalyzerPanel::repaintCallBack(const double time_stamp, const double actual_refresh_rate) {
         if (!isValidHistoryTimeStamp(time_stamp)) {
             return;
         }
+        actual_refresh_rate_.store(actual_refresh_rate, std::memory_order::relaxed);
         next_stamp_.store(time_stamp, std::memory_order::relaxed);
         repaint();
         if ((time_stamp < rms_previous_stamp_ || time_stamp - rms_previous_stamp_ > 1.) && rms_panel_.isVisible()) {

@@ -168,8 +168,8 @@ namespace zlpanel {
         analyzer_setting_panel_.repaintCallBackSlow();
     }
 
-    void CurvePanel::repaintCallBack(const double time_stamp) {
-        mag_analyzer_panel_.repaintCallBack(time_stamp);
+    void CurvePanel::repaintCallBack(const double time_stamp, const double actual_refresh_rate) {
+        mag_analyzer_panel_.repaintCallBack(time_stamp, actual_refresh_rate);
         if (equalize_panel_.isVisible()) {
             equalize_panel_.repaintCallBack(time_stamp);
         }

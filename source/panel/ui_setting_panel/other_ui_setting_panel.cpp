@@ -80,7 +80,7 @@ namespace zlpanel {
         addAndMakeVisible(font_label_);
         font_mode_box_.getBox().addListener(this);
         addAndMakeVisible(font_mode_box_);
-        font_scale_slider_.getSlider().setNormalisableRange(juce::NormalisableRange<double>(0.5, 1.0, .01));
+        font_scale_slider_.getSlider().setNormalisableRange(juce::NormalisableRange<double>(0.5, 0.9, .01));
         font_scale_slider_.getSlider().setDoubleClickReturnValue(true, 0.9);
         addAndMakeVisible(font_scale_slider_);
         static_font_size_slider_.setInterceptsMouseClicks(false, false);

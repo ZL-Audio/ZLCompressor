@@ -20,10 +20,10 @@ namespace zlpanel {
 
         const auto target_refresh_id = p.state_.getRawParameterValue(
             zlstate::PTargetRefreshSpeed::kID)->load(std::memory_order::relaxed);
-        const auto circular_capacity = static_cast<size_t>(
+        const auto initial_hold_size = static_cast<size_t>(
             zlstate::PTargetRefreshSpeed::kRates[static_cast<size_t>(std::round(target_refresh_id))]);
-        circular_min_max_.setCapacity(circular_capacity);
-        circular_min_max_.setSize(circular_capacity);
+        circular_min_max_.setCapacity(kMaximumHoldUpdates);
+        circular_min_max_.setSize(initial_hold_size);
 
         meter_top_panel_.setBufferedToImage(true);
         addAndMakeVisible(meter_top_panel_);
@@ -128,7 +128,8 @@ namespace zlpanel {
 
     void MeterDisplayPanel::run(const double next_time_stamp,
                                 zldsp::analyzer::FIFOTransferBuffer<zlp::CompressController::kAnalyzerStreamNum>& transfer_buffer,
-                                const size_t consumer_id, const MagDBRange& db_range) {
+                                const size_t consumer_id, const MagDBRange& db_range,
+                                const double actual_refresh_rate) {
         if (!isValidHistoryTimeStamp(next_time_stamp)) {
             return;
         }
@@ -148,7 +149,7 @@ namespace zlpanel {
         const auto mag_type = static_cast<zldsp::analyzer::MagType>(std::round(
             analyzer_mag_type_ref_.load(std::memory_order::relaxed)));
 
-        const auto delta_time = std::clamp(next_time_stamp - start_time_, 0.01, 1.0);
+        const auto delta_time = std::clamp(next_time_stamp - start_time_, 0.001, 1.0);
         start_time_ = next_time_stamp;
         // run meter receiver
         auto& fifo{transfer_buffer.getMulticastFIFO()};
@@ -224,6 +225,13 @@ namespace zlpanel {
             }
         }
         // update reduction short-term max display
+        if (std::isfinite(actual_refresh_rate) && actual_refresh_rate > 0.0) {
+            const auto hold_size = static_cast<size_t>(std::round(std::clamp(
+                actual_refresh_rate, 1.0, static_cast<double>(kMaximumHoldUpdates))));
+            if (hold_size != circular_min_max_.getSize()) {
+                circular_min_max_.setSize(hold_size);
+            }
+        }
         float reduction_max_value;
         float reduction_max_pos;
         if (is_upwards_) {

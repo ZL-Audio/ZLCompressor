@@ -30,7 +30,7 @@ namespace zlpanel {
 
         void repaintCallBackSlow();
 
-        void repaintCallBack(double time_stamp);
+        void repaintCallBack(double time_stamp, double actual_refresh_rate);
 
         void run(const juce::Thread& thread, const MagDBRange& db_range);
 
@@ -73,6 +73,7 @@ namespace zlpanel {
         zlgui::attachment::SliderAttachment<true> ratio_attachment_;
 
         std::atomic<double> next_stamp_{kUnsetHistoryTimeStamp};
+        std::atomic<double> actual_refresh_rate_{1.0};
         double rms_previous_stamp_{0.};
 
         double sample_rate_{0.0};

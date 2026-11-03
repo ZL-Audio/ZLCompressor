@@ -34,7 +34,7 @@ namespace zlpanel {
 
         void resized() override;
 
-        void repaintCallBack(double time_stamp);
+        void repaintCallBack(double time_stamp, double actual_refresh_rate);
 
         void repaintCallBackSlow();
 

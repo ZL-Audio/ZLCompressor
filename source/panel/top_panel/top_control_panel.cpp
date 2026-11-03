@@ -50,6 +50,7 @@ namespace zlpanel {
 
         label_laf_.setFontScale(1.5f);
 
+        lookahead_slider_.setComponentID(zlp::PLookAhead::kID);
         lookahead_slider_.setFontScale(1.5f);
         lookahead_slider_.setJustification(juce::Justification::centred);
         lookahead_slider_.setBufferedToImage(true);
@@ -73,6 +74,7 @@ namespace zlpanel {
         oversample_label_.setTooltip(tooltip_helper.getToolTipText(multilingual::TooltipLabel::kOversample));
         addAndMakeVisible(oversample_label_);
 
+        clipper_slider_.setComponentID(zlp::PClipperDrive::kID);
         clipper_slider_.setFontScale(1.5f);
         clipper_slider_.setJustification(juce::Justification::centred);
         clipper_slider_.setBufferedToImage(true);
