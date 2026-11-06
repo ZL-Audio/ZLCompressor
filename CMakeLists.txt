@@ -1,12 +1,12 @@
 # 3.24.1 is bundled in Visual Studio 2022 v17.4
 # 3.24.1 is also bundled in CLion as of 2023
 cmake_minimum_required(VERSION 3.24.1)
-set (CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# This tells cmake we have goodies in the /cmake folder
+# Load the project-specific CMake helpers.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-includes")
 include(GitVersion)
-include(PamplejuceVersion)
 
 # Keep local builds and CI on macOS 12 or newer, including reused build directories.
 if (CMAKE_HOST_APPLE)
@@ -39,25 +39,13 @@ set(PLUGIN_MANUFACTURER_CODE "Zliu")
 # Change me! Used for the MacOS bundle identifier (and signing)
 set(BUNDLE_ID "com.zlaudio.plugins")
 
-set(LV2URI "https://github.com/ZL-Audio/${PROJECT_NAME}")
-
-# For simplicity, the name of the CMake project is also the name of the target
-project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
-
-# Change me! Used for the MacOS bundle name and Installers
-set(COMPANY_NAME "ZL")
-set(PLUGIN_MANUFACTURER_CODE "Zliu")
-
-# Change me! Used for the MacOS bundle identifier (and signing)
-set(BUNDLE_ID "com.zlaudio.plugins")
-
-set(LV2URI "https://github.com/ZL-Audio/${PROJECT_NAME}")
+set(LV2URI "https://github.com/ZL-Audio/ZLCompressor")
 
 # For simplicity, the name of the CMake project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
 
 if (NOT DEFINED ZL_JUCE_COPY_PLUGIN)
-    set (ZL_JUCE_COPY_PLUGIN TRUE)
+    set(ZL_JUCE_COPY_PLUGIN TRUE)
 endif ()
 
 if (DEFINED ZL_JUCE_FORMATS)
@@ -108,7 +96,6 @@ juce_add_plugin("${PROJECT_NAME}"
         COMPANY_NAME "${COMPANY_NAME}"
         BUNDLE_ID "${BUNDLE_ID}"
 
-        # On MacOS, plugin is copied to ~/Users/yourname/Library/Audio/Plug-Ins/
         COPY_PLUGIN_AFTER_BUILD ${ZL_JUCE_COPY_PLUGIN}
         AAX_COPY_DIR "${JUCE_AAX_COPY_DIR}"
 
@@ -125,22 +112,23 @@ juce_add_plugin("${PROJECT_NAME}"
         LV2URI "${LV2URI}"
         LV2_PLUGIN_CLASS CompressorPlugin
 
+        IS_SYNTH FALSE
+        NEEDS_MIDI_INPUT FALSE
+        NEEDS_MIDI_OUTPUT FALSE
+
         AU_MAIN_TYPE kAudioUnitType_Effect
         VST3_CATEGORIES Dynamics
-        AAX_CATEGORY AAX_EPlugInCategory_Dynamics
+        AAX_CATEGORY AAX_ePlugInCategory_Dynamics
 
         MICROPHONE_PERMISSION_ENABLED TRUE
         MICROPHONE_PERMISSION_TEXT "${PRODUCT_NAME} Standalone needs access to your audio interface"
         HARDENED_RUNTIME_ENABLED TRUE
         HARDENED_RUNTIME_OPTIONS com.apple.security.device.audio-input
 
-        # The name of your final executable
-        # This is how it's listed in the DAW
-        # This can be different from PROJECT_NAME and can have spaces!
-        # You might want to use v${MAJOR_VERSION} here once you go to v2...
-        PRODUCT_NAME "${PRODUCT_NAME}")
+        PRODUCT_NAME "${PRODUCT_NAME}"
+)
 
-# On Linux, JUCE adds -Wl,--no-undefined by default. 
+# On Linux, JUCE adds -Wl,--no-undefined by default.
 # This prevents shared libraries (like VST3) from having unresolved sanitizer symbols.
 # We must remove it if sanitizers are enabled, because the host provides the sanitizer runtime.
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND (WITH_ADDRESS_SANITIZER OR WITH_THREAD_SANITIZER))
@@ -204,7 +192,7 @@ target_compile_definitions(SharedCode
         # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
         PRODUCT_NAME_WITHOUT_VERSION="${PRODUCT_NAME}"
         #        JUCE_COREGRAPHICS_RENDER_WITH_MULTIPLE_PAINT_CALLS=1
-        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1}
+        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
 )
 
 # Link to any other modules you added (with juce_add_module) here!
@@ -226,28 +214,30 @@ target_link_libraries(SharedCode
 
 # add highway
 set(ZL_HWY_STATIC_TARGET "NONE" CACHE STRING "Target architecture for static dispatch")
-if(ZL_HWY_STATIC_TARGET STREQUAL "NONE")
+if (ZL_HWY_STATIC_TARGET STREQUAL "NONE")
     message(FATAL_ERROR "ZL_HWY_STATIC_TARGET must be set: SSE2/SSE4/AVX2/NEON/LSX/LASX.")
-endif()
+endif ()
+# Plugin bundles must not depend on a separately installed Highway library.
+set(HWY_FORCE_STATIC_LIBS ON CACHE BOOL "Link Highway statically" FORCE)
 set(HWY_ENABLE_CONTRIB OFF CACHE BOOL "Disable highway contrib library" FORCE)
 set(HWY_ENABLE_EXAMPLES OFF CACHE BOOL "Disable highway examples" FORCE)
 set(HWY_ENABLE_TESTS OFF CACHE BOOL "Disable highway tests" FORCE)
 set(HWY_COMPILE_ONLY_STATIC ON CACHE BOOL "Force highway static dispatch" FORCE)
-if(ZL_HWY_STATIC_TARGET STREQUAL "NEON")
+if (ZL_HWY_STATIC_TARGET STREQUAL "NEON")
     set(ZL_HWY_ARCH_FLAGS "-march=armv8-a+simd")
-elseif(ZL_HWY_STATIC_TARGET STREQUAL "SSE2")
+elseif (ZL_HWY_STATIC_TARGET STREQUAL "SSE2")
     set(ZL_HWY_ARCH_FLAGS "-march=x86-64")
-elseif(ZL_HWY_STATIC_TARGET STREQUAL "SSE4")
+elseif (ZL_HWY_STATIC_TARGET STREQUAL "SSE4")
     set(ZL_HWY_ARCH_FLAGS "-march=x86-64-v2" "-maes" "-mpclmul")
-elseif(ZL_HWY_STATIC_TARGET STREQUAL "AVX2")
+elseif (ZL_HWY_STATIC_TARGET STREQUAL "AVX2")
     set(ZL_HWY_ARCH_FLAGS "-march=x86-64-v3" "-maes" "-mpclmul")
 elseif (ZL_HWY_STATIC_TARGET STREQUAL "LSX")
     set(ZL_HWY_ARCH_FLAGS "-mlsx")
 elseif (ZL_HWY_STATIC_TARGET STREQUAL "LASX")
     set(ZL_HWY_ARCH_FLAGS "-mlasx")
-else()
+else ()
     message(FATAL_ERROR "Unsupported ZL_HWY_STATIC_TARGET chosen: ${ZL_HWY_STATIC_TARGET}")
-endif()
+endif ()
 message(STATUS "SIMD target is ${ZL_HWY_STATIC_TARGET}")
 target_compile_definitions(SharedCode INTERFACE HWY_COMPILE_ONLY_STATIC)
 target_compile_options(SharedCode INTERFACE ${ZL_HWY_ARCH_FLAGS})
