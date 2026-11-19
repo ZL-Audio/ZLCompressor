@@ -165,6 +165,10 @@ namespace zldsp::filter {
         }
 
     protected:
+        size_t getProcessingOrder() const {
+            return c_filter_type_ == kFlatTilt ? 0 : c_order_;
+        }
+
         std::array<std::array<double, 5>, kFilterSize> coeffs_{};
         size_t current_filter_num_{1};
         zldsp::chore::SmoothedValue<double, zldsp::chore::kLin> c_gain_{0.0};
